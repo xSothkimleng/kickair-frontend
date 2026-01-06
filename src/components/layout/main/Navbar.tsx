@@ -12,6 +12,7 @@ import PeopleIcon from "@mui/icons-material/People";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ShieldIcon from "@mui/icons-material/Shield";
 import Image from "next/image";
+import Link from "next/link";
 
 // Type definitions
 type DropdownType = "why" | "freelancer" | "client" | "pro" | "language" | null;
@@ -45,7 +46,9 @@ function MainNavbar() {
         boxShadow: "0 2px 4px rgba(0, 0, 0, 0.1)",
       }}>
       <div>
-        <Image src='/assets/images/kickair-logo.png' alt='logo' width={100} height={38} style={{ objectFit: "fill" }} />
+        <Link href='/' passHref>
+          <Image src='/assets/images/kickair-logo.png' alt='logo' width={100} height={38} style={{ objectFit: "fill" }} />
+        </Link>
       </div>
       <Box sx={{ display: "flex", alignItems: "center", gap: "20px" }}>
         <Box sx={{ display: "flex", gap: "10px" }}>
@@ -88,61 +91,64 @@ function MainNavbar() {
                   </Box>
 
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Button
-                      onClick={() => handleNavigateAndClose("why-kickair", { scrollTo: "how-it-works" })}
-                      sx={{
-                        width: "100%",
-                        textAlign: "left",
-                        display: "block",
-                        p: 2,
-                        borderRadius: "12px",
-                        textTransform: "none",
-                        color: "black",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>How It Works</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
-                        Step-by-step guide for clients and freelancers
-                      </Box>
-                    </Button>
+                    <Link href='/whykickair#how-it-works' scroll={true}>
+                      <Button
+                        sx={{
+                          width: "100%",
+                          textAlign: "left",
+                          display: "block",
+                          p: 2,
+                          borderRadius: "12px",
+                          textTransform: "none",
+                          color: "black",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>How It Works</Box>
+                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
+                          Step-by-step guide for clients and freelancers
+                        </Box>
+                      </Button>
+                    </Link>
 
-                    <Button
-                      onClick={() => handleNavigateAndClose("why-kickair", { scrollTo: "success-stories" })}
-                      sx={{
-                        width: "100%",
-                        textAlign: "left",
-                        display: "block",
-                        p: 2,
-                        borderRadius: "12px",
-                        textTransform: "none",
-                        color: "black",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Success Stories</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Real results from our community</Box>
-                    </Button>
+                    <Link href='/whykickair#success-stories' scroll={true}>
+                      <Button
+                        sx={{
+                          width: "100%",
+                          textAlign: "left",
+                          display: "block",
+                          p: 2,
+                          borderRadius: "12px",
+                          textTransform: "none",
+                          color: "black",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Success Stories</Box>
+                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Real results from our community</Box>
+                      </Button>
+                    </Link>
 
-                    <Button
-                      onClick={() => handleNavigateAndClose("why-kickair", { scrollTo: "reviews" })}
-                      sx={{
-                        width: "100%",
-                        textAlign: "left",
-                        display: "block",
-                        p: 2,
-                        borderRadius: "12px",
-                        textTransform: "none",
-                        color: "black",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Reviews</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>See what people are saying about us</Box>
-                    </Button>
+                    <Link href='/whykickair#reviews' scroll={true}>
+                      <Button
+                        sx={{
+                          width: "100%",
+                          textAlign: "left",
+                          display: "block",
+                          p: 2,
+                          borderRadius: "12px",
+                          textTransform: "none",
+                          color: "black",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Reviews</Box>
+                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>See what people are saying about us</Box>
+                      </Button>
+                    </Link>
                   </Box>
                 </Box>
               </Box>
@@ -181,27 +187,28 @@ function MainNavbar() {
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-                    <Button
-                      onClick={() => handleNavigateAndClose("university", { userType: "freelancer" })}
-                      sx={{
-                        textAlign: "left",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        p: 2,
-                        borderRadius: "12px",
-                        textTransform: "none",
-                        color: "black",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <BookOpenIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>KickAir University</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
-                        Master freelancing skills, pricing strategies, and client management
-                      </Box>
-                    </Button>
+                    <Link href='/kickairuniversity' scroll={true}>
+                      <Button
+                        sx={{
+                          textAlign: "left",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          p: 2,
+                          borderRadius: "12px",
+                          textTransform: "none",
+                          color: "black",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <BookOpenIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
+                        <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>KickAir University</Box>
+                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
+                          Master freelancing skills, pricing strategies, and client management
+                        </Box>
+                      </Button>
+                    </Link>
 
                     <Button
                       onClick={() => handleNavigateAndClose("freelancer-dashboard")}
@@ -300,27 +307,29 @@ function MainNavbar() {
                   <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>Get work done with trusted freelancers</Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-                    <Button
-                      onClick={() => handleNavigateAndClose("university", { userType: "client" })}
-                      sx={{
-                        textAlign: "left",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        p: 2,
-                        borderRadius: "12px",
-                        textTransform: "none",
-                        color: "black",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <BookOpenIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>KickAir University</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
-                        Learn project management and hiring best practices
-                      </Box>
-                    </Button>
+                    <Link href='/kickairuniversity' scroll={true}>
+                      <Button
+                        onClick={() => handleNavigateAndClose("university", { userType: "client" })}
+                        sx={{
+                          textAlign: "left",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          p: 2,
+                          borderRadius: "12px",
+                          textTransform: "none",
+                          color: "black",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <BookOpenIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
+                        <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>KickAir University</Box>
+                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
+                          Learn project management and hiring best practices
+                        </Box>
+                      </Button>
+                    </Link>
 
                     <Button
                       onClick={() => handleNavigateAndClose("services")}
