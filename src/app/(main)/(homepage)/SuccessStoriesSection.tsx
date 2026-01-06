@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Grid, Chip, Button } from "@mui/material";
 import { TrendingUp, CheckCircle } from "@mui/icons-material";
 

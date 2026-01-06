@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Button, Grid, Chip } from "@mui/material";
 import {
   GpsFixed as TargetIcon,

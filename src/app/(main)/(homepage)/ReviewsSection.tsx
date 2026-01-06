@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Grid, Avatar, Button } from "@mui/material";
 import { Star } from "@mui/icons-material";
 

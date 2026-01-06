@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Button, Chip } from "@mui/material";
 import { MenuBook as BookOpenIcon, ArrowForward } from "@mui/icons-material";
 

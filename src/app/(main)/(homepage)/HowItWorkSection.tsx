@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Grid, Button } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 

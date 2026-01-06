@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Grid, Chip } from "@mui/material";
 import { Security as ShieldIcon, CheckCircle, Star, People as UsersIcon } from "@mui/icons-material";
 

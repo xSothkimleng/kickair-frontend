@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Button, Grid } from "@mui/material";
 import { ArrowForward } from "@mui/icons-material";
 import { ServiceCard } from "@/components/layout/card/ServiceCard";

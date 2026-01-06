@@ -1,5 +1,3 @@
-"use client";
-
 import { Box, Typography, Button, Grid, Chip, Card, CardContent } from "@mui/material";
 import { BusinessCenter as BriefcaseIcon, CheckCircle, ArrowForward } from "@mui/icons-material";
 
