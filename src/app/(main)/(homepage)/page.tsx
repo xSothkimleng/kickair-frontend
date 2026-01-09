@@ -1,7 +1,7 @@
 import { Container } from "@mui/material";
 import HeroSection from "./HeroSection";
 import ServicesSection from "./ServicesSection";
-import { freelancers, serviceCategories } from "../data/mockdata";
+import { freelancers, serviceCategories } from "../../data/mockdata";
 import ExploreFreelancersSection from "./FreelancersSection";
 import FreelancerEmpowermentSection from "./FreelancerEmpowermentSection";
 import FindStableJobsSection from "./FindStableJobsSection";

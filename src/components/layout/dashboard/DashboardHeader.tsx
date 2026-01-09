@@ -1,7 +1,12 @@
 import { Box, Typography, Button } from "@mui/material";
 import { ChevronLeft } from "@mui/icons-material";
 
-export default function FreelancerHeader() {
+type DashboardHeaderProps = {
+  title: string;
+  description?: string;
+};
+
+export default function DashboardHeader({ title, description }: DashboardHeaderProps) {
   return (
     <Box
       sx={{
@@ -36,9 +41,9 @@ export default function FreelancerHeader() {
               letterSpacing: "-0.01em",
               mb: 1,
             }}>
-            Freelancer Space
+            {title}
           </Typography>
-          <Typography sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)" }}>Manage your profile, services, and earnings</Typography>
+          <Typography sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)" }}>{description}</Typography>
         </Box>
       </Box>
     </Box>

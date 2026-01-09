@@ -20,7 +20,7 @@ import {
 } from "@mui/material";
 import { ChevronLeft, TuneOutlined, Search as SearchIcon, KeyboardArrowUp, KeyboardArrowDown, Close } from "@mui/icons-material";
 
-import { serviceCategories, freelancers, regions, languages } from "../data/mockdata";
+import { serviceCategories, freelancers, regions, languages } from "../../data/mockdata";
 import { FreelancerCard } from "@/components/layout/card/FreelancerCard";
 
 interface FindFreelancersPageProps {

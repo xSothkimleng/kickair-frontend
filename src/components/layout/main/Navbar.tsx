@@ -697,54 +697,58 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                       Mode
                     </Typography>
                     <Box sx={{ display: "flex", gap: 1 }}>
-                      <Button
-                        onClick={() => {
-                          if (user.hasFreelancerProfile) {
-                            onSwitchMode?.("freelancer");
-                            setActiveDropdown(null);
-                          } else {
-                            handleNavigateAndClose("create-freelancer-profile");
-                          }
-                        }}
-                        sx={{
-                          flex: 1,
-                          px: 1.5,
-                          py: 1,
-                          fontSize: 12,
-                          borderRadius: 1,
-                          textTransform: "none",
-                          bgcolor: user.currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.05)",
-                          color: user.currentMode === "freelancer" ? "white" : "rgba(0, 0, 0, 0.6)",
-                          "&:hover": {
-                            bgcolor: user.currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.1)",
-                          },
-                        }}>
-                        Freelancer
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          if (user.hasClientProfile) {
-                            onSwitchMode?.("client");
-                            setActiveDropdown(null);
-                          } else {
-                            handleNavigateAndClose("create-client-profile");
-                          }
-                        }}
-                        sx={{
-                          flex: 1,
-                          px: 1.5,
-                          py: 1,
-                          fontSize: 12,
-                          borderRadius: 1,
-                          textTransform: "none",
-                          bgcolor: user.currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.05)",
-                          color: user.currentMode === "client" ? "white" : "rgba(0, 0, 0, 0.6)",
-                          "&:hover": {
-                            bgcolor: user.currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.1)",
-                          },
-                        }}>
-                        Client
-                      </Button>
+                      <Link href='/dashboard/freelancer' passHref>
+                        <Button
+                          onClick={() => {
+                            if (user.hasFreelancerProfile) {
+                              onSwitchMode?.("freelancer");
+                              setActiveDropdown(null);
+                            } else {
+                              handleNavigateAndClose("create-freelancer-profile");
+                            }
+                          }}
+                          sx={{
+                            flex: 1,
+                            px: 1.5,
+                            py: 1,
+                            fontSize: 12,
+                            borderRadius: 1,
+                            textTransform: "none",
+                            bgcolor: user.currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.05)",
+                            color: user.currentMode === "freelancer" ? "white" : "rgba(0, 0, 0, 0.6)",
+                            "&:hover": {
+                              bgcolor: user.currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.1)",
+                            },
+                          }}>
+                          Freelancer
+                        </Button>
+                      </Link>
+                      <Link href='/dashboard/client' passHref>
+                        <Button
+                          onClick={() => {
+                            if (user.hasClientProfile) {
+                              onSwitchMode?.("client");
+                              setActiveDropdown(null);
+                            } else {
+                              handleNavigateAndClose("create-client-profile");
+                            }
+                          }}
+                          sx={{
+                            flex: 1,
+                            px: 1.5,
+                            py: 1,
+                            fontSize: 12,
+                            borderRadius: 1,
+                            textTransform: "none",
+                            bgcolor: user.currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.05)",
+                            color: user.currentMode === "client" ? "white" : "rgba(0, 0, 0, 0.6)",
+                            "&:hover": {
+                              bgcolor: user.currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.1)",
+                            },
+                          }}>
+                          Client
+                        </Button>
+                      </Link>
                     </Box>
                     {!user.hasFreelancerProfile && user.currentMode === "client" && (
                       <Button

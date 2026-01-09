@@ -3,18 +3,10 @@ import { Box, Tabs, Tab } from "@mui/material";
 interface FreelancerTabsProps {
   activeTab: string;
   onTabChange: (tab: unknown) => void;
+  tabs?: { value: string; label: string }[];
 }
 
-export default function FreelancerTabs({ activeTab, onTabChange }: FreelancerTabsProps) {
-  const tabs = [
-    { value: "dashboard", label: "Dashboard" },
-    { value: "profile", label: "Profile" },
-    { value: "services", label: "Services" },
-    { value: "finance", label: "Finance" },
-    { value: "messages", label: "Messages" },
-    { value: "level", label: "Level" },
-  ];
-
+export default function FreelancerTabs({ activeTab, onTabChange, tabs }: FreelancerTabsProps) {
   return (
     <Box
       sx={{
@@ -44,9 +36,7 @@ export default function FreelancerTabs({ activeTab, onTabChange }: FreelancerTab
               bgcolor: "black",
             },
           }}>
-          {tabs.map(tab => (
-            <Tab key={tab.value} value={tab.value} label={tab.label} />
-          ))}
+          {tabs && tabs.map(tab => <Tab key={tab.value} value={tab.value} label={tab.label} />)}
         </Tabs>
       </Box>
     </Box>

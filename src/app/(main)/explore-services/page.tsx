@@ -7,7 +7,7 @@ import { serviceListings } from "./serviceListings";
 import FiltersSidebar from "./FiltersSidebar";
 import SortBar from "./SortBar";
 import ServiceGrid from "./ServiceGrid";
-import { serviceCategories } from "../data/mockdata";
+import { serviceCategories } from "../../data/mockdata";
 
 interface ServicesPageProps {
   onNavigate?: (page: string, data?: any) => void;
