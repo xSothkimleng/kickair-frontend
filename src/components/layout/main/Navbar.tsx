@@ -16,7 +16,7 @@ import { Box, Button, Avatar, Typography } from "@mui/material";
 import { KeyboardArrowDown, BusinessCenter, Settings as SettingsIcon, HelpOutline, Logout } from "@mui/icons-material";
 
 // Type definitions
-type DropdownType = "why" | "freelancer" | "client" | "pro" | "language" | null;
+type DropdownType = "why" | "freelancer" | "client" | "pro" | "language" | "profile" | null;
 
 export interface User {
   isLoggedIn: boolean;
