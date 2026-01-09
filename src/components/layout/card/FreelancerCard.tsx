@@ -24,7 +24,7 @@ export function FreelancerCard({ freelancer }: FreelancerCardProps) {
       //   onClick={onClick}
       sx={{
         width: "100%",
-        bgcolor: "#f5f5f7",
+        bgcolor: "white",
         borderRadius: "16px",
         p: 3,
         border: "1px solid transparent",

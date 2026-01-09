@@ -55,7 +55,7 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
         {/* Freelancer Cards Grid */}
         <Grid container spacing={3}>
           {freelancers.slice(0, 10).map(freelancer => (
-            <Grid size={4} key={freelancer.id}>
+            <Grid size={2.4} key={freelancer.id}>
               <FreelancerCard freelancer={freelancer} />
             </Grid>
           ))}
