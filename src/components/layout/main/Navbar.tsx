@@ -116,7 +116,7 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                   </Box>
 
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    <Link href='/whykickair#how-it-works' scroll={true}>
+                    <Link href='/why-kick-air#how-it-works' scroll={true}>
                       <Button
                         sx={{
                           width: "100%",
@@ -137,7 +137,7 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                       </Button>
                     </Link>
 
-                    <Link href='/whykickair#success-stories' scroll={true}>
+                    <Link href='/why-kick-air#success-stories' scroll={true}>
                       <Button
                         sx={{
                           width: "100%",
@@ -156,7 +156,7 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                       </Button>
                     </Link>
 
-                    <Link href='/whykickair#reviews' scroll={true}>
+                    <Link href='/why-kick-air#reviews' scroll={true}>
                       <Button
                         sx={{
                           width: "100%",
@@ -212,7 +212,7 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                   </Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-                    <Link href='/kickairuniversity' scroll={true}>
+                    <Link href='/kick-air-university' scroll={true}>
                       <Button
                         sx={{
                           textAlign: "left",
@@ -332,7 +332,7 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                   <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>Get work done with trusted freelancers</Box>
 
                   <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-                    <Link href='/kickairuniversity' scroll={true}>
+                    <Link href='/kick-air-university' scroll={true}>
                       <Button
                         onClick={() => handleNavigateAndClose("university", { userType: "client" })}
                         sx={{
@@ -378,25 +378,27 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                       <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Browse freelancer offerings</Box>
                     </Button>
 
-                    <Button
-                      onClick={() => handleNavigateAndClose("services")}
-                      sx={{
-                        textAlign: "left",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        p: 2,
-                        borderRadius: "12px",
-                        textTransform: "none",
-                        color: "black",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <PeopleIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Find Freelancers</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>One-off jobs & projects</Box>
-                    </Button>
+                    <Link href='/find-freelancer' passHref>
+                      <Button
+                        onClick={() => handleNavigateAndClose("services")}
+                        sx={{
+                          textAlign: "left",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          p: 2,
+                          borderRadius: "12px",
+                          textTransform: "none",
+                          color: "black",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <PeopleIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
+                        <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Find Freelancers</Box>
+                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>One-off jobs & projects</Box>
+                      </Button>
+                    </Link>
 
                     <Button
                       onClick={() => handleNavigateAndClose("client-dashboard")}
