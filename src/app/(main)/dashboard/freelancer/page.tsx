@@ -6,16 +6,18 @@ import DashboardTabs from "@/components/layout/dashboard/DashboardTabs";
 import DashboardContent from "./DashboardContent";
 import ProfileContent from "./ProfileContent";
 import ServicesContent from "./ServicesContent";
+import OrdersContent from "./OrdersContent";
 import FinanceContent from "./FinanceContent";
 import MessagesContent from "./MessagesContent";
 import LevelContent from "./LevelContent";
 
-export type Tab = "dashboard" | "profile" | "services" | "finance" | "messages" | "level";
+export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "messages" | "level";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard", label: "Dashboard" },
   { value: "profile", label: "Profile" },
   { value: "services", label: "My Services" },
+  { value: "orders", label: "Orders" },
   { value: "finance", label: "Finance" },
   { value: "messages", label: "Messages" },
   { value: "level", label: "Level" },
@@ -33,6 +35,7 @@ export default function FreelancerSpacePage() {
         {activeTab === "dashboard" && <DashboardContent />}
         {activeTab === "profile" && <ProfileContent />}
         {activeTab === "services" && <ServicesContent />}
+        {activeTab === "orders" && <OrdersContent />}
         {activeTab === "finance" && <FinanceContent />}
         {activeTab === "messages" && <MessagesContent />}
         {activeTab === "level" && <LevelContent />}

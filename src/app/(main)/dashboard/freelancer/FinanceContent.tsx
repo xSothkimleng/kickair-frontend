@@ -1,4 +1,6 @@
-import { useState } from "react";
+"use client";
+
+import { useState, useEffect } from "react";
 import {
   Box,
   Paper,
@@ -20,85 +22,51 @@ import {
   TableHead,
   TableRow,
   InputAdornment,
+  CircularProgress,
 } from "@mui/material";
-
-interface Transaction {
-  id: number;
-  date: string;
-  activity: string;
-  description: string;
-  client: string | null;
-  amount: number;
-  status: "pending" | "completed" | "potential";
-  type: "credit" | "debit";
-}
+import { api } from "@/lib/api";
+import { Wallet, Transaction } from "@/types/wallet";
 
 export default function FinanceContent() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState("ABA Bank - ***1234");
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const mockTransactions: Transaction[] = [
-    {
-      id: 1,
-      date: "2025-01-05",
-      activity: "Service Completed",
-      description: "Modern Logo Design - Basic Package",
-      client: "Sokha Restaurant",
-      amount: 50,
-      status: "pending",
-      type: "credit",
-    },
-    {
-      id: 2,
-      date: "2025-01-04",
-      activity: "Payment Released",
-      description: "Website Development - Premium Package",
-      client: "TechStart Co.",
-      amount: 1200,
-      status: "completed",
-      type: "credit",
-    },
-    {
-      id: 3,
-      date: "2025-01-03",
-      activity: "Withdrawal",
-      description: "Transferred to ABA Bank - ***1234",
-      client: null,
-      amount: 500,
-      status: "completed",
-      type: "debit",
-    },
-    {
-      id: 4,
-      date: "2025-01-02",
-      activity: "Service In Progress",
-      description: "Social Media Graphics - Standard Package",
-      client: "Fashion Boutique",
-      amount: 150,
-      status: "potential",
-      type: "credit",
-    },
-    {
-      id: 5,
-      date: "2024-12-28",
-      activity: "Payment Released",
-      description: "Brand Identity Design - Premium Package",
-      client: "Coffee Shop Ltd.",
-      amount: 800,
-      status: "completed",
-      type: "credit",
-    },
-  ];
+  useEffect(() => {
+    fetchFinanceData();
+  }, []);
 
-  const potentialPayments = mockTransactions.filter(t => t.status === "potential");
-  const pendingPayments = mockTransactions.filter(t => t.status === "pending");
-  const completedPayments = mockTransactions.filter(t => t.status === "completed" && t.type === "credit");
+  const fetchFinanceData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
 
-  const potentialTotal = potentialPayments.reduce((sum, t) => sum + t.amount, 0);
-  const pendingTotal = pendingPayments.reduce((sum, t) => sum + t.amount, 0);
-  const availableBalance = 2450;
-  const earningsToDate = completedPayments.reduce((sum, t) => sum + t.amount, 0);
+      const [walletResponse, transactionsResponse] = await Promise.all([
+        api.get("/api/wallet"),
+        api.get("/api/wallet/transactions"),
+      ]);
+
+      setWallet(walletResponse.data);
+      setTransactions(transactionsResponse.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch finance data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Filter transactions by status
+  const pendingPayments = transactions.filter(t => t.status === "pending" && t.type !== "withdrawal");
+  const completedPayments = transactions.filter(t => t.status === "completed" && (t.type === "payment" || t.type === "deposit"));
+
+  // Calculate totals from wallet data
+  const availableBalance = wallet ? parseFloat(wallet.available_balance_raw) : 0;
+  const pendingTotal = wallet ? parseFloat(wallet.pending_balance_raw) : 0;
+  const earningsToDate = wallet ? parseFloat(wallet.total_earnings_raw) : 0;
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString("en-US", {
@@ -120,19 +88,70 @@ export default function FinanceContent() {
         return { bgcolor: "rgba(34, 197, 94, 0.1)", color: "rgb(21, 128, 61)" };
       case "pending":
         return { bgcolor: "rgba(37, 99, 235, 0.1)", color: "rgb(29, 78, 216)" };
-      case "potential":
-        return { bgcolor: "rgba(234, 179, 8, 0.1)", color: "rgb(161, 98, 7)" };
+      case "failed":
+        return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "rgb(185, 28, 28)" };
       default:
         return { bgcolor: "rgba(0, 0, 0, 0.1)", color: "black" };
     }
   };
 
   const getAmountColor = (transaction: Transaction) => {
-    if (transaction.type === "debit") return "#ef4444";
-    if (transaction.status === "potential") return "#f59e0b";
+    if (transaction.type === "withdrawal") return "#ef4444";
     if (transaction.status === "pending") return "#3b82f6";
     return "#16a34a";
   };
+
+  const getTransactionActivity = (transaction: Transaction) => {
+    switch (transaction.type) {
+      case "payment":
+        return transaction.status === "completed" ? "Payment Received" : "Payment Pending";
+      case "deposit":
+        return "Deposit";
+      case "withdrawal":
+        return "Withdrawal";
+      case "refund":
+        return "Refund";
+      case "escrow":
+        return "Escrow";
+      default:
+        return transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1);
+    }
+  };
+
+  const getTransactionDescription = (transaction: Transaction) => {
+    if (transaction.metadata?.service_title) {
+      const pricingOption = transaction.metadata.pricing_option_title;
+      return pricingOption
+        ? `${transaction.metadata.service_title} - ${pricingOption}`
+        : transaction.metadata.service_title;
+    }
+    if (transaction.order?.service?.title) {
+      const pricingOption = transaction.order.pricing_option?.title;
+      return pricingOption
+        ? `${transaction.order.service.title} - ${pricingOption}`
+        : transaction.order.service.title;
+    }
+    return transaction.description;
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
+        <CircularProgress size={32} sx={{ color: "rgba(0, 0, 0, 0.4)" }} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography sx={{ fontSize: 13, color: "rgba(239, 68, 68, 0.8)", mb: 2 }}>{error}</Typography>
+        <Button onClick={fetchFinanceData} sx={{ fontSize: 12, textTransform: "none" }}>
+          Try again
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -184,17 +203,17 @@ export default function FinanceContent() {
           </Paper>
         </Grid>
 
-        {/* Potential Payments */}
+        {/* Total Balance */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
           <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>Potential Payments</Typography>
-              <Box sx={{ width: 8, height: 8, bgcolor: "#f59e0b", borderRadius: "50%" }} />
+              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>Total Balance</Typography>
+              <Box sx={{ width: 8, height: 8, bgcolor: "#16a34a", borderRadius: "50%" }} />
             </Box>
             <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
-              ${potentialTotal.toLocaleString()}
+              ${wallet ? wallet.total_balance_raw.toLocaleString() : "0"}
             </Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)" }}>Services in progress</Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)" }}>Available + Pending</Typography>
           </Paper>
         </Grid>
 
@@ -205,7 +224,7 @@ export default function FinanceContent() {
             <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
               ${earningsToDate.toLocaleString()}
             </Typography>
-            <Typography sx={{ fontSize: 11, color: "#16a34a" }}>+12% from last month</Typography>
+            <Typography sx={{ fontSize: 11, color: "#16a34a" }}>Total earned</Typography>
           </Paper>
         </Grid>
       </Grid>
@@ -245,14 +264,18 @@ export default function FinanceContent() {
                     <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 1 }}>
                       <Box sx={{ flex: 1 }}>
                         <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black", mb: 0.5 }}>
-                          {payment.description}
+                          {getTransactionDescription(payment)}
                         </Typography>
-                        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{payment.client}</Typography>
+                        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
+                          {payment.order?.service?.freelancer_profile ? "Client Order" : "Service"}
+                        </Typography>
                       </Box>
-                      <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#3b82f6" }}>${payment.amount}</Typography>
+                      <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#3b82f6" }}>
+                        ${parseFloat(payment.amount_raw).toLocaleString()}
+                      </Typography>
                     </Box>
                     <Typography sx={{ fontSize: 10, color: "rgba(0, 0, 0, 0.4)" }}>
-                      Completed on {formatDate(payment.date)}
+                      Created on {formatDate(payment.created_at)}
                     </Typography>
                   </Box>
                 ))}
@@ -265,54 +288,58 @@ export default function FinanceContent() {
           </Paper>
         </Grid>
 
-        {/* Potential Payments Details */}
+        {/* Recent Completed Payments */}
         <Grid size={{ xs: 12, lg: 6 }}>
           <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 3 }}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Potential Payments</Typography>
+              <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Recent Completed</Typography>
               <Chip
-                label={`${potentialPayments.length} orders`}
+                label={`${completedPayments.length} orders`}
                 sx={{
                   height: 24,
-                  bgcolor: "rgba(234, 179, 8, 0.1)",
-                  color: "rgb(161, 98, 7)",
+                  bgcolor: "rgba(34, 197, 94, 0.1)",
+                  color: "rgb(21, 128, 61)",
                   fontSize: 11,
                 }}
               />
             </Box>
             <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 2 }}>
-              Orders you&apos;ve accepted and are currently working on. Payment will move to pending once services are completed.
+              Payments that have been cleared and added to your available balance.
             </Typography>
 
-            {potentialPayments.length > 0 ? (
+            {completedPayments.length > 0 ? (
               <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {potentialPayments.map(payment => (
+                {completedPayments.slice(0, 5).map(payment => (
                   <Box
                     key={payment.id}
                     sx={{
                       p: 2,
-                      bgcolor: "rgba(234, 179, 8, 0.05)",
+                      bgcolor: "rgba(34, 197, 94, 0.05)",
                       borderRadius: 3,
-                      border: "1px solid rgba(234, 179, 8, 0.2)",
+                      border: "1px solid rgba(34, 197, 94, 0.2)",
                     }}>
                     <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 1 }}>
                       <Box sx={{ flex: 1 }}>
                         <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black", mb: 0.5 }}>
-                          {payment.description}
+                          {getTransactionDescription(payment)}
                         </Typography>
-                        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{payment.client}</Typography>
+                        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
+                          {payment.type === "deposit" ? "Deposit" : "Client Order"}
+                        </Typography>
                       </Box>
-                      <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#f59e0b" }}>${payment.amount}</Typography>
+                      <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#16a34a" }}>
+                        +${parseFloat(payment.amount_raw).toLocaleString()}
+                      </Typography>
                     </Box>
                     <Typography sx={{ fontSize: 10, color: "rgba(0, 0, 0, 0.4)" }}>
-                      Started on {formatDate(payment.date)}
+                      Completed on {formatDate(payment.created_at)}
                     </Typography>
                   </Box>
                 ))}
               </Box>
             ) : (
               <Box sx={{ textAlign: "center", py: 4 }}>
-                <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.4)" }}>No services in progress</Typography>
+                <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.4)" }}>No completed payments yet</Typography>
               </Box>
             )}
           </Paper>
@@ -337,77 +364,77 @@ export default function FinanceContent() {
           </Button>
         </Box>
 
-        <TableContainer>
-          <Table sx={{ minWidth: 650 }}>
-            <TableHead>
-              <TableRow sx={{ borderBottom: "1px solid rgba(0, 0, 0, 0.08)" }}>
-                <TableCell sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
-                  Date
-                </TableCell>
-                <TableCell sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
-                  Activity
-                </TableCell>
-                <TableCell sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
-                  Description
-                </TableCell>
-                <TableCell sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
-                  Client
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
-                  Amount
-                </TableCell>
-                <TableCell
-                  align='right'
-                  sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
-                  Status
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {mockTransactions.map(transaction => (
-                <TableRow
-                  key={transaction.id}
-                  sx={{
-                    borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-                    "&:hover": {
-                      bgcolor: "rgba(0, 0, 0, 0.02)",
-                    },
-                    transition: "background-color 0.2s",
-                  }}>
-                  <TableCell sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", border: "none", py: 2 }}>
-                    {formatDate(transaction.date)}
+        {transactions.length === 0 ? (
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.4)" }}>No transactions yet</Typography>
+          </Box>
+        ) : (
+          <TableContainer>
+            <Table sx={{ minWidth: 650 }}>
+              <TableHead>
+                <TableRow sx={{ borderBottom: "1px solid rgba(0, 0, 0, 0.08)" }}>
+                  <TableCell sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
+                    Date
                   </TableCell>
-                  <TableCell sx={{ fontSize: 13, fontWeight: 500, color: "black", border: "none", py: 2 }}>
-                    {transaction.activity}
+                  <TableCell sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
+                    Activity
                   </TableCell>
-                  <TableCell sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.8)", border: "none", py: 2 }}>
-                    {transaction.description}
-                  </TableCell>
-                  <TableCell sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", border: "none", py: 2 }}>
-                    {transaction.client || "-"}
+                  <TableCell sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
+                    Description
                   </TableCell>
                   <TableCell
                     align='right'
-                    sx={{ fontSize: 14, fontWeight: 600, color: getAmountColor(transaction), border: "none", py: 2 }}>
-                    {transaction.type === "credit" ? "+" : "-"}${transaction.amount}
+                    sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
+                    Amount
                   </TableCell>
-                  <TableCell align='right' sx={{ border: "none", py: 2 }}>
-                    <Chip
-                      label={transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                      sx={{
-                        height: 22,
-                        fontSize: 10,
-                        ...getStatusColor(transaction.status),
-                      }}
-                    />
+                  <TableCell
+                    align='right'
+                    sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", fontWeight: 500, border: "none", pb: 2 }}>
+                    Status
                   </TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {transactions.map(transaction => (
+                  <TableRow
+                    key={transaction.id}
+                    sx={{
+                      borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
+                      "&:hover": {
+                        bgcolor: "rgba(0, 0, 0, 0.02)",
+                      },
+                      transition: "background-color 0.2s",
+                    }}>
+                    <TableCell sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", border: "none", py: 2 }}>
+                      {formatDate(transaction.created_at)}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 13, fontWeight: 500, color: "black", border: "none", py: 2 }}>
+                      {getTransactionActivity(transaction)}
+                    </TableCell>
+                    <TableCell sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.8)", border: "none", py: 2 }}>
+                      {getTransactionDescription(transaction)}
+                    </TableCell>
+                    <TableCell
+                      align='right'
+                      sx={{ fontSize: 14, fontWeight: 600, color: getAmountColor(transaction), border: "none", py: 2 }}>
+                      {transaction.type === "withdrawal" ? "-" : "+"}${parseFloat(transaction.amount_raw).toLocaleString()}
+                    </TableCell>
+                    <TableCell align='right' sx={{ border: "none", py: 2 }}>
+                      <Chip
+                        label={transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                        sx={{
+                          height: 22,
+                          fontSize: 10,
+                          ...getStatusColor(transaction.status),
+                        }}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Paper>
 
       {/* Withdraw Modal */}

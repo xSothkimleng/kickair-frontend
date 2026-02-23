@@ -1,6 +1,8 @@
 "use client";
 import { useState } from "react";
-import { Box, Paper, Typography, TextField, Button, Divider, InputAdornment, Grid } from "@mui/material";
+import { useRouter } from "next/navigation";
+import { Box, Paper, Typography, TextField, Button, Divider, InputAdornment, Grid, Alert } from "@mui/material";
+import { useAuth } from "@/components/context/AuthContext";
 import {
   PersonOutline,
   MailOutline,
@@ -12,6 +14,8 @@ import {
 } from "@mui/icons-material";
 
 export default function SignUpPage() {
+  const router = useRouter();
+  const { register } = useAuth();
   const [userType, setUserType] = useState<"client" | "freelancer" | null>(null);
   const [formData, setFormData] = useState({
     fullName: "",
@@ -21,31 +25,58 @@ export default function SignUpPage() {
     confirmPassword: "",
   });
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string>("");
 
   const handleChange = (field: string, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    // Client-side validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(formData.email)) {
+      setError("Please enter a valid email address");
+      return;
+    }
+
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters");
+      return;
+    }
 
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
 
     setIsLoading(true);
 
-    // Simulate registration
-    setTimeout(() => {
-      setIsLoading(false);
+    try {
+      await register({
+        name: formData.fullName,
+        email: formData.email,
+        password: formData.password,
+        password_confirmation: formData.confirmPassword,
+        is_client: userType === "client",
+        is_freelancer: userType === "freelancer",
+        telephone: formData.phone || undefined,
+      });
+
       // Navigate to appropriate dashboard based on user type
       if (userType === "freelancer") {
-        // onNavigate("freelancer-dashboard");
+        router.push("/dashboard/freelancer");
       } else {
-        // onNavigate("client-dashboard");
+        router.push("/dashboard/client");
       }
-    }, 1000);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Registration failed. Please try again.";
+      setError(errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // Step 1: Select user type
@@ -62,7 +93,6 @@ export default function SignUpPage() {
         <Box sx={{ width: "100%", maxWidth: 1024 }}>
           {/* Back Button */}
           <Button
-            // onClick={() => onNavigate("login")}
             startIcon={<ArrowBack />}
             sx={{
               color: "text.secondary",
@@ -124,7 +154,7 @@ export default function SignUpPage() {
                       },
                     },
                   }}>
-                  <Box
+                  {/* <Box
                     className='icon-container'
                     sx={{
                       width: 64,
@@ -154,12 +184,12 @@ export default function SignUpPage() {
                     <ShoppingBagOutlined
                       sx={{
                         fontSize: 32,
-                        color: "primary.main",
+                        color: "black",
                         position: "relative",
                         zIndex: 1,
                       }}
                     />
-                  </Box>
+                  </Box> */}
                   <Typography variant='h6' sx={{ mb: 2, color: "text.primary" }}>
                     I&apos;m a client, hiring for a project
                   </Typography>
@@ -190,7 +220,7 @@ export default function SignUpPage() {
                       },
                     },
                   }}>
-                  <Box
+                  {/* <Box
                     className='icon-container'
                     sx={{
                       width: 64,
@@ -219,13 +249,13 @@ export default function SignUpPage() {
                     }}>
                     <BusinessCenterOutlined
                       sx={{
-                        fontSize: 32,
-                        color: "primary.main",
+                        fontSize: 62,
+                        color: "text.primary",
                         position: "relative",
                         zIndex: 1,
                       }}
                     />
-                  </Box>
+                  </Box> */}
                   <Typography variant='h6' sx={{ mb: 2, color: "text.primary" }}>
                     I&apos;m a freelancer, looking for work
                   </Typography>
@@ -317,6 +347,13 @@ export default function SignUpPage() {
 
           {/* Form */}
           <Box component='form' onSubmit={handleSubmit} sx={{ mt: 4 }}>
+            {/* Error Alert */}
+            {error && (
+              <Alert severity='error' sx={{ mb: 3 }}>
+                {error}
+              </Alert>
+            )}
+
             {/* Full Name Input */}
             <Box sx={{ mb: 2.5 }}>
               <Typography

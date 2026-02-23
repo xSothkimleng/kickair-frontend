@@ -1,5 +1,5 @@
 "use client";
-import { useRef, useState } from "react";
+import { useRef, useState, useEffect } from "react";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import LanguageIcon from "@mui/icons-material/Language";
 import BookOpenIcon from "@mui/icons-material/MenuBook";
@@ -12,37 +12,108 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ShieldIcon from "@mui/icons-material/Shield";
 import Image from "next/image";
 import Link from "next/link";
-import { Box, Button, Avatar, Typography } from "@mui/material";
-import { KeyboardArrowDown, BusinessCenter, Settings as SettingsIcon, HelpOutline, Logout } from "@mui/icons-material";
+import {
+  Box,
+  Button,
+  Avatar,
+  Typography,
+  CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+} from "@mui/material";
+import { KeyboardArrowDown, Settings as SettingsIcon, HelpOutline, Logout, Work as BriefcaseIcon } from "@mui/icons-material";
+import { useAuth } from "@/components/context/AuthContext";
+import { api } from "@/lib/api";
+import { useRouter, usePathname } from "next/navigation";
 
 // Type definitions
 type DropdownType = "why" | "freelancer" | "client" | "pro" | "language" | "profile" | null;
-
-export interface User {
-  isLoggedIn: boolean;
-  name: string;
-  profilePicture: string;
-  currentMode: "freelancer" | "client";
-  hasFreelancerProfile: boolean;
-  hasClientProfile: boolean;
-}
 
 interface NavigationOptions {
   scrollTo?: string;
   userType?: "freelancer" | "client";
   lang?: string;
+  initialTab?: string;
 }
 
-interface MainNavbarProps {
-  user?: User;
-  onSwitchMode?: (mode: "freelancer" | "client") => void;
-  onLogout?: () => void;
-}
-
-function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
+export default function MainNavbar() {
   const [activeDropdown, setActiveDropdown] = useState<DropdownType>(null);
   const [selectedLanguage, setSelectedLanguage] = useState<string>("English");
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
+  const [profileDialogType, setProfileDialogType] = useState<"freelancer" | "client" | null>(null);
+  const [profileDialogLoading, setProfileDialogLoading] = useState(false);
+  const [profileDialogError, setProfileDialogError] = useState<string | null>(null);
   const profileDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Use AuthContext
+  const { user, loading, logout, refreshUser } = useAuth();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Debug: Log when component renders and user state changes
+  // console.log("Navbar render - User:", user, "Loading:", loading);
+
+  // Click outside to close dropdown
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileDropdownRef.current && !profileDropdownRef.current.contains(event.target as Node)) {
+        if (activeDropdown === "profile") {
+          setActiveDropdown(null);
+        }
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [activeDropdown]);
+
+  // Handle mode switch - show dialog if profile doesn't exist
+  const handleModeSwitch = (mode: "freelancer" | "client") => {
+    if (mode === "freelancer" && !isFreelancer) {
+      setProfileDialogType("freelancer");
+      setProfileDialogOpen(true);
+    } else if (mode === "client" && !isClient) {
+      setProfileDialogType("client");
+      setProfileDialogOpen(true);
+    } else {
+      // User has the profile, navigate to dashboard
+      setActiveDropdown(null);
+      router.push(`/dashboard/${mode}`);
+    }
+  };
+
+  const handleDialogClose = () => {
+    if (profileDialogLoading) return;
+    setProfileDialogOpen(false);
+    setProfileDialogType(null);
+    setProfileDialogError(null);
+  };
+
+  const handleCreateProfile = async () => {
+    if (!profileDialogType) return;
+    setProfileDialogLoading(true);
+    setProfileDialogError(null);
+    try {
+      if (profileDialogType === "freelancer") {
+        await api.createFreelancerProfile({});
+      } else {
+        await api.createClientProfile({});
+      }
+      await refreshUser();
+      setProfileDialogOpen(false);
+      setProfileDialogType(null);
+      setActiveDropdown(null);
+      router.push(`/dashboard/${profileDialogType}`);
+    } catch (error) {
+      setProfileDialogError(error instanceof Error ? error.message : "Something went wrong. Please try again.");
+    } finally {
+      setProfileDialogLoading(false);
+    }
+  };
 
   const handleNavigateAndClose = (page: string, options?: NavigationOptions): void => {
     console.log("Navigate to:", page, options);
@@ -52,6 +123,29 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
   const handleDropdownToggle = (dropdown: DropdownType): void => {
     setActiveDropdown(activeDropdown === dropdown ? null : dropdown);
   };
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setActiveDropdown(null);
+      router.push("/");
+    } catch (error) {
+      console.error("Logout failed:", error);
+    }
+  };
+
+  // Determine user mode based on Laravel user data
+  const isFreelancer = user?.is_freelancer || false;
+  const isClient = user?.is_client || false;
+
+  // Determine current mode from URL path
+  const currentMode = pathname?.includes("/dashboard/client")
+    ? "client"
+    : pathname?.includes("/dashboard/freelancer")
+      ? "freelancer"
+      : isFreelancer
+        ? "freelancer"
+        : "client";
 
   return (
     <Box
@@ -211,32 +305,9 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                     Learn, earn, and grow your freelance career
                   </Box>
 
-                  <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
-                    <Link href='/kick-air-university' scroll={true}>
-                      <Button
-                        sx={{
-                          textAlign: "left",
-                          display: "flex",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                          p: 2,
-                          borderRadius: "12px",
-                          textTransform: "none",
-                          color: "black",
-                          "&:hover": {
-                            backgroundColor: "rgba(0, 0, 0, 0.04)",
-                          },
-                        }}>
-                        <BookOpenIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
-                        <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>KickAir University</Box>
-                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
-                          Master freelancing skills, pricing strategies, and client management
-                        </Box>
-                      </Button>
-                    </Link>
-
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
                     <Button
-                      onClick={() => handleNavigateAndClose("freelancer-dashboard")}
+                      onClick={() => handleNavigateAndClose("freelancer-space", { initialTab: "services" })}
                       sx={{
                         textAlign: "left",
                         display: "flex",
@@ -258,7 +329,7 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                     </Button>
 
                     <Button
-                      onClick={() => handleNavigateAndClose("services")}
+                      onClick={() => handleNavigateAndClose("jobs")}
                       sx={{
                         textAlign: "left",
                         display: "flex",
@@ -273,12 +344,12 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                         },
                       }}>
                       <BusinessCenterIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Find Stable Jobs</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Browse part-time & full-time opportunities</Box>
+                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Opportunities</Box>
+                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Find gigs, part-time & full-time work</Box>
                     </Button>
 
                     <Button
-                      onClick={() => handleNavigateAndClose("services")}
+                      onClick={() => handleNavigateAndClose("university", { userType: "freelancer" })}
                       sx={{
                         textAlign: "left",
                         display: "flex",
@@ -292,9 +363,11 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                           backgroundColor: "rgba(0, 0, 0, 0.04)",
                         },
                       }}>
-                      <EmojiEventsIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
-                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Boost Profile with Ads</Box>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Increase visibility with premium placement</Box>
+                      <BookOpenIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
+                      <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>KickAir University</Box>
+                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>
+                        Master freelancing skills, pricing strategies, and client management
+                      </Box>
                     </Button>
                   </Box>
                 </Box>
@@ -334,7 +407,6 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                   <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 3 }}>
                     <Link href='/kick-air-university' scroll={true}>
                       <Button
-                        onClick={() => handleNavigateAndClose("university", { userType: "client" })}
                         sx={{
                           textAlign: "left",
                           display: "flex",
@@ -356,31 +428,29 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                       </Button>
                     </Link>
 
-                    <Button
-                      onClick={() => handleNavigateAndClose("services")}
-                      sx={{
-                        textAlign: "left",
-                        display: "flex",
-                        flexDirection: "column",
-                        alignItems: "flex-start",
-                        p: 2,
-                        borderRadius: "12px",
-                        textTransform: "none",
-                        color: "black",
-                        "&:hover": {
-                          backgroundColor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <SearchIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
-                      <Link href='/explore-services' passHref>
+                    <Link href='/explore-services' passHref>
+                      <Button
+                        sx={{
+                          textAlign: "left",
+                          display: "flex",
+                          flexDirection: "column",
+                          alignItems: "flex-start",
+                          p: 2,
+                          borderRadius: "12px",
+                          textTransform: "none",
+                          color: "black",
+                          "&:hover": {
+                            backgroundColor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <SearchIcon sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)", mb: 1 }} />
                         <Box sx={{ fontSize: "13px", fontWeight: 600, mb: 0.5 }}>Explore Services</Box>
-                      </Link>
-                      <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Browse freelancer offerings</Box>
-                    </Button>
+                        <Box sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>Browse freelancer offerings</Box>
+                      </Button>
+                    </Link>
 
                     <Link href='/find-freelancer' passHref>
                       <Button
-                        onClick={() => handleNavigateAndClose("services")}
                         sx={{
                           textAlign: "left",
                           display: "flex",
@@ -634,8 +704,12 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
           </Box>
         </Box>
 
-        <Box sx={{ display: "flex", gap: "10px" }}>
-          {user && user.isLoggedIn ? (
+        <Box sx={{ display: "flex", gap: "10px", alignItems: "center" }}>
+          {/* Show loading spinner while checking auth */}
+          {loading ? (
+            <CircularProgress size={24} sx={{ color: "rgba(0, 0, 0, 0.6)" }} />
+          ) : user ? (
+            // Logged in - show profile dropdown
             <Box ref={profileDropdownRef} sx={{ position: "relative", ml: 1 }}>
               <Button
                 onClick={() => handleDropdownToggle("profile")}
@@ -653,11 +727,15 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                     bgcolor: "transparent",
                   },
                 }}>
-                <Avatar src={user.profilePicture} alt={user.name} sx={{ width: 24, height: 24 }} />
+                <Avatar
+                  src={user.profile_image ? `${process.env.NEXT_PUBLIC_API_URL}/storage/${user.profile_image}` : undefined}
+                  alt={user.name}
+                  sx={{ width: 24, height: 24 }}>
+                  {!user.profile_image && user.name?.charAt(0).toUpperCase()}
+                </Avatar>
                 <span>{user.name}</span>
                 <KeyboardArrowDown sx={{ fontSize: 14, opacity: 0.6 }} />
               </Button>
-
               {activeDropdown === "profile" && (
                 <Box
                   sx={{
@@ -676,11 +754,16 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                   {/* Profile Header */}
                   <Box sx={{ p: 1.5, borderBottom: "1px solid rgba(0, 0, 0, 0.08)" }}>
                     <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 1 }}>
-                      <Avatar src={user.profilePicture} alt={user.name} sx={{ width: 40, height: 40 }} />
+                      <Avatar
+                        src={user.profile_image ? `${process.env.NEXT_PUBLIC_API_URL}/storage/${user.profile_image}` : undefined}
+                        alt={user.name}
+                        sx={{ width: 40, height: 40 }}>
+                        {!user.profile_image && user.name?.charAt(0).toUpperCase()}
+                      </Avatar>
                       <Box>
                         <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{user.name}</Typography>
                         <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", textTransform: "capitalize" }}>
-                          {user.currentMode} mode
+                          {currentMode} mode
                         </Typography>
                       </Box>
                     </Box>
@@ -699,107 +782,48 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                       Mode
                     </Typography>
                     <Box sx={{ display: "flex", gap: 1 }}>
-                      <Link href='/dashboard/freelancer' passHref>
-                        <Button
-                          onClick={() => {
-                            if (user.hasFreelancerProfile) {
-                              onSwitchMode?.("freelancer");
-                              setActiveDropdown(null);
-                            } else {
-                              handleNavigateAndClose("create-freelancer-profile");
-                            }
-                          }}
-                          sx={{
-                            flex: 1,
-                            px: 1.5,
-                            py: 1,
-                            fontSize: 12,
-                            borderRadius: 1,
-                            textTransform: "none",
-                            bgcolor: user.currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.05)",
-                            color: user.currentMode === "freelancer" ? "white" : "rgba(0, 0, 0, 0.6)",
-                            "&:hover": {
-                              bgcolor: user.currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.1)",
-                            },
-                          }}>
-                          Freelancer
-                        </Button>
-                      </Link>
-                      <Link href='/dashboard/client' passHref>
-                        <Button
-                          onClick={() => {
-                            if (user.hasClientProfile) {
-                              onSwitchMode?.("client");
-                              setActiveDropdown(null);
-                            } else {
-                              handleNavigateAndClose("create-client-profile");
-                            }
-                          }}
-                          sx={{
-                            flex: 1,
-                            px: 1.5,
-                            py: 1,
-                            fontSize: 12,
-                            borderRadius: 1,
-                            textTransform: "none",
-                            bgcolor: user.currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.05)",
-                            color: user.currentMode === "client" ? "white" : "rgba(0, 0, 0, 0.6)",
-                            "&:hover": {
-                              bgcolor: user.currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.1)",
-                            },
-                          }}>
-                          Client
-                        </Button>
-                      </Link>
+                      <Button
+                        onClick={() => handleModeSwitch("freelancer")}
+                        sx={{
+                          flex: 1,
+                          px: 1.5,
+                          py: 1,
+                          fontSize: 12,
+                          borderRadius: 2,
+                          textTransform: "none",
+                          bgcolor: currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.05)",
+                          color: currentMode === "freelancer" ? "white" : "rgba(0, 0, 0, 0.6)",
+                          "&:hover": {
+                            bgcolor: currentMode === "freelancer" ? "black" : "rgba(0, 0, 0, 0.1)",
+                          },
+                        }}>
+                        Freelancer
+                      </Button>
+                      <Button
+                        onClick={() => handleModeSwitch("client")}
+                        sx={{
+                          flex: 1,
+                          px: 1.5,
+                          py: 1,
+                          fontSize: 12,
+                          borderRadius: 2,
+                          textTransform: "none",
+                          bgcolor: currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.05)",
+                          color: currentMode === "client" ? "white" : "rgba(0, 0, 0, 0.6)",
+                          "&:hover": {
+                            bgcolor: currentMode === "client" ? "black" : "rgba(0, 0, 0, 0.1)",
+                          },
+                        }}>
+                        Client
+                      </Button>
                     </Box>
-                    {!user.hasFreelancerProfile && user.currentMode === "client" && (
-                      <Button
-                        onClick={() => handleNavigateAndClose("create-freelancer-profile")}
-                        sx={{
-                          width: "100%",
-                          mt: 1,
-                          px: 1.5,
-                          py: 1,
-                          fontSize: 11,
-                          color: "rgba(0, 0, 0, 0.6)",
-                          textTransform: "none",
-                          "&:hover": {
-                            color: "black",
-                            bgcolor: "transparent",
-                          },
-                        }}>
-                        Create Freelancer Profile
-                      </Button>
-                    )}
-                    {!user.hasClientProfile && user.currentMode === "freelancer" && (
-                      <Button
-                        onClick={() => handleNavigateAndClose("create-client-profile")}
-                        sx={{
-                          width: "100%",
-                          mt: 1,
-                          px: 1.5,
-                          py: 1,
-                          fontSize: 11,
-                          color: "rgba(0, 0, 0, 0.6)",
-                          textTransform: "none",
-                          "&:hover": {
-                            color: "black",
-                            bgcolor: "transparent",
-                          },
-                        }}>
-                        Create Client Profile
-                      </Button>
-                    )}
                   </Box>
 
                   {/* Menu Items */}
                   <Box sx={{ py: 1 }}>
-                    <Link href='/dashboard/freelancer' passHref>
+                    <Link href={currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client"} passHref>
                       <Button
-                        onClick={() => {
-                          handleNavigateAndClose(user.currentMode === "freelancer" ? "freelancer-space" : "client-space");
-                          setActiveDropdown(null);
-                        }}
+                        onClick={() => setActiveDropdown(null)}
                         sx={{
                           width: "100%",
                           justifyContent: "flex-start",
@@ -812,59 +836,54 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
                             bgcolor: "rgba(0, 0, 0, 0.04)",
                           },
                         }}>
-                        <BusinessCenter sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)", mr: 1 }} />
-                        {user.currentMode === "freelancer" ? "Freelancer Profile" : "Client Profile"}
+                        <BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)", mr: 1 }} />
+                        {currentMode === "freelancer" ? "Freelancer Profile" : "Client Profile"}
                       </Button>
                     </Link>
-                    <Button
-                      onClick={() => {
-                        handleNavigateAndClose("settings");
-                        setActiveDropdown(null);
-                      }}
-                      sx={{
-                        width: "100%",
-                        justifyContent: "flex-start",
-                        px: 2,
-                        py: 1.25,
-                        fontSize: 12,
-                        color: "black",
-                        textTransform: "none",
-                        "&:hover": {
-                          bgcolor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <SettingsIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)", mr: 1 }} />
-                      Settings
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        handleNavigateAndClose("help");
-                        setActiveDropdown(null);
-                      }}
-                      sx={{
-                        width: "100%",
-                        justifyContent: "flex-start",
-                        px: 2,
-                        py: 1.25,
-                        fontSize: 12,
-                        color: "black",
-                        textTransform: "none",
-                        "&:hover": {
-                          bgcolor: "rgba(0, 0, 0, 0.04)",
-                        },
-                      }}>
-                      <HelpOutline sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)", mr: 1 }} />
-                      Help & Support
-                    </Button>
+                    <Link href='/settings' passHref>
+                      <Button
+                        onClick={() => setActiveDropdown(null)}
+                        sx={{
+                          width: "100%",
+                          justifyContent: "flex-start",
+                          px: 2,
+                          py: 1.25,
+                          fontSize: 12,
+                          color: "black",
+                          textTransform: "none",
+                          "&:hover": {
+                            bgcolor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <SettingsIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)", mr: 1 }} />
+                        Settings
+                      </Button>
+                    </Link>
+                    <Link href='/help' passHref>
+                      <Button
+                        onClick={() => setActiveDropdown(null)}
+                        sx={{
+                          width: "100%",
+                          justifyContent: "flex-start",
+                          px: 2,
+                          py: 1.25,
+                          fontSize: 12,
+                          color: "black",
+                          textTransform: "none",
+                          "&:hover": {
+                            bgcolor: "rgba(0, 0, 0, 0.04)",
+                          },
+                        }}>
+                        <HelpOutline sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)", mr: 1 }} />
+                        Help & Support
+                      </Button>
+                    </Link>
                   </Box>
 
                   {/* Logout */}
                   <Box sx={{ borderTop: "1px solid rgba(0, 0, 0, 0.08)", p: 1 }}>
                     <Button
-                      onClick={() => {
-                        onLogout?.();
-                        setActiveDropdown(null);
-                      }}
+                      onClick={handleLogout}
                       sx={{
                         width: "100%",
                         justifyContent: "flex-start",
@@ -886,9 +905,9 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
               )}
             </Box>
           ) : (
+            // Not logged in - show Sign In button
             <Link href='/auth/sign-in' passHref>
               <Button
-                onClick={() => handleNavigateAndClose("login")}
                 sx={{
                   ml: 1,
                   px: 2,
@@ -908,8 +927,65 @@ function MainNavbar({ user, onSwitchMode, onLogout }: MainNavbarProps) {
           )}
         </Box>
       </Box>
+
+      {/* Create Profile Dialog */}
+      <Dialog
+        open={profileDialogOpen}
+        onClose={handleDialogClose}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              minWidth: 400,
+              p: 1,
+            },
+          },
+        }}>
+        <DialogTitle sx={{ fontSize: 18, fontWeight: 600, pb: 1 }}>
+          Create {profileDialogType === "freelancer" ? "Freelancer" : "Client"} Profile
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)" }}>
+            You don&apos;t have a {profileDialogType} profile yet. Would you like to create one?
+          </Typography>
+          {profileDialogError && (
+            <Typography sx={{ fontSize: 13, color: "#dc2626", mt: 1.5 }}>
+              {profileDialogError}
+            </Typography>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleDialogClose}
+            disabled={profileDialogLoading}
+            sx={{
+              textTransform: "none",
+              fontSize: 13,
+              color: "rgba(0, 0, 0, 0.6)",
+              "&:hover": {
+                bgcolor: "rgba(0, 0, 0, 0.04)",
+              },
+            }}>
+            Cancel
+          </Button>
+          <Button
+            onClick={handleCreateProfile}
+            disabled={profileDialogLoading}
+            sx={{
+              textTransform: "none",
+              fontSize: 13,
+              bgcolor: "black",
+              color: "white",
+              px: 3,
+              borderRadius: 2,
+              "&:hover": {
+                bgcolor: "rgba(0, 0, 0, 0.8)",
+              },
+            }}>
+            {profileDialogLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : "Create Profile"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
-
-export default MainNavbar;

@@ -1,9 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import { Box, Typography, Button, Card, CardContent, Stack, Chip, Grid, Paper, Divider } from "@mui/material";
+import { useState, useEffect } from "react";
 import {
-  TrendingUp as TrendingUpIcon,
+  Box,
+  Typography,
+  Button,
+  Card,
+  CardContent,
+  Stack,
+  Chip,
+  Grid,
+  Paper,
+  Divider,
+  CircularProgress,
+} from "@mui/material";
+import {
   Download as DownloadIcon,
   AttachMoney as DollarSignIcon,
   CreditCard as CreditCardIcon,
@@ -12,64 +23,15 @@ import {
   Cancel as XCircleIcon,
   AccessTime as ClockIcon,
 } from "@mui/icons-material";
+import { api } from "@/lib/api";
+import { Wallet, Transaction } from "@/types/wallet";
 
 export default function FinanceContent() {
-  const [activeFilter, setActiveFilter] = useState<"all" | "completed" | "pending" | "cancelled">("all");
-
-  const financialOverview = {
-    totalSpent: 24500,
-    inEscrow: 2450,
-    monthlySpending: 3200,
-    availableBalance: 5000,
-  };
-
-  const transactions = [
-    {
-      id: 1,
-      type: "payment",
-      description: "Payment to Sopheak Chan",
-      project: "E-commerce Website Development",
-      amount: -1200,
-      status: "Completed",
-      date: "Jan 5, 2026",
-    },
-    {
-      id: 2,
-      type: "escrow",
-      description: "Funds held in escrow",
-      project: "Logo Design - Premium Package",
-      amount: -350,
-      status: "Pending",
-      date: "Jan 3, 2026",
-    },
-    {
-      id: 3,
-      type: "refund",
-      description: "Refund from David Lim",
-      project: "Content Writing Project",
-      amount: 200,
-      status: "Completed",
-      date: "Dec 28, 2025",
-    },
-    {
-      id: 4,
-      type: "payment",
-      description: "Payment to Sarah Kim",
-      project: "Social Media Graphics",
-      amount: -450,
-      status: "Completed",
-      date: "Dec 20, 2025",
-    },
-    {
-      id: 5,
-      type: "deposit",
-      description: "Account balance top-up",
-      project: "Wallet Deposit",
-      amount: 5000,
-      status: "Completed",
-      date: "Dec 15, 2025",
-    },
-  ];
+  const [activeFilter, setActiveFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
+  const [wallet, setWallet] = useState<Wallet | null>(null);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   const paymentMethods = [
     {
@@ -86,13 +48,41 @@ export default function FinanceContent() {
     },
   ];
 
+  useEffect(() => {
+    fetchFinanceData();
+  }, []);
+
+  const fetchFinanceData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [walletResponse, transactionsResponse] = await Promise.all([
+        api.get("/api/wallet"),
+        api.get("/api/wallet/transactions"),
+      ]);
+
+      setWallet(walletResponse.data);
+      setTransactions(transactionsResponse.data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to fetch finance data");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const filteredTransactions = transactions.filter(transaction => {
+    if (activeFilter === "all") return true;
+    return transaction.status === activeFilter;
+  });
+
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case "Completed":
+      case "completed":
         return <CheckCircle2Icon sx={{ fontSize: 16, color: "#16a34a" }} />;
-      case "Pending":
+      case "pending":
         return <ClockIcon sx={{ fontSize: 16, color: "#ea580c" }} />;
-      case "Cancelled":
+      case "failed":
         return <XCircleIcon sx={{ fontSize: 16, color: "#dc2626" }} />;
       default:
         return null;
@@ -101,16 +91,70 @@ export default function FinanceContent() {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case "Completed":
+      case "completed":
         return { bgcolor: "rgba(22, 163, 74, 0.1)", color: "#15803d" };
-      case "Pending":
+      case "pending":
         return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
-      case "Cancelled":
+      case "failed":
         return { bgcolor: "rgba(220, 38, 38, 0.1)", color: "#b91c1c" };
       default:
         return { bgcolor: "rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.6)" };
     }
   };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getTransactionAmount = (transaction: Transaction) => {
+    const amount = parseFloat(transaction.amount_raw);
+    // Deposits and refunds are positive (money in), payments and withdrawals are negative (money out)
+    const isPositive = transaction.type === "deposit" || transaction.type === "refund";
+    return { amount, isPositive };
+  };
+
+  const getTransactionDescription = (transaction: Transaction) => {
+    if (transaction.metadata?.service_title) {
+      return transaction.metadata.service_title;
+    }
+    if (transaction.order?.service?.title) {
+      return transaction.order.service.title;
+    }
+    return transaction.description;
+  };
+
+  const getTransactionProject = (transaction: Transaction) => {
+    if (transaction.metadata?.pricing_option_title) {
+      return transaction.metadata.pricing_option_title;
+    }
+    if (transaction.order?.pricing_option?.title) {
+      return transaction.order.pricing_option.title;
+    }
+    return transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1);
+  };
+
+  if (loading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
+        <CircularProgress size={32} sx={{ color: "rgba(0, 0, 0, 0.4)" }} />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box sx={{ textAlign: "center", py: 6 }}>
+        <Typography sx={{ fontSize: 13, color: "rgba(239, 68, 68, 0.8)", mb: 2 }}>{error}</Typography>
+        <Button onClick={fetchFinanceData} sx={{ fontSize: 12, textTransform: "none" }}>
+          Try again
+        </Button>
+      </Box>
+    );
+  }
 
   return (
     <Box>
@@ -156,7 +200,29 @@ export default function FinanceContent() {
               <Stack spacing={1}>
                 <DollarSignIcon sx={{ fontSize: 20, color: "#2563eb" }} />
                 <Typography variant='h5' fontWeight={600}>
-                  ${financialOverview.totalSpent.toLocaleString()}
+                  ${wallet ? parseFloat(wallet.available_balance_raw).toLocaleString() : "0"}
+                </Typography>
+                <Typography variant='caption' color='text.secondary'>
+                  Available Balance
+                </Typography>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+          <Card
+            elevation={0}
+            sx={{
+              borderRadius: 3,
+              border: "1px solid",
+              borderColor: "rgba(0,0,0,0.08)",
+            }}>
+            <CardContent>
+              <Stack spacing={1}>
+                <DollarSignIcon sx={{ fontSize: 20, color: "#2563eb" }} />
+                <Typography variant='h5' fontWeight={600}>
+                  ${wallet ? parseFloat(wallet.total_spent_raw).toLocaleString() : "0"}
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
                   Total Spent
@@ -178,7 +244,7 @@ export default function FinanceContent() {
               <Stack spacing={1}>
                 <ClockIcon sx={{ fontSize: 20, color: "#ea580c" }} />
                 <Typography variant='h5' fontWeight={600}>
-                  ${financialOverview.inEscrow.toLocaleString()}
+                  ${wallet ? parseFloat(wallet.pending_balance_raw).toLocaleString() : "0"}
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
                   In Escrow
@@ -198,34 +264,12 @@ export default function FinanceContent() {
             }}>
             <CardContent>
               <Stack spacing={1}>
-                <TrendingUpIcon sx={{ fontSize: 20, color: "#9333ea" }} />
-                <Typography variant='h5' fontWeight={600}>
-                  ${financialOverview.monthlySpending.toLocaleString()}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Monthly Spending
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-            }}>
-            <CardContent>
-              <Stack spacing={1}>
                 <CreditCardIcon sx={{ fontSize: 20, color: "#16a34a" }} />
                 <Typography variant='h5' fontWeight={600}>
-                  ${financialOverview.availableBalance.toLocaleString()}
+                  ${wallet ? wallet.total_balance_raw.toLocaleString() : "0"}
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
-                  Available Balance
+                  Total Balance
                 </Typography>
               </Stack>
             </CardContent>
@@ -249,7 +293,7 @@ export default function FinanceContent() {
                   Transaction History
                 </Typography>
                 <Stack direction='row' spacing={1}>
-                  {(["all", "completed", "pending", "cancelled"] as const).map(filter => (
+                  {(["all", "completed", "pending", "failed"] as const).map(filter => (
                     <Button
                       key={filter}
                       onClick={() => setActiveFilter(filter)}
@@ -277,69 +321,79 @@ export default function FinanceContent() {
                 </Stack>
               </Stack>
 
-              <Stack spacing={1.5}>
-                {transactions.map((transaction, index) => (
-                  <Box key={transaction.id}>
-                    <Stack
-                      direction='row'
-                      justifyContent='space-between'
-                      alignItems='center'
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        transition: "all 0.2s",
-                        "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                      }}>
-                      <Stack direction='row' spacing={2} flex={1}>
-                        <Box
+              {filteredTransactions.length === 0 ? (
+                <Box sx={{ textAlign: "center", py: 6 }}>
+                  <FileTextIcon sx={{ fontSize: 48, color: "rgba(0, 0, 0, 0.2)", mb: 2 }} />
+                  <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>No transactions found</Typography>
+                </Box>
+              ) : (
+                <Stack spacing={1.5}>
+                  {filteredTransactions.map((transaction, index) => {
+                    const { amount, isPositive } = getTransactionAmount(transaction);
+                    return (
+                      <Box key={transaction.id}>
+                        <Stack
+                          direction='row'
+                          justifyContent='space-between'
+                          alignItems='center'
                           sx={{
-                            width: 40,
-                            height: 40,
+                            p: 2,
                             borderRadius: 2,
-                            bgcolor: "rgba(0,0,0,0.05)",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
+                            transition: "all 0.2s",
+                            "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
                           }}>
-                          <FileTextIcon sx={{ fontSize: 20, color: "text.secondary" }} />
-                        </Box>
-                        <Box flex={1}>
-                          <Typography variant='body2' fontWeight={500} mb={0.25}>
-                            {transaction.description}
-                          </Typography>
-                          <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                            {transaction.project}
-                          </Typography>
-                          <Stack direction='row' spacing={1} alignItems='center'>
-                            {getStatusIcon(transaction.status)}
-                            <Chip
-                              label={transaction.status}
-                              size='small'
+                          <Stack direction='row' spacing={2} flex={1}>
+                            <Box
                               sx={{
-                                height: 20,
-                                fontSize: 10,
-                                ...getStatusColor(transaction.status),
-                              }}
-                            />
-                            <Typography variant='caption' color='text.disabled'>
-                              {transaction.date}
-                            </Typography>
+                                width: 40,
+                                height: 40,
+                                borderRadius: 2,
+                                bgcolor: "rgba(0,0,0,0.05)",
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                              }}>
+                              <FileTextIcon sx={{ fontSize: 20, color: "text.secondary" }} />
+                            </Box>
+                            <Box flex={1}>
+                              <Typography variant='body2' fontWeight={500} mb={0.25}>
+                                {getTransactionDescription(transaction)}
+                              </Typography>
+                              <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
+                                {getTransactionProject(transaction)}
+                              </Typography>
+                              <Stack direction='row' spacing={1} alignItems='center'>
+                                {getStatusIcon(transaction.status)}
+                                <Chip
+                                  label={transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
+                                  size='small'
+                                  sx={{
+                                    height: 20,
+                                    fontSize: 10,
+                                    ...getStatusColor(transaction.status),
+                                  }}
+                                />
+                                <Typography variant='caption' color='text.disabled'>
+                                  {formatDate(transaction.created_at)}
+                                </Typography>
+                              </Stack>
+                            </Box>
                           </Stack>
-                        </Box>
-                      </Stack>
-                      <Typography
-                        variant='body1'
-                        fontWeight={600}
-                        sx={{
-                          color: transaction.amount > 0 ? "#16a34a" : "black",
-                        }}>
-                        {transaction.amount > 0 ? "+" : ""}${Math.abs(transaction.amount)}
-                      </Typography>
-                    </Stack>
-                    {index < transactions.length - 1 && <Divider />}
-                  </Box>
-                ))}
-              </Stack>
+                          <Typography
+                            variant='body1'
+                            fontWeight={600}
+                            sx={{
+                              color: isPositive ? "#16a34a" : "black",
+                            }}>
+                            {isPositive ? "+" : "-"}${amount.toLocaleString()}
+                          </Typography>
+                        </Stack>
+                        {index < filteredTransactions.length - 1 && <Divider />}
+                      </Box>
+                    );
+                  })}
+                </Stack>
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -420,73 +474,6 @@ export default function FinanceContent() {
                     </Stack>
                   </Paper>
                 ))}
-              </Stack>
-            </CardContent>
-          </Card>
-
-          {/* Quick Actions */}
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-            }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant='h6' fontWeight={600} mb={2}>
-                Quick Actions
-              </Typography>
-              <Stack spacing={1.5}>
-                <Button
-                  fullWidth
-                  variant='contained'
-                  sx={{
-                    fontSize: 12,
-                    textTransform: "none",
-                    borderRadius: 10,
-                    bgcolor: "#0071e3",
-                    color: "white",
-                    justifyContent: "flex-start",
-                    "&:hover": {
-                      bgcolor: "#0077ED",
-                    },
-                  }}>
-                  Add Funds to Wallet
-                </Button>
-                <Button
-                  fullWidth
-                  variant='outlined'
-                  sx={{
-                    fontSize: 12,
-                    textTransform: "none",
-                    borderRadius: 10,
-                    borderColor: "rgba(0,0,0,0.2)",
-                    color: "black",
-                    justifyContent: "flex-start",
-                    "&:hover": {
-                      borderColor: "rgba(0,0,0,0.4)",
-                      bgcolor: "transparent",
-                    },
-                  }}>
-                  Request Invoice
-                </Button>
-                <Button
-                  fullWidth
-                  variant='outlined'
-                  sx={{
-                    fontSize: 12,
-                    textTransform: "none",
-                    borderRadius: 10,
-                    borderColor: "rgba(0,0,0,0.2)",
-                    color: "black",
-                    justifyContent: "flex-start",
-                    "&:hover": {
-                      borderColor: "rgba(0,0,0,0.4)",
-                      bgcolor: "transparent",
-                    },
-                  }}>
-                  View Tax Documents
-                </Button>
               </Stack>
             </CardContent>
           </Card>

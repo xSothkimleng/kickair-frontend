@@ -1,0 +1,251 @@
+import {
+  User,
+  RegisterData,
+  Language,
+  Expertise,
+  Industry,
+  FreelancerProfile,
+  ClientProfile,
+  FreelancerProfileRequest,
+  ClientProfileRequest,
+  FreelancerProfilesListResponse,
+} from "@/types/user";
+
+// lib/api.ts
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+class ApiClient {
+  private getCsrfToken(): string | null {
+    const matches = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+    if (matches) {
+      return decodeURIComponent(matches[1]);
+    }
+    return null;
+  }
+
+  private async request(endpoint: string, options: RequestInit = {}) {
+    const url = `${API_URL}${endpoint}`;
+    const csrfToken = this.getCsrfToken();
+
+    const response = await fetch(url, {
+      ...options,
+      credentials: "include",
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+        ...(csrfToken && { "X-XSRF-TOKEN": csrfToken }),
+        ...options.headers,
+      },
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Request failed" }));
+      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  async getCsrfCookie() {
+    await fetch(`${API_URL}/sanctum/csrf-cookie`, {
+      credentials: "include",
+    });
+  }
+
+  // Returns the user object directly
+  async login(email: string, password: string): Promise<User> {
+    await this.getCsrfCookie();
+
+    const response = await this.request("/api/auth/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    return response.data.user;
+  }
+
+  // Returns the user object directly
+  async register(data: RegisterData): Promise<User> {
+    await this.getCsrfCookie();
+
+    const response = await this.request("/api/auth/register", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    return response.data.user;
+  }
+
+  async logout(): Promise<void> {
+    await this.request("/api/auth/logout", {
+      method: "POST",
+    });
+  }
+
+  // Returns the user object directly
+  async getUser(): Promise<User> {
+    const response = await this.request("/api/auth/me");
+    return response.data.user;
+  }
+
+  async get(endpoint: string) {
+    return this.request(endpoint, { method: "GET" });
+  }
+
+  async post(endpoint: string, data: unknown) {
+    return this.request(endpoint, {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async put(endpoint: string, data: unknown) {
+    return this.request(endpoint, {
+      method: "PUT",
+      body: JSON.stringify(data),
+    });
+  }
+
+  async delete(endpoint: string) {
+    return this.request(endpoint, { method: "DELETE" });
+  }
+
+  async uploadFile(endpoint: string, file: File, fieldName: string = "file") {
+    const url = `${API_URL}${endpoint}`;
+    const csrfToken = this.getCsrfToken();
+
+    const formData = new FormData();
+    formData.append(fieldName, file);
+
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        ...(csrfToken && { "X-XSRF-TOKEN": csrfToken }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Upload failed" }));
+      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // Upload file with additional form data fields (e.g., upload_token for temp uploads)
+  async uploadFormData(endpoint: string, file: File, additionalFields: Record<string, string> = {}) {
+    const url = `${API_URL}${endpoint}`;
+    const csrfToken = this.getCsrfToken();
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    // Add additional fields to the form data
+    for (const [key, value] of Object.entries(additionalFields)) {
+      formData.append(key, value);
+    }
+
+    const response = await fetch(url, {
+      method: "POST",
+      credentials: "include",
+      headers: {
+        Accept: "application/json",
+        ...(csrfToken && { "X-XSRF-TOKEN": csrfToken }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Upload failed" }));
+      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
+  // ============================================
+  // Profile Image Methods
+  // ============================================
+
+  async uploadProfileImage(file: File): Promise<User> {
+    const response = await this.uploadFile("/api/auth/profile-image", file, "image");
+    return response.data.user;
+  }
+
+  async deleteProfileImage(): Promise<User> {
+    const response = await this.delete("/api/auth/profile-image");
+    return response.data.user;
+  }
+
+  // ============================================
+  // Reference Data Methods (Public - No Auth)
+  // ============================================
+
+  async getLanguages(): Promise<Language[]> {
+    const response = await this.get("/api/languages");
+    return response.data;
+  }
+
+  async getIndustries(): Promise<Industry[]> {
+    const response = await this.get("/api/industries");
+    return response.data;
+  }
+
+  async getExpertises(): Promise<Expertise[]> {
+    const response = await this.get("/api/user-expertises");
+    return response.data;
+  }
+
+  // ============================================
+  // Freelancer Profile Methods
+  // ============================================
+
+  async getFreelancerProfiles(page: number = 1): Promise<FreelancerProfilesListResponse> {
+    return this.get(`/api/freelancer-profiles?page=${page}`);
+  }
+
+  async getFreelancerProfile(id: number): Promise<FreelancerProfile> {
+    const response = await this.get(`/api/freelancer-profiles/${id}`);
+    return response.data;
+  }
+
+  async createFreelancerProfile(data: FreelancerProfileRequest): Promise<FreelancerProfile> {
+    const response = await this.post("/api/freelancer-profiles", data);
+    return response.data;
+  }
+
+  async updateFreelancerProfile(id: number, data: FreelancerProfileRequest): Promise<FreelancerProfile> {
+    const response = await this.put(`/api/freelancer-profiles/${id}`, data);
+    return response.data;
+  }
+
+  async deleteFreelancerProfile(id: number): Promise<void> {
+    await this.delete(`/api/freelancer-profiles/${id}`);
+  }
+
+  // ============================================
+  // Client Profile Methods
+  // ============================================
+
+  async getClientProfile(id: number): Promise<ClientProfile> {
+    const response = await this.get(`/api/client-profiles/${id}`);
+    return response.data;
+  }
+
+  async createClientProfile(data: ClientProfileRequest): Promise<ClientProfile> {
+    const response = await this.post("/api/client-profiles", data);
+    return response.data;
+  }
+
+  async updateClientProfile(id: number, data: ClientProfileRequest): Promise<ClientProfile> {
+    const response = await this.put(`/api/client-profiles/${id}`, data);
+    return response.data;
+  }
+
+  async deleteClientProfile(id: number): Promise<void> {
+    await this.delete(`/api/client-profiles/${id}`);
+  }
+}
+
+export const api = new ApiClient();

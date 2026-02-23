@@ -1,22 +1,8 @@
-// components/services/ServiceGrid.tsx
 "use client";
 
 import { Box, Button } from "@mui/material";
 import ServiceCard from "./ServiceCard";
-
-interface Service {
-  id: number;
-  title: string;
-  category: string;
-  freelancerName: string;
-  freelancerAvatar: string;
-  image: string;
-  price: number;
-  rating: number;
-  reviewCount: number;
-  deliveryDays: number;
-  featured: boolean;
-}
+import { Service } from "@/types/service";
 
 interface ServiceGridProps {
   services: Service[];

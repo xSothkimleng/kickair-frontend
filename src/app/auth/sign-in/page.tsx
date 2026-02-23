@@ -1,23 +1,44 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Paper, Typography, TextField, Button, Divider, InputAdornment } from "@mui/material";
+import { useRouter } from "next/navigation";
+import { Box, Paper, Typography, TextField, Button, Divider, InputAdornment, Alert } from "@mui/material";
 import { PersonOutline, LockOutlined, ArrowBack } from "@mui/icons-material";
+import { useAuth } from "@/components/context/AuthContext";
 
 export default function SignInPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const { login } = useAuth();
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
+    setError("");
 
-    // Simulate login
-    setTimeout(() => {
+    try {
+      await login(email, password);
+      // On successful login, navigate to home or dashboard
+      console.log("Login successful");
+      router.push("/");
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || "Invalid email or password. Please try again.");
+    } finally {
       setIsLoading(false);
-      // On successful login, navigate to home
-    }, 1000);
+    }
+  };
+
+  const handleBackToHome = () => {
+    router.push("/");
+  };
+
+  const handleCreateAccount = () => {
+    router.push("/auth/sign-up"); // Change to your signup route
   };
 
   return (
@@ -32,6 +53,7 @@ export default function SignInPage() {
       <Box sx={{ width: "100%", maxWidth: 448 }}>
         {/* Back Button */}
         <Button
+          onClick={handleBackToHome}
           startIcon={<ArrowBack />}
           sx={{
             color: "text.secondary",
@@ -71,6 +93,13 @@ export default function SignInPage() {
             </Typography>
           </Box>
 
+          {/* Error Alert */}
+          {error && (
+            <Alert severity='error' onClose={() => setError("")} sx={{ mb: 3 }}>
+              {error}
+            </Alert>
+          )}
+
           {/* Form */}
           <Box component='form' onSubmit={handleSubmit} sx={{ mt: 4 }}>
             {/* Email Input */}
@@ -90,6 +119,7 @@ export default function SignInPage() {
                 onChange={e => setEmail(e.target.value)}
                 fullWidth
                 required
+                disabled={isLoading}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
@@ -131,6 +161,7 @@ export default function SignInPage() {
                 onChange={e => setPassword(e.target.value)}
                 fullWidth
                 required
+                disabled={isLoading}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position='start'>
@@ -159,6 +190,7 @@ export default function SignInPage() {
             <Box sx={{ textAlign: "right", mb: 3 }}>
               <Button
                 type='button'
+                onClick={() => router.push("/forgot-password")}
                 sx={{
                   textTransform: "none",
                   fontSize: "0.875rem",
@@ -190,6 +222,10 @@ export default function SignInPage() {
                   backgroundColor: "primary.dark",
                   opacity: 0.9,
                 },
+                "&:disabled": {
+                  backgroundColor: "action.disabledBackground",
+                  color: "action.disabled",
+                },
                 mb: 3,
               }}>
               {isLoading ? "Signing in..." : "Sign In"}
@@ -218,6 +254,8 @@ export default function SignInPage() {
               type='button'
               variant='outlined'
               fullWidth
+              onClick={handleCreateAccount}
+              disabled={isLoading}
               sx={{
                 height: 48,
                 borderRadius: 3,

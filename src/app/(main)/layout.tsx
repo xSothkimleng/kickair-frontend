@@ -1,6 +1,7 @@
 "use client";
 import Footer from "@/components/layout/main/Footer";
-import Navbar, { User } from "@/components/layout/main/Navbar";
+import Navbar from "@/components/layout/main/Navbar";
+import { User } from "@/types/user";
 import { useState } from "react";
 
 const mockUserLoggedIn: User = {
