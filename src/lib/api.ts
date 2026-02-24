@@ -10,6 +10,7 @@ import {
   ClientProfileRequest,
   FreelancerProfilesListResponse,
 } from "@/types/user";
+import { ClientDashboardData, FreelancerDashboardData } from "@/types/dashboard";
 
 // lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -245,6 +246,20 @@ class ApiClient {
 
   async deleteClientProfile(id: number): Promise<void> {
     await this.delete(`/api/client-profiles/${id}`);
+  }
+
+  // ============================================
+  // Dashboard Methods
+  // ============================================
+
+  async getClientDashboard(): Promise<ClientDashboardData> {
+    const response = await this.get("/api/client-dashboard");
+    return response.data;
+  }
+
+  async getFreelancerDashboard(): Promise<FreelancerDashboardData> {
+    const response = await this.get("/api/freelancer-dashboard");
+    return response.data;
   }
 }
 

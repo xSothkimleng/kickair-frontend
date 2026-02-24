@@ -1,143 +1,143 @@
 "use client";
 
-import { Box, Typography, Button, Avatar, Chip, Card, CardContent, Grid, Stack, Badge, Paper } from "@mui/material";
+import { Box, Typography, Button, Avatar, Chip, Card, CardContent, Grid, Stack, Badge, Paper, CircularProgress } from "@mui/material";
 import {
   LocationOn as MapPinIcon,
   CalendarToday as CalendarIcon,
   Visibility as EyeIcon,
   Work as BriefcaseIcon,
   Message as MessageCircleIcon,
-  Notifications as BellIcon,
+  AccountBalanceWallet as WalletIcon,
   AttachMoney as DollarSignIcon,
   TrendingUp as ArrowUpRightIcon,
   Shield as ShieldIcon,
 } from "@mui/icons-material";
+import { useClientDashboard } from "@/hooks/useClientDashboard";
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+const formatMemberSince = (iso: string) =>
+  new Date(iso).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+
+const timeAgo = (iso: string) => {
+  const seconds = Math.floor((Date.now() - new Date(iso).getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s ago`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+};
+
+const formatCurrency = (value: string) =>
+  `$${parseFloat(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case "pending": return "Awaiting Acceptance";
+    case "active": return "In Progress";
+    case "completed": return "Completed";
+    case "cancelled": return "Cancelled";
+    default: return status;
+  }
+};
+
+const getStatusColors = (status: string) => {
+  switch (status) {
+    case "pending": return { bg: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
+    case "active": return { bg: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
+    case "completed": return { bg: "rgba(22, 163, 74, 0.1)", color: "#15803d" };
+    case "cancelled": return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
+    default: return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
+  }
+};
+
+const getActivityColor = (type: string) => {
+  switch (type) {
+    case "deposit": return "#16a34a";
+    case "payment": return "#9333ea";
+    default: return "#000";
+  }
+};
+
+// ─── Mock data for sections not yet implemented ──────────────────────────────
+
+const mockNotifications = [
+  {
+    id: 1,
+    type: "proposal",
+    title: "New proposal received",
+    message: 'Sopheak Chan sent a proposal for "E-commerce Website Development"',
+    time: "10 min ago",
+    unread: true,
+  },
+  {
+    id: 2,
+    type: "delivery",
+    title: "Order delivered",
+    message: 'Sarah Kim delivered your "Logo Design - Premium Package"',
+    time: "2 hours ago",
+    unread: true,
+  },
+  {
+    id: 3,
+    type: "message",
+    title: "New message from David Lim",
+    message: "I have a question about the project requirements...",
+    time: "5 hours ago",
+    unread: false,
+  },
+];
+
+const mockRecentMessages = [
+  {
+    id: 1,
+    freelancerName: "Sopheak Chan",
+    freelancerAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
+    lastMessage: "I can start working on your project tomorrow. Looking forward to it!",
+    timestamp: "5m ago",
+    unread: 1,
+  },
+  {
+    id: 2,
+    freelancerName: "Sarah Kim",
+    freelancerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
+    lastMessage: "The final logo designs are ready for your review.",
+    timestamp: "2h ago",
+    unread: 0,
+  },
+  {
+    id: 3,
+    freelancerName: "David Lim",
+    freelancerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100",
+    lastMessage: "Thank you for the feedback! I'll make those changes.",
+    timestamp: "1d ago",
+    unread: 0,
+  },
+];
+
+// ─── Component ───────────────────────────────────────────────────────────────
 
 export default function DashboardContent() {
-  const profileData = {
-    name: "Sokha Pheakdey",
-    avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400",
-    company: "Tech Solutions Cambodia",
-    location: "Phnom Penh, Cambodia",
-    memberSince: "January 2024",
-    verified: true,
-    totalSpent: 24500,
-    activeProjects: 3,
-    completedProjects: 12,
-    profileCompleteness: 90,
-  };
+  const { data, loading, error } = useClientDashboard();
 
-  const notifications = [
-    {
-      id: 1,
-      type: "proposal",
-      title: "New proposal received",
-      message: 'Sopheak Chan sent a proposal for "E-commerce Website Development"',
-      time: "10 min ago",
-      unread: true,
-    },
-    {
-      id: 2,
-      type: "delivery",
-      title: "Order delivered",
-      message: 'Sarah Kim delivered your "Logo Design - Premium Package"',
-      time: "2 hours ago",
-      unread: true,
-    },
-    {
-      id: 3,
-      type: "message",
-      title: "New message from David Lim",
-      message: "I have a question about the project requirements...",
-      time: "5 hours ago",
-      unread: false,
-    },
-  ];
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
+        <CircularProgress />
+      </Box>
+    );
+  }
 
-  const recentMessages = [
-    {
-      id: 1,
-      freelancerName: "Sopheak Chan",
-      freelancerAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
-      lastMessage: "I can start working on your project tomorrow. Looking forward to it!",
-      timestamp: "5m ago",
-      unread: 1,
-    },
-    {
-      id: 2,
-      freelancerName: "Sarah Kim",
-      freelancerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
-      lastMessage: "The final logo designs are ready for your review.",
-      timestamp: "2h ago",
-      unread: 0,
-    },
-    {
-      id: 3,
-      freelancerName: "David Lim",
-      freelancerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100",
-      lastMessage: "Thank you for the feedback! I'll make those changes.",
-      timestamp: "1d ago",
-      unread: 0,
-    },
-  ];
+  if (error || !data) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
+        <Typography color="error">{error ?? "Failed to load dashboard."}</Typography>
+      </Box>
+    );
+  }
 
-  const activeOrders = [
-    {
-      freelancer: "Sopheak Chan",
-      service: "E-commerce Website Development",
-      status: "In Progress",
-      dueDate: "Jan 15, 2026",
-      amount: "$1,200",
-    },
-    {
-      freelancer: "Sarah Kim",
-      service: "Logo Design - Premium Package",
-      status: "Under Review",
-      dueDate: "Jan 10, 2026",
-      amount: "$350",
-    },
-    {
-      freelancer: "David Lim",
-      service: "Social Media Marketing Strategy",
-      status: "In Progress",
-      dueDate: "Jan 20, 2026",
-      amount: "$900",
-    },
-  ];
-
-  const recentActivity = [
-    {
-      type: "proposal",
-      title: "New proposal received",
-      description: "Sopheak Chan sent a proposal for your project",
-      time: "10 min ago",
-    },
-    {
-      type: "delivery",
-      title: "Order delivered",
-      description: "Sarah Kim delivered Logo Design - Premium Package",
-      time: "2 hours ago",
-    },
-    {
-      type: "payment",
-      title: "Payment processed",
-      description: "$350 transferred to escrow",
-      time: "1 day ago",
-    },
-  ];
-
-  const getActivityColor = (type: string) => {
-    switch (type) {
-      case "proposal":
-        return "#2563eb";
-      case "delivery":
-        return "#16a34a";
-      case "payment":
-        return "#9333ea";
-      default:
-        return "#000";
-    }
-  };
+  const { profile, stats, activeOrders, recentActivity } = data;
 
   return (
     <Box>
@@ -154,13 +154,13 @@ export default function DashboardContent() {
           <Stack spacing={3}>
             <Stack direction='row' justifyContent='space-between' alignItems='flex-start'>
               <Stack direction='row' spacing={2} alignItems='flex-start'>
-                <Avatar src={profileData.avatar} alt={profileData.name} sx={{ width: 80, height: 80 }} />
+                <Avatar src={profile.avatarUrl ?? undefined} alt={profile.name} sx={{ width: 80, height: 80 }} />
                 <Box>
                   <Stack direction='row' spacing={1} alignItems='center' mb={0.5}>
                     <Typography variant='h6' fontWeight={600}>
-                      {profileData.name}
+                      {profile.name}
                     </Typography>
-                    {profileData.verified && (
+                    {profile.verified && (
                       <Chip
                         icon={<ShieldIcon sx={{ fontSize: 12 }} />}
                         label='Verified'
@@ -176,20 +176,24 @@ export default function DashboardContent() {
                       />
                     )}
                   </Stack>
-                  <Typography variant='body2' color='text.secondary' mb={0.5}>
-                    {profileData.company}
-                  </Typography>
+                  {profile.company && (
+                    <Typography variant='body2' color='text.secondary' mb={0.5}>
+                      {profile.company}
+                    </Typography>
+                  )}
                   <Stack direction='row' spacing={2} alignItems='center'>
-                    <Stack direction='row' spacing={0.5} alignItems='center'>
-                      <MapPinIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                      <Typography variant='caption' color='text.secondary'>
-                        {profileData.location}
-                      </Typography>
-                    </Stack>
+                    {profile.location && (
+                      <Stack direction='row' spacing={0.5} alignItems='center'>
+                        <MapPinIcon sx={{ fontSize: 12, color: "text.secondary" }} />
+                        <Typography variant='caption' color='text.secondary'>
+                          {profile.location}
+                        </Typography>
+                      </Stack>
+                    )}
                     <Stack direction='row' spacing={0.5} alignItems='center'>
                       <CalendarIcon sx={{ fontSize: 12, color: "text.secondary" }} />
                       <Typography variant='caption' color='text.secondary'>
-                        Member since {profileData.memberSince}
+                        Member since {formatMemberSince(profile.memberSince)}
                       </Typography>
                     </Stack>
                   </Stack>
@@ -226,7 +230,7 @@ export default function DashboardContent() {
               }}>
               <Grid size={3}>
                 <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  ${profileData.totalSpent.toLocaleString()}
+                  {formatCurrency(stats.totalSpent)}
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
                   Total Spent
@@ -234,7 +238,7 @@ export default function DashboardContent() {
               </Grid>
               <Grid size={3}>
                 <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  {profileData.activeProjects}
+                  {stats.activeProjectsCount}
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
                   Active Projects
@@ -242,7 +246,7 @@ export default function DashboardContent() {
               </Grid>
               <Grid size={3}>
                 <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  {profileData.completedProjects}
+                  {stats.completedProjectsCount}
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
                   Completed Projects
@@ -250,7 +254,7 @@ export default function DashboardContent() {
               </Grid>
               <Grid size={3}>
                 <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  {profileData.profileCompleteness}%
+                  {profile.profileCompleteness}%
                 </Typography>
                 <Typography variant='caption' color='text.secondary'>
                   Profile Completeness
@@ -291,7 +295,7 @@ export default function DashboardContent() {
                 />
               </Stack>
               <Typography variant='h4' fontWeight={600} mb={0.5}>
-                3
+                {stats.activeProjectsCount}
               </Typography>
               <Typography variant='caption' color='text.secondary'>
                 Active Orders
@@ -329,22 +333,24 @@ export default function DashboardContent() {
                 />
               </Stack>
               <Typography variant='h4' fontWeight={600} mb={0.5}>
-                8
+                {stats.unreadMessagesCount}
               </Typography>
               <Typography variant='caption' color='text.secondary'>
                 Unread Messages
               </Typography>
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 16,
-                  right: 16,
-                  width: 8,
-                  height: 8,
-                  bgcolor: "#9333ea",
-                  borderRadius: "50%",
-                }}
-              />
+              {stats.unreadMessagesCount > 0 && (
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 16,
+                    right: 16,
+                    width: 8,
+                    height: 8,
+                    bgcolor: "#9333ea",
+                    borderRadius: "50%",
+                  }}
+                />
+              )}
             </CardContent>
           </Card>
         </Grid>
@@ -355,46 +361,33 @@ export default function DashboardContent() {
             sx={{
               borderRadius: 3,
               border: "1px solid",
-              borderColor: "rgba(234, 88, 12, 0.2)",
-              background: "linear-gradient(135deg, rgba(234, 88, 12, 0.1) 0%, rgba(234, 88, 12, 0.05) 100%)",
+              borderColor: "rgba(0,0,0,0.08)",
               cursor: "pointer",
               transition: "all 0.2s",
-              position: "relative",
               "&:hover": {
-                borderColor: "rgba(234, 88, 12, 0.3)",
+                borderColor: "rgba(0,0,0,0.2)",
                 "& .arrow-icon": { opacity: 1 },
               },
             }}>
             <CardContent>
               <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                <BellIcon sx={{ fontSize: 20, color: "#ea580c" }} />
+                <WalletIcon sx={{ fontSize: 20, color: "#2563eb" }} />
                 <ArrowUpRightIcon
                   className='arrow-icon'
                   sx={{
                     fontSize: 16,
-                    color: "rgba(234, 88, 12, 0.4)",
+                    color: "rgba(0,0,0,0.4)",
                     opacity: 0,
                     transition: "opacity 0.2s",
                   }}
                 />
               </Stack>
-              <Typography variant='h4' fontWeight={600} color='#b45309' mb={0.5}>
-                {notifications.filter(n => n.unread).length}
+              <Typography variant='h4' fontWeight={600} mb={0.5}>
+                {formatCurrency(stats.availableBalance)}
               </Typography>
-              <Typography variant='caption' sx={{ color: "rgba(180, 83, 9, 0.7)" }}>
-                New Notifications
+              <Typography variant='caption' color='text.secondary'>
+                Available Balance
               </Typography>
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 16,
-                  right: 16,
-                  width: 8,
-                  height: 8,
-                  bgcolor: "#ea580c",
-                  borderRadius: "50%",
-                }}
-              />
             </CardContent>
           </Card>
         </Grid>
@@ -427,7 +420,7 @@ export default function DashboardContent() {
                 />
               </Stack>
               <Typography variant='h4' fontWeight={600} mb={0.5}>
-                $2,450
+                {formatCurrency(stats.inEscrow)}
               </Typography>
               <Typography variant='caption' color='text.secondary'>
                 In Escrow
@@ -466,48 +459,63 @@ export default function DashboardContent() {
                 </Stack>
 
                 <Stack spacing={1.5}>
-                  {activeOrders.map((order, idx) => (
-                    <Paper
-                      elevation={0}
-                      key={idx}
-                      sx={{
-                        p: 2,
-                        borderRadius: 2,
-                        border: "1px solid",
-                        borderColor: "rgba(0,0,0,0.08)",
-                        transition: "all 0.2s",
-                        "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                      }}>
-                      <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                        <Box flex={1}>
-                          <Typography variant='body2' fontWeight={500} mb={0.5}>
-                            {order.service}
-                          </Typography>
-                          <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                            by {order.freelancer}
-                          </Typography>
-                          <Stack direction='row' spacing={1} alignItems='center'>
-                            <Chip
-                              label={order.status}
-                              size='small'
-                              sx={{
-                                height: 20,
-                                fontSize: 10,
-                                bgcolor: order.status === "Under Review" ? "rgba(234, 88, 12, 0.1)" : "rgba(37, 99, 235, 0.1)",
-                                color: order.status === "Under Review" ? "#b45309" : "#1e40af",
-                              }}
-                            />
-                            <Typography variant='caption' color='text.disabled'>
-                              Due: {order.dueDate}
+                  {activeOrders.length === 0 ? (
+                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
+                      No active orders
+                    </Typography>
+                  ) : (
+                    activeOrders.map(order => {
+                      const statusColors = getStatusColors(order.status);
+                      return (
+                        <Paper
+                          elevation={0}
+                          key={order.id}
+                          sx={{
+                            p: 2,
+                            borderRadius: 2,
+                            border: "1px solid",
+                            borderColor: "rgba(0,0,0,0.08)",
+                            transition: "all 0.2s",
+                            "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
+                          }}>
+                          <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                            <Box flex={1}>
+                              <Typography variant='body2' fontWeight={500} mb={0.5}>
+                                {order.service}
+                              </Typography>
+                              <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
+                                by {order.freelancerName}
+                              </Typography>
+                              <Stack direction='row' spacing={1} alignItems='center'>
+                                <Chip
+                                  label={getStatusLabel(order.status)}
+                                  size='small'
+                                  sx={{
+                                    height: 20,
+                                    fontSize: 10,
+                                    bgcolor: statusColors.bg,
+                                    color: statusColors.color,
+                                  }}
+                                />
+                                {order.dueDate ? (
+                                  <Typography variant='caption' color='text.disabled'>
+                                    Due: {new Date(order.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
+                                  </Typography>
+                                ) : (
+                                  <Typography variant='caption' color='text.disabled'>
+                                    Due: TBD
+                                  </Typography>
+                                )}
+                              </Stack>
+                            </Box>
+                            <Typography variant='body2' fontWeight={600}>
+                              ${order.amount}
                             </Typography>
                           </Stack>
-                        </Box>
-                        <Typography variant='body2' fontWeight={600}>
-                          {order.amount}
-                        </Typography>
-                      </Stack>
-                    </Paper>
-                  ))}
+                        </Paper>
+                      );
+                    })
+                  )}
                 </Stack>
               </CardContent>
             </Card>
@@ -526,40 +534,48 @@ export default function DashboardContent() {
                 </Typography>
 
                 <Stack spacing={2}>
-                  {recentActivity.map((activity, idx) => (
-                    <Stack
-                      key={idx}
-                      direction='row'
-                      spacing={1.5}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        transition: "all 0.2s",
-                        "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                      }}>
-                      <Box
+                  {recentActivity.length === 0 ? (
+                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
+                      No recent activity
+                    </Typography>
+                  ) : (
+                    recentActivity.map(activity => (
+                      <Stack
+                        key={activity.id}
+                        direction='row'
+                        spacing={1.5}
                         sx={{
-                          width: 8,
-                          height: 8,
-                          borderRadius: "50%",
-                          bgcolor: getActivityColor(activity.type),
-                          mt: 1,
-                          flexShrink: 0,
-                        }}
-                      />
-                      <Box flex={1}>
-                        <Typography variant='body2' fontWeight={500} mb={0.25}>
-                          {activity.title}
-                        </Typography>
-                        <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                          {activity.description}
-                        </Typography>
-                        <Typography variant='caption' color='text.disabled'>
-                          {activity.time}
-                        </Typography>
-                      </Box>
-                    </Stack>
-                  ))}
+                          p: 1.5,
+                          borderRadius: 2,
+                          transition: "all 0.2s",
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
+                        }}>
+                        <Box
+                          sx={{
+                            width: 8,
+                            height: 8,
+                            borderRadius: "50%",
+                            bgcolor: getActivityColor(activity.type),
+                            mt: 1,
+                            flexShrink: 0,
+                          }}
+                        />
+                        <Box flex={1}>
+                          <Typography variant='body2' fontWeight={500} mb={0.25}>
+                            {activity.title}
+                          </Typography>
+                          {activity.description && (
+                            <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
+                              {activity.description}
+                            </Typography>
+                          )}
+                          <Typography variant='caption' color='text.disabled'>
+                            {timeAgo(activity.createdAt)}
+                          </Typography>
+                        </Box>
+                      </Stack>
+                    ))
+                  )}
                 </Stack>
               </CardContent>
             </Card>
@@ -569,7 +585,7 @@ export default function DashboardContent() {
         {/* Sidebar */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <Stack spacing={3}>
-            {/* Recent Messages */}
+            {/* Recent Messages — not yet implemented, mock data */}
             <Card
               elevation={0}
               sx={{
@@ -596,7 +612,7 @@ export default function DashboardContent() {
                 </Stack>
 
                 <Stack spacing={1.5}>
-                  {recentMessages.map(message => (
+                  {mockRecentMessages.map(message => (
                     <Button
                       key={message.id}
                       sx={{
@@ -645,7 +661,7 @@ export default function DashboardContent() {
               </CardContent>
             </Card>
 
-            {/* Notifications */}
+            {/* Notifications — not yet implemented, mock data */}
             <Card
               elevation={0}
               sx={{
@@ -659,7 +675,7 @@ export default function DashboardContent() {
                     Notifications
                   </Typography>
                   <Chip
-                    label={`${notifications.filter(n => n.unread).length} new`}
+                    label={`${mockNotifications.filter(n => n.unread).length} new`}
                     size='small'
                     sx={{
                       height: 20,
@@ -672,7 +688,7 @@ export default function DashboardContent() {
                 </Stack>
 
                 <Stack spacing={1}>
-                  {notifications.map(notification => (
+                  {mockNotifications.map(notification => (
                     <Paper
                       elevation={0}
                       key={notification.id}
