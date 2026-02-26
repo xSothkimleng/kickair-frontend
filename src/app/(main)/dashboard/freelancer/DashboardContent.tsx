@@ -9,36 +9,50 @@ import { useFreelancerDashboard } from "@/hooks/useFreelancerDashboard";
 const formatCurrency = (value: string) =>
   `$${parseFloat(value).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
 
-const formatMemberSince = (iso: string) =>
-  new Date(iso).toLocaleDateString("en-US", { month: "long", year: "numeric" });
+const formatMemberSince = (iso: string) => new Date(iso).toLocaleDateString("en-US", { month: "long", year: "numeric" });
 
 const getLevelGradient = (level: string) => {
   switch (level) {
-    case "Bronze": return "linear-gradient(135deg, #92400e 0%, #d97706 100%)";
-    case "Silver": return "linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)";
-    case "Gold": return "linear-gradient(135deg, #d97706 0%, #fbbf24 100%)";
-    case "Platinum": return "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)";
-    default: return "linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)";
+    case "Bronze":
+      return "linear-gradient(135deg, #92400e 0%, #d97706 100%)";
+    case "Silver":
+      return "linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)";
+    case "Gold":
+      return "linear-gradient(135deg, #d97706 0%, #fbbf24 100%)";
+    case "Platinum":
+      return "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)";
+    default:
+      return "linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)";
   }
 };
 
 const getStatusLabel = (status: string) => {
   switch (status) {
-    case "pending": return "Awaiting Acceptance";
-    case "active": return "In Progress";
-    case "completed": return "Completed";
-    case "cancelled": return "Cancelled";
-    default: return status;
+    case "pending":
+      return "Awaiting Acceptance";
+    case "active":
+      return "In Progress";
+    case "completed":
+      return "Completed";
+    case "cancelled":
+      return "Cancelled";
+    default:
+      return status;
   }
 };
 
 const getStatusColors = (status: string) => {
   switch (status) {
-    case "pending": return { bg: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
-    case "active": return { bg: "rgba(37, 99, 235, 0.1)", color: "rgb(29, 78, 216)" };
-    case "completed": return { bg: "rgba(34, 197, 94, 0.1)", color: "rgb(21, 128, 61)" };
-    case "cancelled": return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
-    default: return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
+    case "pending":
+      return { bg: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
+    case "active":
+      return { bg: "rgba(37, 99, 235, 0.1)", color: "rgb(29, 78, 216)" };
+    case "completed":
+      return { bg: "rgba(34, 197, 94, 0.1)", color: "rgb(21, 128, 61)" };
+    case "cancelled":
+      return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
+    default:
+      return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
   }
 };
 
@@ -113,7 +127,7 @@ export default function DashboardContent() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
+      <Box display='flex' justifyContent='center' alignItems='center' minHeight={400}>
         <CircularProgress />
       </Box>
     );
@@ -121,8 +135,8 @@ export default function DashboardContent() {
 
   if (error || !data) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
-        <Typography color="error">{error ?? "Failed to load dashboard."}</Typography>
+      <Box display='flex' justifyContent='center' alignItems='center' minHeight={400}>
+        <Typography color='error'>{error ?? "Failed to load dashboard."}</Typography>
       </Box>
     );
   }
@@ -135,10 +149,10 @@ export default function DashboardContent() {
       <Paper
         elevation={0}
         sx={{
-          borderRadius: 4,
-          border: "1px solid rgba(0, 0, 0, 0.08)",
           p: 3,
           mb: 4,
+          borderRadius: 4,
+          border: "1px solid rgba(0, 0, 0, 0.08)",
         }}>
         <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 3 }}>
           <Box sx={{ display: "flex", alignItems: "start", gap: 2 }}>
@@ -146,14 +160,11 @@ export default function DashboardContent() {
             <Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
                 <Typography sx={{ fontSize: 20, fontWeight: 600, color: "black" }}>{profile.name}</Typography>
-                {profile.verified && (
-                  <Shield sx={{ fontSize: 16, color: "#2563eb" }} />
-                )}
+                {profile.verified && <Shield sx={{ fontSize: 16, color: "#2563eb" }} />}
               </Box>
               {profile.tagline && (
                 <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)", mb: 1.5 }}>{profile.tagline}</Typography>
               )}
-
               <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
                 {/* Level Badge */}
                 {profile.level && (
@@ -328,9 +339,7 @@ export default function DashboardContent() {
                 sx={{ fontSize: 16, color: "rgba(0, 0, 0, 0.4)", opacity: 0, transition: "opacity 0.3s" }}
               />
             </Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
-              {stats.unreadMessagesCount}
-            </Typography>
+            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>{stats.unreadMessagesCount}</Typography>
             <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>Unread Messages</Typography>
             {stats.unreadMessagesCount > 0 && (
               <Box
@@ -423,12 +432,8 @@ export default function DashboardContent() {
                         "&:hover": { bgcolor: "rgba(0, 0, 0, 0.02)" },
                       }}>
                       <Box>
-                        <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black", mb: 0.5 }}>
-                          {service.title}
-                        </Typography>
-                        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
-                          {service.ordersCount} orders
-                        </Typography>
+                        <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black", mb: 0.5 }}>{service.title}</Typography>
+                        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{service.ordersCount} orders</Typography>
                       </Box>
                       <Box sx={{ textAlign: "right" }}>
                         <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black" }}>
@@ -652,10 +657,10 @@ export default function DashboardContent() {
                             notification.type === "order"
                               ? "#16a34a"
                               : notification.type === "message"
-                              ? "#2563eb"
-                              : notification.type === "review"
-                              ? "#f59e0b"
-                              : "#9333ea",
+                                ? "#2563eb"
+                                : notification.type === "review"
+                                  ? "#f59e0b"
+                                  : "#9333ea",
                         }}
                       />
                       <Box sx={{ flex: 1, minWidth: 0 }}>

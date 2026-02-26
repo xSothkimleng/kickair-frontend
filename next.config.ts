@@ -23,6 +23,18 @@ const nextConfig: NextConfig = {
         port: "8000",
         pathname: "/storage/**",
       },
+      {
+        protocol: "https",
+        hostname: "kickair-api-production.up.railway.app",
+        port: "",
+        pathname: "/storage/**",
+      },
+      {
+        protocol: "https",
+        hostname: "pub-7862fdfe18e9471a867c2facd844ba89.r2.dev",
+        port: "",
+        pathname: "/**",
+      },
     ],
   },
 };

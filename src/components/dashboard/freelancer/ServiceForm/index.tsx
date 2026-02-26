@@ -216,7 +216,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   };
 
   return (
-    <Box sx={{ maxWidth: 896, display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
       {/* Header */}
       <Box>
         <Button

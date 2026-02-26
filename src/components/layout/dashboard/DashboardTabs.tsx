@@ -1,4 +1,4 @@
-import { Box, Tabs, Tab } from "@mui/material";
+import { Box, Tabs, Tab, Container } from "@mui/material";
 
 interface FreelancerTabsProps {
   activeTab: string;
@@ -13,9 +13,8 @@ export default function FreelancerTabs({ activeTab, onTabChange, tabs }: Freelan
         bgcolor: "white",
         borderBottom: 1,
         borderColor: "rgba(0, 0, 0, 0.08)",
-      }}
-    >
-      <Box sx={{ maxWidth: 1440, mx: "auto", px: 3 }}>
+      }}>
+      <Container sx={{ px: 3 }}>
         <Tabs
           value={activeTab}
           onChange={(_, newValue) => onTabChange(newValue)}
@@ -36,11 +35,10 @@ export default function FreelancerTabs({ activeTab, onTabChange, tabs }: Freelan
               height: 2,
               bgcolor: "black",
             },
-          }}
-        >
-          {tabs && tabs.map((tab) => <Tab key={tab.value} value={tab.value} label={tab.label} />)}
+          }}>
+          {tabs && tabs.map(tab => <Tab key={tab.value} value={tab.value} label={tab.label} />)}
         </Tabs>
-      </Box>
+      </Container>
     </Box>
   );
 }
