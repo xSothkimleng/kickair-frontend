@@ -34,25 +34,15 @@ export const getEcho = (): Echo<"pusher"> => {
             socketId: string,
             callback: (error: Error | null, data: { auth: string } | null) => void
           ) => {
-            // Get CSRF token from cookie
-            const getCsrfToken = (): string | null => {
-              const matches = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-              if (matches) {
-                return decodeURIComponent(matches[1]);
-              }
-              return null;
-            };
-
-            const csrfToken = getCsrfToken();
+            const token = localStorage.getItem("auth_token");
 
             fetch(`${API_URL}/api/broadcasting/auth`, {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
                 Accept: "application/json",
-                ...(csrfToken && { "X-XSRF-TOKEN": csrfToken }),
+                ...(token && { Authorization: `Bearer ${token}` }),
               },
-              credentials: "include",
               body: JSON.stringify({
                 socket_id: socketId,
                 channel_name: channel.name,

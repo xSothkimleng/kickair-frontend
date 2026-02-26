@@ -15,10 +15,6 @@ import FaqSection from "./FAQSection";
 import FinalCtaSection from "./FinalCTASection";
 
 export default function Home() {
-  fetch("http://127.0.0.1:8000/sanctum/csrf-cookie", {
-    credentials: "include",
-  }).then(r => console.log("Status:", r.status));
-
   return (
     <Container>
       <HeroSection />

@@ -14,27 +14,33 @@ import { ClientDashboardData, FreelancerDashboardData } from "@/types/dashboard"
 
 // lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+const TOKEN_KEY = "auth_token";
 
 class ApiClient {
-  private getCsrfToken(): string | null {
-    const matches = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-    if (matches) {
-      return decodeURIComponent(matches[1]);
-    }
-    return null;
+  getToken(): string | null {
+    if (typeof window === "undefined") return null;
+    return localStorage.getItem(TOKEN_KEY);
+  }
+
+  private setToken(token: string): void {
+    localStorage.setItem(TOKEN_KEY, token);
+  }
+
+  clearToken(): void {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(TOKEN_KEY);
   }
 
   private async request(endpoint: string, options: RequestInit = {}) {
     const url = `${API_URL}${endpoint}`;
-    const csrfToken = this.getCsrfToken();
+    const token = this.getToken();
 
     const response = await fetch(url, {
       ...options,
-      credentials: "include",
       headers: {
         "Content-Type": "application/json",
         Accept: "application/json",
-        ...(csrfToken && { "X-XSRF-TOKEN": csrfToken }),
+        ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
     });
@@ -47,31 +53,23 @@ class ApiClient {
     return response.json();
   }
 
-  async getCsrfCookie() {
-    await fetch(`${API_URL}/sanctum/csrf-cookie`, {
-      credentials: "include",
-    });
-  }
-
   // Returns the user object directly
   async login(email: string, password: string): Promise<User> {
-    await this.getCsrfCookie();
-
     const response = await this.request("/api/auth/login", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
+    this.setToken(response.data.token);
     return response.data.user;
   }
 
   // Returns the user object directly
   async register(data: RegisterData): Promise<User> {
-    await this.getCsrfCookie();
-
     const response = await this.request("/api/auth/register", {
       method: "POST",
       body: JSON.stringify(data),
     });
+    this.setToken(response.data.token);
     return response.data.user;
   }
 
@@ -79,6 +77,7 @@ class ApiClient {
     await this.request("/api/auth/logout", {
       method: "POST",
     });
+    this.clearToken();
   }
 
   // Returns the user object directly
@@ -111,17 +110,16 @@ class ApiClient {
 
   async uploadFile(endpoint: string, file: File, fieldName: string = "file") {
     const url = `${API_URL}${endpoint}`;
-    const csrfToken = this.getCsrfToken();
+    const token = this.getToken();
 
     const formData = new FormData();
     formData.append(fieldName, file);
 
     const response = await fetch(url, {
       method: "POST",
-      credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(csrfToken && { "X-XSRF-TOKEN": csrfToken }),
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: formData,
     });
@@ -137,7 +135,7 @@ class ApiClient {
   // Upload file with additional form data fields (e.g., upload_token for temp uploads)
   async uploadFormData(endpoint: string, file: File, additionalFields: Record<string, string> = {}) {
     const url = `${API_URL}${endpoint}`;
-    const csrfToken = this.getCsrfToken();
+    const token = this.getToken();
 
     const formData = new FormData();
     formData.append("file", file);
@@ -149,10 +147,9 @@ class ApiClient {
 
     const response = await fetch(url, {
       method: "POST",
-      credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(csrfToken && { "X-XSRF-TOKEN": csrfToken }),
+        ...(token && { Authorization: `Bearer ${token}` }),
       },
       body: formData,
     });
