@@ -31,11 +31,11 @@ export function ServiceCard({ name, description, icon }: ServiceCardProps) {
 
   return (
     <Box
-      component='button'
+      component="button"
       //   onClick={onClick}
       sx={{
         width: "100%",
-        bgcolor: "#f5f5f7",
+        bgcolor: "#fff",
         borderRadius: "16px",
         p: { xs: 4, md: 5 },
         border: "1px solid transparent",
@@ -53,18 +53,20 @@ export function ServiceCard({ name, description, icon }: ServiceCardProps) {
             color: "#0071e3",
           },
         },
-      }}>
+      }}
+    >
       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: 2 }}>
         <Box
-          className='icon-wrapper'
+          className="icon-wrapper"
           sx={{
             p: 1.5,
             bgcolor: "rgba(0, 0, 0, 0.05)",
             borderRadius: "12px",
             transition: "background-color 0.3s ease",
-          }}>
+          }}
+        >
           <IconComponent
-            className='icon'
+            className="icon"
             sx={{
               fontSize: 24,
               color: "rgba(0, 0, 0, 0.7)",
@@ -74,19 +76,21 @@ export function ServiceCard({ name, description, icon }: ServiceCardProps) {
         </Box>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
           <Typography
-            component='h3'
+            component="h3"
             sx={{
               fontSize: "20px",
               color: "black",
               fontWeight: 500,
-            }}>
+            }}
+          >
             {name}
           </Typography>
           <Typography
             sx={{
               fontSize: "14px",
               color: "rgba(0, 0, 0, 0.6)",
-            }}>
+            }}
+          >
             {description}
           </Typography>
         </Box>

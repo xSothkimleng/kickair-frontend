@@ -14,65 +14,68 @@ export default function HeroSection() {
 
   return (
     <Box
-      component='section'
+      component="section"
       sx={{
-        maxWidth: "1200px",
+        bgcolor: "#F5F5F7",
         mx: "auto",
         px: { xs: 3, sm: 6 },
         pt: { xs: 8, md: 12 },
         pb: { xs: 12, md: 16 },
         textAlign: "center",
-      }}>
+      }}
+    >
       <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
         {/* Hero Text */}
         <Box sx={{ display: "flex", justifyContent: "center", flexDirection: "column", gap: 2 }}>
           <Typography
-            variant='h1'
+            variant="h1"
             sx={{
               fontSize: { xs: "48px", md: "72px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
               lineHeight: 1.05,
-            }}>
-            Build Your Brand.
+            }}
+          >
+            Hire Cambodia's
             <br />
-            Be Your Own Boss.
+            Top Freelance Talent.
           </Typography>
           <div style={{ display: "flex", justifyContent: "center" }}>
             <Typography
               sx={{
                 fontSize: { xs: "21px", md: "24px" },
                 color: "rgba(0, 0, 0, 0.6)",
-                maxWidth: "768px",
+                maxWidth: "740px",
                 mx: "auto",
                 lineHeight: 1.4,
-              }}>
-              Join Cambodia premium freelancing platform. Earn money your way with three-tier pricing and transparent payments.
+              }}
+            >
+              Work with skilled professionals at transparent prices. Browse ready-to-buy services or hire freelancers for your next project.
             </Typography>
           </div>
         </Box>
 
         {/* Search Bar */}
-        <Box sx={{ pt: 2, maxWidth: "768px", mx: "auto", width: "100%" }}>
-          <Box component='form' onSubmit={handleSearch} sx={{ position: "relative" }}>
+        <Box sx={{ maxWidth: "768px", mx: "auto", width: "100%" }}>
+          <Box component="form" onSubmit={handleSearch} sx={{ position: "relative" }}>
             <TextField
               fullWidth
-              type='text'
-              placeholder='Search for any service...'
+              type="text"
+              placeholder="Search for any service..."
               value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
+              onChange={(e) => setSearchQuery(e.target.value)}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position='start'>
+                  <InputAdornment position="start">
                     <Search sx={{ color: "rgba(0, 0, 0, 0.4)", fontSize: 20 }} />
                   </InputAdornment>
                 ),
                 endAdornment: (
-                  <InputAdornment position='end'>
+                  <InputAdornment position="end">
                     <Button
-                      type='submit'
-                      variant='contained'
+                      type="submit"
+                      variant="contained"
                       sx={{
                         px: 3,
                         py: 1.25,
@@ -87,7 +90,8 @@ export default function HeroSection() {
                           bgcolor: "#0077ed",
                           boxShadow: "none",
                         },
-                      }}>
+                      }}
+                    >
                       Search
                     </Button>
                   </InputAdornment>
@@ -116,16 +120,16 @@ export default function HeroSection() {
                     opacity: 1,
                   },
                 },
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
               }}
             />
           </Box>
           <Typography
             sx={{
+              marginTop: "10px !important",
               fontSize: "13px",
               color: "rgba(0, 0, 0, 0.5)",
-              mt: 1.5,
-            }}>
+            }}
+          >
             Popular: Web Design, Logo Design, WordPress, Mobile App, Video Editing
           </Typography>
         </Box>
@@ -139,10 +143,11 @@ export default function HeroSection() {
             justifyContent: "center",
             gap: 2,
             pt: 2,
-          }}>
+          }}
+        >
           <Button
             // onClick={() => onNavigate("services")}
-            variant='contained'
+            variant="contained"
             sx={{
               px: 4,
               py: 1.75,
@@ -157,12 +162,13 @@ export default function HeroSection() {
               "&:hover": {
                 bgcolor: "#0077ed",
               },
-            }}>
+            }}
+          >
             Explore Freelancers
           </Button>
           <Button
             // onClick={() => onNavigate("register")}
-            variant='outlined'
+            variant="outlined"
             sx={{
               px: 4,
               py: 1.75,
@@ -178,7 +184,8 @@ export default function HeroSection() {
                 bgcolor: "#0071e3",
                 color: "white",
               },
-            }}>
+            }}
+          >
             Become a Freelancer
           </Button>
         </Box>
@@ -194,22 +201,23 @@ export default function HeroSection() {
             pt: 4,
             fontSize: "13px",
             color: "rgba(0, 0, 0, 0.6)",
-          }}>
+          }}
+        >
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CheckCircle sx={{ fontSize: 16, color: "#0071e3" }} />
-            <Typography component='span' sx={{ fontSize: "13px" }}>
+            <Typography component="span" sx={{ fontSize: "13px" }}>
               15,000+ Active Freelancers
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CheckCircle sx={{ fontSize: 16, color: "#0071e3" }} />
-            <Typography component='span' sx={{ fontSize: "13px" }}>
+            <Typography component="span" sx={{ fontSize: "13px" }}>
               50,000+ Projects Completed
             </Typography>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <CheckCircle sx={{ fontSize: 16, color: "#0071e3" }} />
-            <Typography component='span' sx={{ fontSize: "13px" }}>
+            <Typography component="span" sx={{ fontSize: "13px" }}>
               4.9/5 Average Rating
             </Typography>
           </Box>

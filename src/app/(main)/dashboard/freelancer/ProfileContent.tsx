@@ -39,14 +39,7 @@ import {
 } from "@mui/icons-material";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
-import {
-  Education,
-  Certificate,
-  Language,
-  Expertise,
-  FreelancerProfileRequest,
-  LanguageWithProficiency,
-} from "@/types/user";
+import { Education, Certificate, Language, Expertise, FreelancerProfileRequest, LanguageWithProficiency } from "@/types/user";
 
 const PROFICIENCY_OPTIONS = [
   { value: "basic", label: "Basic" },
@@ -69,9 +62,7 @@ export default function ProfileContent() {
   });
   const [educations, setEducations] = useState<Education[]>([]);
   const [certificates, setCertificates] = useState<Certificate[]>([]);
-  const [selectedLanguages, setSelectedLanguages] = useState<
-    { language_id: number; name: string; proficiency: ProficiencyLevel }[]
-  >([]);
+  const [selectedLanguages, setSelectedLanguages] = useState<{ language_id: number; name: string; proficiency: ProficiencyLevel }[]>([]);
   const [selectedExpertiseIds, setSelectedExpertiseIds] = useState<number[]>([]);
 
   // Reference data
@@ -97,7 +88,7 @@ export default function ProfileContent() {
   }>({
     open: false,
     editIndex: null,
-    data: { school: "", degree: "" },
+    data: { facility: "", studies: "" },
   });
 
   const [certificateDialog, setCertificateDialog] = useState<{
@@ -107,7 +98,7 @@ export default function ProfileContent() {
   }>({
     open: false,
     editIndex: null,
-    data: { name: "", issuer: "" },
+    data: { title: "", source: "" },
   });
 
   const [languageDialog, setLanguageDialog] = useState<{
@@ -155,7 +146,7 @@ export default function ProfileContent() {
             language_id: lang.id,
             name: lang.name,
             proficiency: lang.proficiency,
-          }))
+          })),
         );
       }
 
@@ -250,13 +241,13 @@ export default function ProfileContent() {
       setEducationDialog({
         open: true,
         editIndex: null,
-        data: { school: "", degree: "" },
+        data: { facility: "", studies: "" },
       });
     }
   };
 
   const handleSaveEducation = () => {
-    if (!educationDialog.data.school || !educationDialog.data.degree) return;
+    if (!educationDialog.data.facility || !educationDialog.data.studies) return;
 
     if (educationDialog.editIndex !== null) {
       const updated = [...educations];
@@ -265,7 +256,7 @@ export default function ProfileContent() {
     } else {
       setEducations([...educations, educationDialog.data]);
     }
-    setEducationDialog({ open: false, editIndex: null, data: { school: "", degree: "" } });
+    setEducationDialog({ open: false, editIndex: null, data: { facility: "", studies: "" } });
     setHasUnsavedChanges(true);
   };
 
@@ -286,13 +277,13 @@ export default function ProfileContent() {
       setCertificateDialog({
         open: true,
         editIndex: null,
-        data: { name: "", issuer: "" },
+        data: { title: "", source: "" },
       });
     }
   };
 
   const handleSaveCertificate = () => {
-    if (!certificateDialog.data.name || !certificateDialog.data.issuer) return;
+    if (!certificateDialog.data.title || !certificateDialog.data.source) return;
 
     if (certificateDialog.editIndex !== null) {
       const updated = [...certificates];
@@ -301,7 +292,7 @@ export default function ProfileContent() {
     } else {
       setCertificates([...certificates, certificateDialog.data]);
     }
-    setCertificateDialog({ open: false, editIndex: null, data: { name: "", issuer: "" } });
+    setCertificateDialog({ open: false, editIndex: null, data: { title: "", source: "" } });
     setHasUnsavedChanges(true);
   };
 
@@ -387,10 +378,10 @@ export default function ProfileContent() {
   const selectedExpertiseObjects = expertises.filter((exp) => selectedExpertiseIds.includes(exp.id));
 
   return (
-    <Box sx={{ maxWidth: 896, display: "flex", flexDirection: "column", gap: 3 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
       {/* Profile Picture & Basic Info */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 3 }}>Basic Information</Typography>
+        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: "18px !important" }}>Basic Information</Typography>
 
         <Box sx={{ display: "flex", alignItems: "start", gap: 3, mb: 3 }}>
           <Box sx={{ position: "relative" }}>
@@ -415,13 +406,7 @@ export default function ProfileContent() {
                 <CircularProgress size={24} sx={{ color: "white" }} />
               </Box>
             )}
-            <input
-              type="file"
-              ref={fileInputRef}
-              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
-              style={{ display: "none" }}
-              onChange={handleImageUpload}
-            />
+            <input type="file" ref={fileInputRef} accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" style={{ display: "none" }} onChange={handleImageUpload} />
             <IconButton
               onClick={() => fileInputRef.current?.click()}
               disabled={uploadingImage}
@@ -482,9 +467,7 @@ export default function ProfileContent() {
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Box>
-            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>
-              Short Tagline (max 255 characters)
-            </Typography>
+            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Short Tagline (max 255 characters)</Typography>
             <TextField
               fullWidth
               value={formData.tagline}
@@ -506,9 +489,7 @@ export default function ProfileContent() {
           </Box>
 
           <Box>
-            <Typography
-              sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}
-            >
+            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
               <RoomOutlined sx={{ fontSize: 14 }} />
               Location
             </Typography>
@@ -690,8 +671,8 @@ export default function ProfileContent() {
               >
                 <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
                   <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{edu.degree}</Typography>
-                    <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>{edu.school}</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{edu.studies}</Typography>
+                    <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>{edu.facility}</Typography>
                   </Box>
                   <Stack direction="row" spacing={0.5}>
                     <IconButton size="small" onClick={() => handleOpenEducationDialog(idx)}>
@@ -746,8 +727,8 @@ export default function ProfileContent() {
               >
                 <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
                   <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{cert.name}</Typography>
-                    <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>{cert.issuer}</Typography>
+                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{cert.title}</Typography>
+                    <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>{cert.source}</Typography>
                   </Box>
                   <Stack direction="row" spacing={0.5}>
                     <IconButton size="small" onClick={() => handleOpenCertificateDialog(idx)}>
@@ -769,9 +750,7 @@ export default function ProfileContent() {
       {/* Verification */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
         <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>Verification</Typography>
-        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
-          Verification is required to accept service requests from clients
-        </Typography>
+        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>Verification is required to accept service requests from clients</Typography>
 
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Box
@@ -785,9 +764,7 @@ export default function ProfileContent() {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
-              <VerifiedUserOutlined
-                sx={{ fontSize: 20, color: user.is_verified_id ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }}
-              />
+              <VerifiedUserOutlined sx={{ fontSize: 20, color: user.is_verified_id ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }} />
               <Box>
                 <Typography
                   sx={{
@@ -805,10 +782,7 @@ export default function ProfileContent() {
               </Box>
             </Box>
             {user.is_verified_id ? (
-              <Chip
-                label="VERIFIED"
-                sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }}
-              />
+              <Chip label="VERIFIED" sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }} />
             ) : (
               <Button
                 size="small"
@@ -837,9 +811,7 @@ export default function ProfileContent() {
             }}
           >
             <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
-              <PhoneOutlined
-                sx={{ fontSize: 20, color: user.is_verified_phone ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }}
-              />
+              <PhoneOutlined sx={{ fontSize: 20, color: user.is_verified_phone ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }} />
               <Box>
                 <Typography
                   sx={{
@@ -857,10 +829,7 @@ export default function ProfileContent() {
               </Box>
             </Box>
             {user.is_verified_phone ? (
-              <Chip
-                label="VERIFIED"
-                sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }}
-              />
+              <Chip label="VERIFIED" sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }} />
             ) : (
               <Button
                 size="small"
@@ -932,33 +901,25 @@ export default function ProfileContent() {
         >
           Share Profile
         </Button>
-        {hasUnsavedChanges && (
-          <Typography sx={{ fontSize: 11, color: "#f59e0b", ml: 1 }}>You have unsaved changes</Typography>
-        )}
+        {hasUnsavedChanges && <Typography sx={{ fontSize: 11, color: "#f59e0b", ml: 1 }}>You have unsaved changes</Typography>}
       </Box>
 
       {/* Education Dialog */}
       <Dialog open={educationDialog.open} onClose={() => setEducationDialog((prev) => ({ ...prev, open: false }))}>
-        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>
-          {educationDialog.editIndex !== null ? "Edit Education" : "Add Education"}
-        </DialogTitle>
+        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>{educationDialog.editIndex !== null ? "Edit Education" : "Add Education"}</DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="School/University"
-              value={educationDialog.data.school}
-              onChange={(e) =>
-                setEducationDialog((prev) => ({ ...prev, data: { ...prev.data, school: e.target.value } }))
-              }
+              value={educationDialog.data.facility}
+              onChange={(e) => setEducationDialog((prev) => ({ ...prev, data: { ...prev.data, facility: e.target.value } }))}
               fullWidth
               slotProps={{ htmlInput: { maxLength: 255 } }}
             />
             <TextField
               label="Degree/Field of Study"
-              value={educationDialog.data.degree}
-              onChange={(e) =>
-                setEducationDialog((prev) => ({ ...prev, data: { ...prev.data, degree: e.target.value } }))
-              }
+              value={educationDialog.data.studies}
+              onChange={(e) => setEducationDialog((prev) => ({ ...prev, data: { ...prev.data, studies: e.target.value } }))}
               fullWidth
               slotProps={{ htmlInput: { maxLength: 255 } }}
             />
@@ -966,41 +927,28 @@ export default function ProfileContent() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEducationDialog((prev) => ({ ...prev, open: false }))}>Cancel</Button>
-          <Button
-            onClick={handleSaveEducation}
-            disabled={!educationDialog.data.school || !educationDialog.data.degree}
-            variant="contained"
-          >
+          <Button onClick={handleSaveEducation} disabled={!educationDialog.data.facility || !educationDialog.data.studies} variant="contained">
             Save
           </Button>
         </DialogActions>
       </Dialog>
 
       {/* Certificate Dialog */}
-      <Dialog
-        open={certificateDialog.open}
-        onClose={() => setCertificateDialog((prev) => ({ ...prev, open: false }))}
-      >
-        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>
-          {certificateDialog.editIndex !== null ? "Edit Certificate" : "Add Certificate"}
-        </DialogTitle>
+      <Dialog open={certificateDialog.open} onClose={() => setCertificateDialog((prev) => ({ ...prev, open: false }))}>
+        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>{certificateDialog.editIndex !== null ? "Edit Certificate" : "Add Certificate"}</DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label="Certificate Name"
-              value={certificateDialog.data.name}
-              onChange={(e) =>
-                setCertificateDialog((prev) => ({ ...prev, data: { ...prev.data, name: e.target.value } }))
-              }
+              value={certificateDialog.data.title}
+              onChange={(e) => setCertificateDialog((prev) => ({ ...prev, data: { ...prev.data, title: e.target.value } }))}
               fullWidth
               slotProps={{ htmlInput: { maxLength: 255 } }}
             />
             <TextField
               label="Issuing Organization"
-              value={certificateDialog.data.issuer}
-              onChange={(e) =>
-                setCertificateDialog((prev) => ({ ...prev, data: { ...prev.data, issuer: e.target.value } }))
-              }
+              value={certificateDialog.data.source}
+              onChange={(e) => setCertificateDialog((prev) => ({ ...prev, data: { ...prev.data, source: e.target.value } }))}
               fullWidth
               slotProps={{ htmlInput: { maxLength: 255 } }}
             />
@@ -1008,11 +956,7 @@ export default function ProfileContent() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setCertificateDialog((prev) => ({ ...prev, open: false }))}>Cancel</Button>
-          <Button
-            onClick={handleSaveCertificate}
-            disabled={!certificateDialog.data.name || !certificateDialog.data.issuer}
-            variant="contained"
-          >
+          <Button onClick={handleSaveCertificate} disabled={!certificateDialog.data.title || !certificateDialog.data.source} variant="contained">
             Save
           </Button>
         </DialogActions>
@@ -1034,9 +978,7 @@ export default function ProfileContent() {
               <InputLabel>Proficiency</InputLabel>
               <Select
                 value={languageDialog.proficiency}
-                onChange={(e) =>
-                  setLanguageDialog((prev) => ({ ...prev, proficiency: e.target.value as ProficiencyLevel }))
-                }
+                onChange={(e) => setLanguageDialog((prev) => ({ ...prev, proficiency: e.target.value as ProficiencyLevel }))}
                 label="Proficiency"
               >
                 {PROFICIENCY_OPTIONS.map((option) => (
@@ -1061,13 +1003,9 @@ export default function ProfileContent() {
         open={snackbar.open}
         autoHideDuration={4000}
         onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
       >
-        <Alert
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
+        <Alert onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} severity={snackbar.severity} sx={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

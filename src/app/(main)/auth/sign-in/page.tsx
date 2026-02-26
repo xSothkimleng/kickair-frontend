@@ -44,12 +44,13 @@ export default function SignInPage() {
   return (
     <Box
       sx={{
-        minHeight: "100vh",
+        minHeight: "90vh",
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
         px: { xs: 3, sm: 6 },
-      }}>
+      }}
+    >
       <Box sx={{ width: "100%", maxWidth: 448 }}>
         {/* Back Button */}
         <Button
@@ -63,8 +64,9 @@ export default function SignInPage() {
               color: "text.primary",
               backgroundColor: "transparent",
             },
-          }}>
-          <Typography variant='body2'>Back to Home</Typography>
+          }}
+        >
+          <Typography variant="body2">Back to Home</Typography>
         </Button>
 
         {/* Login Card */}
@@ -75,59 +77,57 @@ export default function SignInPage() {
             border: 1,
             borderColor: "divider",
             p: { xs: 4, md: 6 },
-          }}>
+          }}
+        >
           {/* Header */}
           <Box sx={{ textAlign: "center", mb: 4 }}>
             <Typography
-              variant='h4'
-              component='h1'
+              variant="h4"
+              component="h1"
               sx={{
                 fontWeight: 500,
                 mb: 1,
                 color: "text.primary",
-              }}>
+              }}
+            >
               Welcome Back
             </Typography>
-            <Typography variant='body1' color='text.secondary'>
+            <Typography variant="body1" color="text.secondary">
               Sign in to continue to KickAir
             </Typography>
           </Box>
 
           {/* Error Alert */}
           {error && (
-            <Alert severity='error' onClose={() => setError("")} sx={{ mb: 3 }}>
+            <Alert severity="error" onClose={() => setError("")} sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
 
           {/* Form */}
-          <Box component='form' onSubmit={handleSubmit} sx={{ mt: 4 }}>
+          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 4 }}>
             {/* Email Input */}
             <Box sx={{ mb: 3 }}>
-              <Typography
-                component='label'
-                htmlFor='email'
-                variant='body2'
-                sx={{ display: "block", mb: 1, color: "text.primary" }}>
+              <Typography component="label" htmlFor="email" variant="body2" sx={{ display: "block", mb: 1, color: "text.primary" }}>
                 Email Address
               </Typography>
               <TextField
-                id='email'
-                type='email'
-                placeholder='you@example.com'
+                id="email"
+                type="email"
+                placeholder="you@example.com"
                 value={email}
-                onChange={e => setEmail(e.target.value)}
+                onChange={(e) => setEmail(e.target.value)}
                 fullWidth
                 required
                 disabled={isLoading}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position='start'>
+                    <InputAdornment position="start">
                       <PersonOutline sx={{ color: "text.secondary" }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{
+                sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
                     height: 48,
                     borderRadius: 3,
@@ -140,36 +140,37 @@ export default function SignInPage() {
                       borderColor: "primary.main",
                     },
                   },
-                }}
+                  "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus": {
+                    WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.default} inset`,
+                    WebkitTextFillColor: theme.palette.text.primary,
+                    caretColor: theme.palette.text.primary,
+                  },
+                })}
               />
             </Box>
 
             {/* Password Input */}
             <Box sx={{ mb: 2 }}>
-              <Typography
-                component='label'
-                htmlFor='password'
-                variant='body2'
-                sx={{ display: "block", mb: 1, color: "text.primary" }}>
+              <Typography component="label" htmlFor="password" variant="body2" sx={{ display: "block", mb: 1, color: "text.primary" }}>
                 Password
               </Typography>
               <TextField
-                id='password'
-                type='password'
-                placeholder='Enter your password'
+                id="password"
+                type="password"
+                placeholder="Enter your password"
                 value={password}
-                onChange={e => setPassword(e.target.value)}
+                onChange={(e) => setPassword(e.target.value)}
                 fullWidth
                 required
                 disabled={isLoading}
                 InputProps={{
                   startAdornment: (
-                    <InputAdornment position='start'>
+                    <InputAdornment position="start">
                       <LockOutlined sx={{ color: "text.secondary" }} />
                     </InputAdornment>
                   ),
                 }}
-                sx={{
+                sx={(theme) => ({
                   "& .MuiOutlinedInput-root": {
                     height: 48,
                     borderRadius: 3,
@@ -182,14 +183,19 @@ export default function SignInPage() {
                       borderColor: "primary.main",
                     },
                   },
-                }}
+                  "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus": {
+                    WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.default} inset`,
+                    WebkitTextFillColor: theme.palette.text.primary,
+                    caretColor: theme.palette.text.primary,
+                  },
+                })}
               />
             </Box>
 
             {/* Forgot Password */}
             <Box sx={{ textAlign: "right", mb: 3 }}>
               <Button
-                type='button'
+                type="button"
                 onClick={() => router.push("/forgot-password")}
                 sx={{
                   textTransform: "none",
@@ -199,15 +205,16 @@ export default function SignInPage() {
                     backgroundColor: "transparent",
                     textDecoration: "underline",
                   },
-                }}>
+                }}
+              >
                 Forgot password?
               </Button>
             </Box>
 
             {/* Submit Button */}
             <Button
-              type='submit'
-              variant='contained'
+              type="submit"
+              variant="contained"
               fullWidth
               disabled={isLoading}
               sx={{
@@ -227,7 +234,8 @@ export default function SignInPage() {
                   color: "action.disabled",
                 },
                 mb: 3,
-              }}>
+              }}
+            >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
 
@@ -235,7 +243,7 @@ export default function SignInPage() {
             <Box sx={{ position: "relative", my: 4 }}>
               <Divider />
               <Typography
-                variant='body2'
+                variant="body2"
                 sx={{
                   position: "absolute",
                   top: "50%",
@@ -244,15 +252,16 @@ export default function SignInPage() {
                   px: 2,
                   backgroundColor: "background.paper",
                   color: "text.secondary",
-                }}>
+                }}
+              >
                 New to KickAir?
               </Typography>
             </Box>
 
             {/* Sign Up Link */}
             <Button
-              type='button'
-              variant='outlined'
+              type="button"
+              variant="outlined"
               fullWidth
               onClick={handleCreateAccount}
               disabled={isLoading}
@@ -268,7 +277,8 @@ export default function SignInPage() {
                   borderColor: "divider",
                   backgroundColor: "action.hover",
                 },
-              }}>
+              }}
+            >
               Create an Account
             </Button>
           </Box>
@@ -276,13 +286,14 @@ export default function SignInPage() {
 
         {/* Footer Note */}
         <Typography
-          variant='caption'
+          variant="caption"
           sx={{
             display: "block",
             textAlign: "center",
             color: "text.secondary",
             mt: 4,
-          }}>
+          }}
+        >
           By continuing, you agree to KickAir&apos;s Terms of Service and Privacy Policy
         </Typography>
       </Box>

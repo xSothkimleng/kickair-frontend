@@ -4,11 +4,12 @@ import { MenuBook as BookOpenIcon, ArrowForward } from "@mui/icons-material";
 export default function KickAirUniversitySection() {
   return (
     <Box
-      component='section'
+      component="section"
       sx={{
         background: "linear-gradient(to bottom right, #0071e3, #0077ed)",
         py: 10,
-      }}>
+      }}
+    >
       <Box
         sx={{
           maxWidth: "1200px",
@@ -16,10 +17,11 @@ export default function KickAirUniversitySection() {
           px: { xs: 3, sm: 6 },
           textAlign: "center",
           color: "white",
-        }}>
+        }}
+      >
         <Chip
           icon={<BookOpenIcon sx={{ fontSize: 14, color: "white" }} />}
-          label='FREE EDUCATION'
+          label="FREE EDUCATION"
           sx={{
             bgcolor: "rgba(255, 255, 255, 0.2)",
             backdropFilter: "blur(8px)",
@@ -35,28 +37,31 @@ export default function KickAirUniversitySection() {
           }}
         />
         <Typography
-          component='h2'
+          component="h2"
           sx={{
             fontSize: "40px",
             fontWeight: 600,
             letterSpacing: "-0.02em",
             mb: 2,
-          }}>
+          }}
+        >
           KickAir University
         </Typography>
-        <Typography
-          sx={{
-            fontSize: "19px",
-            color: "rgba(255, 255, 255, 0.8)",
-            maxWidth: "672px",
-            mx: "auto",
-            mb: 4,
-          }}>
-          Master freelancing with free courses on pricing, client management, marketing, and more
-        </Typography>
+        <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
+          <Typography
+            sx={{
+              fontSize: "19px",
+              color: "rgba(255, 255, 255, 0.8)",
+              maxWidth: "672px",
+              mx: "auto",
+            }}
+          >
+            Master freelancing with free courses on pricing, client management, marketing, and more
+          </Typography>
+        </Box>
         <Button
           //   onClick={() => onNavigate("university")}
-          variant='contained'
+          variant="contained"
           endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
           sx={{
             px: 4,
@@ -71,7 +76,8 @@ export default function KickAirUniversitySection() {
             "&:hover": {
               bgcolor: "rgba(255, 255, 255, 0.9)",
             },
-          }}>
+          }}
+        >
           Start Learning Free
         </Button>
       </Box>

@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Box } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import DashboardHeader from "@/components/layout/dashboard/DashboardHeader";
 import DashboardTabs from "@/components/layout/dashboard/DashboardTabs";
 import DashboardContent from "./DashboardContent";
@@ -28,10 +28,10 @@ export default function FreelancerSpacePage() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
-      <DashboardHeader title='Freelancer Space' description='Manage your profile, services, and earnings' />
+      <DashboardHeader title="Freelancer Space" description="Manage your profile, services, and earnings" />
       {/* @ts-expect-error type unknown */}
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
-      <Box sx={{ maxWidth: 1440, mx: "auto", px: 3, py: 4 }}>
+      <Container maxWidth="lg" sx={{ px: 3, py: 4 }}>
         {activeTab === "dashboard" && <DashboardContent />}
         {activeTab === "profile" && <ProfileContent />}
         {activeTab === "services" && <ServicesContent />}
@@ -39,7 +39,7 @@ export default function FreelancerSpacePage() {
         {activeTab === "finance" && <FinanceContent />}
         {activeTab === "messages" && <MessagesContent />}
         {activeTab === "level" && <LevelContent />}
-      </Box>
+      </Container>
     </Box>
   );
 }

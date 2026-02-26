@@ -1,17 +1,13 @@
 // User and Authentication types
 
 export interface Education {
-  school: string;       // School/University name
-  degree: string;       // Degree/Major
-  field?: string;       // Field of study
-  from?: string;        // Start year e.g. "2018"
-  to?: string | null;   // End year, null if ongoing
+  facility: string;     // School/University name
+  studies: string;      // Degree/Field of study
 }
 
 export interface Certificate {
-  name: string;    // Certificate name
-  issuer: string;  // Issuing organization
-  year?: string;   // Year issued
+  title: string;   // Certificate name
+  source: string;  // Issuing organization
 }
 
 export interface LanguageWithProficiency {

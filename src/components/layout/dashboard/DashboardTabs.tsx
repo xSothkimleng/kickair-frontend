@@ -13,7 +13,8 @@ export default function FreelancerTabs({ activeTab, onTabChange, tabs }: Freelan
         bgcolor: "white",
         borderBottom: 1,
         borderColor: "rgba(0, 0, 0, 0.08)",
-      }}>
+      }}
+    >
       <Box sx={{ maxWidth: 1440, mx: "auto", px: 3 }}>
         <Tabs
           value={activeTab}
@@ -35,8 +36,9 @@ export default function FreelancerTabs({ activeTab, onTabChange, tabs }: Freelan
               height: 2,
               bgcolor: "black",
             },
-          }}>
-          {tabs && tabs.map(tab => <Tab key={tab.value} value={tab.value} label={tab.label} />)}
+          }}
+        >
+          {tabs && tabs.map((tab) => <Tab key={tab.value} value={tab.value} label={tab.label} />)}
         </Tabs>
       </Box>
     </Box>

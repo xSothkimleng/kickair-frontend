@@ -16,7 +16,7 @@ import FinalCtaSection from "./FinalCTASection";
 
 export default function Home() {
   return (
-    <Container>
+    <>
       <HeroSection />
       <ServicesSection serviceCategories={serviceCategories} />
       <ExploreFreelancersSection freelancers={freelancers} />
@@ -30,6 +30,6 @@ export default function Home() {
       <KickAirUniversitySection />
       <FaqSection />
       <FinalCtaSection />
-    </Container>
+    </>
   );
 }
