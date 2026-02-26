@@ -52,3 +52,94 @@ a {
     color-scheme: dark;
   }
 } */
+
+/* ── Rich text display (read-only rendered HTML) ── */
+.rich-text-display p,
+.rich-text-display ul,
+.rich-text-display ol,
+.rich-text-display blockquote {
+  margin: 0 0 0.6em;
+  padding: 0;
+}
+.rich-text-display ul,
+.rich-text-display ol {
+  padding-left: 1.4em;
+}
+.rich-text-display strong { font-weight: 600; }
+.rich-text-display em { font-style: italic; }
+.rich-text-display blockquote {
+  border-left: 3px solid rgba(0,0,0,0.15);
+  padding-left: 0.75em;
+  color: rgba(0,0,0,0.6);
+}
+
+/* ── Tiptap editor wrapper ── */
+.rich-text-editor-wrapper {
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 12px;
+  overflow: hidden;
+  background: white;
+  transition: border-color 0.2s;
+}
+.rich-text-editor-wrapper:focus-within {
+  border-color: rgba(0, 0, 0, 0.2);
+}
+.rich-text-editor-toolbar {
+  display: flex;
+  gap: 2px;
+  padding: 6px 8px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.07);
+  background: rgba(0, 0, 0, 0.02);
+  flex-wrap: wrap;
+}
+.rich-text-editor-toolbar button {
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  padding: 4px 8px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.6);
+  line-height: 1;
+  transition: background 0.15s, color 0.15s;
+}
+.rich-text-editor-toolbar button:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: rgba(0, 0, 0, 0.9);
+}
+.rich-text-editor-toolbar button.is-active {
+  background: rgba(0, 0, 0, 0.08);
+  color: black;
+  font-weight: 600;
+}
+.rich-text-editor-toolbar .divider {
+  width: 1px;
+  background: rgba(0, 0, 0, 0.1);
+  margin: 2px 4px;
+}
+.rich-text-editor-content .ProseMirror {
+  outline: none;
+  padding: 10px 14px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.85);
+  min-height: var(--editor-min-height, 100px);
+}
+.rich-text-editor-content .ProseMirror p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  float: left;
+  height: 0;
+}
+.rich-text-editor-content .ProseMirror p,
+.rich-text-editor-content .ProseMirror ul,
+.rich-text-editor-content .ProseMirror ol {
+  margin: 0 0 0.5em;
+}
+.rich-text-editor-content .ProseMirror ul,
+.rich-text-editor-content .ProseMirror ol {
+  padding-left: 1.4em;
+}
+.rich-text-editor-content .ProseMirror strong { font-weight: 600; }
+.rich-text-editor-content .ProseMirror em { font-style: italic; }

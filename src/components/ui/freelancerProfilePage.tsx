@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import {
   Box,
   Typography,
@@ -237,9 +238,9 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
               {profile.about && (
                 <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 4 }}>
                   <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>About</Typography>
-                  <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.75)", lineHeight: 1.75, whiteSpace: "pre-wrap" }}>
-                    {profile.about}
-                  </Typography>
+                  <Box sx={{ fontSize: 14, color: "rgba(0,0,0,0.75)", lineHeight: 1.75 }}>
+                    <RichTextDisplay value={profile.about} />
+                  </Box>
                 </Box>
               )}
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import {
   Box,
   Typography,
@@ -461,25 +462,13 @@ export default function ProfileContent() {
             />
 
             <Box>
-              <TextField
-                label="About"
+              <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>About</Typography>
+              <RichTextEditor
                 value={formData.about}
-                onChange={(e) => handleInputChange("about", e.target.value)}
+                onChange={html => handleInputChange("about", html)}
                 placeholder="Tell freelancers about your company and what kind of projects you work on..."
-                multiline
-                rows={5}
-                fullWidth
-                inputProps={{ maxLength: 2000 }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    fontSize: 13,
-                  },
-                }}
+                minHeight={120}
               />
-              <Typography variant="caption" color="text.secondary" display="block" mt={1}>
-                {formData.about.length}/2000 characters
-              </Typography>
             </Box>
           </Stack>
         </CardContent>

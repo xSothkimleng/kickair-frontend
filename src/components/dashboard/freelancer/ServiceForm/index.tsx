@@ -34,10 +34,13 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
 
   // Media state for editing existing services
   const [media, setMedia] = useState<ServiceMedia[]>(service?.media || []);
+  const [featureImageId, setFeatureImageId] = useState<number | null>(service?.feature_image_id ?? null);
 
   // Temporary upload state for new services (upload-before-create flow)
   const [uploadToken, setUploadToken] = useState<string | null>(null);
   const [tempUploads, setTempUploads] = useState<TemporaryUpload[]>([]);
+  // Which temp upload the user wants as cover (applied via PATCH after creation)
+  const [desiredCoverTempId, setDesiredCoverTempId] = useState<number | null>(null);
 
   // Initialize form data from service if editing
   const getInitialFormData = (): ServiceFormData => {
@@ -204,7 +207,19 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       if (isEditing && service) {
         await api.put(`/api/services/${service.id}`, requestData);
       } else {
-        await api.post("/api/services", requestData);
+        const response = await api.post("/api/services", requestData);
+        // Apply the desired cover image if the user selected one during creation
+        if (desiredCoverTempId !== null && response?.data?.media?.length) {
+          const desiredTempUpload = tempUploads.find(t => t.id === desiredCoverTempId);
+          if (desiredTempUpload) {
+            const matchingMedia = response.data.media.find(
+              (m: { file_name: string; id: number }) => m.file_name === desiredTempUpload.file_name
+            );
+            if (matchingMedia) {
+              await api.put(`/api/services/${response.data.id}`, { feature_image_id: matchingMedia.id });
+            }
+          }
+        }
       }
 
       onBack();
@@ -254,10 +269,20 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       <MediaGallerySection
         serviceId={service?.id || null}
         media={media}
-        onMediaChange={setMedia}
+        onMediaChange={updatedMedia => {
+          setMedia(updatedMedia);
+          // If the cover image was removed, clear local featureImageId
+          if (featureImageId && !updatedMedia.some(m => m.id === featureImageId)) {
+            setFeatureImageId(null);
+          }
+        }}
         uploadToken={uploadToken}
         tempUploads={tempUploads}
         onTempUploadsChange={setTempUploads}
+        featureImageId={featureImageId}
+        onFeatureImageChange={setFeatureImageId}
+        desiredCoverTempId={desiredCoverTempId}
+        onDesiredCoverTempIdChange={setDesiredCoverTempId}
         disabled={submitting}
       />
       <FAQsSection formData={formData} onFormDataChange={setFormData} />

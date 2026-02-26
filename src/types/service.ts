@@ -75,6 +75,8 @@ export interface Service {
   faqs: ServiceFAQ[] | null;
   created_at: string;
   updated_at: string;
+  feature_image_id: number | null;
+  feature_image: ServiceMedia | null;
   freelancer_profile?: FreelancerProfile;
   category?: ServiceCategory;
   pricing_options?: PricingOption[];

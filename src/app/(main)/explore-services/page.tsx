@@ -9,14 +9,14 @@ import ServiceGrid from "./ServiceGrid";
 import { serviceCategories } from "../../data/mockdata";
 import { api } from "@/lib/api";
 import { Service, ServicesListResponse, PaginationMeta } from "@/types/service";
+import Link from "next/link";
 
 interface ServicesPageProps {
-  onNavigate?: (page: string, data?: any) => void;
   initialCategory?: string;
   searchQuery?: string;
 }
 
-export default function ServicesPage({ onNavigate, initialCategory, searchQuery }: ServicesPageProps) {
+export default function ServicesPage({ initialCategory, searchQuery }: ServicesPageProps) {
   // API state
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,25 +67,20 @@ export default function ServicesPage({ onNavigate, initialCategory, searchQuery 
   };
 
   // Calculate max price from loaded services
-  const maxPrice = services.length > 0
-    ? Math.max(...services.flatMap(s => s.pricing_options?.map(p => p.price_raw) || [0]), 10000)
-    : 10000;
+  const maxPrice =
+    services.length > 0 ? Math.max(...services.flatMap(s => s.pricing_options?.map(p => p.price_raw) || [0]), 10000) : 10000;
 
   // Filter services client-side
   let filteredServices = [...services];
 
   // Filter by category
   if (selectedCategories.length > 0) {
-    filteredServices = filteredServices.filter(s =>
-      s.category && selectedCategories.includes(s.category.slug)
-    );
+    filteredServices = filteredServices.filter(s => s.category && selectedCategories.includes(s.category.slug));
   }
 
   // Filter by budget
   filteredServices = filteredServices.filter(s => {
-    const lowestPrice = s.pricing_options?.length
-      ? Math.min(...s.pricing_options.map(p => p.price_raw))
-      : 0;
+    const lowestPrice = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => p.price_raw)) : 0;
     return lowestPrice >= budgetRange[0] && lowestPrice <= budgetRange[1];
   });
 
@@ -93,9 +88,7 @@ export default function ServicesPage({ onNavigate, initialCategory, searchQuery 
   if (deliveryTime !== "any") {
     const maxDays = parseInt(deliveryTime);
     filteredServices = filteredServices.filter(s => {
-      const fastestDelivery = s.pricing_options?.length
-        ? Math.min(...s.pricing_options.map(p => p.delivery_time))
-        : 0;
+      const fastestDelivery = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => p.delivery_time)) : 0;
       return fastestDelivery <= maxDays;
     });
   }
@@ -107,7 +100,7 @@ export default function ServicesPage({ onNavigate, initialCategory, searchQuery 
       service =>
         service.title.toLowerCase().includes(query) ||
         service.freelancer_profile?.user?.name?.toLowerCase().includes(query) ||
-        service.search_tags?.some(tag => tag.toLowerCase().includes(query))
+        service.search_tags?.some(tag => tag.toLowerCase().includes(query)),
     );
   }
 
@@ -146,44 +139,47 @@ export default function ServicesPage({ onNavigate, initialCategory, searchQuery 
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
-      <Container maxWidth='xl' sx={{ px: { xs: 3, md: 6 }, py: { xs: 6, md: 10 } }}>
-        {/* Back Button */}
-        <Button
-          onClick={() => onNavigate?.("home")}
-          startIcon={<ChevronLeft />}
-          sx={{
-            fontSize: 12,
-            color: "rgba(0, 0, 0, 0.6)",
-            textTransform: "none",
-            mb: 4,
-            "&:hover": {
-              color: "rgba(0, 0, 0, 1)",
-              bgcolor: "transparent",
-            },
-          }}>
-          Back to Home
-        </Button>
+      <Box sx={{ bgcolor: "#fff", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", mb: 4, py: 2 }}>
+        <Container>
+          {/* Back Button */}
+          <Link href='/' passHref>
+            <Button
+              startIcon={<ChevronLeft />}
+              sx={{
+                fontSize: 12,
+                color: "rgba(0, 0, 0, 0.6)",
+                textTransform: "none",
+                "&:hover": {
+                  color: "rgba(0, 0, 0, 1)",
+                  bgcolor: "transparent",
+                },
+              }}>
+              Back to Home
+            </Button>
+          </Link>
 
-        {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 4 }}>
-          <Typography
-            variant='h1'
-            sx={{
-              fontSize: { xs: 32, md: 48 },
-              fontWeight: 600,
-              color: "black",
-              letterSpacing: "-0.02em",
-              mb: 2,
-            }}>
-            {searchQuery ? `Search Results for "${searchQuery}"` : "Explore Services"}
-          </Typography>
-          <Typography sx={{ fontSize: 17, color: "rgba(0, 0, 0, 0.6)" }}>
-            {searchQuery
-              ? `Found ${filteredServices.length} result${filteredServices.length !== 1 ? "s" : ""}`
-              : "Browse ready-to-buy services from talented freelancers"}
-          </Typography>
-        </Box>
-
+          {/* Header */}
+          <Box sx={{ textAlign: "center", mb: 4, py: 2 }}>
+            <Typography
+              variant='h1'
+              sx={{
+                fontSize: { xs: 32, md: 48 },
+                fontWeight: 600,
+                color: "black",
+                letterSpacing: "-0.02em",
+                mb: 2,
+              }}>
+              {searchQuery ? `Search Results for "${searchQuery}"` : "Explore Services"}
+            </Typography>
+            <Typography sx={{ fontSize: 17, color: "rgba(0, 0, 0, 0.6)" }}>
+              {searchQuery
+                ? `Found ${filteredServices.length} result${filteredServices.length !== 1 ? "s" : ""}`
+                : "Browse ready-to-buy services from talented freelancers"}
+            </Typography>
+          </Box>
+        </Container>
+      </Box>
+      <Container>
         {/* Filter Toggle - Mobile */}
         <Box sx={{ display: { xs: "flex", lg: "none" }, justifyContent: "center", mb: 3 }}>
           <Button
@@ -228,14 +224,13 @@ export default function ServicesPage({ onNavigate, initialCategory, searchQuery 
         {/* Error State */}
         {error && (
           <Alert
-            severity="error"
+            severity='error'
             sx={{ mb: 3 }}
             action={
-              <Button color="inherit" size="small" onClick={() => fetchServices(currentPage)}>
+              <Button color='inherit' size='small' onClick={() => fetchServices(currentPage)}>
                 Retry
               </Button>
-            }
-          >
+            }>
             {error}
           </Alert>
         )}
@@ -278,8 +273,8 @@ export default function ServicesPage({ onNavigate, initialCategory, searchQuery 
                       count={pagination.last_page}
                       page={pagination.current_page}
                       onChange={handlePageChange}
-                      color="primary"
-                      size="large"
+                      color='primary'
+                      size='large'
                       sx={{
                         "& .MuiPaginationItem-root": {
                           fontSize: 14,
@@ -303,9 +298,8 @@ export default function ServicesPage({ onNavigate, initialCategory, searchQuery 
                       textAlign: "center",
                       mt: 2,
                       fontSize: 13,
-                      color: "rgba(0, 0, 0, 0.6)"
-                    }}
-                  >
+                      color: "rgba(0, 0, 0, 0.6)",
+                    }}>
                     Showing {pagination.from || 0} - {pagination.to || 0} of {pagination.total} services
                   </Typography>
                 )}

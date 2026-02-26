@@ -3,7 +3,7 @@
 import { useRef, useState } from "react";
 import Image from "next/image";
 import { Box, Paper, Typography, Button, IconButton, Grid, CircularProgress } from "@mui/material";
-import { CloudUploadOutlined, CloseOutlined, ImageOutlined, VideocamOutlined, InsertDriveFileOutlined } from "@mui/icons-material";
+import { CloudUploadOutlined, CloseOutlined, ImageOutlined, VideocamOutlined, InsertDriveFileOutlined, StarBorderOutlined, Star } from "@mui/icons-material";
 import { ServiceMedia, TemporaryUpload } from "@/types/service";
 import { api } from "@/lib/api";
 
@@ -30,6 +30,11 @@ interface MediaGallerySectionProps {
   uploadToken: string | null;
   tempUploads: TemporaryUpload[];
   onTempUploadsChange: (uploads: TemporaryUpload[]) => void;
+  featureImageId: number | null;
+  onFeatureImageChange: (id: number | null) => void;
+  // For new services: local-only selection applied after creation
+  desiredCoverTempId: number | null;
+  onDesiredCoverTempIdChange: (id: number | null) => void;
   disabled?: boolean;
 }
 
@@ -40,6 +45,10 @@ export default function MediaGallerySection({
   uploadToken,
   tempUploads,
   onTempUploadsChange,
+  featureImageId,
+  onFeatureImageChange,
+  desiredCoverTempId,
+  onDesiredCoverTempIdChange,
   disabled,
 }: MediaGallerySectionProps) {
   // Determine which mode we're in
@@ -48,6 +57,7 @@ export default function MediaGallerySection({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<number | null>(null);
+  const [settingCoverId, setSettingCoverId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const getFileType = (fileName: string): "image" | "video" | "pdf" | null => {
@@ -157,6 +167,23 @@ export default function MediaGallerySection({
     }
   };
 
+  // Set or clear the feature (cover) image
+  const handleSetCover = async (mediaId: number) => {
+    if (!serviceId) return;
+    const newId = featureImageId === mediaId ? null : mediaId;
+
+    try {
+      setSettingCoverId(mediaId);
+      setError(null);
+      await api.put(`/api/services/${serviceId}`, { feature_image_id: newId });
+      onFeatureImageChange(newId);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to update cover image");
+    } finally {
+      setSettingCoverId(null);
+    }
+  };
+
   const handleUploadClick = () => {
     if (!canUpload) {
       setError("Upload not available. Please try again.");
@@ -215,64 +242,128 @@ export default function MediaGallerySection({
     );
   };
 
-  // Render a media item card with delete button
+  // Render a media item card with delete button (and optional cover controls for images)
   const renderMediaCard = (
     item: { id: number; file_type: string; file_url: string; file_name: string },
     onDelete: (id: number) => void,
-    keyPrefix: string
-  ) => (
-    <Grid size={{ xs: 6, md: 3 }} key={`${keyPrefix}-${item.id}`}>
-      <Box
-        sx={{
-          position: "relative",
-          aspectRatio: "1",
-          bgcolor: "rgba(0, 0, 0, 0.05)",
-          borderRadius: 3,
-          overflow: "hidden",
-          "&:hover .delete-btn": {
-            opacity: 1,
-          },
-        }}>
-        {renderPreview(item)}
-        {deletingId === item.id ? (
-          <Box
-            sx={{
-              position: "absolute",
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              bgcolor: "rgba(0, 0, 0, 0.3)",
-            }}>
-            <CircularProgress size={24} sx={{ color: "white" }} />
-          </Box>
-        ) : (
-          <IconButton
-            className="delete-btn"
-            onClick={() => onDelete(item.id)}
-            disabled={disabled}
-            sx={{
-              position: "absolute",
-              top: 8,
-              right: 8,
-              p: 0.75,
-              bgcolor: "#ef4444",
-              color: "white",
-              opacity: 0,
-              transition: "opacity 0.3s",
-              "&:hover": {
-                bgcolor: "#dc2626",
-              },
-            }}>
-            <CloseOutlined sx={{ fontSize: 12 }} />
-          </IconButton>
-        )}
-      </Box>
-    </Grid>
-  );
+    keyPrefix: string,
+    coverConfig?: { isCover: boolean; isSettingCover: boolean; onToggle: () => void }
+  ) => {
+    const isCover = coverConfig?.isCover ?? false;
+    const isSettingCover = coverConfig?.isSettingCover ?? false;
+
+    return (
+      <Grid size={{ xs: 6, md: 3 }} key={`${keyPrefix}-${item.id}`}>
+        <Box
+          sx={{
+            position: "relative",
+            aspectRatio: "1",
+            bgcolor: "rgba(0, 0, 0, 0.05)",
+            borderRadius: 3,
+            overflow: "hidden",
+            border: isCover ? "2px solid #0071e3" : "2px solid transparent",
+            "&:hover .delete-btn": { opacity: 1 },
+            "&:hover .cover-btn": { opacity: 1 },
+          }}>
+          {renderPreview(item)}
+
+          {/* Cover badge */}
+          {isCover && (
+            <Box
+              sx={{
+                position: "absolute",
+                bottom: 6,
+                left: 6,
+                px: 0.75,
+                py: 0.25,
+                bgcolor: "#0071e3",
+                color: "white",
+                fontSize: 9,
+                fontWeight: 600,
+                borderRadius: 1,
+                pointerEvents: "none",
+              }}>
+              COVER
+            </Box>
+          )}
+
+          {/* Cover toggle button */}
+          {coverConfig && (
+            isSettingCover ? (
+              <Box
+                sx={{
+                  position: "absolute",
+                  top: 6,
+                  left: 6,
+                  width: 26,
+                  height: 26,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                }}>
+                <CircularProgress size={14} sx={{ color: "white" }} />
+              </Box>
+            ) : (
+              <IconButton
+                className="cover-btn"
+                onClick={() => coverConfig.onToggle()}
+                disabled={disabled}
+                title={isCover ? "Remove cover" : "Set as cover"}
+                sx={{
+                  position: "absolute",
+                  top: 6,
+                  left: 6,
+                  p: 0.5,
+                  bgcolor: "rgba(0,0,0,0.5)",
+                  color: isCover ? "#facc15" : "white",
+                  opacity: isCover ? 1 : 0,
+                  transition: "opacity 0.2s",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
+                }}>
+                {isCover
+                  ? <Star sx={{ fontSize: 14 }} />
+                  : <StarBorderOutlined sx={{ fontSize: 14 }} />
+                }
+              </IconButton>
+            )
+          )}
+
+          {/* Delete button */}
+          {deletingId === item.id ? (
+            <Box
+              sx={{
+                position: "absolute",
+                top: 0, left: 0, right: 0, bottom: 0,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                bgcolor: "rgba(0, 0, 0, 0.3)",
+              }}>
+              <CircularProgress size={24} sx={{ color: "white" }} />
+            </Box>
+          ) : (
+            <IconButton
+              className="delete-btn"
+              onClick={() => onDelete(item.id)}
+              disabled={disabled}
+              sx={{
+                position: "absolute",
+                top: 8,
+                right: 8,
+                p: 0.75,
+                bgcolor: "#ef4444",
+                color: "white",
+                opacity: 0,
+                transition: "opacity 0.3s",
+                "&:hover": { bgcolor: "#dc2626" },
+              }}>
+              <CloseOutlined sx={{ fontSize: 12 }} />
+            </IconButton>
+          )}
+        </Box>
+      </Grid>
+    );
+  };
 
   return (
     <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
@@ -297,10 +388,37 @@ export default function MediaGallerySection({
 
       <Grid container spacing={2}>
         {/* Render existing service media (for editing) */}
-        {media.map(mediaItem => renderMediaCard(mediaItem, handleDeleteMedia, "media"))}
+        {media.map(mediaItem =>
+          renderMediaCard(
+            mediaItem,
+            handleDeleteMedia,
+            "media",
+            isEditingExistingService && mediaItem.file_type === "image"
+              ? {
+                  isCover: featureImageId === mediaItem.id,
+                  isSettingCover: settingCoverId === mediaItem.id,
+                  onToggle: () => handleSetCover(mediaItem.id),
+                }
+              : undefined
+          )
+        )}
 
         {/* Render temporary uploads (for new services) */}
-        {tempUploads.map(tempItem => renderMediaCard(tempItem, handleDeleteTempUpload, "temp"))}
+        {tempUploads.map(tempItem =>
+          renderMediaCard(
+            tempItem,
+            handleDeleteTempUpload,
+            "temp",
+            tempItem.file_type === "image"
+              ? {
+                  isCover: desiredCoverTempId === tempItem.id,
+                  isSettingCover: false,
+                  onToggle: () =>
+                    onDesiredCoverTempIdChange(desiredCoverTempId === tempItem.id ? null : tempItem.id),
+                }
+              : undefined
+          )
+        )}
 
         {/* Upload button */}
         <Grid size={{ xs: 6, md: 3 }}>

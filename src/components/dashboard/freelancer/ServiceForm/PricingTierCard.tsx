@@ -1,4 +1,5 @@
 import { Box, Typography, TextField } from "@mui/material";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import { PricingTier, smallTextFieldSx } from "../types";
 
 interface PricingTierCardProps {
@@ -20,30 +21,11 @@ export default function PricingTierCard({ tier, data, onChange }: PricingTierCar
 
         <Box>
           <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>Description</Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={3}
+          <RichTextEditor
             value={data.description}
-            onChange={e => onChange({ ...data, description: e.target.value })}
+            onChange={html => onChange({ ...data, description: html })}
             placeholder="What's included?"
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: 2,
-                bgcolor: "white",
-                fontSize: 12,
-                "& fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.1)",
-                },
-                "&:hover fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                  borderWidth: 1,
-                },
-              },
-            }}
+            minHeight={80}
           />
         </Box>
 

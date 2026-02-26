@@ -104,6 +104,13 @@ class ApiClient {
     });
   }
 
+  async patch(endpoint: string, data: unknown) {
+    return this.request(endpoint, {
+      method: "PATCH",
+      body: JSON.stringify(data),
+    });
+  }
+
   async delete(endpoint: string) {
     return this.request(endpoint, { method: "DELETE" });
   }

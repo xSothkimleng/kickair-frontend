@@ -1,4 +1,5 @@
 import { Box, Paper, Typography, TextField, Select, MenuItem } from "@mui/material";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import { RoomOutlined } from "@mui/icons-material";
 import { ServiceFormData, textFieldSx, textareaSx } from "../types";
 import { ServiceCategory } from "@/types/service";
@@ -110,14 +111,11 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
 
         <Box>
           <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Service Description *</Typography>
-          <TextField
-            fullWidth
-            multiline
-            rows={6}
+          <RichTextEditor
             value={formData.description}
-            onChange={e => onFormDataChange({ ...formData, description: e.target.value })}
+            onChange={html => onFormDataChange({ ...formData, description: html })}
             placeholder="Describe your service in detail. What will you deliver? What makes your service unique?"
-            sx={textareaSx}
+            minHeight={150}
           />
         </Box>
       </Box>

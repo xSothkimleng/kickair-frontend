@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
@@ -127,19 +128,17 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
         <Box sx={{ bgcolor: "white", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-          <Container maxWidth='xl' sx={{ px: 3, py: 2 }}>
-            <Button
-              onClick={() => router.back()}
-              startIcon={<ChevronLeft />}
-              sx={{
-                fontSize: "12px",
-                color: "rgba(0,0,0,0.6)",
-                "&:hover": { color: "black", bgcolor: "transparent" },
-                textTransform: "none",
-              }}>
-              Back to Services
-            </Button>
-          </Container>
+          <Button
+            onClick={() => router.back()}
+            startIcon={<ChevronLeft />}
+            sx={{
+              fontSize: "12px",
+              color: "rgba(0,0,0,0.6)",
+              "&:hover": { color: "black", bgcolor: "transparent" },
+              textTransform: "none",
+            }}>
+            Back to Services
+          </Button>
         </Box>
         <Container maxWidth='xl' sx={{ px: 3, py: 4 }}>
           <Alert severity='error' sx={{ mb: 3 }}>
@@ -161,14 +160,21 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const pricingOptions = service.pricing_options || [];
   const media = service.media || [];
   const faqs = service.faqs || [];
-  const gallery = media.filter(m => m.file_type === "image").map(m => m.file_url);
+  const imageMedia = media.filter(m => m.file_type === "image");
+  const sortedImageMedia = service.feature_image_id
+    ? [
+        ...imageMedia.filter(m => m.id === service.feature_image_id),
+        ...imageMedia.filter(m => m.id !== service.feature_image_id),
+      ]
+    : imageMedia;
+  const gallery = sortedImageMedia.map(m => m.file_url);
   const selectedPricing = pricingOptions[selectedPackage];
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
       {/* Header */}
       <Box sx={{ bgcolor: "white", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-        <Container maxWidth='xl' sx={{ px: 3, py: 2 }}>
+        <Container sx={{ py: 2 }}>
           <Button
             onClick={() => router.back()}
             startIcon={<ChevronLeft />}
@@ -183,7 +189,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
         </Container>
       </Box>
 
-      <Container maxWidth='xl' sx={{ px: 3, py: 4 }}>
+      <Container sx={{ py: 4 }}>
         <Grid container spacing={4}>
           {/* Left Column - Service Details */}
           <Grid size={{ xs: 12, lg: 8 }}>
@@ -324,7 +330,11 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                           </Typography>
                         )}
                       </Box>
-                      <Button sx={{ fontSize: "13px", color: "#0071e3", textTransform: "none" }}>View Profile</Button>
+                      <Button
+                        onClick={() => router.push(`/find-freelancer/${freelancer?.id}`)}
+                        sx={{ fontSize: "13px", color: "#0071e3", textTransform: "none" }}>
+                        View Profile
+                      </Button>
                     </Box>
                     {freelancer?.educations && freelancer.educations.length > 0 && (
                       <Grid container spacing={2} sx={{ mt: 2, pt: 2, borderTop: "1px solid rgba(0,0,0,0.08)" }}>
@@ -355,11 +365,12 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                 <Typography variant='h5' sx={{ fontSize: "21px", fontWeight: 600, mb: 2 }}>
                   About This Service
                 </Typography>
-                <Typography
-                  variant='body1'
-                  sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)", lineHeight: 1.7, whiteSpace: "pre-line" }}>
-                  {service.description || "No description available."}
-                </Typography>
+                <Box sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)", lineHeight: 1.7 }}>
+                  {service.description
+                    ? <RichTextDisplay value={service.description} />
+                    : <Typography variant="body1" sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)" }}>No description available.</Typography>
+                  }
+                </Box>
 
                 {/* Tags */}
                 {service.search_tags && service.search_tags.length > 0 && (
@@ -474,16 +485,20 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                       </Box>
 
                       {/* Description */}
-                      <Typography variant='body2' sx={{ fontSize: "14px", color: "rgba(0,0,0,0.7)", mb: 3 }}>
-                        {selectedPricing.description}
-                      </Typography>
+                      {selectedPricing.description && (
+                        <Box sx={{ fontSize: "14px", color: "rgba(0,0,0,0.7)", mb: 3 }}>
+                          <RichTextDisplay value={selectedPricing.description} />
+                        </Box>
+                      )}
 
                       {/* CTA Buttons */}
                       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
                         <Button
                           fullWidth
                           variant='contained'
-                          onClick={() => router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`)}
+                          onClick={() =>
+                            router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`)
+                          }
                           sx={{
                             height: 44,
                             bgcolor: "#0071e3",
