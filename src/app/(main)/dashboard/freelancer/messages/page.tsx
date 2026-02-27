@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Box, Paper, Typography, IconButton } from "@mui/material";
+import { Box, Paper, Typography, IconButton, CircularProgress } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import Link from "next/link";
 import { ConversationList, ChatView } from "@/components/messages";
@@ -10,7 +10,7 @@ import { useConversations } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { Conversation } from "@/types/message";
 
-export default function FreelancerMessagesPage() {
+function FreelancerMessagesContent() {
   const searchParams = useSearchParams();
   const conversationIdParam = searchParams.get("id");
 
@@ -111,5 +111,13 @@ export default function FreelancerMessagesPage() {
         </Paper>
       </Box>
     </Box>
+  );
+}
+
+export default function FreelancerMessagesPage() {
+  return (
+    <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}><CircularProgress /></Box>}>
+      <FreelancerMessagesContent />
+    </Suspense>
   );
 }

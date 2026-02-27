@@ -89,7 +89,7 @@ export default function OrdersContent() {
   const handleAcceptOrder = async (orderId: number) => {
     try {
       setActionLoading(orderId);
-      await api.post(`/api/orders/${orderId}/accept`);
+      await api.post(`/api/orders/${orderId}/accept`, {});
       await fetchOrders();
     } catch (err) {
       console.error("Failed to accept order:", err);
@@ -101,7 +101,7 @@ export default function OrdersContent() {
   const handleCompleteOrder = async (orderId: number) => {
     try {
       setActionLoading(orderId);
-      await api.post(`/api/orders/${orderId}/complete`);
+      await api.post(`/api/orders/${orderId}/complete`, {});
       await fetchOrders();
     } catch (err) {
       console.error("Failed to complete order:", err);
@@ -113,7 +113,7 @@ export default function OrdersContent() {
   const handleCancelOrder = async (orderId: number) => {
     try {
       setActionLoading(orderId);
-      await api.post(`/api/orders/${orderId}/cancel`);
+      await api.post(`/api/orders/${orderId}/cancel`, {});
       await fetchOrders();
     } catch (err) {
       console.error("Failed to cancel order:", err);

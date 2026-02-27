@@ -59,22 +59,22 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         basic: {
           name: "Basic",
           description: basicOption?.description || "",
-          revisions: basicOption?.revisions || "1",
-          deliveryTime: basicOption?.delivery_time?.replace(" days", "") || "3",
+          revisions: String(basicOption?.revisions || "1"),
+          deliveryTime: String(basicOption?.delivery_time || "").replace(" days", "") || "3",
           price: basicOption?.price || "",
         },
         standard: {
           name: "Standard",
           description: standardOption?.description || "",
-          revisions: standardOption?.revisions || "3",
-          deliveryTime: standardOption?.delivery_time?.replace(" days", "") || "5",
+          revisions: String(standardOption?.revisions || "3"),
+          deliveryTime: String(standardOption?.delivery_time || "").replace(" days", "") || "5",
           price: standardOption?.price || "",
         },
         premium: {
           name: "Premium",
           description: premiumOption?.description || "",
-          revisions: premiumOption?.revisions || "Unlimited",
-          deliveryTime: premiumOption?.delivery_time?.replace(" days", "") || "7",
+          revisions: String(premiumOption?.revisions || "Unlimited"),
+          deliveryTime: String(premiumOption?.delivery_time || "").replace(" days", "") || "7",
           price: premiumOption?.price || "",
         },
       },
@@ -134,8 +134,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         title: "Basic",
         description: formData.pricing.basic.description,
         price: parseFloat(formData.pricing.basic.price),
-        revisions: formData.pricing.basic.revisions,
-        delivery_time: `${formData.pricing.basic.deliveryTime} days`,
+        revisions: parseInt(formData.pricing.basic.revisions) || 0,
+        delivery_time: parseInt(formData.pricing.basic.deliveryTime),
       });
     }
     if (formData.pricing.standard.price) {
@@ -143,8 +143,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         title: "Standard",
         description: formData.pricing.standard.description,
         price: parseFloat(formData.pricing.standard.price),
-        revisions: formData.pricing.standard.revisions,
-        delivery_time: `${formData.pricing.standard.deliveryTime} days`,
+        revisions: parseInt(formData.pricing.standard.revisions) || 0,
+        delivery_time: parseInt(formData.pricing.standard.deliveryTime),
       });
     }
     if (formData.pricing.premium.price) {
@@ -152,8 +152,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         title: "Premium",
         description: formData.pricing.premium.description,
         price: parseFloat(formData.pricing.premium.price),
-        revisions: formData.pricing.premium.revisions,
-        delivery_time: `${formData.pricing.premium.deliveryTime} days`,
+        revisions: parseInt(formData.pricing.premium.revisions) || 0,
+        delivery_time: parseInt(formData.pricing.premium.deliveryTime),
       });
     }
 

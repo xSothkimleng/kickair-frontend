@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useParams } from "next/navigation";
 import Image from "next/image";
@@ -17,7 +17,7 @@ import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse, PricingOption } from "@/types/service";
 import { CreateOrderResponse } from "@/types/order";
 
-export default function CheckoutPage() {
+function CheckoutContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
@@ -353,5 +353,13 @@ export default function CheckoutPage() {
         </Box>
       </Container>
     </Box>
+  );
+}
+
+export default function CheckoutPage() {
+  return (
+    <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}><CircularProgress sx={{ color: "#0071e3" }} /></Box>}>
+      <CheckoutContent />
+    </Suspense>
   );
 }

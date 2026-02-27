@@ -36,7 +36,7 @@ export default function RichTextEditor({
     if (!editor) return;
     const incoming = value ?? "";
     if (editor.getHTML() !== incoming) {
-      editor.commands.setContent(incoming, false);
+      editor.commands.setContent(incoming);
     }
   }, [value, editor]);
 

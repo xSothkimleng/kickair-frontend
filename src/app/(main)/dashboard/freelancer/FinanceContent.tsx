@@ -113,8 +113,6 @@ export default function FinanceContent() {
         return "Refund";
       case "escrow":
         return "Escrow";
-      default:
-        return transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1);
     }
   };
 

@@ -29,7 +29,7 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
       <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
         <Box sx={{ flex: 1 }}>
           <Typography sx={{ fontSize: 15, fontWeight: 500, color: "black", mb: 0.5 }}>{service.title}</Typography>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1.5 }}>{service.category?.category_name || "Uncategorized"}</Typography>
+          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1.5 }}>{service.category?.name || "Uncategorized"}</Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
             <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{service.orders_count} orders</Typography>
             <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>•</Typography>

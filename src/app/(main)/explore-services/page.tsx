@@ -68,7 +68,7 @@ export default function ServicesPage({ initialCategory, searchQuery }: ServicesP
 
   // Calculate max price from loaded services
   const maxPrice =
-    services.length > 0 ? Math.max(...services.flatMap(s => s.pricing_options?.map(p => p.price_raw) || [0]), 10000) : 10000;
+    services.length > 0 ? Math.max(...services.flatMap(s => s.pricing_options?.map(p => Number(p.price_raw)) || [0]), 10000) : 10000;
 
   // Filter services client-side
   let filteredServices = [...services];
@@ -80,7 +80,7 @@ export default function ServicesPage({ initialCategory, searchQuery }: ServicesP
 
   // Filter by budget
   filteredServices = filteredServices.filter(s => {
-    const lowestPrice = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => p.price_raw)) : 0;
+    const lowestPrice = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => Number(p.price_raw))) : 0;
     return lowestPrice >= budgetRange[0] && lowestPrice <= budgetRange[1];
   });
 
@@ -88,7 +88,7 @@ export default function ServicesPage({ initialCategory, searchQuery }: ServicesP
   if (deliveryTime !== "any") {
     const maxDays = parseInt(deliveryTime);
     filteredServices = filteredServices.filter(s => {
-      const fastestDelivery = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => p.delivery_time)) : 0;
+      const fastestDelivery = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => Number(p.delivery_time))) : 0;
       return fastestDelivery <= maxDays;
     });
   }
@@ -106,8 +106,8 @@ export default function ServicesPage({ initialCategory, searchQuery }: ServicesP
 
   // Apply sorting
   const sortedServices = [...filteredServices].sort((a, b) => {
-    const aPrice = a.pricing_options?.length ? Math.min(...a.pricing_options.map(p => p.price_raw)) : 0;
-    const bPrice = b.pricing_options?.length ? Math.min(...b.pricing_options.map(p => p.price_raw)) : 0;
+    const aPrice = a.pricing_options?.length ? Math.min(...a.pricing_options.map(p => Number(p.price_raw))) : 0;
+    const bPrice = b.pricing_options?.length ? Math.min(...b.pricing_options.map(p => Number(p.price_raw))) : 0;
 
     switch (sortBy) {
       case "price-low":
