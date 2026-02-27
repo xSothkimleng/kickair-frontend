@@ -124,7 +124,7 @@ export default function MessagesContent() {
                   }}
                 >
                   <Avatar
-                    src={conversation.other_participant.profile_image_url || undefined}
+                    src={conversation.other_participant.avatar_url || undefined}
                     alt={conversation.other_participant.name}
                     sx={{ width: 48, height: 48 }}
                   />

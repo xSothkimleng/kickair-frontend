@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Box } from "@mui/material";
+import { Box, Container } from "@mui/material";
 import DashboardHeader from "@/components/layout/dashboard/DashboardHeader";
 import DashboardTabs from "@/components/layout/dashboard/DashboardTabs";
 import DashboardContent from "./DsahboardContent";
@@ -29,14 +29,14 @@ export default function ClientSpacePage() {
       <DashboardHeader title='Client Space' description='Manage your projects, orders, and freelancers' />
       {/* @ts-expect-error type unknown */}
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
-      <Box sx={{ maxWidth: 1440, mx: "auto", px: 3, py: 4 }}>
+      <Container sx={{ px: 3, py: 4 }}>
         {activeTab === "dashboard" && <DashboardContent />}
         {activeTab === "profile" && <ProfileContent />}
         {activeTab === "orders" && <OrdersContent />}
         {activeTab === "service" && <PostProjectContent />}
         {activeTab === "finance" && <FinanceContent />}
         {activeTab === "messages" && <MessagesContent />}
-      </Box>
+      </Container>
     </Box>
   );
 }

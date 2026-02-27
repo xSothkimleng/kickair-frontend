@@ -17,7 +17,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
 
   // Extract display data from service
   const freelancerName = service.freelancer_profile?.user?.name || "Unknown";
-  const freelancerAvatar = service.freelancer_profile?.user?.profile_image || "";
+  const freelancerAvatar = service.freelancer_profile?.user?.avatar_url || "";
   const categoryName = service.category?.name || "Uncategorized";
   const image = service.feature_image?.file_url || service.media?.[0]?.file_url || "";
 

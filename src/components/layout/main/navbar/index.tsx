@@ -52,7 +52,7 @@ export default function MainNavbar() {
         : "client";
 
   // Single derived value — avoids duplicating the URL construction in JSX
-  const profileImageSrc = user?.profile_image ? `${process.env.NEXT_PUBLIC_API_URL}/storage/${user.profile_image}` : undefined;
+  const profileImageSrc = user?.avatar_url ?? undefined;
 
   // Close click-based dropdowns when clicking outside — stable (no deps)
   useEffect(() => {

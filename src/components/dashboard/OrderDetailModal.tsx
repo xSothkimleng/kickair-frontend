@@ -251,7 +251,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center">
               <Avatar
-                src={freelancer?.user?.profile_image || undefined}
+                src={freelancer?.user?.avatar_url || undefined}
                 alt={freelancer?.user?.name || "Freelancer"}
                 sx={{ width: 48, height: 48 }}
               >

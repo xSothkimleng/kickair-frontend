@@ -171,7 +171,7 @@ export default function OrdersContent() {
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
                   <Stack direction="row" spacing={2} flex={1}>
                     <Avatar
-                      src={order.freelancer?.user?.profile_image || undefined}
+                      src={order.freelancer?.user?.avatar_url || undefined}
                       alt={order.freelancer?.user?.name || "Freelancer"}
                       sx={{ width: 50, height: 50 }}
                     />

@@ -98,7 +98,7 @@ export default function ProfileContent() {
   }, [user?.client_profile]);
 
   const handleInputChange = (field: string, value: string | number) => {
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [field]: value,
     }));
@@ -166,7 +166,7 @@ export default function ProfileContent() {
   };
 
   const handleDeleteImage = async () => {
-    if (!user?.profile_image) return;
+    if (!user?.avatar_url) return;
 
     setUploadingImage(true);
     try {
@@ -183,17 +183,17 @@ export default function ProfileContent() {
 
   if (authLoading) {
     return (
-      <Box maxWidth={800} mx="auto">
+      <Box>
         <Card elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", mb: 3 }}>
           <CardContent sx={{ p: 4 }}>
-            <Skeleton variant="text" width={200} height={40} sx={{ mb: 2 }} />
-            <Stack direction="row" spacing={3} alignItems="center" mb={4}>
-              <Skeleton variant="circular" width={100} height={100} />
-              <Skeleton variant="rectangular" width={120} height={36} sx={{ borderRadius: 2 }} />
+            <Skeleton variant='text' width={200} height={40} sx={{ mb: 2 }} />
+            <Stack direction='row' spacing={3} alignItems='center' mb={4}>
+              <Skeleton variant='circular' width={100} height={100} />
+              <Skeleton variant='rectangular' width={120} height={36} sx={{ borderRadius: 2 }} />
             </Stack>
             <Stack spacing={3}>
-              {[1, 2, 3, 4, 5].map((i) => (
-                <Skeleton key={i} variant="rectangular" height={56} sx={{ borderRadius: 2 }} />
+              {[1, 2, 3, 4, 5].map(i => (
+                <Skeleton key={i} variant='rectangular' height={56} sx={{ borderRadius: 2 }} />
               ))}
             </Stack>
           </CardContent>
@@ -204,14 +204,14 @@ export default function ProfileContent() {
 
   if (!user) {
     return (
-      <Box maxWidth={800} mx="auto">
-        <Alert severity="warning">Please log in to view your profile.</Alert>
+      <Box maxWidth={800} mx='auto'>
+        <Alert severity='warning'>Please log in to view your profile.</Alert>
       </Box>
     );
   }
 
   return (
-    <Box maxWidth={800} mx="auto">
+    <Box>
       <Card
         elevation={0}
         sx={{
@@ -219,21 +219,20 @@ export default function ProfileContent() {
           border: "1px solid",
           borderColor: "rgba(0,0,0,0.08)",
           mb: 3,
-        }}
-      >
+        }}>
         <CardContent sx={{ p: 4 }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={4}>
+          <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={4}>
             <Box>
-              <Typography variant="h5" fontWeight={600} mb={0.5}>
+              <Typography variant='h5' fontWeight={600} mb={0.5}>
                 Client Profile
               </Typography>
-              <Typography variant="body2" color="text.secondary">
+              <Typography variant='body2' color='text.secondary'>
                 Build trust with freelancers by completing your profile
               </Typography>
             </Box>
             {hasUnsavedChanges && (
               <Button
-                variant="contained"
+                variant='contained'
                 onClick={handleSaveChanges}
                 disabled={saving}
                 sx={{
@@ -246,54 +245,48 @@ export default function ProfileContent() {
                   "&:hover": {
                     bgcolor: "#0077ED",
                   },
-                }}
-              >
-                {saving ? <CircularProgress size={20} color="inherit" /> : "Save Changes"}
+                }}>
+                {saving ? <CircularProgress size={20} color='inherit' /> : "Save Changes"}
               </Button>
             )}
           </Stack>
 
           {/* Profile Picture */}
           <Box mb={4}>
-            <Typography variant="body2" fontWeight={500} mb={1.5}>
+            <Typography variant='body2' fontWeight={500} mb={1.5}>
               Profile Picture
             </Typography>
-            <Stack direction="row" spacing={3} alignItems="center">
-              <Box position="relative">
-                <Avatar
-                  src={user.profile_image || undefined}
-                  alt={user.name}
-                  sx={{ width: 100, height: 100 }}
-                >
+            <Stack direction='row' spacing={3} alignItems='center'>
+              <Box position='relative'>
+                <Avatar src={user.avatar_url || undefined} alt={user.name} sx={{ width: 100, height: 100 }}>
                   {user.name?.charAt(0).toUpperCase()}
                 </Avatar>
                 {uploadingImage && (
                   <Box
-                    position="absolute"
+                    position='absolute'
                     top={0}
                     left={0}
                     right={0}
                     bottom={0}
-                    display="flex"
-                    alignItems="center"
-                    justifyContent="center"
-                    bgcolor="rgba(0,0,0,0.5)"
-                    borderRadius="50%"
-                  >
+                    display='flex'
+                    alignItems='center'
+                    justifyContent='center'
+                    bgcolor='rgba(0,0,0,0.5)'
+                    borderRadius='50%'>
                     <CircularProgress size={24} sx={{ color: "white" }} />
                   </Box>
                 )}
               </Box>
-              <Stack direction="row" spacing={1}>
+              <Stack direction='row' spacing={1}>
                 <input
-                  type="file"
+                  type='file'
                   ref={fileInputRef}
-                  accept="image/jpeg,image/jpg,image/png,image/gif,image/webp"
+                  accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
                   style={{ display: "none" }}
                   onChange={handleImageUpload}
                 />
                 <Button
-                  variant="contained"
+                  variant='contained'
                   startIcon={<UploadIcon sx={{ fontSize: 14 }} />}
                   onClick={() => fileInputRef.current?.click()}
                   disabled={uploadingImage}
@@ -308,13 +301,12 @@ export default function ProfileContent() {
                       bgcolor: "rgba(0,0,0,0.1)",
                       boxShadow: "none",
                     },
-                  }}
-                >
+                  }}>
                   Change Photo
                 </Button>
-                {user.profile_image && (
+                {user.avatar_url && (
                   <Button
-                    variant="contained"
+                    variant='contained'
                     startIcon={<DeleteIcon sx={{ fontSize: 14 }} />}
                     onClick={handleDeleteImage}
                     disabled={uploadingImage}
@@ -329,14 +321,13 @@ export default function ProfileContent() {
                         bgcolor: "rgba(239,68,68,0.2)",
                         boxShadow: "none",
                       },
-                    }}
-                  >
+                    }}>
                     Remove
                   </Button>
                 )}
               </Stack>
             </Stack>
-            <Typography variant="caption" color="text.secondary" display="block" mt={1}>
+            <Typography variant='caption' color='text.secondary' display='block' mt={1}>
               A professional photo helps build trust with freelancers. Max 5MB (JPG, PNG, GIF, WebP)
             </Typography>
           </Box>
@@ -344,11 +335,11 @@ export default function ProfileContent() {
           {/* Basic Information */}
           <Stack spacing={3}>
             <TextField
-              label="Full Name"
+              label='Full Name'
               value={user.name}
               disabled
               fullWidth
-              helperText="Name is managed in account settings"
+              helperText='Name is managed in account settings'
               sx={{
                 "& .MuiOutlinedInput-root": {
                   borderRadius: 2,
@@ -358,10 +349,10 @@ export default function ProfileContent() {
             />
 
             <TextField
-              label="Company Name"
+              label='Company Name'
               value={formData.company_name}
-              onChange={(e) => handleInputChange("company_name", e.target.value)}
-              placeholder="Your company name"
+              onChange={e => handleInputChange("company_name", e.target.value)}
+              placeholder='Your company name'
               fullWidth
               inputProps={{ maxLength: 255 }}
               sx={{
@@ -376,18 +367,17 @@ export default function ProfileContent() {
               <InputLabel sx={{ fontSize: 13 }}>Industry</InputLabel>
               <Select
                 value={formData.industry_id}
-                onChange={(e) => handleInputChange("industry_id", e.target.value)}
-                label="Industry"
+                onChange={e => handleInputChange("industry_id", e.target.value)}
+                label='Industry'
                 disabled={loadingIndustries}
                 sx={{
                   borderRadius: 2,
                   fontSize: 13,
-                }}
-              >
-                <MenuItem value="">
+                }}>
+                <MenuItem value=''>
                   <em>Select an industry</em>
                 </MenuItem>
-                {industries.map((industry) => (
+                {industries.map(industry => (
                   <MenuItem key={industry.id} value={industry.id}>
                     {industry.name}
                   </MenuItem>
@@ -399,17 +389,16 @@ export default function ProfileContent() {
               <InputLabel sx={{ fontSize: 13 }}>Company Size</InputLabel>
               <Select
                 value={formData.company_size}
-                onChange={(e) => handleInputChange("company_size", e.target.value)}
-                label="Company Size"
+                onChange={e => handleInputChange("company_size", e.target.value)}
+                label='Company Size'
                 sx={{
                   borderRadius: 2,
                   fontSize: 13,
-                }}
-              >
-                <MenuItem value="">
+                }}>
+                <MenuItem value=''>
                   <em>Select company size</em>
                 </MenuItem>
-                {COMPANY_SIZES.map((size) => (
+                {COMPANY_SIZES.map(size => (
                   <MenuItem key={size.value} value={size.value}>
                     {size.label}
                   </MenuItem>
@@ -418,15 +407,15 @@ export default function ProfileContent() {
             </FormControl>
 
             <TextField
-              label="Location"
+              label='Location'
               value={formData.location}
-              onChange={(e) => handleInputChange("location", e.target.value)}
-              placeholder="City, Country"
+              onChange={e => handleInputChange("location", e.target.value)}
+              placeholder='City, Country'
               fullWidth
               inputProps={{ maxLength: 255 }}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <MapPinIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                   </InputAdornment>
                 ),
@@ -440,15 +429,15 @@ export default function ProfileContent() {
             />
 
             <TextField
-              label="Website"
+              label='Website'
               value={formData.website}
-              onChange={(e) => handleInputChange("website", e.target.value)}
-              placeholder="https://yourwebsite.com"
+              onChange={e => handleInputChange("website", e.target.value)}
+              placeholder='https://yourwebsite.com'
               fullWidth
               inputProps={{ maxLength: 255 }}
               InputProps={{
                 startAdornment: (
-                  <InputAdornment position="start">
+                  <InputAdornment position='start'>
                     <GlobeIcon sx={{ fontSize: 16, color: "text.secondary" }} />
                   </InputAdornment>
                 ),
@@ -466,7 +455,7 @@ export default function ProfileContent() {
               <RichTextEditor
                 value={formData.about}
                 onChange={html => handleInputChange("about", html)}
-                placeholder="Tell freelancers about your company and what kind of projects you work on..."
+                placeholder='Tell freelancers about your company and what kind of projects you work on...'
                 minHeight={120}
               />
             </Box>
@@ -483,26 +472,25 @@ export default function ProfileContent() {
           border: "1px solid",
           borderColor: "rgba(37, 99, 235, 0.2)",
           p: 3,
-        }}
-      >
-        <Stack direction="row" spacing={2} alignItems="flex-start">
+        }}>
+        <Stack direction='row' spacing={2} alignItems='flex-start'>
           <ShieldIcon sx={{ fontSize: 24, color: "#2563eb", mt: 0.5 }} />
           <Box flex={1}>
-            <Typography variant="body1" fontWeight={600} mb={0.5}>
+            <Typography variant='body1' fontWeight={600} mb={0.5}>
               Verify Your Identity
             </Typography>
-            <Typography variant="body2" color="text.secondary" mb={2}>
+            <Typography variant='body2' color='text.secondary' mb={2}>
               Verified clients receive 3x more proposals from top freelancers. Complete verification to build trust and
               credibility.
             </Typography>
-            <Stack direction="row" spacing={2} alignItems="center">
+            <Stack direction='row' spacing={2} alignItems='center'>
               {user.is_verified_id ? (
-                <Typography variant="body2" color="success.main" fontWeight={500}>
+                <Typography variant='body2' color='success.main' fontWeight={500}>
                   ID Verified
                 </Typography>
               ) : (
                 <Button
-                  variant="contained"
+                  variant='contained'
                   sx={{
                     bgcolor: "#0071e3",
                     color: "white",
@@ -512,13 +500,12 @@ export default function ProfileContent() {
                     "&:hover": {
                       bgcolor: "#0077ED",
                     },
-                  }}
-                >
+                  }}>
                   Start Verification
                 </Button>
               )}
               {user.is_verified_phone && (
-                <Typography variant="body2" color="success.main" fontWeight={500}>
+                <Typography variant='body2' color='success.main' fontWeight={500}>
                   Phone Verified
                 </Typography>
               )}
@@ -531,14 +518,12 @@ export default function ProfileContent() {
       <Snackbar
         open={snackbar.open}
         autoHideDuration={4000}
-        onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      >
+        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
         <Alert
-          onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))}
+          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
           severity={snackbar.severity}
-          sx={{ width: "100%" }}
-        >
+          sx={{ width: "100%" }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

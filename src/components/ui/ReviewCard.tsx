@@ -35,7 +35,7 @@ function formatDate(dateString: string): string {
 export default function ReviewCard({ review }: ReviewCardProps) {
   const client = review.client_profile?.user;
   const name = client?.name || "Anonymous";
-  const avatar = client?.profile_image || undefined;
+  const avatar = client?.avatar_url || undefined;
   const initials = name.charAt(0).toUpperCase();
 
   return (

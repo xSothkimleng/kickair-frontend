@@ -210,7 +210,7 @@ export default function OrdersContent() {
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
                     <Stack direction="row" spacing={2} flex={1}>
                       <Avatar
-                        src={client?.user?.profile_image || undefined}
+                        src={client?.user?.avatar_url || undefined}
                         alt={client?.user?.name || "Client"}
                         sx={{ width: 50, height: 50 }}
                       />

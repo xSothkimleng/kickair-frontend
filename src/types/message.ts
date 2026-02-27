@@ -3,7 +3,7 @@ export type MessageType = "text" | "file" | "system";
 export interface MessageSender {
   id: number;
   name: string;
-  profile_image_url: string | null;
+  avatar_url: string | null;
 }
 
 export interface Message {
@@ -30,7 +30,7 @@ export interface ConversationOrder {
 export interface ConversationParticipant {
   id: number;
   name: string;
-  profile_image_url: string | null;
+  avatar_url: string | null;
 }
 
 export interface ConversationLatestMessage {

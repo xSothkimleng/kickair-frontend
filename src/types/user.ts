@@ -100,7 +100,7 @@ export interface User {
   name: string;
   email: string;
   telephone: string | null;
-  profile_image: string | null;
+  avatar_url: string | null;
   is_verified_phone: boolean;
   is_verified_id: boolean;
   email_verified_at: string | null;
@@ -119,7 +119,25 @@ export interface RegisterData {
   is_client: boolean;
   is_freelancer: boolean;
   telephone?: string;
-  profile_image?: string;
+  avatar_url?: string;
+}
+
+export interface EmailRegisterData {
+  name: string;
+  email: string;
+  password: string;
+  password_confirmation: string;
+  is_client: boolean;
+  is_freelancer: boolean;
+}
+
+export interface PhoneRegisterData {
+  name: string;
+  telephone: string;
+  password: string;
+  password_confirmation: string;
+  is_client: boolean;
+  is_freelancer: boolean;
 }
 
 // Request types for profile updates

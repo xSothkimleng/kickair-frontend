@@ -2,18 +2,36 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Paper, Typography, TextField, Button, Divider, InputAdornment, Alert } from "@mui/material";
-import { PersonOutline, LockOutlined, ArrowBack } from "@mui/icons-material";
+import {
+  Box,
+  Paper,
+  Typography,
+  TextField,
+  Button,
+  Divider,
+  InputAdornment,
+  Alert,
+  Tabs,
+  Tab,
+} from "@mui/material";
+import { LockOutlined, ArrowBack, MailOutline, PhoneOutlined } from "@mui/icons-material";
 import { useAuth } from "@/components/context/AuthContext";
 
 export default function SignInPage() {
-  const [email, setEmail] = useState("");
+  const [method, setMethod] = useState<"email" | "phone">("email");
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login } = useAuth();
+  const { loginEmail, loginPhone } = useAuth();
   const router = useRouter();
+
+  const handleMethodChange = (_: React.SyntheticEvent, value: "email" | "phone") => {
+    setMethod(value);
+    setIdentifier("");
+    setError("");
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,25 +39,34 @@ export default function SignInPage() {
     setError("");
 
     try {
-      await login(email, password);
-      // On successful login, navigate to home or dashboard
-      console.log("Login successful");
+      if (method === "email") {
+        await loginEmail(identifier, password);
+      } else {
+        await loginPhone(identifier, password);
+      }
       router.push("/");
       router.refresh();
     } catch (err: any) {
-      setError(err.message || "Invalid email or password. Please try again.");
+      setError(err.message || "Invalid credentials. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleBackToHome = () => {
-    router.push("/");
-  };
-
-  const handleCreateAccount = () => {
-    router.push("/auth/sign-up"); // Change to your signup route
-  };
+  const inputSx = (theme: any) => ({
+    "& .MuiOutlinedInput-root": {
+      height: 48,
+      borderRadius: 3,
+      backgroundColor: "background.default",
+      "&:hover fieldset": { borderColor: "divider" },
+      "&.Mui-focused fieldset": { borderWidth: 2, borderColor: "primary.main" },
+    },
+    "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus": {
+      WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.default} inset`,
+      WebkitTextFillColor: theme.palette.text.primary,
+      caretColor: theme.palette.text.primary,
+    },
+  });
 
   return (
     <Box
@@ -52,44 +79,25 @@ export default function SignInPage() {
       }}
     >
       <Box sx={{ width: "100%", maxWidth: 448 }}>
-        {/* Back Button */}
         <Button
-          onClick={handleBackToHome}
+          onClick={() => router.push("/")}
           startIcon={<ArrowBack />}
           sx={{
             color: "text.secondary",
             textTransform: "none",
             mb: 4,
-            "&:hover": {
-              color: "text.primary",
-              backgroundColor: "transparent",
-            },
+            "&:hover": { color: "text.primary", backgroundColor: "transparent" },
           }}
         >
           <Typography variant="body2">Back to Home</Typography>
         </Button>
 
-        {/* Login Card */}
         <Paper
           elevation={0}
-          sx={{
-            borderRadius: 6,
-            border: 1,
-            borderColor: "divider",
-            p: { xs: 4, md: 6 },
-          }}
+          sx={{ borderRadius: 6, border: 1, borderColor: "divider", p: { xs: 4, md: 6 } }}
         >
-          {/* Header */}
-          <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Typography
-              variant="h4"
-              component="h1"
-              sx={{
-                fontWeight: 500,
-                mb: 1,
-                color: "text.primary",
-              }}
-            >
+          <Box sx={{ textAlign: "center", mb: 3 }}>
+            <Typography variant="h4" component="h1" sx={{ fontWeight: 500, mb: 1, color: "text.primary" }}>
               Welcome Back
             </Typography>
             <Typography variant="body1" color="text.secondary">
@@ -97,61 +105,68 @@ export default function SignInPage() {
             </Typography>
           </Box>
 
-          {/* Error Alert */}
+          {/* Method toggle */}
+          <Tabs
+            value={method}
+            onChange={handleMethodChange}
+            variant="fullWidth"
+            sx={{
+              mb: 3,
+              "& .MuiTabs-indicator": { borderRadius: 2 },
+              "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
+            }}
+          >
+            <Tab value="email" label="Email" icon={<MailOutline fontSize="small" />} iconPosition="start" />
+            <Tab value="phone" label="Phone" icon={<PhoneOutlined fontSize="small" />} iconPosition="start" />
+          </Tabs>
+
           {error && (
             <Alert severity="error" onClose={() => setError("")} sx={{ mb: 3 }}>
               {error}
             </Alert>
           )}
 
-          {/* Form */}
-          <Box component="form" onSubmit={handleSubmit} sx={{ mt: 4 }}>
-            {/* Email Input */}
+          <Box component="form" onSubmit={handleSubmit}>
             <Box sx={{ mb: 3 }}>
-              <Typography component="label" htmlFor="email" variant="body2" sx={{ display: "block", mb: 1, color: "text.primary" }}>
-                Email Address
+              <Typography
+                component="label"
+                htmlFor="identifier"
+                variant="body2"
+                sx={{ display: "block", mb: 1, color: "text.primary" }}
+              >
+                {method === "email" ? "Email Address" : "Phone Number"}
               </Typography>
               <TextField
-                id="email"
-                type="email"
-                placeholder="you@example.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                id="identifier"
+                type={method === "email" ? "email" : "tel"}
+                placeholder={method === "email" ? "you@example.com" : "012 345 678"}
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
                 fullWidth
                 required
                 disabled={isLoading}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <PersonOutline sx={{ color: "text.secondary" }} />
+                      {method === "email" ? (
+                        <MailOutline sx={{ color: "text.secondary" }} />
+                      ) : (
+                        <PhoneOutlined sx={{ color: "text.secondary" }} />
+                      )}
                     </InputAdornment>
                   ),
                 }}
-                sx={(theme) => ({
-                  "& .MuiOutlinedInput-root": {
-                    height: 48,
-                    borderRadius: 3,
-                    backgroundColor: "background.default",
-                    "&:hover fieldset": {
-                      borderColor: "divider",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderWidth: 2,
-                      borderColor: "primary.main",
-                    },
-                  },
-                  "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus": {
-                    WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.default} inset`,
-                    WebkitTextFillColor: theme.palette.text.primary,
-                    caretColor: theme.palette.text.primary,
-                  },
-                })}
+                sx={inputSx}
               />
             </Box>
 
-            {/* Password Input */}
             <Box sx={{ mb: 2 }}>
-              <Typography component="label" htmlFor="password" variant="body2" sx={{ display: "block", mb: 1, color: "text.primary" }}>
+              <Typography
+                component="label"
+                htmlFor="password"
+                variant="body2"
+                sx={{ display: "block", mb: 1, color: "text.primary" }}
+              >
                 Password
               </Typography>
               <TextField
@@ -170,29 +185,10 @@ export default function SignInPage() {
                     </InputAdornment>
                   ),
                 }}
-                sx={(theme) => ({
-                  "& .MuiOutlinedInput-root": {
-                    height: 48,
-                    borderRadius: 3,
-                    backgroundColor: "background.default",
-                    "&:hover fieldset": {
-                      borderColor: "divider",
-                    },
-                    "&.Mui-focused fieldset": {
-                      borderWidth: 2,
-                      borderColor: "primary.main",
-                    },
-                  },
-                  "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus": {
-                    WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.default} inset`,
-                    WebkitTextFillColor: theme.palette.text.primary,
-                    caretColor: theme.palette.text.primary,
-                  },
-                })}
+                sx={inputSx}
               />
             </Box>
 
-            {/* Forgot Password */}
             <Box sx={{ textAlign: "right", mb: 3 }}>
               <Button
                 type="button"
@@ -201,17 +197,13 @@ export default function SignInPage() {
                   textTransform: "none",
                   fontSize: "0.875rem",
                   color: "primary.main",
-                  "&:hover": {
-                    backgroundColor: "transparent",
-                    textDecoration: "underline",
-                  },
+                  "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
                 }}
               >
                 Forgot password?
               </Button>
             </Box>
 
-            {/* Submit Button */}
             <Button
               type="submit"
               variant="contained"
@@ -223,23 +215,12 @@ export default function SignInPage() {
                 textTransform: "none",
                 fontSize: "1rem",
                 fontWeight: 500,
-                backgroundColor: "primary.main",
-                color: "primary.contrastText",
-                "&:hover": {
-                  backgroundColor: "primary.dark",
-                  opacity: 0.9,
-                },
-                "&:disabled": {
-                  backgroundColor: "action.disabledBackground",
-                  color: "action.disabled",
-                },
                 mb: 3,
               }}
             >
               {isLoading ? "Signing in..." : "Sign In"}
             </Button>
 
-            {/* Divider */}
             <Box sx={{ position: "relative", my: 4 }}>
               <Divider />
               <Typography
@@ -258,12 +239,11 @@ export default function SignInPage() {
               </Typography>
             </Box>
 
-            {/* Sign Up Link */}
             <Button
               type="button"
               variant="outlined"
               fullWidth
-              onClick={handleCreateAccount}
+              onClick={() => router.push("/auth/sign-up")}
               disabled={isLoading}
               sx={{
                 height: 48,
@@ -273,10 +253,7 @@ export default function SignInPage() {
                 fontWeight: 500,
                 borderColor: "divider",
                 color: "text.primary",
-                "&:hover": {
-                  borderColor: "divider",
-                  backgroundColor: "action.hover",
-                },
+                "&:hover": { borderColor: "divider", backgroundColor: "action.hover" },
               }}
             >
               Create an Account
@@ -284,15 +261,9 @@ export default function SignInPage() {
           </Box>
         </Paper>
 
-        {/* Footer Note */}
         <Typography
           variant="caption"
-          sx={{
-            display: "block",
-            textAlign: "center",
-            color: "text.secondary",
-            mt: 4,
-          }}
+          sx={{ display: "block", textAlign: "center", color: "text.secondary", mt: 4 }}
         >
           By continuing, you agree to KickAir&apos;s Terms of Service and Privacy Policy
         </Typography>

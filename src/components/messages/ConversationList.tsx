@@ -131,7 +131,7 @@ export default function ConversationList({
                   }}
                 >
                   <Avatar
-                    src={conv.other_participant.profile_image_url || undefined}
+                    src={conv.other_participant.avatar_url || undefined}
                     alt={conv.other_participant.name}
                     sx={{ width: 48, height: 48 }}
                   />

@@ -1,6 +1,8 @@
 import {
   User,
   RegisterData,
+  EmailRegisterData,
+  PhoneRegisterData,
   Language,
   Expertise,
   Industry,
@@ -10,6 +12,13 @@ import {
   ClientProfileRequest,
   FreelancerProfilesListResponse,
 } from "@/types/user";
+
+export class EmailUnverifiedError extends Error {
+  constructor() {
+    super("Your email address is not verified.");
+    this.name = "EmailUnverifiedError";
+  }
+}
 import { ClientDashboardData, FreelancerDashboardData } from "@/types/dashboard";
 import { Review } from "@/types/order";
 
@@ -19,7 +28,7 @@ export interface ReviewClientProfile {
   user: {
     id: number;
     name: string;
-    profile_image: string | null;
+    avatar_url: string | null;
   };
 }
 
@@ -88,6 +97,9 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Request failed" }));
+      if (response.status === 403 && error.message === "Your email address is not verified.") {
+        throw new EmailUnverifiedError();
+      }
       throw new Error(error.message || `HTTP error! status: ${response.status}`);
     }
 
@@ -112,6 +124,53 @@ class ApiClient {
     });
     this.setToken(response.data.token);
     return response.data.user;
+  }
+
+  async loginEmail(email: string, password: string): Promise<User> {
+    const response = await this.request("/api/auth/login/email", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+    });
+    this.setToken(response.data.token);
+    return response.data.user;
+  }
+
+  async loginPhone(telephone: string, password: string): Promise<User> {
+    const response = await this.request("/api/auth/login/phone", {
+      method: "POST",
+      body: JSON.stringify({ telephone, password }),
+    });
+    this.setToken(response.data.token);
+    return response.data.user;
+  }
+
+  async registerEmail(data: EmailRegisterData): Promise<User> {
+    const response = await this.request("/api/auth/register/email", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    this.setToken(response.data.token);
+    return response.data.user;
+  }
+
+  async registerPhone(data: PhoneRegisterData): Promise<User> {
+    const response = await this.request("/api/auth/register/phone", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+    this.setToken(response.data.token);
+    return response.data.user;
+  }
+
+  async resendVerificationEmail(): Promise<void> {
+    await this.request("/api/auth/email/resend", { method: "POST" });
+  }
+
+  async addEmail(email: string): Promise<void> {
+    await this.request("/api/auth/add-email", {
+      method: "POST",
+      body: JSON.stringify({ email }),
+    });
   }
 
   async logout(): Promise<void> {

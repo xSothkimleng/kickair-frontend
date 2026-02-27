@@ -6,7 +6,7 @@ export interface ServiceUser {
   id: number;
   name: string;
   email: string;
-  profile_image: string | null; // Full URL to image
+  avatar_url: string | null; // Full URL to image
 }
 
 // Re-export profile types for backward compatibility
@@ -34,7 +34,7 @@ export interface PricingOption {
 export interface ServiceReviewUser {
   id: number;
   name: string;
-  profile_image: string | null;
+  avatar_url: string | null;
 }
 
 export interface ServiceReviewClientProfile {

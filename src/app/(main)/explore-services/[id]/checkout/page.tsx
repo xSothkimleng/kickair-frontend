@@ -125,7 +125,7 @@ function CheckoutContent() {
   const freelancer = service.freelancer_profile;
   const user = freelancer?.user;
   const freelancerName = user?.name || "Unknown";
-  const freelancerAvatar = user?.profile_image || "";
+  const freelancerAvatar = user?.avatar_url || "";
 
   const priceRaw = Number(selectedPricing.price_raw);
   const platformFee = priceRaw * 0.05;

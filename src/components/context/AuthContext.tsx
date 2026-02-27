@@ -1,61 +1,150 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { api } from "@/lib/api";
-import { User, RegisterData } from "@/types/user";
+import { api, EmailUnverifiedError } from "@/lib/api";
+import { User, EmailRegisterData, PhoneRegisterData } from "@/types/user";
+import EmailVerificationWall from "@/components/auth/EmailVerificationWall";
+
+const PENDING_EMAIL_KEY = "pending_verification_email";
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: RegisterData) => Promise<void>;
+  emailVerificationPending: boolean;
+  pendingEmail: string | null;
+  loginEmail: (email: string, password: string) => Promise<void>;
+  loginPhone: (telephone: string, password: string) => Promise<void>;
+  registerEmail: (data: EmailRegisterData) => Promise<void>;
+  registerPhone: (data: PhoneRegisterData) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  resendVerification: () => Promise<void>;
   setUser: (user: User | null) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function isEmailUnverified(user: User): boolean {
+  return !!user.email && !user.email_verified_at;
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const [emailVerificationPending, setEmailVerificationPending] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
 
   const refreshUser = useCallback(async () => {
     try {
       const updatedUser = await api.getUser();
       setUser(updatedUser);
-    } catch {
-      setUser(null);
+      if (isEmailUnverified(updatedUser)) {
+        setEmailVerificationPending(true);
+        setPendingEmail(updatedUser.email);
+      } else {
+        setEmailVerificationPending(false);
+        setPendingEmail(null);
+        localStorage.removeItem(PENDING_EMAIL_KEY);
+      }
+    } catch (err) {
+      if (err instanceof EmailUnverifiedError) {
+        setEmailVerificationPending(true);
+        const stored = localStorage.getItem(PENDING_EMAIL_KEY);
+        setPendingEmail(stored);
+      } else {
+        setUser(null);
+      }
     }
   }, []);
 
   useEffect(() => {
-    // Check if user is already logged in
     api
       .getUser()
-      .then(setUser)
-      .catch(() => setUser(null))
+      .then((fetchedUser) => {
+        setUser(fetchedUser);
+        if (isEmailUnverified(fetchedUser)) {
+          setEmailVerificationPending(true);
+          setPendingEmail(fetchedUser.email);
+        }
+      })
+      .catch((err) => {
+        if (err instanceof EmailUnverifiedError) {
+          setEmailVerificationPending(true);
+          const stored = localStorage.getItem(PENDING_EMAIL_KEY);
+          setPendingEmail(stored);
+        } else {
+          setUser(null);
+        }
+      })
       .finally(() => setLoading(false));
   }, []);
 
-  const login = async (email: string, password: string) => {
-    const user = await api.login(email, password);
-    setUser(user);
+  const loginEmail = async (email: string, password: string) => {
+    const loggedInUser = await api.loginEmail(email, password);
+    setUser(loggedInUser);
+    if (isEmailUnverified(loggedInUser)) {
+      setEmailVerificationPending(true);
+      setPendingEmail(loggedInUser.email);
+      localStorage.setItem(PENDING_EMAIL_KEY, loggedInUser.email);
+    }
   };
 
-  const register = async (data: RegisterData) => {
-    const user = await api.register(data);
-    setUser(user);
+  const loginPhone = async (telephone: string, password: string) => {
+    const loggedInUser = await api.loginPhone(telephone, password);
+    setUser(loggedInUser);
+  };
+
+  const registerEmail = async (data: EmailRegisterData) => {
+    const registeredUser = await api.registerEmail(data);
+    setUser(registeredUser);
+    setEmailVerificationPending(true);
+    setPendingEmail(data.email);
+    localStorage.setItem(PENDING_EMAIL_KEY, data.email);
+  };
+
+  const registerPhone = async (data: PhoneRegisterData) => {
+    const registeredUser = await api.registerPhone(data);
+    setUser(registeredUser);
   };
 
   const logout = async () => {
-    await api.logout();
+    try {
+      await api.logout();
+    } catch {
+      api.clearToken();
+    }
     setUser(null);
+    setEmailVerificationPending(false);
+    setPendingEmail(null);
+    localStorage.removeItem(PENDING_EMAIL_KEY);
+  };
+
+  const resendVerification = async () => {
+    await api.resendVerificationEmail();
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, register, refreshUser, setUser }}>
-      {children}
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        emailVerificationPending,
+        pendingEmail,
+        loginEmail,
+        loginPhone,
+        registerEmail,
+        registerPhone,
+        logout,
+        refreshUser,
+        resendVerification,
+        setUser,
+      }}
+    >
+      {!loading && emailVerificationPending ? (
+        <EmailVerificationWall email={pendingEmail} onResend={resendVerification} onLogout={logout} />
+      ) : (
+        children
+      )}
     </AuthContext.Provider>
   );
 }

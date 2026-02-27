@@ -15,7 +15,7 @@ export interface OrderUser {
   name: string;
   email: string;
   telephone: string | null;
-  profile_image: string | null;
+  avatar_url: string | null;
   is_verified_phone: boolean;
   is_verified_id: boolean;
   email_verified_at: string | null;

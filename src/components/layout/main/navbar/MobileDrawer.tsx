@@ -19,7 +19,7 @@ export interface MobileDrawerProps {
   onClose: () => void;
   selectedLanguage: Language;
   onLanguageChange: (lang: Language) => void;
-  user: { name: string; profile_image?: string | null } | null;
+  user: { name: string; avatar_url?: string | null } | null;
   loading: boolean;
   onLogout: () => Promise<void>;
 }

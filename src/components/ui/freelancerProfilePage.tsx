@@ -109,7 +109,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
   };
 
   const name = profile.user?.name || "Unknown";
-  const avatar = profile.user?.profile_image || "";
+  const avatar = profile.user?.avatar_url || "";
   const isVerified = profile.user?.is_verified_id || false;
 
   const ratingAvg = profile.rating_average ? parseFloat(profile.rating_average) : null;

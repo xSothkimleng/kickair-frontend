@@ -10,7 +10,7 @@ interface FreelancerCardProps {
 
 export function FreelancerCard({ profile }: FreelancerCardProps) {
   const name = profile.user?.name || "Unknown";
-  const avatar = profile.user?.profile_image || "";
+  const avatar = profile.user?.avatar_url || "";
   const tagline = profile.tagline || "";
 
   const lowestPrice = profile.services?.length

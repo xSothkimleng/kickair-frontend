@@ -177,7 +177,7 @@ export default function FreelancerOrderDetailModal({
             </Typography>
             <Stack direction="row" spacing={2} alignItems="center">
               <Avatar
-                src={client?.user?.profile_image || undefined}
+                src={client?.user?.avatar_url || undefined}
                 alt={client?.user?.name || "Client"}
                 sx={{ width: 48, height: 48 }}>
                 {client?.user?.name?.charAt(0) || "?"}

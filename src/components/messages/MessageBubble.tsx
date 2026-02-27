@@ -35,7 +35,7 @@ export default function MessageBubble({ message, showAvatar = true }: MessageBub
       >
         {showAvatar && !isMine && (
           <Avatar
-            src={message.sender.profile_image_url || undefined}
+            src={message.sender.avatar_url || undefined}
             alt={message.sender.name}
             sx={{ width: 32, height: 32 }}
           />

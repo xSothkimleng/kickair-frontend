@@ -158,7 +158,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const freelancer = service.freelancer_profile;
   const user = freelancer?.user;
   const freelancerName = user?.name || "Unknown";
-  const freelancerAvatar = user?.profile_image || "";
+  const freelancerAvatar = user?.avatar_url || "";
   const pricingOptions = service.pricing_options || [];
   const media = service.media || [];
   const faqs = service.faqs || [];
@@ -485,7 +485,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                         {idx > 0 && <Divider sx={{ mb: 3 }} />}
                         <Box sx={{ display: "flex", gap: 2 }}>
                           <Avatar
-                            src={review.client_profile.user.profile_image ?? undefined}
+                            src={review.client_profile.user.avatar_url ?? undefined}
                             alt={review.client_profile.user.name}
                             sx={{ width: 40, height: 40 }}>
                             {review.client_profile.user.name.charAt(0)}
