@@ -11,6 +11,47 @@ import {
   FreelancerProfilesListResponse,
 } from "@/types/user";
 import { ClientDashboardData, FreelancerDashboardData } from "@/types/dashboard";
+import { Review } from "@/types/order";
+
+export interface ReviewClientProfile {
+  id: number;
+  user_id: number;
+  user: {
+    id: number;
+    name: string;
+    profile_image: string | null;
+  };
+}
+
+export interface FreelancerReview extends Review {
+  client_profile: ReviewClientProfile;
+}
+
+export interface SubmitReviewRequest {
+  rating: number;
+  comment?: string;
+}
+
+export interface SubmitReviewResponse {
+  data: Review & { client_profile: ReviewClientProfile };
+  message: string;
+}
+
+export interface FreelancerReviewsResponse {
+  data: FreelancerReview[];
+  links: {
+    first: string | null;
+    last: string | null;
+    prev: string | null;
+    next: string | null;
+  };
+  meta: {
+    current_page: number;
+    last_page: number;
+    per_page: number;
+    total: number;
+  };
+}
 
 // lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
@@ -264,6 +305,18 @@ class ApiClient {
   async getFreelancerDashboard(): Promise<FreelancerDashboardData> {
     const response = await this.get("/api/freelancer-dashboard");
     return response.data;
+  }
+
+  // ============================================
+  // Review Methods
+  // ============================================
+
+  async submitReview(orderId: number, data: SubmitReviewRequest): Promise<SubmitReviewResponse> {
+    return this.post(`/api/orders/${orderId}/review`, data);
+  }
+
+  async getFreelancerReviews(freelancerProfileId: number, page: number = 1): Promise<FreelancerReviewsResponse> {
+    return this.get(`/api/freelancer-profiles/${freelancerProfileId}/reviews?page=${page}`);
   }
 }
 

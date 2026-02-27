@@ -37,6 +37,7 @@ import {
   PhoneOutlined,
   DeleteOutline,
   EditOutlined,
+  StarRounded,
 } from "@mui/icons-material";
 import { useAuth } from "@/components/context/AuthContext";
 import { useFreelancerDashboard } from "@/hooks/useFreelancerDashboard";
@@ -470,6 +471,16 @@ export default function ProfileContent() {
                   },
                 }}
               />
+            </Box>
+
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 1, px: 1.5, bgcolor: "rgba(0,0,0,0.02)", borderRadius: 2 }}>
+              <StarRounded sx={{ fontSize: 16, color: dashboardData?.profile.totalReviews ? "#f59e0b" : "rgba(0,0,0,0.2)" }} />
+              <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black" }}>
+                {dashboardData?.profile.rating ? parseFloat(dashboardData.profile.rating).toFixed(1) : "—"}
+              </Typography>
+              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)" }}>
+                · {dashboardData?.profile.totalReviews ?? 0} {dashboardData?.profile.totalReviews === 1 ? "review" : "reviews"}
+              </Typography>
             </Box>
           </Box>
         </Box>

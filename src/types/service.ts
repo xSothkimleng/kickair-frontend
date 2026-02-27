@@ -24,11 +24,33 @@ export interface PricingOption {
   title: string;
   description: string;
   price: string;
-  price_raw: number;
-  revisions: number;
-  delivery_time: number;
+  price_raw: string | number; // API returns string e.g. "11.00"
+  revisions: string | number; // API returns string e.g. "1", "Unlimited"
+  delivery_time: string | number; // API returns string e.g. "3 days"
   created_at: string;
   updated_at: string;
+}
+
+export interface ServiceReviewUser {
+  id: number;
+  name: string;
+  profile_image: string | null;
+}
+
+export interface ServiceReviewClientProfile {
+  id: number;
+  user_id: number;
+  user: ServiceReviewUser;
+}
+
+export interface ServiceReview {
+  id: number;
+  order_id: number;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+  pricing_option: Pick<PricingOption, "id" | "title">;
+  client_profile: ServiceReviewClientProfile;
 }
 
 export interface ServiceMedia {
@@ -72,6 +94,8 @@ export interface Service {
   search_tags: string[] | null;
   location: string | null;
   orders_count: number;
+  rating_average: string | null;
+  rating_count: number;
   faqs: ServiceFAQ[] | null;
   created_at: string;
   updated_at: string;
@@ -81,6 +105,7 @@ export interface Service {
   category?: ServiceCategory;
   pricing_options?: PricingOption[];
   media?: ServiceMedia[];
+  reviews?: ServiceReview[];
 }
 
 // API Response types

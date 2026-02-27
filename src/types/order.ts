@@ -2,6 +2,14 @@ import { ClientProfile } from "./service";
 
 export type OrderStatus = "pending" | "active" | "completed" | "cancelled";
 
+export interface Review {
+  id: number;
+  order_id: number;
+  rating: number;
+  comment: string | null;
+  created_at: string;
+}
+
 export interface OrderUser {
   id: number;
   name: string;
@@ -70,6 +78,7 @@ export interface Order {
   status: OrderStatus;
   created_at: string;
   updated_at: string;
+  review: Review | null;
   client_profile?: ClientProfile;
   pricing_option?: OrderPricingOption;
   service?: OrderService;

@@ -71,6 +71,9 @@ export interface FreelancerProfile {
   certificates: Certificate[] | null;
   created_at: string;
   updated_at: string;
+  rating_average: string | null;
+  rating_count: number;
+  completed_orders_count: number;
   user?: User;
   expertises?: Expertise[];
   languages?: LanguageWithProficiency[];

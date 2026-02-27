@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
+import ReviewCard from "@/components/ui/ReviewCard";
 import {
   Box,
   Typography,
@@ -11,6 +12,8 @@ import {
   Card,
   CardContent,
   IconButton,
+  Pagination,
+  CircularProgress,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -26,10 +29,14 @@ import {
   School,
   ShoppingBag,
   ImageNotSupported,
+  Star as StarIcon,
+  RateReview as ReviewIcon,
+  CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FreelancerProfile } from "@/types/user";
+import { api, FreelancerReview } from "@/lib/api";
 
 interface FreelancerProfilePageProps {
   profile: FreelancerProfile;
@@ -51,14 +58,62 @@ const PROFICIENCY_LABELS: Record<string, string> = {
   native: "Native",
 };
 
+function StatBadge({ icon, label }: { icon: React.ReactNode; label: string }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+      {icon}
+      <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>{label}</Typography>
+    </Box>
+  );
+}
+
 export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<Tab>("about");
   const [isFavorite, setIsFavorite] = useState(false);
 
+  // Reviews state
+  const [reviews, setReviews] = useState<FreelancerReview[]>([]);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsLastPage, setReviewsLastPage] = useState(1);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [reviewsError, setReviewsError] = useState<string | null>(null);
+  const [reviewsFetched, setReviewsFetched] = useState(false);
+
+  const fetchReviews = useCallback(async (page: number) => {
+    setReviewsLoading(true);
+    setReviewsError(null);
+    try {
+      const response = await api.getFreelancerReviews(profile.id, page);
+      setReviews(response.data);
+      setReviewsLastPage(response.meta.last_page);
+      setReviewsFetched(true);
+    } catch (err) {
+      setReviewsError(err instanceof Error ? err.message : "Failed to load reviews.");
+    } finally {
+      setReviewsLoading(false);
+    }
+  }, [profile.id]);
+
+  const handleTabChange = (tab: Tab) => {
+    setActiveTab(tab);
+    if (tab === "reviews" && !reviewsFetched) {
+      fetchReviews(1);
+    }
+  };
+
+  const handleReviewsPageChange = (_: React.ChangeEvent<unknown>, page: number) => {
+    setReviewsPage(page);
+    fetchReviews(page);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const name = profile.user?.name || "Unknown";
   const avatar = profile.user?.profile_image || "";
   const isVerified = profile.user?.is_verified_id || false;
+
+  const ratingAvg = profile.rating_average ? parseFloat(profile.rating_average) : null;
+  const hasRating = typeof profile.rating_count === "number" && profile.rating_count > 0 && ratingAvg !== null;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
@@ -71,7 +126,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
             sx={{
               fontSize: 12, color: "rgba(0, 0, 0, 0.6)", textTransform: "none",
               "&:hover": { color: "black", bgcolor: "transparent" },
-            }}>
+            }}
+          >
             Back to Freelancers
           </Button>
         </Box>
@@ -86,7 +142,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
               <Avatar
                 src={avatar}
                 alt={name}
-                sx={{ width: 120, height: 120, fontSize: 40, bgcolor: "rgba(0,0,0,0.08)" }}>
+                sx={{ width: 120, height: 120, fontSize: 40, bgcolor: "rgba(0,0,0,0.08)" }}
+              >
                 {name.charAt(0)}
               </Avatar>
               {isVerified && (
@@ -97,7 +154,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                     bgcolor: "#0071e3", borderRadius: "50%",
                     display: "flex", alignItems: "center", justifyContent: "center",
                     border: "3px solid white",
-                  }}>
+                  }}
+                >
                   <Verified sx={{ fontSize: 16, color: "white" }} />
                 </Box>
               )}
@@ -135,11 +193,9 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                       bgcolor: isFavorite ? "rgba(239,68,68,0.06)" : "white",
                       color: isFavorite ? "#ef4444" : "rgba(0,0,0,0.4)",
                       "&:hover": { borderColor: isFavorite ? "rgba(239,68,68,0.5)" : "rgba(0,0,0,0.2)" },
-                    }}>
-                    {isFavorite
-                      ? <Favorite sx={{ fontSize: 18 }} />
-                      : <FavoriteBorder sx={{ fontSize: 18 }} />
-                    }
+                    }}
+                  >
+                    {isFavorite ? <Favorite sx={{ fontSize: 18 }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}
                   </IconButton>
                   <IconButton
                     sx={{
@@ -147,7 +203,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                       border: "1px solid rgba(0,0,0,0.1)", bgcolor: "white",
                       color: "rgba(0,0,0,0.4)",
                       "&:hover": { borderColor: "rgba(0,0,0,0.2)" },
-                    }}>
+                    }}
+                  >
                     <Share sx={{ fontSize: 18 }} />
                   </IconButton>
                 </Box>
@@ -155,7 +212,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
 
               {/* Expertise chips */}
               {profile.expertises && profile.expertises.length > 0 && (
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 2.5 }}>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 2 }}>
                   {profile.expertises.map(exp => (
                     <Chip
                       key={exp.id}
@@ -170,6 +227,27 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                 </Box>
               )}
 
+              {/* Stats row */}
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2.5, mb: 2.5 }}>
+                {hasRating ? (
+                  <StatBadge
+                    icon={<StarIcon sx={{ fontSize: 15, color: "#f59e0b" }} />}
+                    label={`${ratingAvg!.toFixed(2)} (${profile.rating_count} review${profile.rating_count !== 1 ? "s" : ""})`}
+                  />
+                ) : (
+                  <StatBadge
+                    icon={<ReviewIcon sx={{ fontSize: 15, color: "rgba(0,0,0,0.3)" }} />}
+                    label="No reviews yet"
+                  />
+                )}
+                {profile.completed_orders_count > 0 && (
+                  <StatBadge
+                    icon={<CheckCircleIcon sx={{ fontSize: 15, color: "#16a34a" }} />}
+                    label={`${profile.completed_orders_count} completed order${profile.completed_orders_count !== 1 ? "s" : ""}`}
+                  />
+                )}
+              </Box>
+
               {/* CTA */}
               <Box sx={{ display: "flex", gap: 1.5 }}>
                 <Button
@@ -179,18 +257,20 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                     bgcolor: "#0071e3", color: "white", borderRadius: 25,
                     textTransform: "none",
                     "&:hover": { bgcolor: "#0077ED" },
-                  }}>
+                  }}
+                >
                   Contact Me
                 </Button>
                 <Button
-                  onClick={() => setActiveTab("services")}
+                  onClick={() => handleTabChange("services")}
                   sx={{
                     px: 3, height: 44, fontSize: 13, fontWeight: 500,
                     bgcolor: "white", color: "black",
                     border: "1px solid rgba(0,0,0,0.12)", borderRadius: 25,
                     textTransform: "none",
                     "&:hover": { borderColor: "rgba(0,0,0,0.25)", bgcolor: "white" },
-                  }}>
+                  }}
+                >
                   View Services
                 </Button>
               </Box>
@@ -204,13 +284,14 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
         sx={{
           bgcolor: "white", borderBottom: "1px solid rgba(0,0,0,0.08)",
           position: "sticky", top: 0, zIndex: 10,
-        }}>
+        }}
+      >
         <Box sx={{ maxWidth: 1440, mx: "auto", px: { xs: 3, md: 6 } }}>
           <Box sx={{ display: "flex", gap: 0 }}>
             {TABS.map(tab => (
               <Button
                 key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
+                onClick={() => handleTabChange(tab.id)}
                 disableRipple
                 sx={{
                   px: 2, py: 2, fontSize: 13, fontWeight: 500,
@@ -218,8 +299,22 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                   color: activeTab === tab.id ? "black" : "rgba(0,0,0,0.55)",
                   borderBottom: activeTab === tab.id ? "2px solid #0071e3" : "2px solid transparent",
                   "&:hover": { bgcolor: "transparent", color: "black" },
-                }}>
+                }}
+              >
                 {tab.label}
+                {tab.id === "reviews" && profile.rating_count > 0 && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 0.75, px: 0.75, py: 0.1,
+                      bgcolor: activeTab === "reviews" ? "#0071e3" : "rgba(0,0,0,0.1)",
+                      color: activeTab === "reviews" ? "white" : "rgba(0,0,0,0.5)",
+                      borderRadius: 10, fontSize: 10, fontWeight: 600,
+                    }}
+                  >
+                    {profile.rating_count}
+                  </Box>
+                )}
               </Button>
             ))}
           </Box>
@@ -233,8 +328,6 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
           {/* ── ABOUT ── */}
           {activeTab === "about" && (
             <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-
-              {/* Bio */}
               {profile.about && (
                 <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 4 }}>
                   <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>About</Typography>
@@ -244,7 +337,6 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                 </Box>
               )}
 
-              {/* Languages */}
               {profile.languages && profile.languages.length > 0 && (
                 <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 4 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
@@ -264,7 +356,6 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                 </Box>
               )}
 
-              {/* Education */}
               {profile.educations && profile.educations.length > 0 && (
                 <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 4 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
@@ -274,20 +365,14 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {profile.educations.map((edu, idx) => (
                       <Box key={idx} sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-                        <Typography sx={{ fontSize: 14, fontWeight: 500, color: "black" }}>{edu.degree}</Typography>
-                        <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>{edu.school}</Typography>
-                        {(edu.from || edu.to !== undefined) && (
-                          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }}>
-                            {edu.from}{edu.from && (edu.to !== undefined) ? " – " : ""}{edu.to ?? "Present"}
-                          </Typography>
-                        )}
+                        <Typography sx={{ fontSize: 14, fontWeight: 500, color: "black" }}>{edu.studies}</Typography>
+                        <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>{edu.facility}</Typography>
                       </Box>
                     ))}
                   </Box>
                 </Box>
               )}
 
-              {/* Certificates */}
               {profile.certificates && profile.certificates.length > 0 && (
                 <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 4 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2.5 }}>
@@ -297,18 +382,14 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                   <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
                     {profile.certificates.map((cert, idx) => (
                       <Box key={idx} sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
-                        <Typography sx={{ fontSize: 14, fontWeight: 500, color: "black" }}>{cert.name}</Typography>
-                        <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>{cert.issuer}</Typography>
-                        {cert.year && (
-                          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }}>{cert.year}</Typography>
-                        )}
+                        <Typography sx={{ fontSize: 14, fontWeight: 500, color: "black" }}>{cert.title}</Typography>
+                        <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>{cert.source}</Typography>
                       </Box>
                     ))}
                   </Box>
                 </Box>
               )}
 
-              {/* Empty about state */}
               {!profile.about && (!profile.languages || profile.languages.length === 0) &&
                 (!profile.educations || profile.educations.length === 0) &&
                 (!profile.certificates || profile.certificates.length === 0) && (
@@ -343,7 +424,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                     display: "grid",
                     gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
                     gap: 3,
-                  }}>
+                  }}
+                >
                   {profile.services.map(service => {
                     const lowestPrice = service.pricing_options?.length
                       ? Math.min(...service.pricing_options.map(p => p.price_raw))
@@ -353,10 +435,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                       : null;
 
                     return (
-                      <Link
-                        key={service.id}
-                        href={`/explore-services/${service.id}`}
-                        style={{ textDecoration: "none" }}>
+                      <Link key={service.id} href={`/explore-services/${service.id}`} style={{ textDecoration: "none" }}>
                         <Card
                           elevation={0}
                           sx={{
@@ -369,7 +448,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                               border: "1px solid rgba(0,0,0,0.18)",
                               boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
                             },
-                          }}>
+                          }}
+                        >
                           <CardContent sx={{ p: 2.5 }}>
                             <Typography
                               sx={{
@@ -379,7 +459,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                                 WebkitLineClamp: 2,
                                 WebkitBoxOrient: "vertical",
                                 overflow: "hidden",
-                              }}>
+                              }}
+                            >
                               {service.title}
                             </Typography>
 
@@ -394,24 +475,18 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                               sx={{
                                 display: "flex", alignItems: "center", justifyContent: "space-between",
                                 pt: 2, borderTop: "1px solid rgba(0,0,0,0.07)",
-                              }}>
+                              }}
+                            >
                               <Box>
                                 {lowestPrice != null ? (
                                   <>
-                                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)", mb: 0.25 }}>
-                                      Starting at
-                                    </Typography>
-                                    <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>
-                                      ${lowestPrice}
-                                    </Typography>
+                                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)", mb: 0.25 }}>Starting at</Typography>
+                                    <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>${lowestPrice}</Typography>
                                   </>
                                 ) : (
-                                  <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }}>
-                                    Price on request
-                                  </Typography>
+                                  <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }}>Price on request</Typography>
                                 )}
                               </Box>
-
                               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
                                 {fastestDelivery != null && isFinite(fastestDelivery) && (
                                   <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)" }}>
@@ -440,15 +515,96 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
             </Box>
           )}
 
-          {/* ── REVIEWS (placeholder) ── */}
+          {/* ── REVIEWS ── */}
           {activeTab === "reviews" && (
-            <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 6, textAlign: "center" }}>
-              <Typography sx={{ fontSize: 15, fontWeight: 500, color: "rgba(0,0,0,0.5)", mb: 1 }}>
-                No reviews yet
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.35)" }}>
-                Reviews will appear here once clients complete orders with this freelancer.
-              </Typography>
+            <Box>
+              {/* Summary bar */}
+              {hasRating && (
+                <Box
+                  sx={{
+                    display: "flex", alignItems: "center", gap: 2,
+                    bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)",
+                    p: 3, mb: 3,
+                  }}
+                >
+                  <Typography sx={{ fontSize: 40, fontWeight: 700, color: "black", lineHeight: 1 }}>
+                    {ratingAvg!.toFixed(2)}
+                  </Typography>
+                  <Box>
+                    <Box sx={{ display: "flex", gap: 0.25, mb: 0.5 }}>
+                      {[1, 2, 3, 4, 5].map((star) => (
+                        <StarIcon
+                          key={star}
+                          sx={{
+                            fontSize: 18,
+                            color: star <= Math.round(ratingAvg!) ? "#f59e0b" : "rgba(0,0,0,0.15)",
+                          }}
+                        />
+                      ))}
+                    </Box>
+                    <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.5)" }}>
+                      {profile.rating_count} review{profile.rating_count !== 1 ? "s" : ""}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
+              {/* Loading */}
+              {reviewsLoading && (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
+                  <CircularProgress size={28} />
+                </Box>
+              )}
+
+              {/* Error */}
+              {reviewsError && !reviewsLoading && (
+                <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 6, textAlign: "center" }}>
+                  <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.4)" }}>{reviewsError}</Typography>
+                  <Button
+                    onClick={() => fetchReviews(reviewsPage)}
+                    sx={{ mt: 2, fontSize: 13, textTransform: "none", color: "#0071e3" }}
+                  >
+                    Try again
+                  </Button>
+                </Box>
+              )}
+
+              {/* Reviews list */}
+              {!reviewsLoading && !reviewsError && reviewsFetched && (
+                <>
+                  {reviews.length === 0 ? (
+                    <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 6, textAlign: "center" }}>
+                      <Typography sx={{ fontSize: 15, fontWeight: 500, color: "rgba(0,0,0,0.5)", mb: 1 }}>
+                        No reviews yet
+                      </Typography>
+                      <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.35)" }}>
+                        Reviews will appear here once clients complete orders with this freelancer.
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                      {reviews.map((review) => (
+                        <ReviewCard key={review.id} review={review} />
+                      ))}
+                    </Box>
+                  )}
+
+                  {reviewsLastPage > 1 && (
+                    <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                      <Pagination
+                        count={reviewsLastPage}
+                        page={reviewsPage}
+                        onChange={handleReviewsPageChange}
+                        shape="rounded"
+                        sx={{
+                          "& .MuiPaginationItem-root": { fontSize: 13 },
+                          "& .Mui-selected": { bgcolor: "#0071e3 !important", color: "white" },
+                        }}
+                      />
+                    </Box>
+                  )}
+                </>
+              )}
             </Box>
           )}
 

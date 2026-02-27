@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress } from "@mui/material";
 import { Message as MessageCircleIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
-import { Order, OrderStatus, MyOrdersResponse } from "@/types/order";
+import { Order, OrderStatus, MyOrdersResponse, Review } from "@/types/order";
 import OrderDetailModal from "@/components/dashboard/OrderDetailModal";
 
 export default function OrdersContent() {
@@ -83,6 +83,13 @@ export default function OrdersContent() {
   const handleCloseModal = () => {
     setDetailModalOpen(false);
     setSelectedOrder(null);
+  };
+
+  const handleReviewSubmitted = (orderId: number, review: Review) => {
+    setOrders((prev) =>
+      prev.map((o) => (o.id === orderId ? { ...o, review } : o))
+    );
+    setSelectedOrder((prev) => (prev?.id === orderId ? { ...prev, review } : prev));
   };
 
   if (loading) {
@@ -263,6 +270,7 @@ export default function OrdersContent() {
         open={detailModalOpen}
         order={selectedOrder}
         onClose={handleCloseModal}
+        onReviewSubmitted={handleReviewSubmitted}
       />
     </Box>
   );

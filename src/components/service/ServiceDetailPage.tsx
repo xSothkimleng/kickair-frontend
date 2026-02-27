@@ -38,6 +38,7 @@ import {
   Send,
   LocationOn,
   ShoppingBag,
+  StarRounded,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse } from "@/types/service";
@@ -97,8 +98,9 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
     if (!service || !pricingOptions[selectedPackage]) return;
 
     const selectedPkg = pricingOptions[selectedPackage];
-    const platformFee = selectedPkg.price_raw * 0.05;
-    const total = selectedPkg.price_raw + platformFee;
+    const priceRaw = Number(selectedPkg.price_raw);
+    const platformFee = priceRaw * 0.05;
+    const total = priceRaw + platformFee;
     const installmentFee = total * 0.03;
     const totalWithFee = total + installmentFee;
     const perPayment = totalWithFee / installmentTerms.numberOfPayments;
@@ -162,10 +164,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const faqs = service.faqs || [];
   const imageMedia = media.filter(m => m.file_type === "image");
   const sortedImageMedia = service.feature_image_id
-    ? [
-        ...imageMedia.filter(m => m.id === service.feature_image_id),
-        ...imageMedia.filter(m => m.id !== service.feature_image_id),
-      ]
+    ? [...imageMedia.filter(m => m.id === service.feature_image_id), ...imageMedia.filter(m => m.id !== service.feature_image_id)]
     : imageMedia;
   const gallery = sortedImageMedia.map(m => m.file_url);
   const selectedPricing = pricingOptions[selectedPackage];
@@ -277,6 +276,17 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                         </Typography>
                       </Box>
                     )}
+                    {service.rating_count > 0 && (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                        <StarRounded sx={{ fontSize: 15, color: "#f59e0b" }} />
+                        <Typography variant='body2' sx={{ fontWeight: 600, color: "black" }}>
+                          {parseFloat(String(service.rating_average)).toFixed(1)}
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          ({service.rating_count} {service.rating_count === 1 ? "review" : "reviews"})
+                        </Typography>
+                      </Box>
+                    )}
                     <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                       <ShoppingBag sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }} />
                       <Typography variant='body2' color='text.secondary'>
@@ -319,16 +329,11 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                     {freelancerName.charAt(0)}
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
                       <Box>
                         <Typography variant='h6' sx={{ fontSize: "17px", fontWeight: 600 }}>
                           {freelancerName}
                         </Typography>
-                        {freelancer?.certificates && freelancer.certificates.length > 0 && (
-                          <Typography variant='caption' sx={{ color: "#0071e3", fontWeight: 500 }}>
-                            {freelancer.certificates[0].title}
-                          </Typography>
-                        )}
                       </Box>
                       <Button
                         onClick={() => router.push(`/find-freelancer/${freelancer?.id}`)}
@@ -336,26 +341,47 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                         View Profile
                       </Button>
                     </Box>
-                    {freelancer?.educations && freelancer.educations.length > 0 && (
-                      <Grid container spacing={2} sx={{ mt: 2, pt: 2, borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-                        <Grid size={{ xs: 6, md: 6 }}>
-                          <Typography variant='caption' color='text.secondary' display='block'>
-                            Education
-                          </Typography>
-                          <Typography variant='body2' fontWeight={500}>
-                            {freelancer.educations[0].studies} - {freelancer.educations[0].facility}
-                          </Typography>
-                        </Grid>
-                        <Grid size={{ xs: 6, md: 6 }}>
-                          <Typography variant='caption' color='text.secondary' display='block'>
-                            Total Orders
-                          </Typography>
-                          <Typography variant='body2' fontWeight={500}>
-                            {service.orders_count}
-                          </Typography>
-                        </Grid>
+                    <Grid container spacing={2} sx={{ pt: 2, borderTop: "1px solid rgba(0,0,0,0.08)" }}>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
+                          Response Time
+                        </Typography>
+                        <Typography variant='body2' fontWeight={500}>
+                          {"< 1 hour"}
+                        </Typography>
                       </Grid>
-                    )}
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
+                          Total Orders
+                        </Typography>
+                        <Typography variant='body2' fontWeight={500}>
+                          {service.orders_count}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
+                          Member Since
+                        </Typography>
+                        <Typography variant='body2' fontWeight={500}>
+                          {user?.created_at
+                            ? new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+                            : "—"}
+                        </Typography>
+                      </Grid>
+                      <Grid size={{ xs: 6, md: 3 }}>
+                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
+                          Languages
+                        </Typography>
+                        <Typography variant='body2' fontWeight={500}>
+                          {freelancer?.languages && freelancer.languages.length > 0
+                            ? freelancer.languages
+                                .slice(0, 2)
+                                .map(l => l.name)
+                                .join(", ")
+                            : "—"}
+                        </Typography>
+                      </Grid>
+                    </Grid>
                   </Box>
                 </Box>
               </Card>
@@ -366,10 +392,13 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   About This Service
                 </Typography>
                 <Box sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)", lineHeight: 1.7 }}>
-                  {service.description
-                    ? <RichTextDisplay value={service.description} />
-                    : <Typography variant="body1" sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)" }}>No description available.</Typography>
-                  }
+                  {service.description ? (
+                    <RichTextDisplay value={service.description} />
+                  ) : (
+                    <Typography variant='body1' sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)" }}>
+                      No description available.
+                    </Typography>
+                  )}
                 </Box>
 
                 {/* Tags */}
@@ -427,6 +456,78 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   </Box>
                 </Card>
               )}
+
+              {/* Reviews */}
+              {service.reviews && service.reviews.length > 0 && (
+                <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
+                  {/* Header */}
+                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
+                    <Typography variant='h5' sx={{ fontSize: "21px", fontWeight: 600 }}>
+                      Reviews
+                    </Typography>
+                    {service.rating_count > 0 && (
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                        <StarRounded sx={{ fontSize: 20, color: "#f59e0b" }} />
+                        <Typography sx={{ fontSize: 18, fontWeight: 700, color: "black" }}>
+                          {parseFloat(String(service.rating_average)).toFixed(1)}
+                        </Typography>
+                        <Typography variant='body2' color='text.secondary'>
+                          ({service.rating_count})
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+
+                  {/* Review list */}
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                    {service.reviews.map((review, idx) => (
+                      <Box key={review.id}>
+                        {idx > 0 && <Divider sx={{ mb: 3 }} />}
+                        <Box sx={{ display: "flex", gap: 2 }}>
+                          <Avatar
+                            src={review.client_profile.user.profile_image ?? undefined}
+                            alt={review.client_profile.user.name}
+                            sx={{ width: 40, height: 40 }}>
+                            {review.client_profile.user.name.charAt(0)}
+                          </Avatar>
+                          <Box sx={{ flex: 1 }}>
+                            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 0.5 }}>
+                              <Box>
+                                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{review.client_profile.user.name}</Typography>
+                                <Typography variant='caption' color='text.secondary'>
+                                  {review.pricing_option.title} package
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.25 }}>
+                                <Box sx={{ display: "flex" }}>
+                                  {[1, 2, 3, 4, 5].map(star => (
+                                    <StarRounded
+                                      key={star}
+                                      sx={{ fontSize: 14, color: star <= review.rating ? "#f59e0b" : "rgba(0,0,0,0.15)" }}
+                                    />
+                                  ))}
+                                </Box>
+                                <Typography variant='caption' color='text.secondary'>
+                                  {new Date(review.created_at).toLocaleDateString("en-US", {
+                                    year: "numeric",
+                                    month: "short",
+                                    day: "numeric",
+                                  })}
+                                </Typography>
+                              </Box>
+                            </Box>
+                            {review.comment && (
+                              <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.6, mt: 1 }}>
+                                {review.comment}
+                              </Typography>
+                            )}
+                          </Box>
+                        </Box>
+                      </Box>
+                    ))}
+                  </Box>
+                </Card>
+              )}
             </Box>
           </Grid>
 
@@ -465,20 +566,17 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                     <CardContent sx={{ p: 3 }}>
                       <Box sx={{ mb: 3 }}>
                         <Typography variant='h3' sx={{ fontSize: "32px", fontWeight: 600, mb: 0.5 }}>
-                          ${selectedPricing.price_raw}
+                          ${Number(selectedPricing.price_raw).toFixed(2)}
                         </Typography>
                         <Box sx={{ display: "flex", gap: 2, fontSize: "13px", color: "rgba(0,0,0,0.6)", mb: 2 }}>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                             <AccessTime sx={{ fontSize: 14 }} />
-                            <Typography variant='caption'>
-                              {selectedPricing.delivery_time} day{selectedPricing.delivery_time !== 1 ? "s" : ""} delivery
-                            </Typography>
+                            <Typography variant='caption'>{selectedPricing.delivery_time} delivery</Typography>
                           </Box>
                           <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
                             <Refresh sx={{ fontSize: 14 }} />
                             <Typography variant='caption'>
-                              {selectedPricing.revisions === -1 ? "Unlimited" : selectedPricing.revisions} revision
-                              {selectedPricing.revisions !== 1 ? "s" : ""}
+                              {selectedPricing.revisions} {String(selectedPricing.revisions) === "1" ? "revision" : "revisions"}
                             </Typography>
                           </Box>
                         </Box>
@@ -510,7 +608,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                             color: "white",
                             "&:hover": { bgcolor: "#0077ED", boxShadow: 2 },
                           }}>
-                          Continue (${selectedPricing.price_raw})
+                          Continue (${Number(selectedPricing.price_raw).toFixed(2)})
                         </Button>
                         <Button
                           fullWidth
@@ -650,7 +748,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   Base Price
                 </Typography>
                 <Typography variant='body2' fontWeight={500}>
-                  ${selectedPricing.price_raw}
+                  ${Number(selectedPricing.price_raw).toFixed(2)}
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
@@ -658,7 +756,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   Platform Fee (5%)
                 </Typography>
                 <Typography variant='body2' fontWeight={500}>
-                  ${(selectedPricing.price_raw * 0.05).toFixed(2)}
+                  ${(Number(selectedPricing.price_raw) * 0.05).toFixed(2)}
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
@@ -666,7 +764,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   Installment Fee (3%)
                 </Typography>
                 <Typography variant='body2' fontWeight={500}>
-                  ${(selectedPricing.price_raw * 1.05 * 0.03).toFixed(2)}
+                  ${(Number(selectedPricing.price_raw) * 1.05 * 0.03).toFixed(2)}
                 </Typography>
               </Box>
               <Divider sx={{ my: 1 }} />
@@ -675,7 +773,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   Total Amount
                 </Typography>
                 <Typography variant='h6' sx={{ fontSize: "17px", fontWeight: 600, color: "#0071e3" }}>
-                  ${(selectedPricing.price_raw * 1.05 * 1.03).toFixed(2)}
+                  ${(Number(selectedPricing.price_raw) * 1.05 * 1.03).toFixed(2)}
                 </Typography>
               </Box>
             </Card>
@@ -743,7 +841,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                     Per Payment
                   </Typography>
                   <Typography variant='h6' sx={{ fontSize: "20px", fontWeight: 600, color: "#7b1fa2" }}>
-                    ${((selectedPricing.price_raw * 1.05 * 1.03) / installmentTerms.numberOfPayments).toFixed(2)}
+                    ${((Number(selectedPricing.price_raw) * 1.05 * 1.03) / installmentTerms.numberOfPayments).toFixed(2)}
                   </Typography>
                 </Box>
               </Box>

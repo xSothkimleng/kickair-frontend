@@ -236,7 +236,7 @@ export default function ServicesPage({ initialCategory, searchQuery }: ServicesP
         )}
 
         {/* Main Content Grid */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 3fr" }, gap: 4 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 3fr" }, gap: 4, pb: 4 }}>
           {/* Filters Sidebar */}
           <Box sx={{ display: { xs: showFilters ? "block" : "none", lg: "block" } }}>
             <FiltersSidebar

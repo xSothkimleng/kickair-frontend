@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Box, Card, CardContent, Typography, IconButton, Avatar } from "@mui/material";
-import { FavoriteBorder, Favorite, ShoppingBag } from "@mui/icons-material";
+import { FavoriteBorder, Favorite, ShoppingBag, StarRounded } from "@mui/icons-material";
 import Image from "next/image";
 import Link from "next/link";
 import { Service } from "@/types/service";
@@ -22,10 +22,12 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   const image = service.feature_image?.file_url || service.media?.[0]?.file_url || "";
 
   // Get the lowest price from pricing options
-  const lowestPrice = service.pricing_options?.length ? Math.min(...service.pricing_options.map(p => p.price_raw)) : 0;
+  const lowestPrice = service.pricing_options?.length ? Math.min(...service.pricing_options.map(p => Number(p.price_raw))) : 0;
 
-  // Get the fastest delivery time
-  const fastestDelivery = service.pricing_options?.length ? Math.min(...service.pricing_options.map(p => p.delivery_time)) : 0;
+  // Get the fastest delivery time (delivery_time may be "3 days" string or a number)
+  const fastestDelivery = service.pricing_options?.length
+    ? Math.min(...service.pricing_options.map(p => parseInt(String(p.delivery_time))))
+    : 0;
 
   return (
     <Link href={`/explore-services/${service.id}`} style={{ textDecoration: "none" }}>
@@ -147,10 +149,21 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             {service.title}
           </Typography>
 
-          {/* Orders Count */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 1.5 }}>
-            <ShoppingBag sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }} />
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{service.orders_count} orders</Typography>
+          {/* Rating & Orders */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+            {service.rating_count > 0 && (
+              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                <StarRounded sx={{ fontSize: 13, color: "#f59e0b" }} />
+                <Typography sx={{ fontSize: 11, fontWeight: 600, color: "black" }}>
+                  {parseFloat(service.rating_average!).toFixed(1)}
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)" }}>({service.rating_count})</Typography>
+              </Box>
+            )}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+              <ShoppingBag sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.5)" }} />
+              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)" }}>{service.orders_count} orders</Typography>
+            </Box>
           </Box>
 
           {/* Price & Delivery */}
