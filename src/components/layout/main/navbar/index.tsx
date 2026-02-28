@@ -705,6 +705,8 @@ export default function MainNavbar() {
           user={user}
           loading={loading}
           onLogout={handleLogout}
+          currentMode={currentMode}
+          onModeSwitch={handleModeSwitch}
         />
 
         {/* ── Create Profile Dialog ─────────────────────────────────────────────── */}

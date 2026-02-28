@@ -3,7 +3,23 @@
     "allow": [
       "Bash(npx tsc:*)",
       "Bash(npm install:*)",
-      "Bash(ls:*)"
+      "Bash(ls:*)",
+      "Bash(git add next.config.ts src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/DashboardContent.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/ProfileContent.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/page.tsx src/components/dashboard/freelancer/ServiceForm/index.tsx src/components/layout/dashboard/DashboardHeader.tsx src/components/layout/dashboard/DashboardTabs.tsx)",
+      "Bash(git commit:*)",
+      "Bash(xargs grep -l \"textarea\\\\|TextArea\")",
+      "Bash(xargs grep -l \"about\\\\|description\")",
+      "Bash(git add package.json package-lock.json src/app/globals.css src/app/\\\\\\(main\\\\\\)/dashboard/client/ProfileContent.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/ProfileContent.tsx src/app/\\\\\\(main\\\\\\)/explore-services/ServiceCard.tsx src/app/\\\\\\(main\\\\\\)/explore-services/page.tsx src/components/dashboard/freelancer/ServiceForm/BasicInfoSection.tsx src/components/dashboard/freelancer/ServiceForm/MediaGallerySection.tsx src/components/dashboard/freelancer/ServiceForm/PricingTierCard.tsx src/components/dashboard/freelancer/ServiceForm/index.tsx src/components/service/ServiceDetailPage.tsx src/components/ui/freelancerProfilePage.tsx src/components/ui/RichTextDisplay.tsx src/components/ui/RichTextEditor.tsx src/lib/api.ts src/types/service.ts)",
+      "Bash(xargs wc -l)",
+      "Bash(git add \"src/app/\\(main\\)/dashboard/client/OrdersContent.tsx\" \"src/app/\\(main\\)/dashboard/freelancer/ProfileContent.tsx\" \"src/app/\\(main\\)/explore-services/ServiceCard.tsx\" \"src/app/\\(main\\)/explore-services/page.tsx\" \"src/components/dashboard/OrderDetailModal.tsx\" \"src/components/service/ServiceDetailPage.tsx\" \"src/components/ui/freelancerProfilePage.tsx\" \"src/components/ui/ReviewCard.tsx\" \"src/lib/api.ts\" \"src/types/order.ts\" \"src/types/service.ts\" \"src/types/user.ts\")",
+      "Bash(npm run build)",
+      "Bash(git add src/app/\\\\\\(main\\\\\\)/dashboard/client/messages/page.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/FinanceContent.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/OrdersContent.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/messages/page.tsx src/app/\\\\\\(main\\\\\\)/explore-services/[id]/checkout/page.tsx src/app/\\\\\\(main\\\\\\)/explore-services/page.tsx src/components/dashboard/freelancer/ServiceCard.tsx src/components/dashboard/freelancer/ServiceForm/BasicInfoSection.tsx src/components/dashboard/freelancer/ServiceForm/index.tsx src/components/ui/RichTextEditor.tsx)",
+      "Bash(git push)",
+      "Bash(git push origin main)",
+      "Bash(git add src/app/\\\\\\(main\\\\\\)/auth/sign-in/page.tsx src/app/\\\\\\(main\\\\\\)/auth/sign-up/page.tsx)",
+      "Bash(git add \"src/app/\\(main\\)/find-freelancer/page.tsx\" \"src/components/layout/card/FreelancerCard.tsx\" \"src/components/layout/main/navbar/index.tsx\" \"src/components/layout/main/navbar/styles.ts\")",
+      "Bash(find \"d:\\\\project\\\\KickAir\\\\kickair-frontend/src/app/\\(main\\)/dashboard\" -name \"*.tsx\" -type f)",
+      "WebFetch(domain:www.upwork.com)",
+      "Bash(git add src/app/\\\\\\(main\\\\\\)/\\\\\\(homepage\\\\\\)/page.tsx src/app/\\\\\\(main\\\\\\)/dashboard/client/PostServiceContent.tsx src/app/\\\\\\(main\\\\\\)/dashboard/client/page.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/page.tsx src/app/\\\\\\(main\\\\\\)/dashboard/freelancer/ProposalsContent.tsx src/app/\\\\\\(main\\\\\\)/dashboard/jobs/ src/app/\\\\\\(main\\\\\\)/jobs/ src/app/\\\\\\(main\\\\\\)/proposals/ src/components/dashboard/freelancer/ServiceForm/index.tsx src/components/jobs/ src/components/layout/main/navbar/index.tsx src/lib/api.ts src/types/job.ts)"
     ]
   }
 }
