@@ -18,7 +18,6 @@ import {
   CircularProgress,
   Alert,
   Pagination,
-  Grid,
 } from "@mui/material";
 import { TuneOutlined, Search as SearchIcon, KeyboardArrowUp, KeyboardArrowDown, Close } from "@mui/icons-material";
 import { FreelancerCard } from "@/components/layout/card/FreelancerCard";
@@ -118,9 +117,9 @@ export default function FindFreelancersPage() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
-      <Container maxWidth='xl' sx={{ px: { xs: 3, md: 6 }, py: { xs: 6, md: 10 } }}>
-        {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 4 }}>
+      {/* Header */}
+      <Box sx={{ textAlign: "center", mb: 4, bgcolor: "#fff", borderBottom: "1px solid rgba(0, 0, 0, 0.08)", py: 4 }}>
+        <Container sx={{ mb: 4 }}>
           <Typography
             variant='h1'
             sx={{
@@ -135,8 +134,10 @@ export default function FindFreelancersPage() {
           <Typography sx={{ fontSize: 17, color: "rgba(0, 0, 0, 0.6)" }}>
             Discover talented professionals ready to bring your project to life
           </Typography>
-        </Box>
+        </Container>
+      </Box>
 
+      <Container sx={{ py: { xs: 6, md: 0 } }}>
         {/* Filter Toggle — Mobile */}
         <Box sx={{ display: { xs: "flex", lg: "none" }, justifyContent: "center", mb: 3 }}>
           <Button
@@ -189,7 +190,7 @@ export default function FindFreelancersPage() {
         )}
 
         {/* Main Grid */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 3fr" }, gap: 4 }}>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "minmax(0, 1fr) minmax(0, 3fr)" }, gap: 4 }}>
           {/* Filters Sidebar */}
           <Box sx={{ display: { xs: showFilters ? "block" : "none", lg: "block" } }}>
             <Box
@@ -507,13 +508,11 @@ export default function FindFreelancersPage() {
               </Box>
             ) : (
               <>
-                <Grid container spacing={3}>
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "1fr 1fr 1fr" }, gap: 3 }}>
                   {sorted.map(profile => (
-                    <Grid size={{ xs: 12, sm: 6, md: 4 }} key={profile.id}>
-                      <FreelancerCard profile={profile} />
-                    </Grid>
+                    <FreelancerCard key={profile.id} profile={profile} />
                   ))}
-                </Grid>
+                </Box>
 
                 {sorted.length === 0 && !loading && (
                   <Box sx={{ textAlign: "center", py: 10 }}>

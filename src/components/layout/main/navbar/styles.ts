@@ -2,6 +2,7 @@ export const dropdownPanelSx = {
   position: "absolute" as const,
   top: "100%",
   mt: 0,
+  width: "max-content",
   backgroundColor: "white",
   borderRadius: "16px",
   boxShadow: "0 20px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04)",
