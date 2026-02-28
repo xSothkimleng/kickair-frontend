@@ -98,8 +98,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
-        const response = await api.get("/api/service-categories");
-        setCategories(response.data);
+        const cats = await api.getServiceCategories();
+        setCategories(cats);
       } catch (err) {
         console.error("Failed to fetch categories:", err);
       } finally {

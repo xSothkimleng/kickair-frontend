@@ -16,7 +16,7 @@ const tabs: { value: string; label: string }[] = [
   { value: "dashboard", label: "Dashboard" },
   { value: "profile", label: "Profile" },
   { value: "orders", label: "Orders" },
-  { value: "service", label: "Post a Service" },
+  { value: "service", label: "Jobs" },
   { value: "finance", label: "Finance" },
   { value: "messages", label: "Messages" },
 ];

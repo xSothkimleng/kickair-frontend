@@ -12,6 +12,18 @@ import {
   ClientProfileRequest,
   FreelancerProfilesListResponse,
 } from "@/types/user";
+import {
+  JobPost,
+  Proposal,
+  PaginatedResponse,
+  CreateJobPostRequest,
+  UpdateJobPostRequest,
+  CreateProposalRequest,
+  UpdateProposalRequest,
+  JobPostFilters,
+} from "@/types/job";
+import { ServiceCategory } from "@/types/service";
+import { Order } from "@/types/order";
 
 export class EmailUnverifiedError extends Error {
   constructor() {
@@ -376,6 +388,116 @@ class ApiClient {
 
   async getFreelancerReviews(freelancerProfileId: number, page: number = 1): Promise<FreelancerReviewsResponse> {
     return this.get(`/api/freelancer-profiles/${freelancerProfileId}/reviews?page=${page}`);
+  }
+
+  // ============================================
+  // Reference Data — Service Categories
+  // ============================================
+
+  async getServiceCategories(): Promise<ServiceCategory[]> {
+    const response = await this.get("/api/service-categories");
+    // API returns `category_name`; normalize to `name` used throughout the frontend
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return response.data.map((c: any) => ({ ...c, name: c.name ?? c.category_name }));
+  }
+
+  // ============================================
+  // Job Post Methods (Public)
+  // ============================================
+
+  async getJobPosts(filters: JobPostFilters = {}): Promise<PaginatedResponse<JobPost>> {
+    const params = new URLSearchParams();
+    if (filters.category_id) params.set("category_id", String(filters.category_id));
+    if (filters.budget_min) params.set("budget_min", String(filters.budget_min));
+    if (filters.budget_max) params.set("budget_max", String(filters.budget_max));
+    if (filters.skill_ids?.length) {
+      filters.skill_ids.forEach(id => params.append("skill_ids[]", String(id)));
+    }
+    if (filters.page && filters.page > 1) params.set("page", String(filters.page));
+    const query = params.toString();
+    return this.get(`/api/job-posts${query ? `?${query}` : ""}`);
+  }
+
+  async getJobPost(id: number): Promise<JobPost> {
+    const response = await this.get(`/api/job-posts/${id}`);
+    return response.data;
+  }
+
+  // ============================================
+  // Job Post Methods (Client)
+  // ============================================
+
+  async createJobPost(data: CreateJobPostRequest): Promise<JobPost> {
+    const response = await this.post("/api/job-posts", data);
+    return response.data;
+  }
+
+  async updateJobPost(id: number, data: UpdateJobPostRequest): Promise<JobPost> {
+    const response = await this.put(`/api/job-posts/${id}`, data);
+    return response.data;
+  }
+
+  async deleteJobPost(id: number): Promise<void> {
+    await this.delete(`/api/job-posts/${id}`);
+  }
+
+  async getClientJobPosts(page: number = 1): Promise<PaginatedResponse<JobPost>> {
+    return this.get(`/api/client/job-posts?page=${page}`);
+  }
+
+  // ============================================
+  // Proposal Methods (Freelancer)
+  // ============================================
+
+  async submitProposal(jobPostId: number, data: CreateProposalRequest): Promise<Proposal> {
+    const response = await this.post(`/api/job-posts/${jobPostId}/proposals`, data);
+    return response.data;
+  }
+
+  async updateProposal(proposalId: number, data: UpdateProposalRequest): Promise<Proposal> {
+    const response = await this.put(`/api/proposals/${proposalId}`, data);
+    return response.data;
+  }
+
+  async withdrawProposal(proposalId: number): Promise<Proposal> {
+    const response = await this.post(`/api/proposals/${proposalId}/withdraw`, {});
+    return response.data;
+  }
+
+  async getFreelancerProposals(page: number = 1): Promise<PaginatedResponse<Proposal>> {
+    return this.get(`/api/freelancer/proposals?page=${page}`);
+  }
+
+  // ============================================
+  // Proposal Methods (Client)
+  // ============================================
+
+  async getJobProposals(jobPostId: number, page: number = 1): Promise<PaginatedResponse<Proposal>> {
+    return this.get(`/api/job-posts/${jobPostId}/proposals?page=${page}`);
+  }
+
+  async getProposal(proposalId: number): Promise<Proposal> {
+    const response = await this.get(`/api/proposals/${proposalId}`);
+    return response.data;
+  }
+
+  async approveProposal(proposalId: number): Promise<Order> {
+    const response = await this.post(`/api/proposals/${proposalId}/approve`, {});
+    return response.data;
+  }
+
+  async rejectProposal(proposalId: number): Promise<Proposal> {
+    const response = await this.post(`/api/proposals/${proposalId}/reject`, {});
+    return response.data;
+  }
+
+  // ============================================
+  // Upload Token
+  // ============================================
+
+  async getUploadToken(): Promise<string> {
+    const response = await this.post("/api/upload-tokens", {});
+    return response.data.upload_token;
   }
 }
 

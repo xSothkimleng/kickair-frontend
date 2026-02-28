@@ -306,7 +306,7 @@ export default function MainNavbar() {
                         icon={<BusinessCenterIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
                         title='Opportunities'
                         description='Find gigs, part-time & full-time work'
-                        href='/opportunities'
+                        href='/jobs'
                         onClick={() => setActiveDropdown(null)}
                       />
                       <DropdownItem

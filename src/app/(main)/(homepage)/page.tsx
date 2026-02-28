@@ -1,4 +1,3 @@
-import { Container } from "@mui/material";
 import HeroSection from "./HeroSection";
 import ServicesSection from "./ServicesSection";
 import { freelancers, serviceCategories } from "../../data/mockdata";

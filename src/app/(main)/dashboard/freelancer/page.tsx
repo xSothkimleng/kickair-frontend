@@ -10,8 +10,9 @@ import OrdersContent from "./OrdersContent";
 import FinanceContent from "./FinanceContent";
 import MessagesContent from "./MessagesContent";
 import LevelContent from "./LevelContent";
+import ProposalsContent from "./ProposalsContent";
 
-export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "messages" | "level";
+export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "messages" | "level" | "proposals";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard", label: "Dashboard" },
@@ -21,6 +22,7 @@ const tabs: { value: string; label: string }[] = [
   { value: "finance", label: "Finance" },
   { value: "messages", label: "Messages" },
   { value: "level", label: "Level" },
+  { value: "proposals", label: "Proposals" },
 ];
 
 export default function FreelancerSpacePage() {
@@ -39,6 +41,7 @@ export default function FreelancerSpacePage() {
         {activeTab === "finance" && <FinanceContent />}
         {activeTab === "messages" && <MessagesContent />}
         {activeTab === "level" && <LevelContent />}
+        {activeTab === "proposals" && <ProposalsContent />}
       </Container>
     </Box>
   );
