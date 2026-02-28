@@ -13,6 +13,11 @@ import {
   Paper,
   Divider,
   CircularProgress,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from "@mui/material";
 import {
   Download as DownloadIcon,
@@ -22,6 +27,7 @@ import {
   CheckCircle as CheckCircle2Icon,
   Cancel as XCircleIcon,
   AccessTime as ClockIcon,
+  Add as AddIcon,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Wallet, Transaction } from "@/types/wallet";
@@ -32,6 +38,10 @@ export default function FinanceContent() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [topUpOpen, setTopUpOpen] = useState(false);
+  const [topUpAmount, setTopUpAmount] = useState("");
+  const [topUpLoading, setTopUpLoading] = useState(false);
+  const [topUpError, setTopUpError] = useState<string | null>(null);
 
   const paymentMethods = [
     {
@@ -51,6 +61,26 @@ export default function FinanceContent() {
   useEffect(() => {
     fetchFinanceData();
   }, []);
+
+  const handleTopUp = async () => {
+    const amount = parseFloat(topUpAmount);
+    if (!topUpAmount || isNaN(amount) || amount <= 0) {
+      setTopUpError("Please enter a valid amount.");
+      return;
+    }
+    try {
+      setTopUpLoading(true);
+      setTopUpError(null);
+      await api.post("/api/wallet/deposit", { amount });
+      setTopUpOpen(false);
+      setTopUpAmount("");
+      await fetchFinanceData();
+    } catch (err) {
+      setTopUpError(err instanceof Error ? err.message : "Deposit failed. Please try again.");
+    } finally {
+      setTopUpLoading(false);
+    }
+  };
 
   const fetchFinanceData = async () => {
     try {
@@ -167,23 +197,41 @@ export default function FinanceContent() {
             Manage your finances and transactions
           </Typography>
         </Box>
-        <Button
-          variant='contained'
-          startIcon={<DownloadIcon sx={{ fontSize: 14 }} />}
-          sx={{
-            fontSize: 12,
-            textTransform: "none",
-            borderRadius: 10,
-            bgcolor: "rgba(0,0,0,0.05)",
-            color: "black",
-            boxShadow: "none",
-            "&:hover": {
-              bgcolor: "rgba(0,0,0,0.1)",
+        <Stack direction='row' spacing={1}>
+          <Button
+            variant='contained'
+            startIcon={<AddIcon sx={{ fontSize: 14 }} />}
+            onClick={() => {
+              setTopUpOpen(true);
+              setTopUpError(null);
+              setTopUpAmount("");
+            }}
+            sx={{
+              fontSize: 12,
+              textTransform: "none",
+              borderRadius: 10,
+              bgcolor: "black",
+              color: "white",
               boxShadow: "none",
-            },
-          }}>
-          Export Report
-        </Button>
+              "&:hover": { bgcolor: "rgba(0,0,0,0.8)", boxShadow: "none" },
+            }}>
+            Top Up
+          </Button>
+          <Button
+            variant='contained'
+            startIcon={<DownloadIcon sx={{ fontSize: 14 }} />}
+            sx={{
+              fontSize: 12,
+              textTransform: "none",
+              borderRadius: 10,
+              bgcolor: "rgba(0,0,0,0.05)",
+              color: "black",
+              boxShadow: "none",
+              "&:hover": { bgcolor: "rgba(0,0,0,0.1)", boxShadow: "none" },
+            }}>
+            Export Report
+          </Button>
+        </Stack>
       </Stack>
 
       {/* Financial Overview Cards */}
@@ -479,6 +527,53 @@ export default function FinanceContent() {
           </Card>
         </Grid>
       </Grid>
+
+      <Dialog
+        open={topUpOpen}
+        onClose={() => !topUpLoading && setTopUpOpen(false)}
+        slotProps={{ paper: { sx: { borderRadius: 3, width: 360, p: 2 } } }}>
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 16, pb: 1 }}>Top Up Balance</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            fullWidth
+            type='number'
+            label='Amount'
+            value={topUpAmount}
+            onChange={e => {
+              setTopUpAmount(e.target.value);
+              setTopUpError(null);
+            }}
+            slotProps={{ htmlInput: { min: 1, step: "0.01" } }}
+            error={!!topUpError}
+            helperText={topUpError ?? " "}
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ pt: 0 }}>
+          <Button
+            onClick={() => setTopUpOpen(false)}
+            disabled={topUpLoading}
+            sx={{ fontSize: 12, textTransform: "none", color: "text.secondary" }}>
+            Cancel
+          </Button>
+          <Button
+            variant='contained'
+            onClick={handleTopUp}
+            disabled={topUpLoading}
+            sx={{
+              fontSize: 12,
+              textTransform: "none",
+              borderRadius: 10,
+              bgcolor: "black",
+              color: "white",
+              boxShadow: "none",
+              "&:hover": { bgcolor: "rgba(0,0,0,0.8)", boxShadow: "none" },
+            }}>
+            {topUpLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : "Confirm"}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

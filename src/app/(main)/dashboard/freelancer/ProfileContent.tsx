@@ -473,7 +473,16 @@ export default function ProfileContent() {
               />
             </Box>
 
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, py: 1, px: 1.5, bgcolor: "rgba(0,0,0,0.02)", borderRadius: 2 }}>
+            <Box
+              sx={{
+                display: "flex",
+                alignItems: "center",
+                gap: 1,
+                py: 1,
+                px: 1.5,
+                bgcolor: "rgba(0,0,0,0.02)",
+                borderRadius: 2,
+              }}>
               <StarRounded sx={{ fontSize: 16, color: dashboardData?.profile.totalReviews ? "#f59e0b" : "rgba(0,0,0,0.2)" }} />
               <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black" }}>
                 {dashboardData?.profile.rating ? parseFloat(dashboardData.profile.rating).toFixed(1) : "—"}
@@ -539,7 +548,7 @@ export default function ProfileContent() {
             <RichTextEditor
               value={formData.about}
               onChange={html => handleInputChange("about", html)}
-              placeholder="Tell clients about your background, expertise, and what makes you unique..."
+              placeholder='Tell clients about your background, expertise, and what makes you unique...'
               minHeight={120}
             />
           </Box>
@@ -905,10 +914,10 @@ export default function ProfileContent() {
 
       {/* Education Dialog */}
       <Dialog open={educationDialog.open} onClose={() => setEducationDialog(prev => ({ ...prev, open: false }))}>
-        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>
-          {educationDialog.editIndex !== null ? "Edit Education" : "Add Education"}
-        </DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, color: "black" }}>
+            {educationDialog.editIndex !== null ? "Edit Education" : "Add Education"}
+          </Typography>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label='School/University'
@@ -939,10 +948,10 @@ export default function ProfileContent() {
 
       {/* Certificate Dialog */}
       <Dialog open={certificateDialog.open} onClose={() => setCertificateDialog(prev => ({ ...prev, open: false }))}>
-        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>
-          {certificateDialog.editIndex !== null ? "Edit Certificate" : "Add Certificate"}
-        </DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, color: "black" }}>
+            {certificateDialog.editIndex !== null ? "Edit Certificate" : "Add Certificate"}
+          </Typography>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <TextField
               label='Certificate Name'
@@ -973,8 +982,8 @@ export default function ProfileContent() {
 
       {/* Language Dialog */}
       <Dialog open={languageDialog.open} onClose={() => setLanguageDialog(prev => ({ ...prev, open: false }))}>
-        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>Add Language</DialogTitle>
         <DialogContent sx={{ minWidth: 400 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, color: "black" }}>Add Language</Typography>
           <Stack spacing={2} sx={{ mt: 1 }}>
             <Autocomplete
               options={languages.filter(l => !selectedLanguages.some(sl => sl.language_id === l.id))}

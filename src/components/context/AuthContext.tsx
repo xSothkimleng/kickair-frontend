@@ -12,8 +12,8 @@ interface AuthContextType {
   loading: boolean;
   emailVerificationPending: boolean;
   pendingEmail: string | null;
-  loginEmail: (email: string, password: string) => Promise<void>;
-  loginPhone: (telephone: string, password: string) => Promise<void>;
+  loginEmail: (email: string, password: string) => Promise<User>;
+  loginPhone: (telephone: string, password: string) => Promise<User>;
   registerEmail: (data: EmailRegisterData) => Promise<void>;
   registerPhone: (data: PhoneRegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, []);
 
-  const loginEmail = async (email: string, password: string) => {
+  const loginEmail = async (email: string, password: string): Promise<User> => {
     const loggedInUser = await api.loginEmail(email, password);
     setUser(loggedInUser);
     if (isEmailUnverified(loggedInUser)) {
@@ -87,11 +87,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setPendingEmail(loggedInUser.email);
       localStorage.setItem(PENDING_EMAIL_KEY, loggedInUser.email);
     }
+    return loggedInUser;
   };
 
-  const loginPhone = async (telephone: string, password: string) => {
+  const loginPhone = async (telephone: string, password: string): Promise<User> => {
     const loggedInUser = await api.loginPhone(telephone, password);
     setUser(loggedInUser);
+    return loggedInUser;
   };
 
   const registerEmail = async (data: EmailRegisterData) => {

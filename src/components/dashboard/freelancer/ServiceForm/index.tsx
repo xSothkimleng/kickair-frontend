@@ -213,7 +213,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           const desiredTempUpload = tempUploads.find(t => t.id === desiredCoverTempId);
           if (desiredTempUpload) {
             const matchingMedia = response.data.media.find(
-              (m: { file_name: string; id: number }) => m.file_name === desiredTempUpload.file_name
+              (m: { file_name: string; id: number }) => m.file_name === desiredTempUpload.file_name,
             );
             if (matchingMedia) {
               await api.put(`/api/services/${response.data.id}`, { feature_image_id: matchingMedia.id });
@@ -312,7 +312,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
               I agree to the{" "}
               <Typography
                 component='span'
-                sx={{ color: "#0071e3", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
+                sx={{ fontSize: 11, color: "#0071e3", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
                 Terms of Service
               </Typography>{" "}
               and confirm that all information provided is accurate

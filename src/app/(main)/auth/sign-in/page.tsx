@@ -28,12 +28,15 @@ export default function SignInPage() {
     setError("");
 
     try {
-      if (method === "email") {
-        await loginEmail(identifier, password);
-      } else {
-        await loginPhone(identifier, password);
-      }
-      router.push("/");
+      const loggedInUser = method === "email"
+        ? await loginEmail(identifier, password)
+        : await loginPhone(identifier, password);
+
+      const destination = loggedInUser.is_freelancer && !loggedInUser.is_client
+        ? "/dashboard/freelancer"
+        : "/explore-services";
+
+      router.push(destination);
       router.refresh();
     } catch (err: any) {
       setError(err.message || "Invalid credentials. Please try again.");
