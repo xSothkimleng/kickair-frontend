@@ -23,7 +23,8 @@ export interface Message {
 export interface ConversationOrder {
   id: number;
   status: string;
-  service_title: string;
+  title: string;
+  type: "service" | "job";
   created_at: string;
 }
 

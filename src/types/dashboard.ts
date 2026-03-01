@@ -16,11 +16,13 @@ export interface ClientDashboardStats {
   activeProjectsCount: number;
   completedProjectsCount: number;
   unreadMessagesCount: number;
+  unreadNotificationsCount: number;
 }
 
 export interface ClientDashboardOrder {
   id: number;
-  service: string;
+  title: string;
+  type: "service" | "job";
   freelancerId: number;
   freelancerName: string;
   status: "pending" | "active" | "completed" | "cancelled";
@@ -36,11 +38,42 @@ export interface ClientDashboardActivity {
   createdAt: string; // ISO 8601
 }
 
+export interface DashboardConversation {
+  conversationId: number;
+  orderId: number;
+  orderTitle: string;
+  orderType: "service" | "job";
+  otherParticipant: { id: number; name: string; avatarUrl: string | null };
+  lastMessage: { body: string; type: "text" | "file" | "system"; sentAt: string } | null;
+  unreadCount: number;
+}
+
+export type DashboardNotificationType =
+  | "proposal_submitted"
+  | "proposal_accepted"
+  | "proposal_rejected"
+  | "order_placed"
+  | "order_completed"
+  | "order_cancelled"
+  | "review_received";
+
+export interface DashboardNotification {
+  id: string;
+  type: DashboardNotificationType;
+  title: string;
+  body: string;
+  data: Record<string, number>;
+  readAt: string | null;
+  createdAt: string;
+}
+
 export interface ClientDashboardData {
   profile: ClientDashboardProfile;
   stats: ClientDashboardStats;
   activeOrders: ClientDashboardOrder[];
   recentActivity: ClientDashboardActivity[];
+  recentConversations: DashboardConversation[];
+  recentNotifications: DashboardNotification[];
 }
 
 export interface ClientDashboardResponse {
@@ -74,11 +107,13 @@ export interface FreelancerDashboardStats {
   activeProjectsCount: number;
   completedProjectsCount: number;
   unreadMessagesCount: number;
+  unreadNotificationsCount: number;
 }
 
 export interface FreelancerDashboardOrder {
   id: number;
-  service: string;
+  title: string;
+  type: "service" | "job";
   clientId: number;
   clientName: string;
   status: "pending" | "active" | "completed" | "cancelled";
@@ -98,6 +133,8 @@ export interface FreelancerDashboardData {
   stats: FreelancerDashboardStats;
   recentOrders: FreelancerDashboardOrder[];
   activeServices: FreelancerDashboardService[];
+  recentConversations: DashboardConversation[];
+  recentNotifications: DashboardNotification[];
 }
 
 export interface FreelancerDashboardResponse {

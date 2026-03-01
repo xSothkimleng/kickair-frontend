@@ -7,12 +7,10 @@ export default function FreelancerEmpowermentSection() {
       component="section"
       sx={{
         bgcolor: "#F5F5F7",
-        mx: "auto",
-        px: { xs: 3, sm: 6 },
-        py: 10,
+        py: { xs: 6, md: 10 },
       }}
     >
-      <Container>
+      <Container sx={{ px: { xs: 3, sm: 6 } }}>
         {/* Header */}
         <Box sx={{ textAlign: "center", mb: 8 }}>
           {/* Badge */}
@@ -40,7 +38,7 @@ export default function FreelancerEmpowermentSection() {
           <Typography
             component="h2"
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -51,7 +49,7 @@ export default function FreelancerEmpowermentSection() {
           </Typography>
           <Typography
             sx={{
-              fontSize: "19px",
+              fontSize: { xs: "16px", md: "19px" },
               color: "rgba(0, 0, 0, 0.6)",
             }}
           >
@@ -62,7 +60,7 @@ export default function FreelancerEmpowermentSection() {
         {/* Feature Cards */}
         <Grid container spacing={4} sx={{ mb: 6 }}>
           {/* Build Your Brand */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Box
               sx={{
                 bgcolor: "white",
@@ -112,7 +110,7 @@ export default function FreelancerEmpowermentSection() {
           </Grid>
 
           {/* Earn Your Way */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Box
               sx={{
                 bgcolor: "white",
@@ -162,7 +160,7 @@ export default function FreelancerEmpowermentSection() {
           </Grid>
 
           {/* Be Your Own Boss */}
-          <Grid size={4}>
+          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
             <Box
               sx={{
                 bgcolor: "white",

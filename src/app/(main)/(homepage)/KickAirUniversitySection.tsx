@@ -7,7 +7,7 @@ export default function KickAirUniversitySection() {
       component="section"
       sx={{
         background: "linear-gradient(to bottom right, #0071e3, #0077ed)",
-        py: 10,
+        py: { xs: 6, md: 10 },
       }}
     >
       <Box
@@ -39,7 +39,7 @@ export default function KickAirUniversitySection() {
         <Typography
           component="h2"
           sx={{
-            fontSize: "40px",
+            fontSize: { xs: "28px", md: "40px" },
             fontWeight: 600,
             letterSpacing: "-0.02em",
             mb: 2,
@@ -50,7 +50,7 @@ export default function KickAirUniversitySection() {
         <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
           <Typography
             sx={{
-              fontSize: "19px",
+              fontSize: { xs: "16px", md: "19px" },
               color: "rgba(255, 255, 255, 0.8)",
               maxWidth: "672px",
               mx: "auto",

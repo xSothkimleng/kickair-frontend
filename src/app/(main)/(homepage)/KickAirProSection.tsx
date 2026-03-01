@@ -9,12 +9,12 @@ export default function KickAirProSection() {
         bgcolor: "#F5F5F7",
       }}
     >
-      <Container sx={{ mx: "auto", px: { xs: 3, sm: 6 }, py: 10 }}>
+      <Container sx={{ mx: "auto", px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
         <Box
           sx={{
             background: "linear-gradient(to bottom right, #000000, rgba(0, 0, 0, 0.9))",
             borderRadius: "24px",
-            p: { xs: 6, md: 8 },
+            p: { xs: 3, sm: 5, md: 8 },
             textAlign: "center",
             color: "white",
             position: "relative",
@@ -64,7 +64,7 @@ export default function KickAirProSection() {
             <Typography
               component="h2"
               sx={{
-                fontSize: { xs: "40px", md: "48px" },
+                fontSize: { xs: "28px", md: "40px", lg: "48px" },
                 fontWeight: 600,
                 letterSpacing: "-0.02em",
                 mb: 2,
@@ -75,7 +75,7 @@ export default function KickAirProSection() {
 
             <Typography
               sx={{
-                fontSize: "19px",
+                fontSize: { xs: "16px", md: "19px" },
                 color: "rgba(255, 255, 255, 0.7)",
                 maxWidth: "672px",
                 mx: "auto",
@@ -87,7 +87,7 @@ export default function KickAirProSection() {
 
             {/* Features Grid */}
             <Grid container spacing={3} sx={{ maxWidth: "896px", mx: "auto", mb: 5 }}>
-              <Grid size={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box
                   sx={{
                     bgcolor: "rgba(255, 255, 255, 0.05)",
@@ -103,7 +103,7 @@ export default function KickAirProSection() {
                 </Box>
               </Grid>
 
-              <Grid size={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box
                   sx={{
                     bgcolor: "rgba(255, 255, 255, 0.05)",
@@ -119,7 +119,7 @@ export default function KickAirProSection() {
                 </Box>
               </Grid>
 
-              <Grid size={4}>
+              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
                 <Box
                   sx={{
                     bgcolor: "rgba(255, 255, 255, 0.05)",

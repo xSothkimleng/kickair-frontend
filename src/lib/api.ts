@@ -32,6 +32,7 @@ export class EmailUnverifiedError extends Error {
   }
 }
 import { ClientDashboardData, FreelancerDashboardData } from "@/types/dashboard";
+import { PaginatedNotificationsResponse } from "@/types/notification";
 import { Review } from "@/types/order";
 
 export interface ReviewClientProfile {
@@ -489,6 +490,27 @@ class ApiClient {
   async rejectProposal(proposalId: number): Promise<Proposal> {
     const response = await this.post(`/api/proposals/${proposalId}/reject`, {});
     return response.data;
+  }
+
+  // ============================================
+  // Notification Methods
+  // ============================================
+
+  async getNotifications(page: number = 1): Promise<PaginatedNotificationsResponse> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const raw: any = await this.get(`/api/notifications?page=${page}`);
+    // Normalize: handle both { data: [], meta: {} } and { data: { data: [], meta: {} } }
+    const items = Array.isArray(raw.data) ? raw.data : (Array.isArray(raw.data?.data) ? raw.data.data : []);
+    const meta = raw.meta ?? raw.data?.meta ?? null;
+    return { data: items, meta };
+  }
+
+  async markNotificationRead(id: string): Promise<void> {
+    await this.patch(`/api/notifications/${id}/read`, {});
+  }
+
+  async markAllNotificationsRead(): Promise<void> {
+    await this.post("/api/notifications/read-all", {});
   }
 
   // ============================================

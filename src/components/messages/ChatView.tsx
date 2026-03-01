@@ -134,7 +134,7 @@ export default function ChatView({
               <Typography sx={{ fontSize: 15, fontWeight: 600, color: "black" }}>
                 {conversation.other_participant.name}
               </Typography>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{conversation.order.service_title}</Typography>
+              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{conversation.order.title}</Typography>
             </Box>
           </Box>
         </Box>
@@ -152,7 +152,7 @@ export default function ChatView({
             <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
               <WorkOutlineOutlined sx={{ fontSize: 14, color: "#3b82f6" }} />
               <Typography sx={{ fontSize: 12, color: "rgb(29, 78, 216)", fontWeight: 500 }}>
-                Order: {conversation.order.service_title}
+                Order: {conversation.order.title}
               </Typography>
               <Chip
                 label={conversation.order.status}

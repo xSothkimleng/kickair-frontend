@@ -168,7 +168,7 @@ export default function MessagesContent() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {conversation.order.service_title}
+                    {conversation.order.title}
                   </Typography>
 
                   {conversation.latest_message && (

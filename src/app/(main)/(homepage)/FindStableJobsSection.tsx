@@ -7,7 +7,7 @@ export default function StableJobsSection() {
       component='section'
       sx={{
         bgcolor: "white",
-        py: 10,
+        py: { xs: 6, md: 10 },
       }}>
       <Box
         sx={{
@@ -15,9 +15,9 @@ export default function StableJobsSection() {
           mx: "auto",
           px: { xs: 3, sm: 6 },
         }}>
-        <Grid container spacing={6} alignItems='center'>
+        <Grid container spacing={{ xs: 4, md: 6 }} alignItems='center'>
           {/* Left Content */}
-          <Grid size={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             {/* Badge */}
             <Chip
               icon={<BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)" }} />}
@@ -43,7 +43,7 @@ export default function StableJobsSection() {
             <Typography
               component='h2'
               sx={{
-                fontSize: "40px",
+                fontSize: { xs: "28px", md: "40px" },
                 fontWeight: 600,
                 color: "black",
                 letterSpacing: "-0.02em",
@@ -109,7 +109,7 @@ export default function StableJobsSection() {
           </Grid>
 
           {/* Right Content - Job Cards */}
-          <Grid size={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 background: "linear-gradient(to bottom right, rgba(0, 113, 227, 0.05), rgba(0, 113, 227, 0.1))",

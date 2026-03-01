@@ -3,13 +3,13 @@ import { Box, Typography, Button, Container } from "@mui/material";
 export default function FinalCtaSection() {
   return (
     <Box component="section" sx={{ bgcolor: "#F5F5F7" }}>
-      <Container sx={{ px: { xs: 3, sm: 6 }, py: 10 }}>
+      <Container sx={{ px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
         <Box
           sx={{
             bgcolor: "white",
             borderRadius: "24px",
             border: "1px solid rgba(0, 0, 0, 0.08)",
-            p: { xs: 6, md: 8 },
+            p: { xs: 4, sm: 6, md: 8 },
             textAlign: "center",
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
           }}
@@ -17,7 +17,7 @@ export default function FinalCtaSection() {
           <Typography
             component="h2"
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -28,7 +28,7 @@ export default function FinalCtaSection() {
           </Typography>
           <Typography
             sx={{
-              fontSize: "19px",
+              fontSize: { xs: "16px", md: "19px" },
               color: "rgba(0, 0, 0, 0.6)",
               maxWidth: "672px",
               mx: "auto",

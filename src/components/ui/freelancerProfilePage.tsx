@@ -86,7 +86,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
     try {
       const response = await api.getFreelancerReviews(profile.id, page);
       setReviews(response.data);
-      setReviewsLastPage(response.meta.last_page);
+      setReviewsLastPage(response.meta?.last_page ?? 1);
       setReviewsFetched(true);
     } catch (err) {
       setReviewsError(err instanceof Error ? err.message : "Failed to load reviews.");

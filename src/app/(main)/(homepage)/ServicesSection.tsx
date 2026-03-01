@@ -19,13 +19,13 @@ export default function ServicesSection({ serviceCategories }: ServicesSectionPr
         bgcolor: "#F5F5F7",
       }}
     >
-      <Container sx={{ mx: "auto", px: { xs: 3, sm: 6 }, py: 10 }}>
+      <Container sx={{ mx: "auto", px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
         {/* Header */}
         <Box sx={{ textAlign: "center", mb: 6 }}>
           <Typography
             component="h2"
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -36,7 +36,7 @@ export default function ServicesSection({ serviceCategories }: ServicesSectionPr
           </Typography>
           <Typography
             sx={{
-              fontSize: "19px",
+              fontSize: { xs: "16px", md: "19px" },
               color: "rgba(0, 0, 0, 0.6)",
             }}
           >
@@ -47,7 +47,7 @@ export default function ServicesSection({ serviceCategories }: ServicesSectionPr
         {/* Service Cards Grid - Show only first 6 */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {serviceCategories.slice(0, 6).map((category) => (
-            <Grid size={4} key={category.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={category.id}>
               <ServiceCard
                 name={category.name}
                 description={category.description}

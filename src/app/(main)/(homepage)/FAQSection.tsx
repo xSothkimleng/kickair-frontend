@@ -49,7 +49,7 @@ export default function FaqSection() {
         sx={{
           mx: "auto",
           px: { xs: 3, sm: 6 },
-          py: 10,
+          py: { xs: 6, md: 10 },
         }}
       >
         {/* Header */}
@@ -57,7 +57,7 @@ export default function FaqSection() {
           <Typography
             component="h2"
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -66,7 +66,7 @@ export default function FaqSection() {
           >
             Frequently Asked Questions
           </Typography>
-          <Typography sx={{ fontSize: "19px", color: "rgba(0, 0, 0, 0.6)" }}>Everything you need to know about KickAir</Typography>
+          <Typography sx={{ fontSize: { xs: "16px", md: "19px" }, color: "rgba(0, 0, 0, 0.6)" }}>Everything you need to know about KickAir</Typography>
         </Box>
 
         {/* FAQ Accordion */}

@@ -34,7 +34,7 @@ export default function SuccessStoriesSection() {
       component='section'
       sx={{
         bgcolor: "white",
-        py: 10,
+        py: { xs: 6, md: 10 },
       }}>
       <Box
         sx={{
@@ -63,7 +63,7 @@ export default function SuccessStoriesSection() {
           <Typography
             component='h2'
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -71,13 +71,13 @@ export default function SuccessStoriesSection() {
             }}>
             Made on KickAir
           </Typography>
-          <Typography sx={{ fontSize: "19px", color: "rgba(0, 0, 0, 0.6)" }}>Real brands, real results, real success</Typography>
+          <Typography sx={{ fontSize: { xs: "16px", md: "19px" }, color: "rgba(0, 0, 0, 0.6)" }}>Real brands, real results, real success</Typography>
         </Box>
 
         {/* Story Cards */}
         <Grid container spacing={4}>
           {stories.map((story, index) => (
-            <Grid size={4} key={index}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
               <Box
                 sx={{
                   bgcolor: "#F5F5F7",

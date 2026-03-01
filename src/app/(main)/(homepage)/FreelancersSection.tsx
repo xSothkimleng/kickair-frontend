@@ -21,7 +21,7 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
       component='section'
       sx={{
         bgcolor: "white",
-        py: 10,
+        py: { xs: 6, md: 10 },
       }}>
       <Box
         sx={{
@@ -34,7 +34,7 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
           <Typography
             component='h2'
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -44,7 +44,7 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
           </Typography>
           <Typography
             sx={{
-              fontSize: "19px",
+              fontSize: { xs: "16px", md: "19px" },
               color: "rgba(0, 0, 0, 0.6)",
             }}>
             Premium talent with proven portfolios and verified reviews
@@ -54,7 +54,7 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
         {/* Freelancer Cards Grid */}
         <Grid container spacing={3}>
           {freelancers.slice(0, 10).map(freelancer => (
-            <Grid size={2.4} key={freelancer.id}>
+            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 2.4 }} key={freelancer.id}>
               <Box
                 sx={{
                   width: "100%",

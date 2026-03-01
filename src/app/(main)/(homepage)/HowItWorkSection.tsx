@@ -43,7 +43,7 @@ export default function HowItWorksSection() {
       <Container
         sx={{
           px: { xs: 3, sm: 6 },
-          py: 10,
+          py: { xs: 6, md: 10 },
         }}
       >
         {/* Header */}
@@ -51,7 +51,7 @@ export default function HowItWorksSection() {
           <Typography
             component="h2"
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -60,13 +60,13 @@ export default function HowItWorksSection() {
           >
             How It Works
           </Typography>
-          <Typography sx={{ fontSize: "19px", color: "rgba(0, 0, 0, 0.6)" }}>Get started in minutes, hire in hours</Typography>
+          <Typography sx={{ fontSize: { xs: "16px", md: "19px" }, color: "rgba(0, 0, 0, 0.6)" }}>Get started in minutes, hire in hours</Typography>
         </Box>
 
         {/* Steps Grid */}
-        <Grid container spacing={6} sx={{ mb: 6 }}>
+        <Grid container spacing={{ xs: 3, md: 6 }} sx={{ mb: 6 }}>
           {/* For Clients */}
-          <Grid size={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 bgcolor: "white",
@@ -136,7 +136,7 @@ export default function HowItWorksSection() {
           </Grid>
 
           {/* For Freelancers */}
-          <Grid size={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 bgcolor: "white",

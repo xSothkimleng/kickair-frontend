@@ -9,8 +9,9 @@ import PostProjectContent from "./PostServiceContent";
 import FinanceContent from "./FinanceContent";
 import MessagesContent from "./MessagesContent";
 import OrdersContent from "./OrdersContent";
+import NotificationsContent from "@/components/dashboard/NotificationsContent";
 
-export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance" | "messages";
+export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance" | "messages" | "notifications";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard", label: "Dashboard" },
@@ -19,6 +20,7 @@ const tabs: { value: string; label: string }[] = [
   { value: "service", label: "Jobs" },
   { value: "finance", label: "Finance" },
   { value: "messages", label: "Messages" },
+  { value: "notifications", label: "Notifications" },
 ];
 
 export default function ClientSpacePage() {
@@ -30,12 +32,13 @@ export default function ClientSpacePage() {
       {/* @ts-expect-error type unknown */}
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
       <Container sx={{ px: 3, py: 4 }}>
-        {activeTab === "dashboard" && <DashboardContent />}
+        {activeTab === "dashboard" && <DashboardContent onTabChange={setActiveTab} />}
         {activeTab === "profile" && <ProfileContent />}
         {activeTab === "orders" && <OrdersContent />}
         {activeTab === "service" && <PostProjectContent />}
         {activeTab === "finance" && <FinanceContent />}
         {activeTab === "messages" && <MessagesContent />}
+        {activeTab === "notifications" && <NotificationsContent />}
       </Container>
     </Box>
   );

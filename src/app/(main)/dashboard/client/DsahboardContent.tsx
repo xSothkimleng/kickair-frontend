@@ -13,6 +13,8 @@ import {
   Shield as ShieldIcon,
 } from "@mui/icons-material";
 import { useClientDashboard } from "@/hooks/useClientDashboard";
+import { DashboardNotification, DashboardConversation } from "@/types/dashboard";
+import type { Tab } from "./page";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -60,65 +62,26 @@ const getActivityColor = (type: string) => {
   }
 };
 
-// ─── Mock data for sections not yet implemented ──────────────────────────────
-
-const mockNotifications = [
-  {
-    id: 1,
-    type: "proposal",
-    title: "New proposal received",
-    message: 'Sopheak Chan sent a proposal for "E-commerce Website Development"',
-    time: "10 min ago",
-    unread: true,
-  },
-  {
-    id: 2,
-    type: "delivery",
-    title: "Order delivered",
-    message: 'Sarah Kim delivered your "Logo Design - Premium Package"',
-    time: "2 hours ago",
-    unread: true,
-  },
-  {
-    id: 3,
-    type: "message",
-    title: "New message from David Lim",
-    message: "I have a question about the project requirements...",
-    time: "5 hours ago",
-    unread: false,
-  },
-];
-
-const mockRecentMessages = [
-  {
-    id: 1,
-    freelancerName: "Sopheak Chan",
-    freelancerAvatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100",
-    lastMessage: "I can start working on your project tomorrow. Looking forward to it!",
-    timestamp: "5m ago",
-    unread: 1,
-  },
-  {
-    id: 2,
-    freelancerName: "Sarah Kim",
-    freelancerAvatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100",
-    lastMessage: "The final logo designs are ready for your review.",
-    timestamp: "2h ago",
-    unread: 0,
-  },
-  {
-    id: 3,
-    freelancerName: "David Lim",
-    freelancerAvatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100",
-    lastMessage: "Thank you for the feedback! I'll make those changes.",
-    timestamp: "1d ago",
-    unread: 0,
-  },
-];
+const getNotificationColor = (type: DashboardNotification["type"]) => {
+  switch (type) {
+    case "proposal_submitted": return "#2563eb";
+    case "proposal_accepted": return "#16a34a";
+    case "proposal_rejected": return "#dc2626";
+    case "order_placed": return "#9333ea";
+    case "order_completed": return "#16a34a";
+    case "order_cancelled": return "#6b7280";
+    case "review_received": return "#f59e0b";
+    default: return "#6b7280";
+  }
+};
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function DashboardContent() {
+interface Props {
+  onTabChange: (tab: Tab) => void;
+}
+
+export default function DashboardContent({ onTabChange }: Props) {
   const { data, loading, error } = useClientDashboard();
 
   if (loading) {
@@ -137,7 +100,7 @@ export default function DashboardContent() {
     );
   }
 
-  const { profile, stats, activeOrders, recentActivity } = data;
+  const { profile, stats, activeOrders, recentActivity, recentConversations, recentNotifications } = data;
 
   return (
     <Box>
@@ -318,7 +281,8 @@ export default function DashboardContent() {
                 borderColor: "rgba(0,0,0,0.2)",
                 "& .arrow-icon": { opacity: 1 },
               },
-            }}>
+            }}
+            onClick={() => onTabChange("messages")}>
             <CardContent>
               <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
                 <MessageCircleIcon sx={{ fontSize: 20, color: "#9333ea" }} />
@@ -481,7 +445,7 @@ export default function DashboardContent() {
                           <Stack direction='row' justifyContent='space-between' alignItems='center'>
                             <Box flex={1}>
                               <Typography variant='body2' fontWeight={500} mb={0.5}>
-                                {order.service}
+                                {order.title}
                               </Typography>
                               <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
                                 by {order.freelancerName}
@@ -495,6 +459,16 @@ export default function DashboardContent() {
                                     fontSize: 10,
                                     bgcolor: statusColors.bg,
                                     color: statusColors.color,
+                                  }}
+                                />
+                                <Chip
+                                  label={order.type === "job" ? "Job" : "Service"}
+                                  size='small'
+                                  sx={{
+                                    height: 20,
+                                    fontSize: 10,
+                                    bgcolor: order.type === "job" ? "rgba(99,102,241,0.1)" : "rgba(16,185,129,0.1)",
+                                    color: order.type === "job" ? "#6366f1" : "#059669",
                                   }}
                                 />
                                 {order.dueDate ? (
@@ -585,7 +559,7 @@ export default function DashboardContent() {
         {/* Sidebar */}
         <Grid size={{ xs: 12, lg: 4 }}>
           <Stack spacing={3}>
-            {/* Recent Messages — not yet implemented, mock data */}
+            {/* Recent Messages */}
             <Card
               elevation={0}
               sx={{
@@ -599,6 +573,7 @@ export default function DashboardContent() {
                     Recent Messages
                   </Typography>
                   <Button
+                    onClick={() => onTabChange("messages")}
                     sx={{
                       fontSize: 11,
                       color: "#0071e3",
@@ -612,56 +587,70 @@ export default function DashboardContent() {
                 </Stack>
 
                 <Stack spacing={1.5}>
-                  {mockRecentMessages.map(message => (
-                    <Button
-                      key={message.id}
-                      sx={{
-                        width: "100%",
-                        p: 1.5,
-                        borderRadius: 2,
-                        textAlign: "left",
-                        textTransform: "none",
-                        color: "inherit",
-                        justifyContent: "flex-start",
-                        "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                      }}>
-                      <Stack direction='row' spacing={1.5} width='100%'>
-                        <Avatar src={message.freelancerAvatar} alt={message.freelancerName} sx={{ width: 40, height: 40 }} />
-                        <Box flex={1} minWidth={0}>
-                          <Stack direction='row' justifyContent='space-between' alignItems='center' mb={0.5}>
-                            <Typography variant='body2' fontWeight={600} noWrap sx={{ flex: 1 }}>
-                              {message.freelancerName}
+                  {recentConversations.length === 0 ? (
+                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
+                      No messages yet
+                    </Typography>
+                  ) : (
+                    recentConversations.map((conv: DashboardConversation) => (
+                      <Button
+                        key={conv.conversationId}
+                        onClick={() => onTabChange("messages")}
+                        sx={{
+                          width: "100%",
+                          p: 1.5,
+                          borderRadius: 2,
+                          textAlign: "left",
+                          textTransform: "none",
+                          color: "inherit",
+                          justifyContent: "flex-start",
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                        }}>
+                        <Stack direction='row' spacing={1.5} width='100%'>
+                          <Avatar src={conv.otherParticipant.avatarUrl ?? undefined} alt={conv.otherParticipant.name} sx={{ width: 40, height: 40 }} />
+                          <Box flex={1} minWidth={0}>
+                            <Stack direction='row' justifyContent='space-between' alignItems='center' mb={0.5}>
+                              <Typography variant='body2' fontWeight={600} noWrap sx={{ flex: 1 }}>
+                                {conv.otherParticipant.name}
+                              </Typography>
+                              {conv.unreadCount > 0 && (
+                                <Badge
+                                  badgeContent={conv.unreadCount}
+                                  sx={{
+                                    "& .MuiBadge-badge": {
+                                      bgcolor: "#9333ea",
+                                      color: "white",
+                                      fontSize: 9,
+                                      height: 18,
+                                      minWidth: 18,
+                                    },
+                                  }}
+                                />
+                              )}
+                            </Stack>
+                            <Typography variant='caption' color='text.secondary' display='block' noWrap mb={0.5}>
+                              {conv.orderTitle}
                             </Typography>
-                            {message.unread > 0 && (
-                              <Badge
-                                badgeContent={message.unread}
-                                sx={{
-                                  "& .MuiBadge-badge": {
-                                    bgcolor: "#9333ea",
-                                    color: "white",
-                                    fontSize: 9,
-                                    height: 18,
-                                    minWidth: 18,
-                                  },
-                                }}
-                              />
+                            {conv.lastMessage && (
+                              <Stack direction='row' justifyContent='space-between' alignItems='center'>
+                                <Typography variant='caption' color='text.secondary' noWrap sx={{ flex: 1 }}>
+                                  {conv.lastMessage.body}
+                                </Typography>
+                                <Typography variant='caption' color='text.disabled' sx={{ ml: 1, flexShrink: 0 }}>
+                                  {timeAgo(conv.lastMessage.sentAt)}
+                                </Typography>
+                              </Stack>
                             )}
-                          </Stack>
-                          <Typography variant='caption' color='text.secondary' display='block' noWrap mb={0.5}>
-                            {message.lastMessage}
-                          </Typography>
-                          <Typography variant='caption' color='text.disabled'>
-                            {message.timestamp}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Button>
-                  ))}
+                          </Box>
+                        </Stack>
+                      </Button>
+                    ))
+                  )}
                 </Stack>
               </CardContent>
             </Card>
 
-            {/* Notifications — not yet implemented, mock data */}
+            {/* Notifications */}
             <Card
               elevation={0}
               sx={{
@@ -671,68 +660,86 @@ export default function DashboardContent() {
               }}>
               <CardContent sx={{ p: 3 }}>
                 <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                  <Typography variant='h6' fontWeight={600}>
-                    Notifications
-                  </Typography>
-                  <Chip
-                    label={`${mockNotifications.filter(n => n.unread).length} new`}
-                    size='small'
+                  <Stack direction='row' spacing={1} alignItems='center'>
+                    <Typography variant='h6' fontWeight={600}>
+                      Notifications
+                    </Typography>
+                    {stats.unreadNotificationsCount > 0 && (
+                      <Chip
+                        label={`${stats.unreadNotificationsCount} new`}
+                        size='small'
+                        sx={{
+                          height: 20,
+                          fontSize: 9,
+                          fontWeight: 500,
+                          bgcolor: "#ea580c",
+                          color: "white",
+                        }}
+                      />
+                    )}
+                  </Stack>
+                  <Button
+                    onClick={() => onTabChange("notifications")}
                     sx={{
-                      height: 20,
-                      fontSize: 9,
-                      fontWeight: 500,
-                      bgcolor: "#ea580c",
-                      color: "white",
-                    }}
-                  />
+                      fontSize: 11,
+                      color: "#0071e3",
+                      textTransform: "none",
+                      minWidth: "auto",
+                      p: 0,
+                      "&:hover": { textDecoration: "underline", bgcolor: "transparent" },
+                    }}>
+                    View All
+                  </Button>
                 </Stack>
 
                 <Stack spacing={1}>
-                  {mockNotifications.map(notification => (
-                    <Paper
-                      elevation={0}
-                      key={notification.id}
-                      sx={{
-                        p: 1.5,
-                        borderRadius: 2,
-                        bgcolor: notification.unread ? "rgba(234, 88, 12, 0.05)" : "rgba(0,0,0,0.02)",
-                        border: "1px solid",
-                        borderColor: notification.unread ? "rgba(234, 88, 12, 0.2)" : "transparent",
-                      }}>
-                      <Stack direction='row' spacing={1}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            bgcolor:
-                              notification.type === "proposal"
-                                ? "#2563eb"
-                                : notification.type === "delivery"
-                                ? "#16a34a"
-                                : "#9333ea",
-                            mt: 0.75,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <Box flex={1} minWidth={0}>
-                          <Typography variant='caption' fontWeight={600} display='block' mb={0.25}>
-                            {notification.title}
-                          </Typography>
-                          <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                            {notification.message}
-                          </Typography>
-                          <Typography variant='caption' color='text.disabled'>
-                            {notification.time}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                    </Paper>
-                  ))}
+                  {recentNotifications.length === 0 ? (
+                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
+                      No notifications
+                    </Typography>
+                  ) : (
+                    recentNotifications.map((notification: DashboardNotification) => (
+                      <Paper
+                        elevation={0}
+                        key={notification.id}
+                        sx={{
+                          p: 1.5,
+                          borderRadius: 2,
+                          bgcolor: notification.readAt === null ? "rgba(234, 88, 12, 0.05)" : "rgba(0,0,0,0.02)",
+                          border: "1px solid",
+                          borderColor: notification.readAt === null ? "rgba(234, 88, 12, 0.2)" : "transparent",
+                        }}>
+                        <Stack direction='row' spacing={1}>
+                          <Box
+                            sx={{
+                              width: 8,
+                              height: 8,
+                              borderRadius: "50%",
+                              bgcolor: getNotificationColor(notification.type),
+                              mt: 0.75,
+                              flexShrink: 0,
+                            }}
+                          />
+                          <Box flex={1} minWidth={0}>
+                            <Typography variant='caption' fontWeight={600} display='block' mb={0.25}>
+                              {notification.title}
+                            </Typography>
+                            <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
+                              {notification.body}
+                            </Typography>
+                            <Typography variant='caption' color='text.disabled'>
+                              {timeAgo(notification.createdAt)}
+                            </Typography>
+                          </Box>
+                        </Stack>
+                      </Paper>
+                    ))
+                  )}
                 </Stack>
 
                 <Button
                   fullWidth
+                  onClick={() => onTabChange("notifications")}
                   sx={{
                     mt: 1.5,
                     fontSize: 11,

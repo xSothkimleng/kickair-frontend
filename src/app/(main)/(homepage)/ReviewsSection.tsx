@@ -22,13 +22,13 @@ export default function ReviewsSection() {
 
   return (
     <Box component="section" sx={{ bgcolor: "#F5F5F7" }}>
-      <Container sx={{ maxWidth: "1200px", mx: "auto", px: { xs: 3, sm: 6 }, py: 10 }}>
+      <Container sx={{ maxWidth: "1200px", mx: "auto", px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
         {/* Header */}
         <Box sx={{ textAlign: "center", mb: 6 }}>
           <Typography
             component="h2"
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -37,7 +37,7 @@ export default function ReviewsSection() {
           >
             Trusted by Thousands
           </Typography>
-          <Typography sx={{ fontSize: "19px", color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>See what freelancers and clients are saying</Typography>
+          <Typography sx={{ fontSize: { xs: "16px", md: "19px" }, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>See what freelancers and clients are saying</Typography>
           <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 4 }}>
             {[...Array(5)].map((_, i) => (
               <Star key={i} sx={{ fontSize: 32, fill: "black", color: "black" }} />
@@ -49,7 +49,7 @@ export default function ReviewsSection() {
         {/* Review Cards */}
         <Grid container spacing={3} sx={{ mb: 4 }}>
           {reviews.map((review, index) => (
-            <Grid size={4} key={index}>
+            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
               <Box
                 sx={{
                   bgcolor: "white",

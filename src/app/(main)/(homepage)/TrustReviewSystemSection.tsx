@@ -3,7 +3,7 @@ import { Security as ShieldIcon, CheckCircle, Star, People as UsersIcon } from "
 
 export default function TrustReviewSystemSection() {
   return (
-    <Box component="section" sx={{ py: 10 }}>
+    <Box component="section" sx={{ py: { xs: 6, md: 10 } }}>
       <Box
         sx={{
           maxWidth: "1200px",
@@ -32,7 +32,7 @@ export default function TrustReviewSystemSection() {
           <Typography
             component="h2"
             sx={{
-              fontSize: "40px",
+              fontSize: { xs: "28px", md: "40px" },
               fontWeight: 600,
               color: "black",
               letterSpacing: "-0.02em",
@@ -43,7 +43,7 @@ export default function TrustReviewSystemSection() {
           </Typography>
           <Typography
             sx={{
-              fontSize: "19px",
+              fontSize: { xs: "16px", md: "19px" },
               color: "rgba(0, 0, 0, 0.6)",
               mx: "auto",
             }}
@@ -55,7 +55,7 @@ export default function TrustReviewSystemSection() {
         {/* Feature Cards */}
         <Grid container spacing={4} sx={{ mb: 6 }}>
           {/* Verified Reviews */}
-          <Grid size={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 background: "linear-gradient(to bottom right, rgba(0, 113, 227, 0.05), rgba(0, 113, 227, 0.1))",
@@ -116,7 +116,7 @@ export default function TrustReviewSystemSection() {
           </Grid>
 
           {/* No Review = 5 Stars */}
-          <Grid size={6}>
+          <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
                 background: "linear-gradient(to bottom right, #f0fdf4, rgba(220, 252, 231, 0.5))",
@@ -212,7 +212,7 @@ export default function TrustReviewSystemSection() {
             </Typography>
           </Box>
           <Grid container spacing={2} sx={{ maxWidth: "768px", mx: "auto" }}>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Box
                 sx={{
                   bgcolor: "white",
@@ -226,7 +226,7 @@ export default function TrustReviewSystemSection() {
                 <Typography sx={{ fontSize: "12px", color: "rgba(0, 0, 0, 0.6)" }}>Public • Visible to all clients</Typography>
               </Box>
             </Grid>
-            <Grid size={6}>
+            <Grid size={{ xs: 12, sm: 6 }}>
               <Box
                 sx={{
                   bgcolor: "white",

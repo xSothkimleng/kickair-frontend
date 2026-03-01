@@ -11,8 +11,9 @@ import FinanceContent from "./FinanceContent";
 import MessagesContent from "./MessagesContent";
 import LevelContent from "./LevelContent";
 import ProposalsContent from "./ProposalsContent";
+import NotificationsContent from "@/components/dashboard/NotificationsContent";
 
-export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "messages" | "level" | "proposals";
+export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "messages" | "level" | "proposals" | "notifications";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard", label: "Dashboard" },
@@ -23,6 +24,7 @@ const tabs: { value: string; label: string }[] = [
   { value: "messages", label: "Messages" },
   { value: "level", label: "Level" },
   { value: "proposals", label: "Proposals" },
+  { value: "notifications", label: "Notifications" },
 ];
 
 export default function FreelancerSpacePage() {
@@ -34,7 +36,7 @@ export default function FreelancerSpacePage() {
       {/* @ts-expect-error type unknown */}
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
       <Container maxWidth='lg' sx={{ px: 3, py: 4 }}>
-        {activeTab === "dashboard" && <DashboardContent />}
+        {activeTab === "dashboard" && <DashboardContent onTabChange={setActiveTab} />}
         {activeTab === "profile" && <ProfileContent />}
         {activeTab === "services" && <ServicesContent />}
         {activeTab === "orders" && <OrdersContent />}
@@ -42,6 +44,7 @@ export default function FreelancerSpacePage() {
         {activeTab === "messages" && <MessagesContent />}
         {activeTab === "level" && <LevelContent />}
         {activeTab === "proposals" && <ProposalsContent />}
+        {activeTab === "notifications" && <NotificationsContent />}
       </Container>
     </Box>
   );

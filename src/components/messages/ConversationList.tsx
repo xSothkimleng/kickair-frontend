@@ -48,7 +48,7 @@ export default function ConversationList({
   const filteredConversations = conversations.filter(
     (conv) =>
       conv.other_participant.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      conv.order.service_title.toLowerCase().includes(searchQuery.toLowerCase())
+      conv.order.title.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
@@ -175,7 +175,7 @@ export default function ConversationList({
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {conv.order.service_title}
+                    {conv.order.title}
                   </Typography>
 
                   {conv.latest_message && (

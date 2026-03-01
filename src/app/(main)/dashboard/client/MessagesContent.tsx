@@ -169,7 +169,7 @@ export default function MessagesContent() {
                     noWrap
                     mb={0.5}
                   >
-                    {conversation.order.service_title}
+                    {conversation.order.title}
                   </Typography>
 
                   {conversation.latest_message && (
