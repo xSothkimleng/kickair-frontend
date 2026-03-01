@@ -134,8 +134,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         title: "Basic",
         description: formData.pricing.basic.description,
         price: parseFloat(formData.pricing.basic.price),
-        revisions: parseInt(formData.pricing.basic.revisions) || 0,
-        delivery_time: parseInt(formData.pricing.basic.deliveryTime),
+        revisions: formData.pricing.basic.revisions,
+        delivery_time: `${formData.pricing.basic.deliveryTime} days`,
       });
     }
     if (formData.pricing.standard.price) {
@@ -143,8 +143,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         title: "Standard",
         description: formData.pricing.standard.description,
         price: parseFloat(formData.pricing.standard.price),
-        revisions: parseInt(formData.pricing.standard.revisions) || 0,
-        delivery_time: parseInt(formData.pricing.standard.deliveryTime),
+        revisions: formData.pricing.standard.revisions,
+        delivery_time: `${formData.pricing.standard.deliveryTime} days`,
       });
     }
     if (formData.pricing.premium.price) {
@@ -152,8 +152,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         title: "Premium",
         description: formData.pricing.premium.description,
         price: parseFloat(formData.pricing.premium.price),
-        revisions: parseInt(formData.pricing.premium.revisions) || 0,
-        delivery_time: parseInt(formData.pricing.premium.deliveryTime),
+        revisions: formData.pricing.premium.revisions,
+        delivery_time: `${formData.pricing.premium.deliveryTime} days`,
       });
     }
 

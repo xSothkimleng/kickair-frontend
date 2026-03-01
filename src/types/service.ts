@@ -144,8 +144,8 @@ export interface CreatePricingOptionRequest {
   title: string;
   description: string;
   price: number;
-  revisions: number;
-  delivery_time: number;
+  revisions: string;
+  delivery_time: string;
 }
 
 export interface CreateServiceRequest {
