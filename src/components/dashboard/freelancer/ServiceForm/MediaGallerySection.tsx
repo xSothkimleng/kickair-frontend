@@ -234,9 +234,11 @@ export default function MediaGallerySection({
 
     return (
       <Image
+        unoptimized={true}
         src={item.file_url}
         alt={item.file_name}
         fill
+        sizes="(max-width: 600px) 50vw, 25vw"
         style={{ objectFit: "cover", opacity: isDeleting ? 0.5 : 1 }}
       />
     );
