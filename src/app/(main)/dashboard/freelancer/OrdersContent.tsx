@@ -192,6 +192,12 @@ export default function OrdersContent() {
           {filteredOrders.map(order => {
             const client = order.client_profile;
             const isLoading = actionLoading === order.id;
+            const isJobBased = !order.pricing_option_id;
+            const orderTitle = order.service?.title ?? order.proposal?.job_post?.title ?? "Order";
+            const orderPrice = order.pricing_option?.price ?? order.price ?? "0";
+            const deliveryLabel = isJobBased
+              ? `${order.proposal?.timeline_days ?? "N/A"} days (timeline)`
+              : `${order.pricing_option?.delivery_time ?? "N/A"} days`;
 
             return (
               <Card
@@ -216,7 +222,7 @@ export default function OrdersContent() {
                       />
                       <Box flex={1}>
                         <Typography variant="body1" fontWeight={600} mb={0.5}>
-                          {order.service?.title || order.pricing_option?.service?.title || "Service"}
+                          {orderTitle}
                         </Typography>
                         <Typography variant="body2" color="text.secondary" mb={1}>
                           Client: {client?.user?.name || "Unknown"}
@@ -229,14 +235,14 @@ export default function OrdersContent() {
                             •
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            Delivery: {order.pricing_option?.delivery_time || "N/A"} days
+                            {isJobBased ? "Timeline" : "Delivery"}: {deliveryLabel}
                           </Typography>
                         </Stack>
                       </Box>
                     </Stack>
                     <Box textAlign="right">
                       <Typography variant="h6" fontWeight={600} mb={1}>
-                        ${order.pricing_option?.price || "0"}
+                        ${orderPrice}
                       </Typography>
                       <Chip
                         label={getStatusLabel(order.status)}

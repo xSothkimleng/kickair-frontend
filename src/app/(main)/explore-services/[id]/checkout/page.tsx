@@ -128,8 +128,7 @@ function CheckoutContent() {
   const freelancerAvatar = user?.avatar_url || "";
 
   const priceRaw = Number(selectedPricing.price_raw);
-  const platformFee = priceRaw * 0.05;
-  const total = priceRaw + platformFee;
+  const total = priceRaw;
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7", pb: 6 }}>
@@ -234,10 +233,6 @@ function CheckoutContent() {
               <Box sx={{ display: "flex", justifyContent: "space-between" }}>
                 <Typography>Package price</Typography>
                 <Typography>${priceRaw.toFixed(2)}</Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography color='text.secondary'>Platform fee (5%)</Typography>
-                <Typography color='text.secondary'>${platformFee.toFixed(2)}</Typography>
               </Box>
               <Box
                 sx={{

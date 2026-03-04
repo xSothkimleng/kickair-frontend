@@ -71,17 +71,42 @@ export interface OrderPricingOption {
   service?: OrderService;
 }
 
+// Bug #13: new types for job-based order data
+export interface OrderJobPost {
+  id: number;
+  title: string;
+  description: string | null;
+  category?: OrderCategory;
+}
+
+export interface OrderProposal {
+  id: number;
+  job_post_id: number;
+  freelancer_profile_id: number;
+  price: string;
+  timeline_days: number;
+  cover_letter: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  job_post?: OrderJobPost;
+  freelancer_profile?: OrderFreelancerProfile;
+}
+
 export interface Order {
   id: number;
   client_profile_id: number;
-  pricing_option_id: number;
+  pricing_option_id: number | null;  // null for job-based orders
+  proposal_id: number | null;        // null for service-based orders
+  price: string | null;              // locked at creation time
   status: OrderStatus;
   created_at: string;
   updated_at: string;
   review: Review | null;
   client_profile?: ClientProfile;
   pricing_option?: OrderPricingOption;
-  service?: OrderService;
+  proposal?: OrderProposal;          // present for job-based orders
+  service?: OrderService;            // present for service-based orders
   freelancer?: OrderFreelancerProfile;
 }
 

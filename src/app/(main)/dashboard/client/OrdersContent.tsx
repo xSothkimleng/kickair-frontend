@@ -154,7 +154,16 @@ export default function OrdersContent() {
         </Box>
       ) : (
         <Stack spacing={2}>
-          {filteredOrders.map(order => (
+          {filteredOrders.map(order => {
+            const isJobBased = !order.pricing_option_id;
+            const orderTitle = order.service?.title ?? order.proposal?.job_post?.title ?? "Order";
+            const freelancer = order.freelancer ?? order.proposal?.freelancer_profile;
+            const orderPrice = order.pricing_option?.price ?? order.price ?? "0";
+            const deliveryLabel = isJobBased
+              ? `${order.proposal?.timeline_days ?? "N/A"} days (timeline)`
+              : `${order.pricing_option?.delivery_time ?? "N/A"} days`;
+
+            return (
             <Card
               elevation={0}
               key={order.id}
@@ -171,16 +180,16 @@ export default function OrdersContent() {
                 <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
                   <Stack direction="row" spacing={2} flex={1}>
                     <Avatar
-                      src={order.freelancer?.user?.avatar_url || undefined}
-                      alt={order.freelancer?.user?.name || "Freelancer"}
+                      src={freelancer?.user?.avatar_url || undefined}
+                      alt={freelancer?.user?.name || "Freelancer"}
                       sx={{ width: 50, height: 50 }}
                     />
                     <Box flex={1}>
                       <Typography variant="body1" fontWeight={600} mb={0.5}>
-                        {order.service?.title || order.pricing_option?.service?.title || "Service"}
+                        {orderTitle}
                       </Typography>
                       <Typography variant="body2" color="text.secondary" mb={1}>
-                        by {order.freelancer?.user?.name || order.pricing_option?.service?.freelancer_profile?.user?.name || "Unknown"}
+                        by {freelancer?.user?.name || "Unknown"}
                       </Typography>
                       <Stack direction="row" spacing={1.5} alignItems="center">
                         <Typography variant="caption" color="text.secondary">
@@ -190,14 +199,14 @@ export default function OrdersContent() {
                           •
                         </Typography>
                         <Typography variant="caption" color="text.secondary">
-                          Delivery: {order.pricing_option?.delivery_time || "N/A"}
+                          {isJobBased ? "Timeline" : "Delivery"}: {deliveryLabel}
                         </Typography>
                       </Stack>
                     </Box>
                   </Stack>
                   <Box textAlign="right">
                     <Typography variant="h6" fontWeight={600} mb={1}>
-                      ${order.pricing_option?.price || "0"}
+                      ${orderPrice}
                     </Typography>
                     <Chip
                       label={getStatusLabel(order.status)}
@@ -261,7 +270,8 @@ export default function OrdersContent() {
                 </Grid>
               </CardContent>
             </Card>
-          ))}
+          );
+          })}
         </Stack>
       )}
 

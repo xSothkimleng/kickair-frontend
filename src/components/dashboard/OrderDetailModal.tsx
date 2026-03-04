@@ -161,8 +161,9 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
     }
   };
 
-  const service = order.service || order.pricing_option?.service;
-  const freelancer = order.freelancer || order.pricing_option?.service?.freelancer_profile;
+  const isJobBased = !order.pricing_option_id;
+  const service = order.service;
+  const freelancer = order.freelancer ?? order.proposal?.freelancer_profile;
   const pricingOption = order.pricing_option;
   const statusConfig = getStatusConfig(order.status);
 
@@ -282,13 +283,17 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
               <Box>
                 <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)", textTransform: "uppercase", letterSpacing: 0.5, mb: 0.5 }}>
-                  Package
+                  {isJobBased ? "Contract" : "Package"}
                 </Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{pricingOption?.title || "Standard"}</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                  {pricingOption?.title ?? (isJobBased ? "Job Contract" : "Standard")}
+                </Typography>
               </Box>
               <Box sx={{ textAlign: "right" }}>
                 <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)", mb: 0.5 }}>Total</Typography>
-                <Typography sx={{ fontSize: 20, fontWeight: 600 }}>${pricingOption?.price || "0"}</Typography>
+                <Typography sx={{ fontSize: 20, fontWeight: 600 }}>
+                  ${pricingOption?.price ?? order.price ?? "0"}
+                </Typography>
               </Box>
             </Box>
             {pricingOption?.description && (
@@ -300,16 +305,20 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
               <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, bgcolor: "rgba(0, 0, 0, 0.03)", borderRadius: 2 }}>
                 <DeliveryIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.5)" }} />
                 <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
-                  {pricingOption?.delivery_time || "N/A"} day{Number(pricingOption?.delivery_time) !== 1 ? "s" : ""}
+                  {isJobBased
+                    ? `${order.proposal?.timeline_days ?? "N/A"} day${order.proposal?.timeline_days !== 1 ? "s" : ""} (timeline)`
+                    : `${pricingOption?.delivery_time || "N/A"} day${Number(pricingOption?.delivery_time) !== 1 ? "s" : ""}`}
                 </Typography>
               </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, bgcolor: "rgba(0, 0, 0, 0.03)", borderRadius: 2 }}>
-                <RevisionIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.5)" }} />
-                <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
-                  {Number(pricingOption?.revisions) === -1 ? "Unlimited" : pricingOption?.revisions || "N/A"} revision
-                  {Number(pricingOption?.revisions) !== 1 ? "s" : ""}
-                </Typography>
-              </Box>
+              {!isJobBased && (
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 1, bgcolor: "rgba(0, 0, 0, 0.03)", borderRadius: 2 }}>
+                  <RevisionIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.5)" }} />
+                  <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
+                    {Number(pricingOption?.revisions) === -1 ? "Unlimited" : pricingOption?.revisions || "N/A"} revision
+                    {Number(pricingOption?.revisions) !== 1 ? "s" : ""}
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Card>
 

@@ -31,6 +31,8 @@ export default function FinanceContent() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawMethod, setWithdrawMethod] = useState("ABA Bank - ***1234");
+  const [withdrawLoading, setWithdrawLoading] = useState(false);
+  const [withdrawError, setWithdrawError] = useState<string | null>(null);
   const [wallet, setWallet] = useState<Wallet | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,7 +63,8 @@ export default function FinanceContent() {
 
   // Filter transactions by status
   const pendingPayments = transactions.filter(t => t.status === "pending" && t.type !== "withdrawal");
-  const completedPayments = transactions.filter(t => t.status === "completed" && (t.type === "payment" || t.type === "deposit"));
+  // Bug #6: freelancer completed earnings are type "clearance", not "payment" or "deposit"
+  const completedPayments = transactions.filter(t => t.status === "completed" && t.type === "clearance");
 
   // Calculate totals from wallet data
   const availableBalance = wallet ? parseFloat(wallet.available_balance_raw) : 0;
@@ -76,10 +79,25 @@ export default function FinanceContent() {
     });
   };
 
-  const handleWithdraw = () => {
-    alert("Withdrawal request submitted!");
-    setShowWithdrawModal(false);
-    setWithdrawAmount("");
+  // Bug #5: actually call the API instead of showing a dummy alert
+  const handleWithdraw = async () => {
+    const amount = parseFloat(withdrawAmount);
+    if (!withdrawAmount || isNaN(amount) || amount <= 0) {
+      setWithdrawError("Please enter a valid amount.");
+      return;
+    }
+    try {
+      setWithdrawLoading(true);
+      setWithdrawError(null);
+      await api.post("/api/wallet/withdraw", { amount });
+      setShowWithdrawModal(false);
+      setWithdrawAmount("");
+      await fetchFinanceData();
+    } catch (err) {
+      setWithdrawError(err instanceof Error ? err.message : "Withdrawal failed. Please try again.");
+    } finally {
+      setWithdrawLoading(false);
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -101,8 +119,13 @@ export default function FinanceContent() {
     return "#16a34a";
   };
 
+  // Bug #7: added "earning" and "clearance" — the actual types in a freelancer's wallet
   const getTransactionActivity = (transaction: Transaction) => {
     switch (transaction.type) {
+      case "earning":
+        return "Pending Earning";
+      case "clearance":
+        return "Payment Received";
       case "payment":
         return transaction.status === "completed" ? "Payment Received" : "Payment Pending";
       case "deposit":
@@ -111,8 +134,8 @@ export default function FinanceContent() {
         return "Withdrawal";
       case "refund":
         return "Refund";
-      case "escrow":
-        return "Escrow";
+      default:
+        return transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1);
     }
   };
 
@@ -451,6 +474,9 @@ export default function FinanceContent() {
           <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
             Available balance: <strong>${availableBalance.toLocaleString()}</strong>
           </Typography>
+          {withdrawError && (
+            <Typography sx={{ fontSize: 12, color: "#ef4444", mb: 2 }}>{withdrawError}</Typography>
+          )}
 
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
@@ -522,7 +548,8 @@ export default function FinanceContent() {
         </DialogContent>
         <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button
-            onClick={() => setShowWithdrawModal(false)}
+            onClick={() => { setShowWithdrawModal(false); setWithdrawError(null); }}
+            disabled={withdrawLoading}
             sx={{
               flex: 1,
               height: 44,
@@ -539,6 +566,7 @@ export default function FinanceContent() {
           </Button>
           <Button
             onClick={handleWithdraw}
+            disabled={withdrawLoading}
             sx={{
               flex: 1,
               height: 44,
@@ -551,7 +579,7 @@ export default function FinanceContent() {
                 bgcolor: "rgba(0, 0, 0, 0.8)",
               },
             }}>
-            Confirm Withdrawal
+            {withdrawLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : "Confirm Withdrawal"}
           </Button>
         </DialogActions>
       </Dialog>
