@@ -32,9 +32,12 @@ export default function SignInPage() {
         ? await loginEmail(identifier, password)
         : await loginPhone(identifier, password);
 
-      const destination = loggedInUser.is_freelancer && !loggedInUser.is_client
-        ? "/dashboard/freelancer"
-        : "/explore-services";
+      let destination = "/explore-services";
+      if (loggedInUser.is_admin) {
+        destination = "/admin";
+      } else if (loggedInUser.is_freelancer && !loggedInUser.is_client) {
+        destination = "/dashboard/freelancer";
+      }
 
       router.push(destination);
       router.refresh();

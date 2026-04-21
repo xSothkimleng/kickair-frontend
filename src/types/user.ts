@@ -95,6 +95,30 @@ export interface ClientProfile {
   industry?: Industry;
 }
 
+export type KycStatus = 'pending' | 'approved' | 'rejected';
+
+export interface IdentityVerification {
+  id: number;
+  status: KycStatus;
+  admin_note: string | null;
+  id_document_url: string | null;
+  selfie_url: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+}
+
+export interface AdminKycSubmission extends IdentityVerification {
+  user: {
+    id: number;
+    name: string;
+    email: string | null;
+    telephone: string | null;
+    avatar_url: string | null;
+    is_freelancer: boolean;
+    is_client: boolean;
+  };
+}
+
 export interface User {
   id: number;
   name: string;
@@ -103,10 +127,12 @@ export interface User {
   avatar_url: string | null;
   is_verified_phone: boolean;
   is_verified_id: boolean;
+  kyc_status?: KycStatus | null;
   email_verified_at: string | null;
   created_at?: string;
   is_freelancer: boolean;
   is_client: boolean;
+  is_admin: boolean;
   freelancer_profile?: FreelancerProfile | null;
   client_profile?: ClientProfile | null;
 }
@@ -133,7 +159,7 @@ export interface EmailRegisterData {
 
 export interface PhoneRegisterData {
   name: string;
-  telephone: string;
+  firebase_id_token: string;
   password: string;
   password_confirmation: string;
   is_client: boolean;

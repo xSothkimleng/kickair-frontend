@@ -12,6 +12,7 @@ import MessagesContent from "./MessagesContent";
 import LevelContent from "./LevelContent";
 import ProposalsContent from "./ProposalsContent";
 import NotificationsContent from "@/components/dashboard/NotificationsContent";
+import KycBanner from "@/components/dashboard/KycBanner";
 
 export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "messages" | "level" | "proposals" | "notifications";
 
@@ -36,6 +37,7 @@ export default function FreelancerSpacePage() {
       {/* @ts-expect-error type unknown */}
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
       <Container maxWidth='lg' sx={{ px: 3, py: 4 }}>
+        <KycBanner />
         {activeTab === "dashboard" && <DashboardContent onTabChange={setActiveTab} />}
         {activeTab === "profile" && <ProfileContent />}
         {activeTab === "services" && <ServicesContent />}

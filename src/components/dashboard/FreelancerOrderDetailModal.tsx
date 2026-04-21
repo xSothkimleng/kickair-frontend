@@ -1,6 +1,21 @@
 "use client";
 
-import { Dialog, DialogContent, IconButton, Box, Typography, Avatar, Stack, Chip, Button, Card, CircularProgress } from "@mui/material";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  IconButton,
+  Box,
+  Typography,
+  Avatar,
+  Stack,
+  Chip,
+  Button,
+  Card,
+  CircularProgress,
+  TextField,
+  Alert,
+} from "@mui/material";
 import {
   Close as CloseIcon,
   AccessTime as DeliveryIcon,
@@ -12,8 +27,12 @@ import {
   CheckCircle as CheckIcon,
   Done as CompleteIcon,
   Cancel as CancelIcon,
+  Send as SendIcon,
+  Gavel as DisputeIcon,
+  HourglassEmpty as AwaitingIcon,
 } from "@mui/icons-material";
 import { Order, OrderStatus } from "@/types/order";
+import { api } from "@/lib/api";
 
 interface FreelancerOrderDetailModalProps {
   open: boolean;
@@ -33,8 +52,16 @@ export default function FreelancerOrderDetailModal({
   onAccept,
   onComplete,
   onCancel,
+  onOrderUpdate,
   actionLoading,
 }: FreelancerOrderDetailModalProps) {
+  const [deliveryNote, setDeliveryNote] = useState("");
+  const [disputeReason, setDisputeReason] = useState("");
+  const [evidence, setEvidence] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+
   if (!order) return null;
 
   const isLoading = actionLoading === order.id;
@@ -45,6 +72,12 @@ export default function FreelancerOrderDetailModal({
         return { bgcolor: "rgba(0, 113, 227, 0.1)", color: "#0071e3" };
       case "pending":
         return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#ea580c" };
+      case "delivered":
+        return { bgcolor: "rgba(124, 58, 237, 0.1)", color: "#7c3aed" };
+      case "revision_requested":
+        return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#ea580c" };
+      case "disputed":
+        return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "#ef4444" };
       case "completed":
         return { bgcolor: "rgba(22, 163, 74, 0.1)", color: "#16a34a" };
       case "cancelled":
@@ -55,13 +88,16 @@ export default function FreelancerOrderDetailModal({
   };
 
   const getStatusLabel = (status: OrderStatus) => {
-    const labels = {
+    const labels: Record<OrderStatus, string> = {
       active: "In Progress",
       pending: "Pending Approval",
+      delivered: "Delivered — Awaiting Client",
+      revision_requested: "Revision Requested",
+      disputed: "Disputed",
       completed: "Completed",
       cancelled: "Cancelled",
     };
-    return labels[status] || status;
+    return labels[status] ?? status;
   };
 
   const formatDateTime = (dateString: string) => {
@@ -74,8 +110,70 @@ export default function FreelancerOrderDetailModal({
     });
   };
 
+  const handleDeliver = async () => {
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.deliverOrder(order.id, deliveryNote || undefined);
+      setDeliveryNote("");
+      onOrderUpdate();
+      onClose();
+    } catch {
+      setActionError("Failed to submit delivery. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleResubmit = async () => {
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.resubmitOrder(order.id, deliveryNote || undefined);
+      setDeliveryNote("");
+      onOrderUpdate();
+      onClose();
+    } catch {
+      setActionError("Failed to resubmit. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenDispute = async () => {
+    if (!disputeReason.trim()) return;
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.openDispute(order.id, disputeReason);
+      setDisputeReason("");
+      setShowDisputeForm(false);
+      onOrderUpdate();
+      onClose();
+    } catch {
+      setActionError("Failed to open dispute. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitEvidence = async () => {
+    if (!evidence.trim()) return;
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.submitDisputeEvidence(order.id, evidence);
+      setEvidence("");
+      onOrderUpdate();
+    } catch {
+      setActionError("Failed to submit evidence. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const isJobBased = !order.pricing_option_id;
-  const service = order.service;
+  const service = order.service || order.pricing_option?.service;
   const client = order.client_profile;
   const pricingOption = order.pricing_option;
   const statusConfig = getStatusConfig(order.status);
@@ -136,6 +234,48 @@ export default function FreelancerOrderDetailModal({
               "& .MuiChip-icon": { color: statusConfig.color },
             }}
           />
+
+          {/* Delivered: Awaiting client banner */}
+          {order.status === "delivered" && (
+            <Alert
+              icon={<AwaitingIcon />}
+              severity="info"
+              sx={{ borderRadius: 2 }}>
+              Your delivery is awaiting client approval. You will be notified when they respond.
+              {order.delivery_note && (
+                <Box sx={{ mt: 1 }}>
+                  <Typography sx={{ fontSize: 12, fontWeight: 600 }}>Your delivery note:</Typography>
+                  <Typography sx={{ fontSize: 12, mt: 0.5 }}>{order.delivery_note}</Typography>
+                </Box>
+              )}
+            </Alert>
+          )}
+
+          {/* Revision Requested: Show client feedback */}
+          {order.status === "revision_requested" && order.revision_note && (
+            <Alert
+              severity="warning"
+              sx={{ borderRadius: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Revision Requested</Typography>
+              <Typography sx={{ fontSize: 12 }}>{order.revision_note}</Typography>
+            </Alert>
+          )}
+
+          {/* Disputed: Show dispute info + evidence form */}
+          {order.status === "disputed" && order.dispute && (
+            <Alert
+              icon={<DisputeIcon />}
+              severity="error"
+              sx={{ borderRadius: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Dispute Opened</Typography>
+              <Typography sx={{ fontSize: 12, mb: 1 }}>{order.dispute.reason}</Typography>
+              {order.dispute.freelancer_evidence && (
+                <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
+                  Your evidence has been submitted.
+                </Typography>
+              )}
+            </Alert>
+          )}
 
           {/* Service Info */}
           <Card
@@ -306,6 +446,12 @@ export default function FreelancerOrderDetailModal({
             </Stack>
           </Card>
 
+          {actionError && (
+            <Alert severity="error" sx={{ borderRadius: 2 }} onClose={() => setActionError(null)}>
+              {actionError}
+            </Alert>
+          )}
+
           {/* Action Buttons */}
           <Stack spacing={1.5}>
             {/* Message Client - always visible */}
@@ -346,10 +492,7 @@ export default function FreelancerOrderDetailModal({
                     borderRadius: 28,
                     textTransform: "none",
                     boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: "#15803d",
-                      boxShadow: "none",
-                    },
+                    "&:hover": { bgcolor: "#15803d", boxShadow: "none" },
                   }}>
                   Accept Order
                 </Button>
@@ -367,39 +510,163 @@ export default function FreelancerOrderDetailModal({
                     borderRadius: 28,
                     textTransform: "none",
                     boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: "#dc2626",
-                      boxShadow: "none",
-                    },
+                    "&:hover": { bgcolor: "#dc2626", boxShadow: "none" },
                   }}>
                   Decline
                 </Button>
               </Stack>
             )}
 
-            {/* Active: Complete */}
+            {/* Active: Submit Delivery */}
             {order.status === "active" && (
-              <Button
-                fullWidth
-                variant="contained"
-                disabled={isLoading}
-                startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : <CompleteIcon sx={{ fontSize: 16 }} />}
-                onClick={() => onComplete(order.id)}
-                sx={{
-                  height: 44,
-                  bgcolor: "#16a34a",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  borderRadius: 28,
-                  textTransform: "none",
-                  boxShadow: "none",
-                  "&:hover": {
-                    bgcolor: "#15803d",
+              <Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  placeholder="Add a delivery note for the client (optional)..."
+                  value={deliveryNote}
+                  onChange={e => setDeliveryNote(e.target.value)}
+                  size="small"
+                  sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={submitting}
+                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
+                  onClick={handleDeliver}
+                  sx={{
+                    height: 44,
+                    bgcolor: "#16a34a",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    borderRadius: 28,
+                    textTransform: "none",
                     boxShadow: "none",
-                  },
-                }}>
-                Mark as Complete
-              </Button>
+                    "&:hover": { bgcolor: "#15803d", boxShadow: "none" },
+                  }}>
+                  Submit Delivery
+                </Button>
+              </Box>
+            )}
+
+            {/* Revision Requested: Resubmit */}
+            {order.status === "revision_requested" && (
+              <Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  placeholder="Describe what you changed in this revision..."
+                  value={deliveryNote}
+                  onChange={e => setDeliveryNote(e.target.value)}
+                  size="small"
+                  sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={submitting}
+                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <CompleteIcon sx={{ fontSize: 16 }} />}
+                  onClick={handleResubmit}
+                  sx={{
+                    height: 44,
+                    bgcolor: "#0071e3",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    borderRadius: 28,
+                    textTransform: "none",
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: "#0077ED", boxShadow: "none" },
+                  }}>
+                  Resubmit Work
+                </Button>
+              </Box>
+            )}
+
+            {/* Disputed: Add evidence */}
+            {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence && (
+              <Box>
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={3}
+                  placeholder="Submit your evidence to support your position..."
+                  value={evidence}
+                  onChange={e => setEvidence(e.target.value)}
+                  size="small"
+                  sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                />
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={submitting || !evidence.trim()}
+                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
+                  onClick={handleSubmitEvidence}
+                  sx={{
+                    height: 44,
+                    bgcolor: "#7c3aed",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    borderRadius: 28,
+                    textTransform: "none",
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: "#6d28d9", boxShadow: "none" },
+                  }}>
+                  Submit Evidence
+                </Button>
+              </Box>
+            )}
+
+            {/* Open Dispute — low prominence link for active/delivered */}
+            {(order.status === "active" || order.status === "delivered") && (
+              <Box>
+                {!showDisputeForm ? (
+                  <Button
+                    size="small"
+                    startIcon={<DisputeIcon sx={{ fontSize: 14 }} />}
+                    onClick={() => setShowDisputeForm(true)}
+                    sx={{
+                      fontSize: 12,
+                      color: "rgba(0,0,0,0.4)",
+                      textTransform: "none",
+                      "&:hover": { color: "#ef4444", bgcolor: "transparent" },
+                    }}>
+                    Open a dispute
+                  </Button>
+                ) : (
+                  <Box>
+                    <TextField
+                      fullWidth
+                      multiline
+                      minRows={2}
+                      placeholder="Describe the reason for the dispute..."
+                      value={disputeReason}
+                      onChange={e => setDisputeReason(e.target.value)}
+                      size="small"
+                      sx={{ mb: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                    />
+                    <Stack direction="row" spacing={1}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        disabled={submitting || !disputeReason.trim()}
+                        onClick={handleOpenDispute}
+                        sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
+                        {submitting ? <CircularProgress size={14} /> : "Open Dispute"}
+                      </Button>
+                      <Button
+                        size="small"
+                        onClick={() => { setShowDisputeForm(false); setDisputeReason(""); }}
+                        sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
+                        Cancel
+                      </Button>
+                    </Stack>
+                  </Box>
+                )}
+              </Box>
             )}
           </Stack>
         </Stack>

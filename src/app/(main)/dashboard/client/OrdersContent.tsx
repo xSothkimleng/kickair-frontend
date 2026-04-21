@@ -37,12 +37,25 @@ export default function OrdersContent() {
     return order.status === activeFilter;
   });
 
+  const handleOrderUpdate = async () => {
+    try {
+      const response: MyOrdersResponse = await api.get("/api/my-orders");
+      setOrders(response.data);
+    } catch { /* silent refresh */ }
+  };
+
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {
       case "active":
         return { bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
       case "pending":
         return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
+      case "delivered":
+        return { bgcolor: "rgba(124, 58, 237, 0.1)", color: "#6d28d9" };
+      case "revision_requested":
+        return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
+      case "disputed":
+        return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "#b91c1c" };
       case "completed":
         return { bgcolor: "rgba(22, 163, 74, 0.1)", color: "#15803d" };
       case "cancelled":
@@ -53,18 +66,16 @@ export default function OrdersContent() {
   };
 
   const getStatusLabel = (status: OrderStatus) => {
-    switch (status) {
-      case "active":
-        return "Active";
-      case "pending":
-        return "Pending";
-      case "completed":
-        return "Completed";
-      case "cancelled":
-        return "Cancelled";
-      default:
-        return status;
-    }
+    const labels: Record<OrderStatus, string> = {
+      active: "Active",
+      pending: "Pending",
+      delivered: "Delivered",
+      revision_requested: "Revision",
+      disputed: "Disputed",
+      completed: "Completed",
+      cancelled: "Cancelled",
+    };
+    return labels[status] ?? status;
   };
 
   const formatDate = (dateString: string) => {
@@ -121,7 +132,7 @@ export default function OrdersContent() {
 
       {/* Filters */}
       <Stack direction="row" spacing={1} mb={3}>
-        {(["all", "pending", "active", "completed", "cancelled"] as const).map(filter => (
+        {(["all", "pending", "active", "delivered", "revision_requested", "disputed", "completed", "cancelled"] as const).map(filter => (
           <Button
             key={filter}
             onClick={() => setActiveFilter(filter)}
@@ -281,6 +292,7 @@ export default function OrdersContent() {
         order={selectedOrder}
         onClose={handleCloseModal}
         onReviewSubmitted={handleReviewSubmitted}
+        onOrderUpdate={handleOrderUpdate}
       />
     </Box>
   );

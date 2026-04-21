@@ -11,6 +11,8 @@ import {
   FreelancerProfileRequest,
   ClientProfileRequest,
   FreelancerProfilesListResponse,
+  IdentityVerification,
+  AdminKycSubmission,
 } from "@/types/user";
 import {
   JobPost,
@@ -23,7 +25,7 @@ import {
   JobPostFilters,
 } from "@/types/job";
 import { ServiceCategory } from "@/types/service";
-import { Order } from "@/types/order";
+import { AdminDispute, Order } from "@/types/order";
 
 export class EmailUnverifiedError extends Error {
   constructor() {
@@ -521,6 +523,242 @@ class ApiClient {
     const response = await this.post("/api/upload-tokens", {});
     return response.data.upload_token;
   }
+
+  // ============================================
+  // Admin Methods
+  // ============================================
+
+  async getAdminStats(): Promise<AdminStats> {
+    const response = await this.get("/api/admin/stats");
+    return response.data;
+  }
+
+  async getAdminTransactions(page = 1, type?: string, status?: string): Promise<AdminTransactionsResponse> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (type) params.set("type", type);
+    if (status) params.set("status", status);
+    return this.get(`/api/admin/transactions?${params}`);
+  }
+
+  async getAdminWithdrawals(page = 1, status?: string): Promise<AdminTransactionsResponse> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set("status", status);
+    return this.get(`/api/admin/withdrawals?${params}`);
+  }
+
+  async approveWithdrawal(transactionId: number): Promise<void> {
+    await this.post(`/api/admin/withdrawals/${transactionId}/approve`, {});
+  }
+
+  async rejectWithdrawal(transactionId: number, note?: string): Promise<void> {
+    await this.post(`/api/admin/withdrawals/${transactionId}/reject`, { note: note ?? "" });
+  }
+
+  // ── KYC (user-facing) ────────────────────────────────────────────────────
+
+  async getKycStatus(): Promise<IdentityVerification | null> {
+    const response = await this.get("/api/kyc/status");
+    return response.data ?? null;
+  }
+
+  async submitKyc(idDocument: File, selfie: File): Promise<IdentityVerification> {
+    const formData = new FormData();
+    formData.append("id_document", idDocument);
+    formData.append("selfie", selfie);
+
+    const url = `${API_URL}/api/kyc/submit`;
+    const token = this.getToken();
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+        Accept: "application/json",
+      },
+      body: formData,
+    });
+
+    const json = await res.json();
+    if (!res.ok) {
+      throw new Error(json.message || "KYC submission failed.");
+    }
+    return json.data;
+  }
+
+  // ── KYC (admin) ──────────────────────────────────────────────────────────
+
+  async getAdminKyc(page = 1, status?: string): Promise<{ data: AdminKycSubmission[]; meta: { current_page: number; last_page: number; total: number } }> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set("status", status);
+    const response = await this.get(`/api/admin/kyc?${params}`);
+    return response;
+  }
+
+  async approveKyc(kycId: number): Promise<AdminKycSubmission> {
+    const response = await this.post(`/api/admin/kyc/${kycId}/approve`, {});
+    return response.data;
+  }
+
+  async rejectKyc(kycId: number, adminNote: string): Promise<AdminKycSubmission> {
+    const response = await this.post(`/api/admin/kyc/${kycId}/reject`, { admin_note: adminNote });
+    return response.data;
+  }
+
+  // ── Admin Dashboard ──────────────────────────────────────────────────────
+
+  async getAdminDashboardStats(): Promise<AdminDashboardStats> {
+    const response = await this.get("/api/admin/dashboard/stats");
+    return response.data;
+  }
+
+  // ── Admin Users ──────────────────────────────────────────────────────────
+
+  // ============================================
+  // Order Actions
+  // ============================================
+
+  async deliverOrder(orderId: number, deliveryNote?: string): Promise<Order> {
+    const response = await this.post(`/api/orders/${orderId}/deliver`, { delivery_note: deliveryNote ?? null });
+    return response.data;
+  }
+
+  async approveOrder(orderId: number): Promise<Order> {
+    const response = await this.post(`/api/orders/${orderId}/approve`, {});
+    return response.data;
+  }
+
+  async requestRevision(orderId: number, revisionNote: string): Promise<Order> {
+    const response = await this.post(`/api/orders/${orderId}/request-revision`, { revision_note: revisionNote });
+    return response.data;
+  }
+
+  async resubmitOrder(orderId: number, deliveryNote?: string): Promise<Order> {
+    const response = await this.post(`/api/orders/${orderId}/resubmit`, { delivery_note: deliveryNote ?? null });
+    return response.data;
+  }
+
+  async openDispute(orderId: number, reason: string): Promise<{ dispute: AdminDispute; order_status: string }> {
+    const response = await this.post(`/api/orders/${orderId}/dispute`, { reason });
+    return response.data;
+  }
+
+  async submitDisputeEvidence(orderId: number, evidence: string): Promise<void> {
+    await this.put(`/api/orders/${orderId}/dispute/evidence`, { evidence });
+  }
+
+  // ── Admin Disputes ────────────────────────────────────────────────────────
+
+  async getAdminDisputes(page = 1, status?: string): Promise<{ data: AdminDispute[]; meta: { current_page: number; last_page: number; total: number } }> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set("status", status);
+    const response = await this.get(`/api/admin/disputes?${params}`);
+    return response;
+  }
+
+  async resolveDispute(disputeId: number, data: { outcome: string; partial_freelancer_amount?: number; admin_note: string }): Promise<AdminDispute> {
+    const response = await this.post(`/api/admin/disputes/${disputeId}/resolve`, data);
+    return response.data;
+  }
+
+  async getAdminUsers(params: {
+    page?: number;
+    search?: string;
+    role?: string;
+    kyc?: string;
+  } = {}): Promise<{ data: AdminUser[]; meta: { current_page: number; last_page: number; per_page: number; total: number } }> {
+    const query = new URLSearchParams();
+    if (params.page) query.set("page", String(params.page));
+    if (params.search) query.set("search", params.search);
+    if (params.role) query.set("role", params.role);
+    if (params.kyc) query.set("kyc", params.kyc);
+    const res = await this.get(`/api/admin/users?${query}`);
+    return res.data;
+  }
+}
+
+export interface AdminDashboardStats {
+  users: {
+    total: number;
+    new_today: number;
+    new_freelancers_today: number;
+    new_clients_today: number;
+  };
+  orders: {
+    active: number;
+    completed_today: number;
+    total_completed: number;
+  };
+  gmv: {
+    today: string;
+    total: string;
+  };
+  withdrawals: {
+    pending_count: number;
+    pending_amount: string;
+  };
+  kyc: {
+    pending_count: number;
+  };
+}
+
+export interface AdminUser {
+  id: number;
+  name: string;
+  email: string | null;
+  telephone: string | null;
+  avatar_url: string | null;
+  is_client: boolean;
+  is_freelancer: boolean;
+  is_admin: boolean;
+  is_verified_id: boolean;
+  email_verified_at: string | null;
+  kyc_status: string | null;
+  freelancer_rating: string | null;
+  completed_orders: number | null;
+  created_at: string;
+}
+
+export interface AdminStats {
+  gmv_today: string;
+  total_gmv: string;
+  pending_payouts_amount: string;
+  pending_payouts_count: number;
+  refunds_today_amount: string;
+  refunds_today_count: number;
+}
+
+export interface AdminTransaction {
+  id: number;
+  wallet_id: number;
+  order_id: number | null;
+  type: string;
+  amount: string;
+  balance_after: string;
+  status: "pending" | "completed" | "cancelled";
+  description: string;
+  admin_note: string | null;
+  metadata: Record<string, string | undefined>;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    id: number;
+    name: string;
+    email: string;
+  };
+}
+
+export interface AdminTransactionsResponse {
+  status: string;
+  message: string;
+  data: {
+    data: AdminTransaction[];
+    meta: {
+      current_page: number;
+      last_page: number;
+      per_page: number;
+      total: number;
+    };
+  };
 }
 
 export const api = new ApiClient();

@@ -142,7 +142,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser,
       }}
     >
-      {!loading && emailVerificationPending ? (
+      {!loading && emailVerificationPending && !user?.is_admin ? (
         <EmailVerificationWall email={pendingEmail} onResend={resendVerification} onLogout={logout} />
       ) : (
         children

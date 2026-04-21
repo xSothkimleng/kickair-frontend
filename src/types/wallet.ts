@@ -89,7 +89,7 @@ export interface Transaction {
   id: number;
   wallet_id: number;
   order_id: number | null;
-  type: "payment" | "deposit" | "withdrawal" | "refund" | "escrow";
+  type: "payment" | "deposit" | "withdrawal" | "refund" | "escrow" | "earning";
   amount: string;
   amount_raw: string;
   balance_after: string;

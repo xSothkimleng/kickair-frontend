@@ -1,6 +1,58 @@
 import { ClientProfile } from "./service";
 
-export type OrderStatus = "pending" | "active" | "completed" | "cancelled";
+export type OrderStatus =
+  | "pending"
+  | "active"
+  | "delivered"
+  | "revision_requested"
+  | "disputed"
+  | "completed"
+  | "cancelled";
+
+export interface Dispute {
+  id: number;
+  order_id: number;
+  opened_by_user_id: number;
+  reason: string;
+  status: "open" | "resolved";
+  outcome: "full_freelancer" | "partial" | "full_client" | null;
+  partial_freelancer_amount: string | null;
+  client_evidence: string | null;
+  freelancer_evidence: string | null;
+  admin_note: string | null;
+  resolved_at: string | null;
+  created_at: string;
+}
+
+export interface AdminDispute {
+  id: number;
+  status: "open" | "resolved";
+  outcome: "full_freelancer" | "partial" | "full_client" | null;
+  reason: string;
+  client_evidence: string | null;
+  freelancer_evidence: string | null;
+  admin_note: string | null;
+  partial_freelancer_amount: string | null;
+  resolved_at: string | null;
+  opened_at: string;
+  order: {
+    id: number;
+    price: string;
+    title: string;
+  };
+  client: {
+    id: number;
+    name: string;
+    email: string;
+    avatar_url: string | null;
+  };
+  freelancer: {
+    id: number;
+    name: string;
+    email: string;
+    avatar_url: string | null;
+  };
+}
 
 export interface Review {
   id: number;
@@ -100,9 +152,12 @@ export interface Order {
   proposal_id: number | null;        // null for service-based orders
   price: string | null;              // locked at creation time
   status: OrderStatus;
+  delivery_note: string | null;
+  revision_note: string | null;
   created_at: string;
   updated_at: string;
   review: Review | null;
+  dispute: Dispute | null;
   client_profile?: ClientProfile;
   pricing_option?: OrderPricingOption;
   proposal?: OrderProposal;          // present for job-based orders

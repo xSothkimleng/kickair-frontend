@@ -1,10 +1,18 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { Box, Paper, Typography, TextField, Button, Divider, InputAdornment, Grid, Alert, Tabs, Tab } from "@mui/material";
+import {
+  Box, Paper, Typography, TextField, Button, Divider,
+  InputAdornment, Grid, Alert, Tabs, Tab, CircularProgress,
+} from "@mui/material";
 import { useAuth } from "@/components/context/AuthContext";
-import { PersonOutline, MailOutline, LockOutlined, ArrowBack, PhoneOutlined, MarkEmailUnread } from "@mui/icons-material";
+import {
+  PersonOutline, MailOutline, LockOutlined, ArrowBack,
+  PhoneOutlined, MarkEmailUnread, CheckCircle,
+} from "@mui/icons-material";
+import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
+import { firebaseAuth } from "@/lib/firebase";
 
 type UserType = "client" | "freelancer";
 type AuthMethod = "email" | "phone";
@@ -41,6 +49,16 @@ export default function SignUpPage() {
     confirmPassword: "",
   });
 
+  // OTP state
+  const [otpSent, setOtpSent] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [phoneVerified, setPhoneVerified] = useState(false);
+  const [firebaseIdToken, setFirebaseIdToken] = useState<string | null>(null);
+  const [sendingOtp, setSendingOtp] = useState(false);
+  const [verifyingOtp, setVerifyingOtp] = useState(false);
+  const confirmationResultRef = useRef<ConfirmationResult | null>(null);
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
+
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [resending, setResending] = useState(false);
@@ -54,6 +72,62 @@ export default function SignUpPage() {
   const handleMethodChange = (_: React.SyntheticEvent, value: AuthMethod) => {
     setAuthMethod(value);
     setError("");
+    setOtpSent(false);
+    setOtpCode("");
+    setPhoneVerified(false);
+    setFirebaseIdToken(null);
+  };
+
+  const getRecaptchaVerifier = (): RecaptchaVerifier => {
+    if (!recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
+        firebaseAuth,
+        "recaptcha-container",
+        { size: "invisible" }
+      );
+    }
+    return recaptchaVerifierRef.current;
+  };
+
+  const handleSendOtp = async () => {
+    if (!formData.phone) {
+      setError("Please enter your phone number");
+      return;
+    }
+    setSendingOtp(true);
+    setError("");
+    try {
+      const verifier = getRecaptchaVerifier();
+      const result = await signInWithPhoneNumber(firebaseAuth, formData.phone, verifier);
+      confirmationResultRef.current = result;
+      setOtpSent(true);
+    } catch (err: any) {
+      setError(
+        err.code === "auth/invalid-phone-number"
+          ? "Invalid phone number. Use international format, e.g. +85512345678"
+          : err.message || "Failed to send code. Please try again."
+      );
+      recaptchaVerifierRef.current?.clear();
+      recaptchaVerifierRef.current = null;
+    } finally {
+      setSendingOtp(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (!confirmationResultRef.current || !otpCode) return;
+    setVerifyingOtp(true);
+    setError("");
+    try {
+      const credential = await confirmationResultRef.current.confirm(otpCode);
+      const token = await credential.user.getIdToken();
+      setFirebaseIdToken(token);
+      setPhoneVerified(true);
+    } catch {
+      setError("Invalid verification code. Please try again.");
+    } finally {
+      setVerifyingOtp(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -68,9 +142,12 @@ export default function SignUpPage() {
       setError("Passwords do not match");
       return;
     }
+    if (authMethod === "phone" && !phoneVerified) {
+      setError("Please verify your phone number first");
+      return;
+    }
 
     setIsLoading(true);
-
     try {
       if (authMethod === "email") {
         await registerEmail({
@@ -81,13 +158,11 @@ export default function SignUpPage() {
           is_client: userType === "client",
           is_freelancer: userType === "freelancer",
         });
-        // Show inline "check your email" screen — wall in AuthContext takes over
-        // but we also show step 4 as a local confirmation before the wall kicks in
         setStep(3);
       } else {
         await registerPhone({
           name: formData.fullName,
-          telephone: formData.phone,
+          firebase_id_token: firebaseIdToken!,
           password: formData.password,
           password_confirmation: formData.confirmPassword,
           is_client: userType === "client",
@@ -167,10 +242,7 @@ export default function SignUpPage() {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Paper
                   elevation={0}
-                  onClick={() => {
-                    setUserType("client");
-                    setStep(2);
-                  }}
+                  onClick={() => { setUserType("client"); setStep(2); }}
                   sx={selectionCardSx}>
                   <Typography variant='h6' sx={{ mb: 1, color: "text.primary" }}>
                     I&apos;m a client
@@ -183,10 +255,7 @@ export default function SignUpPage() {
               <Grid size={{ xs: 12, md: 6 }}>
                 <Paper
                   elevation={0}
-                  onClick={() => {
-                    setUserType("freelancer");
-                    setStep(2);
-                  }}
+                  onClick={() => { setUserType("freelancer"); setStep(2); }}
                   sx={selectionCardSx}>
                   <Typography variant='h6' sx={{ mb: 1, color: "text.primary" }}>
                     I&apos;m a freelancer
@@ -222,7 +291,7 @@ export default function SignUpPage() {
     );
   }
 
-  // ─── Step 3: Email pending (shown briefly before AuthContext wall takes over) ─
+  // ─── Step 3: Email pending ────────────────────────────────────────────────────
   if (step === 3) {
     return (
       <Box
@@ -238,7 +307,6 @@ export default function SignUpPage() {
           <Paper
             elevation={0}
             sx={{ borderRadius: 6, border: 1, borderColor: "divider", p: { xs: 4, md: 6 }, textAlign: "center" }}>
-            {/* Icon with outer ring */}
             <Box sx={{ position: "relative", width: 88, height: 88, mx: "auto", mb: 4 }}>
               <Box
                 sx={{
@@ -270,7 +338,6 @@ export default function SignUpPage() {
               We sent a verification link to
             </Typography>
 
-            {/* Email chip */}
             <Box
               sx={{
                 display: "inline-flex",
@@ -380,6 +447,9 @@ export default function SignUpPage() {
         justifyContent: "center",
         px: { xs: 3, sm: 6 },
       }}>
+      {/* Invisible reCAPTCHA anchor */}
+      <div id='recaptcha-container' />
+
       <Box sx={{ width: "100%", maxWidth: 448 }}>
         <Button
           onClick={() => setStep(1)}
@@ -448,7 +518,7 @@ export default function SignUpPage() {
               />
             </Box>
 
-            {/* Email (email method only) */}
+            {/* Email field */}
             {authMethod === "email" && (
               <Box sx={{ mb: 2.5 }}>
                 <Typography
@@ -478,7 +548,7 @@ export default function SignUpPage() {
               </Box>
             )}
 
-            {/* Phone (phone method only) */}
+            {/* Phone + OTP section */}
             {authMethod === "phone" && (
               <Box sx={{ mb: 2.5 }}>
                 <Typography
@@ -488,23 +558,105 @@ export default function SignUpPage() {
                   sx={{ display: "block", mb: 1, color: "text.primary" }}>
                   Phone Number
                 </Typography>
-                <TextField
-                  id='phone'
-                  type='tel'
-                  placeholder='012 345 678'
-                  value={formData.phone}
-                  onChange={e => handleChange("phone", e.target.value)}
-                  fullWidth
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position='start'>
-                        <PhoneOutlined sx={{ color: "text.secondary" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={inputSx}
-                />
+
+                {/* Phone input row */}
+                <Box sx={{ display: "flex", gap: 1, mb: otpSent ? 1.5 : 0 }}>
+                  <TextField
+                    id='phone'
+                    type='tel'
+                    placeholder='+855 12 345 678'
+                    value={formData.phone}
+                    onChange={e => {
+                      handleChange("phone", e.target.value);
+                      if (otpSent) {
+                        setOtpSent(false);
+                        setPhoneVerified(false);
+                        setFirebaseIdToken(null);
+                        setOtpCode("");
+                      }
+                    }}
+                    disabled={phoneVerified}
+                    fullWidth
+                    required
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position='start'>
+                          <PhoneOutlined sx={{ color: "text.secondary" }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: phoneVerified ? (
+                        <InputAdornment position='end'>
+                          <CheckCircle sx={{ color: "success.main", fontSize: 20 }} />
+                        </InputAdornment>
+                      ) : null,
+                    }}
+                    sx={inputSx}
+                  />
+                  {!phoneVerified && (
+                    <Button
+                      variant='outlined'
+                      onClick={handleSendOtp}
+                      disabled={sendingOtp || !formData.phone}
+                      sx={{
+                        minWidth: 110,
+                        height: 48,
+                        borderRadius: 3,
+                        textTransform: "none",
+                        flexShrink: 0,
+                        fontSize: "0.8rem",
+                      }}>
+                      {sendingOtp ? <CircularProgress size={16} /> : otpSent ? "Resend" : "Send Code"}
+                    </Button>
+                  )}
+                </Box>
+
+                <Typography variant='caption' color='text.secondary'>
+                  Include country code, e.g. +855 for Cambodia
+                </Typography>
+
+                {/* OTP input row */}
+                {otpSent && !phoneVerified && (
+                  <Box sx={{ mt: 1.5 }}>
+                    <Typography variant='body2' sx={{ mb: 1, color: "text.primary" }}>
+                      Verification Code
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 1 }}>
+                      <TextField
+                        type='text'
+                        placeholder='6-digit code'
+                        value={otpCode}
+                        onChange={e => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                        inputProps={{ maxLength: 6, style: { letterSpacing: "0.3em", textAlign: "center" } }}
+                        fullWidth
+                        sx={inputSx}
+                      />
+                      <Button
+                        variant='contained'
+                        onClick={handleVerifyOtp}
+                        disabled={verifyingOtp || otpCode.length < 6}
+                        sx={{
+                          minWidth: 90,
+                          height: 48,
+                          borderRadius: 3,
+                          textTransform: "none",
+                          flexShrink: 0,
+                          color: "white",
+                          fontSize: "0.8rem",
+                        }}>
+                        {verifyingOtp ? <CircularProgress size={16} color='inherit' /> : "Verify"}
+                      </Button>
+                    </Box>
+                  </Box>
+                )}
+
+                {phoneVerified && (
+                  <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
+                    <CheckCircle sx={{ color: "success.main", fontSize: 16 }} />
+                    <Typography variant='caption' color='success.main' fontWeight={600}>
+                      Phone number verified
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             )}
 
@@ -570,7 +722,7 @@ export default function SignUpPage() {
               type='submit'
               variant='contained'
               fullWidth
-              disabled={isLoading}
+              disabled={isLoading || (authMethod === "phone" && !phoneVerified)}
               sx={{
                 height: 48,
                 borderRadius: 3,

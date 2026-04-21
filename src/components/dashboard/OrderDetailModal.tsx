@@ -28,6 +28,9 @@ import {
   Star as StarIcon,
   StarBorder as StarBorderIcon,
   RateReview as ReviewIcon,
+  ThumbUp as ApproveIcon,
+  Gavel as DisputeIcon,
+  Send as SendIcon,
 } from "@mui/icons-material";
 import { Order, OrderStatus, Review } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
@@ -38,6 +41,7 @@ interface OrderDetailModalProps {
   order: Order | null;
   onClose: () => void;
   onReviewSubmitted?: (orderId: number, review: Review) => void;
+  onOrderUpdate?: () => void;
 }
 
 function InteractiveStars({ value, onChange }: { value: number; onChange: (v: number) => void }) {
@@ -80,12 +84,18 @@ function ReadonlyStars({ rating }: { rating: number }) {
   );
 }
 
-export default function OrderDetailModal({ open, order, onClose, onReviewSubmitted }: OrderDetailModalProps) {
+export default function OrderDetailModal({ open, order, onClose, onReviewSubmitted, onOrderUpdate }: OrderDetailModalProps) {
   const { user } = useAuth();
   const [rating, setRating] = useState(0);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [revisionNote, setRevisionNote] = useState("");
+  const [showRevisionForm, setShowRevisionForm] = useState(false);
+  const [disputeReason, setDisputeReason] = useState("");
+  const [showDisputeForm, setShowDisputeForm] = useState(false);
+  const [evidence, setEvidence] = useState("");
+  const [actionError, setActionError] = useState<string | null>(null);
 
   if (!order) return null;
 
@@ -104,6 +114,12 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
         return { bgcolor: "rgba(0, 113, 227, 0.1)", color: "#0071e3" };
       case "pending":
         return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#ea580c" };
+      case "delivered":
+        return { bgcolor: "rgba(124, 58, 237, 0.1)", color: "#7c3aed" };
+      case "revision_requested":
+        return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#ea580c" };
+      case "disputed":
+        return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "#ef4444" };
       case "completed":
         return { bgcolor: "rgba(22, 163, 74, 0.1)", color: "#16a34a" };
       case "cancelled":
@@ -114,13 +130,16 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
   };
 
   const getStatusLabel = (status: OrderStatus) => {
-    const labels = {
+    const labels: Record<OrderStatus, string> = {
       active: "In Progress",
       pending: "Pending",
+      delivered: "Delivered — Review Required",
+      revision_requested: "Revision Requested",
+      disputed: "Disputed",
       completed: "Completed",
       cancelled: "Cancelled",
     };
-    return labels[status] || status;
+    return labels[status] ?? status;
   };
 
   const formatDateTime = (dateString: string) => {
@@ -139,6 +158,69 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const handleApprove = async () => {
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.approveOrder(order!.id);
+      onOrderUpdate?.();
+      onClose();
+    } catch {
+      setActionError("Failed to approve order. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleRequestRevision = async () => {
+    if (!revisionNote.trim()) return;
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.requestRevision(order!.id, revisionNote);
+      setRevisionNote("");
+      setShowRevisionForm(false);
+      onOrderUpdate?.();
+      onClose();
+    } catch {
+      setActionError("Failed to request revision. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleOpenDispute = async () => {
+    if (!disputeReason.trim()) return;
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.openDispute(order!.id, disputeReason);
+      setDisputeReason("");
+      setShowDisputeForm(false);
+      onOrderUpdate?.();
+      onClose();
+    } catch {
+      setActionError("Failed to open dispute. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleSubmitEvidence = async () => {
+    if (!evidence.trim()) return;
+    setSubmitting(true);
+    setActionError(null);
+    try {
+      await api.submitDisputeEvidence(order!.id, evidence);
+      setEvidence("");
+      onOrderUpdate?.();
+    } catch {
+      setActionError("Failed to submit evidence. Please try again.");
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const handleSubmitReview = async () => {
@@ -223,6 +305,48 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
               "& .MuiChip-icon": { color: statusConfig.color },
             }}
           />
+
+          {/* Delivered: Freelancer delivery note + action buttons */}
+          {order.status === "delivered" && (
+            <Alert severity="success" sx={{ borderRadius: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Work Delivered!</Typography>
+              {order.delivery_note && (
+                <Typography sx={{ fontSize: 12, mb: 1 }}>{order.delivery_note}</Typography>
+              )}
+            </Alert>
+          )}
+
+          {/* Revision Requested: Awaiting resubmission */}
+          {order.status === "revision_requested" && (
+            <Alert severity="warning" sx={{ borderRadius: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Revision Requested</Typography>
+              {order.revision_note && (
+                <Typography sx={{ fontSize: 12 }}>Your feedback: {order.revision_note}</Typography>
+              )}
+              <Typography sx={{ fontSize: 12, mt: 0.5, color: "rgba(0,0,0,0.5)" }}>
+                Awaiting the freelancer to resubmit their work.
+              </Typography>
+            </Alert>
+          )}
+
+          {/* Disputed */}
+          {order.status === "disputed" && order.dispute && (
+            <Alert icon={<DisputeIcon />} severity="error" sx={{ borderRadius: 2 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Dispute Opened</Typography>
+              <Typography sx={{ fontSize: 12, mb: 1 }}>{order.dispute.reason}</Typography>
+              {order.dispute.client_evidence && (
+                <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
+                  Your evidence has been submitted.
+                </Typography>
+              )}
+            </Alert>
+          )}
+
+          {actionError && (
+            <Alert severity="error" sx={{ borderRadius: 2 }} onClose={() => setActionError(null)}>
+              {actionError}
+            </Alert>
+          )}
 
           {/* Service Info */}
           <Card elevation={0} sx={{ p: 2.5, bgcolor: "#F5F5F7", borderRadius: 3 }}>
@@ -346,6 +470,164 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
               )}
             </Stack>
           </Card>
+
+          {/* ── Delivered Actions ── */}
+          {order.status === "delivered" && (
+            <Stack spacing={1.5}>
+              <Button
+                fullWidth
+                variant="contained"
+                disabled={submitting}
+                startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <ApproveIcon sx={{ fontSize: 16 }} />}
+                onClick={handleApprove}
+                sx={{
+                  height: 44,
+                  bgcolor: "#16a34a",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  borderRadius: 28,
+                  textTransform: "none",
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: "#15803d", boxShadow: "none" },
+                }}>
+                Approve & Release Payment
+              </Button>
+
+              {!showRevisionForm ? (
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  disabled={submitting}
+                  startIcon={<RevisionIcon sx={{ fontSize: 16 }} />}
+                  onClick={() => setShowRevisionForm(true)}
+                  sx={{
+                    height: 44,
+                    fontSize: 13,
+                    fontWeight: 500,
+                    borderRadius: 28,
+                    textTransform: "none",
+                    borderColor: "rgba(0,0,0,0.2)",
+                    color: "rgba(0,0,0,0.7)",
+                    "&:hover": { borderColor: "rgba(0,0,0,0.4)", bgcolor: "rgba(0,0,0,0.02)" },
+                  }}>
+                  Request Revision
+                </Button>
+              ) : (
+                <Box>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    placeholder="Describe what you'd like changed..."
+                    value={revisionNote}
+                    onChange={e => setRevisionNote(e.target.value)}
+                    size="small"
+                    sx={{ mb: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      disabled={submitting || !revisionNote.trim()}
+                      onClick={handleRequestRevision}
+                      sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
+                      {submitting ? <CircularProgress size={14} /> : "Send Revision Request"}
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => { setShowRevisionForm(false); setRevisionNote(""); }}
+                      sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
+                      Cancel
+                    </Button>
+                  </Stack>
+                </Box>
+              )}
+            </Stack>
+          )}
+
+          {/* Disputed: Add evidence */}
+          {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_evidence && (
+            <Box>
+              <TextField
+                fullWidth
+                multiline
+                minRows={3}
+                placeholder="Submit your evidence to support your position..."
+                value={evidence}
+                onChange={e => setEvidence(e.target.value)}
+                size="small"
+                sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+              />
+              <Button
+                fullWidth
+                variant="contained"
+                disabled={submitting || !evidence.trim()}
+                startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
+                onClick={handleSubmitEvidence}
+                sx={{
+                  height: 44,
+                  bgcolor: "#7c3aed",
+                  fontSize: 13,
+                  fontWeight: 500,
+                  borderRadius: 28,
+                  textTransform: "none",
+                  boxShadow: "none",
+                  "&:hover": { bgcolor: "#6d28d9", boxShadow: "none" },
+                }}>
+                Submit Evidence
+              </Button>
+            </Box>
+          )}
+
+          {/* Open Dispute — low prominence for active/delivered */}
+          {(order.status === "active" || order.status === "delivered") && (
+            <Box>
+              {!showDisputeForm ? (
+                <Button
+                  size="small"
+                  startIcon={<DisputeIcon sx={{ fontSize: 14 }} />}
+                  onClick={() => setShowDisputeForm(true)}
+                  sx={{
+                    fontSize: 12,
+                    color: "rgba(0,0,0,0.4)",
+                    textTransform: "none",
+                    "&:hover": { color: "#ef4444", bgcolor: "transparent" },
+                  }}>
+                  Open a dispute
+                </Button>
+              ) : (
+                <Box>
+                  <TextField
+                    fullWidth
+                    multiline
+                    minRows={2}
+                    placeholder="Describe the reason for the dispute..."
+                    value={disputeReason}
+                    onChange={e => setDisputeReason(e.target.value)}
+                    size="small"
+                    sx={{ mb: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                  />
+                  <Stack direction="row" spacing={1}>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      disabled={submitting || !disputeReason.trim()}
+                      onClick={handleOpenDispute}
+                      sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
+                      {submitting ? <CircularProgress size={14} /> : "Open Dispute"}
+                    </Button>
+                    <Button
+                      size="small"
+                      onClick={() => { setShowDisputeForm(false); setDisputeReason(""); }}
+                      sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
+                      Cancel
+                    </Button>
+                  </Stack>
+                </Box>
+              )}
+            </Box>
+          )}
 
           {/* ── Review Section ── */}
           {showSubmittedReview && order.review && (

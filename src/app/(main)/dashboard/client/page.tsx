@@ -10,6 +10,7 @@ import FinanceContent from "./FinanceContent";
 import MessagesContent from "./MessagesContent";
 import OrdersContent from "./OrdersContent";
 import NotificationsContent from "@/components/dashboard/NotificationsContent";
+import KycBanner from "@/components/dashboard/KycBanner";
 
 export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance" | "messages" | "notifications";
 
@@ -32,6 +33,7 @@ export default function ClientSpacePage() {
       {/* @ts-expect-error type unknown */}
       <DashboardTabs activeTab={activeTab} onTabChange={setActiveTab} tabs={tabs} />
       <Container sx={{ px: 3, py: 4 }}>
+        <KycBanner />
         {activeTab === "dashboard" && <DashboardContent onTabChange={setActiveTab} />}
         {activeTab === "profile" && <ProfileContent />}
         {activeTab === "orders" && <OrdersContent />}

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress } from "@mui/material";
-import { Message as MessageCircleIcon, CheckCircle as AcceptIcon, Cancel as CancelIcon, Done as CompleteIcon } from "@mui/icons-material";
+import { Message as MessageCircleIcon, CheckCircle as AcceptIcon, Cancel as CancelIcon, Send as DeliverIcon, Replay as ResubmitIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Order, OrderStatus, FreelancerOrdersResponse } from "@/types/order";
 import FreelancerOrderDetailModal from "@/components/dashboard/FreelancerOrderDetailModal";
@@ -44,6 +44,12 @@ export default function OrdersContent() {
         return { bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
       case "pending":
         return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
+      case "delivered":
+        return { bgcolor: "rgba(124, 58, 237, 0.1)", color: "#6d28d9" };
+      case "revision_requested":
+        return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
+      case "disputed":
+        return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "#b91c1c" };
       case "completed":
         return { bgcolor: "rgba(22, 163, 74, 0.1)", color: "#15803d" };
       case "cancelled":
@@ -54,18 +60,16 @@ export default function OrdersContent() {
   };
 
   const getStatusLabel = (status: OrderStatus) => {
-    switch (status) {
-      case "active":
-        return "Active";
-      case "pending":
-        return "Pending";
-      case "completed":
-        return "Completed";
-      case "cancelled":
-        return "Cancelled";
-      default:
-        return status;
-    }
+    const labels: Record<OrderStatus, string> = {
+      active: "Active",
+      pending: "Pending",
+      delivered: "Delivered",
+      revision_requested: "Revision",
+      disputed: "Disputed",
+      completed: "Completed",
+      cancelled: "Cancelled",
+    };
+    return labels[status] ?? status;
   };
 
   const formatDate = (dateString: string) => {
@@ -156,7 +160,7 @@ export default function OrdersContent() {
 
       {/* Filters */}
       <Stack direction="row" spacing={1} mb={3}>
-        {(["all", "pending", "active", "completed", "cancelled"] as const).map(filter => (
+        {(["all", "pending", "active", "delivered", "revision_requested", "disputed", "completed", "cancelled"] as const).map(filter => (
           <Button
             key={filter}
             onClick={() => setActiveFilter(filter)}
@@ -266,7 +270,7 @@ export default function OrdersContent() {
                       borderColor: "rgba(0,0,0,0.08)",
                     }}>
                     {/* View Details - always visible */}
-                    <Grid size={order.status === "pending" ? 3 : order.status === "active" ? 4 : 6}>
+                    <Grid size={order.status === "pending" ? 3 : (order.status === "active" || order.status === "revision_requested") ? 4 : 6}>
                       <Button
                         fullWidth
                         variant="contained"
@@ -288,7 +292,7 @@ export default function OrdersContent() {
                     </Grid>
 
                     {/* Message Client - always visible */}
-                    <Grid size={order.status === "pending" ? 3 : order.status === "active" ? 4 : 6}>
+                    <Grid size={order.status === "pending" ? 3 : (order.status === "active" || order.status === "revision_requested") ? 4 : 6}>
                       <Button
                         fullWidth
                         variant="contained"
@@ -353,26 +357,46 @@ export default function OrdersContent() {
                       </>
                     )}
 
-                    {/* Active: Complete & Cancel */}
+                    {/* Active: Submit Delivery */}
                     {order.status === "active" && (
                       <Grid size={4}>
                         <Button
                           fullWidth
                           variant="contained"
                           disabled={isLoading}
-                          startIcon={isLoading ? <CircularProgress size={14} /> : <CompleteIcon sx={{ fontSize: 14 }} />}
-                          onClick={() => handleCompleteOrder(order.id)}
+                          startIcon={isLoading ? <CircularProgress size={14} /> : <DeliverIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => handleViewDetails(order)}
                           sx={{
                             fontSize: 12,
                             textTransform: "none",
                             borderRadius: 10,
                             bgcolor: "#16a34a",
                             color: "white",
-                            "&:hover": {
-                              bgcolor: "#15803d",
-                            },
+                            "&:hover": { bgcolor: "#15803d" },
                           }}>
-                          Complete
+                          Deliver
+                        </Button>
+                      </Grid>
+                    )}
+
+                    {/* Revision Requested: Resubmit */}
+                    {order.status === "revision_requested" && (
+                      <Grid size={4}>
+                        <Button
+                          fullWidth
+                          variant="contained"
+                          disabled={isLoading}
+                          startIcon={isLoading ? <CircularProgress size={14} /> : <ResubmitIcon sx={{ fontSize: 14 }} />}
+                          onClick={() => handleViewDetails(order)}
+                          sx={{
+                            fontSize: 12,
+                            textTransform: "none",
+                            borderRadius: 10,
+                            bgcolor: "#0071e3",
+                            color: "white",
+                            "&:hover": { bgcolor: "#0077ED" },
+                          }}>
+                          Resubmit
                         </Button>
                       </Grid>
                     )}
