@@ -14,8 +14,10 @@ export type { FreelancerProfile, ClientProfile };
 
 export interface ServiceCategory {
   id: number;
-  name: string;
-  slug: string;
+  category_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface PricingOption {

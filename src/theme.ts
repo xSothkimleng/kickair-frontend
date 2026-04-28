@@ -13,7 +13,19 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           textTransform: "none",
+        },
+        text: {
           color: "inherit",
+        },
+        outlined: {
+          color: "inherit",
+        },
+      },
+    },
+    MuiTab: {
+      styleOverrides: {
+        root: {
+          textTransform: "none",
         },
       },
     },

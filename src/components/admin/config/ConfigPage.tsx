@@ -1,286 +1,539 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
-  Box, Grid, Paper, Typography, Stack, Tabs, Tab, TextField, Switch,
-  FormControlLabel, Button, Select, MenuItem, Chip, IconButton, Divider,
-  InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
+  Box, Grid, Paper, Typography, Stack, Tabs, Tab,
+  Switch, Button, Chip, MenuItem, CircularProgress,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CategoryIcon from "@mui/icons-material/Category";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import ArticleIcon from "@mui/icons-material/Article";
 import LanguageIcon from "@mui/icons-material/Language";
-import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
-import SaveIcon from "@mui/icons-material/Save";
+import ImageIcon from "@mui/icons-material/Image";
+import UploadIcon from "@mui/icons-material/Upload";
+import CloseIcon from "@mui/icons-material/Close";
+import AdminInput from "@/components/admin/ui/AdminInput";
+import { api, AdminCategory, AdminSkill } from "@/lib/api";
 
-const CATEGORIES = [
-  { id: 1, name: "Design & Graphics", subcategories: ["Logo Design", "UI/UX Design", "Illustration", "Social Media Graphics"], active: true },
-  { id: 2, name: "Translation & Languages", subcategories: ["Khmer Translation", "English Translation", "Proofreading", "Transcription"], active: true },
-  { id: 3, name: "Digital Marketing", subcategories: ["Facebook Ads", "SEO", "Social Media Management", "Content Marketing"], active: true },
-  { id: 4, name: "Web Development", subcategories: ["WordPress", "E-commerce", "Landing Pages", "Web Apps"], active: true },
-  { id: 5, name: "Writing & Content", subcategories: ["Blog Posts", "Product Descriptions", "Copywriting", "Technical Writing"], active: true },
+const PAGES = [
+  { title: "Terms & Conditions", url: "/terms", lastUpdated: "2025-01-10", status: "Published" },
+  { title: "Privacy Policy", url: "/privacy", lastUpdated: "2025-01-10", status: "Published" },
+  { title: "How It Works", url: "/how-it-works", lastUpdated: "2024-12-15", status: "Published" },
+  { title: "FAQ - Buyers", url: "/faq-buyers", lastUpdated: "2024-12-20", status: "Published" },
+  { title: "FAQ - Sellers", url: "/faq-sellers", lastUpdated: "2024-12-20", status: "Published" },
+  { title: "About Kickair", url: "/about", lastUpdated: "2024-11-30", status: "Draft" },
 ];
 
 export default function ConfigPage() {
   const [tab, setTab] = useState(0);
-  const [commission, setCommission] = useState("20");
-  const [maintenance, setMaintenance] = useState(false);
-  const [newUserVerification, setNewUserVerification] = useState(true);
+  const [features, setFeatures] = useState({
+    disputes: true,
+    tips: true,
+    subscriptions: false,
+    kycSellers: true,
+    gigApproval: true,
+    multiLanguage: true,
+  });
+
+  // Categories
+  const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [newCategoryName, setNewCategoryName] = useState("");
+  const [addingCategory, setAddingCategory] = useState(false);
+
+  // Skills
+  const [skills, setSkills] = useState<AdminSkill[]>([]);
+  const [skillsLoading, setSkillsLoading] = useState(true);
+  const [newSkillName, setNewSkillName] = useState("");
+  const [addingSkill, setAddingSkill] = useState(false);
+
+  useEffect(() => {
+    api.getAdminCategories()
+      .then(setCategories)
+      .finally(() => setCategoriesLoading(false));
+
+    api.getAdminSkills()
+      .then(setSkills)
+      .finally(() => setSkillsLoading(false));
+  }, []);
+
+  const toggleFeature = (key: keyof typeof features) =>
+    setFeatures((prev) => ({ ...prev, [key]: !prev[key] }));
+
+  const toggleCategory = async (id: number, currentValue: boolean) => {
+    setCategories((prev) =>
+      prev.map((c) => c.id === id ? { ...c, is_active: !currentValue } : c)
+    );
+    try {
+      await api.updateAdminCategory(id, { is_active: !currentValue });
+    } catch {
+      setCategories((prev) =>
+        prev.map((c) => c.id === id ? { ...c, is_active: currentValue } : c)
+      );
+    }
+  };
+
+  const deleteCategory = async (id: number) => {
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+    try {
+      await api.deleteAdminCategory(id);
+    } catch {
+      const res = await api.getAdminCategories();
+      setCategories(res);
+    }
+  };
+
+  const addCategory = async () => {
+    const trimmed = newCategoryName.trim();
+    if (!trimmed || addingCategory) return;
+    setAddingCategory(true);
+    try {
+      const created = await api.createAdminCategory(trimmed);
+      setCategories((prev) => [...prev, created]);
+      setNewCategoryName("");
+    } finally {
+      setAddingCategory(false);
+    }
+  };
+
+  const deleteSkill = async (id: number) => {
+    setSkills((prev) => prev.filter((s) => s.id !== id));
+    try {
+      await api.deleteAdminSkill(id);
+    } catch {
+      const res = await api.getAdminSkills();
+      setSkills(res);
+    }
+  };
+
+  const addSkill = async () => {
+    const trimmed = newSkillName.trim();
+    if (!trimmed || addingSkill) return;
+    setAddingSkill(true);
+    try {
+      const created = await api.createAdminSkill(trimmed);
+      setSkills((prev) => [...prev, created]);
+      setNewSkillName("");
+    } finally {
+      setAddingSkill(false);
+    }
+  };
 
   return (
     <Box sx={{ p: 4 }}>
       <Box sx={{ mb: 4 }}>
-        <Typography variant="h4" fontWeight={700} gutterBottom>Configuration & Settings</Typography>
+        <Typography variant="h4" fontWeight={700} color="grey.900" gutterBottom>
+          Configuration & Settings
+        </Typography>
         <Typography color="text.secondary">Manage platform settings and content</Typography>
       </Box>
 
       <Paper variant="outlined" sx={{ borderRadius: 2 }}>
-        <Tabs value={tab} onChange={(_, v) => setTab(v)} sx={{ borderBottom: "1px solid", borderColor: "grey.200", px: 2 }}>
-          <Tab icon={<SettingsIcon fontSize="small" />} iconPosition="start" label="General" />
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          sx={{ borderBottom: "1px solid", borderColor: "grey.200", px: 2 }}
+        >
+          <Tab icon={<SettingsIcon fontSize="small" />} iconPosition="start" label="General Settings" />
           <Tab icon={<CategoryIcon fontSize="small" />} iconPosition="start" label="Categories & Skills" />
           <Tab icon={<AttachMoneyIcon fontSize="small" />} iconPosition="start" label="Pricing Rules" />
           <Tab icon={<ArticleIcon fontSize="small" />} iconPosition="start" label="CMS & Pages" />
           <Tab icon={<LanguageIcon fontSize="small" />} iconPosition="start" label="Localization" />
         </Tabs>
 
-        {/* General Settings */}
+        {/* ── General Settings ── */}
         {tab === 0 && (
-          <Box sx={{ p: 3 }}>
-            <Grid container spacing={4}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Typography fontWeight={700} mb={2.5}>Platform Settings</Typography>
-                <Stack gap={3}>
-                  <TextField label="Platform Name" defaultValue="KickAir" size="small" fullWidth />
-                  <TextField label="Platform URL" defaultValue="https://kickair.com" size="small" fullWidth />
-                  <TextField label="Support Email" defaultValue="support@kickair.com" size="small" fullWidth />
-                  <TextField
-                    label="Commission Rate (%)"
-                    value={commission}
-                    onChange={(e) => setCommission(e.target.value)}
-                    size="small"
-                    fullWidth
-                    type="number"
-                    slotProps={{ input: { endAdornment: <InputAdornment position="end">%</InputAdornment> } }}
-                  />
-                  <TextField label="Minimum Order Value ($)" defaultValue="5" size="small" fullWidth type="number"
-                    slotProps={{ input: { startAdornment: <InputAdornment position="start">$</InputAdornment> } }} />
-                  <TextField label="Minimum Withdrawal ($)" defaultValue="50" size="small" fullWidth type="number"
-                    slotProps={{ input: { startAdornment: <InputAdornment position="start">$</InputAdornment> } }} />
+          <Box sx={{ p: 3, maxWidth: 896 }}>
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, mb: 3 }}>
+              <Typography fontWeight={700} fontSize={20} mb={3}>Platform Information</Typography>
+              <Stack gap={3}>
+                <AdminInput label="Marketplace Name" defaultValue="Kickair" fullWidth />
+                <AdminInput label="Tagline" defaultValue="Cambodia's Premier Freelancing Platform" fullWidth />
+                <Stack direction="row" gap={2}>
+                  <AdminInput label="Contact Email" type="email" defaultValue="support@kickair.com" fullWidth />
+                  <AdminInput label="Support Phone" type="tel" defaultValue="+855 12 345 678" fullWidth />
                 </Stack>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Typography fontWeight={700} mb={2.5}>Feature Flags</Typography>
-                <Stack gap={1}>
-                  {[
-                    { label: "Maintenance Mode", value: maintenance, set: setMaintenance, desc: "Take the platform offline for maintenance", danger: true },
-                    { label: "New User Verification Required", value: newUserVerification, set: setNewUserVerification, desc: "Require email verification on signup" },
-                    { label: "KYC Required for Freelancers", value: true, set: () => {}, desc: "Require KYC before posting gigs" },
-                    { label: "Escrow Payments Enabled", value: true, set: () => {}, desc: "Hold payments in escrow until job completion" },
-                    { label: "Featured Ads Enabled", value: true, set: () => {}, desc: "Allow freelancers to promote listings" },
-                    { label: "Referral Program Active", value: true, set: () => {}, desc: "Enable referral bonuses for new sign-ups" },
-                  ].map((f, i) => (
-                    <Box key={i} sx={{ p: 2, border: "1px solid", borderColor: f.danger && f.value ? "error.200" : "grey.200", borderRadius: 2, bgcolor: f.danger && f.value ? "error.50" : "transparent" }}>
-                      <Stack direction="row" justifyContent="space-between" alignItems="center">
-                        <Box>
-                          <Typography variant="body2" fontWeight={600} color={f.danger && f.value ? "error.main" : "text.primary"}>{f.label}</Typography>
-                          <Typography variant="caption" color="text.secondary">{f.desc}</Typography>
-                        </Box>
-                        <Switch checked={f.value} onChange={(e) => f.set(e.target.checked)} color={f.danger ? "error" : "primary"} />
-                      </Stack>
+                <Box>
+                  <Typography variant="body2" fontWeight={500} color="grey.700" mb={1.5}>
+                    Logo Upload
+                  </Typography>
+                  <Stack direction="row" alignItems="center" gap={2}>
+                    <Box sx={{
+                      width: 80, height: 80, bgcolor: "#dbeafe", borderRadius: 2,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                    }}>
+                      <ImageIcon sx={{ color: "#2563eb", fontSize: 32 }} />
                     </Box>
-                  ))}
-                </Stack>
-              </Grid>
-            </Grid>
-            <Divider sx={{ my: 3 }} />
-            <Stack direction="row" justifyContent="flex-end">
-              <Button variant="contained" startIcon={<SaveIcon />}>Save Changes</Button>
-            </Stack>
+                    <Button variant="contained" startIcon={<UploadIcon />}>
+                      Upload New Logo
+                    </Button>
+                  </Stack>
+                </Box>
+              </Stack>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+              <Typography fontWeight={700} fontSize={20} mb={3}>Platform Features</Typography>
+              <Stack gap={1.5}>
+                {([
+                  { key: "disputes",      label: "Enable Disputes",          desc: "Allow users to open disputes for orders" },
+                  { key: "tips",          label: "Enable Tips",               desc: "Allow buyers to tip freelancers" },
+                  { key: "subscriptions", label: "Enable Subscriptions",      desc: "Allow freelancers to offer subscription plans" },
+                  { key: "kycSellers",    label: "Require KYC for Sellers",   desc: "Mandate identity verification for all sellers" },
+                  { key: "gigApproval",   label: "Enable Gig Approval Queue", desc: "Review all gigs before going live" },
+                  { key: "multiLanguage", label: "Enable Multiple Languages", desc: "Support Khmer and English interfaces" },
+                ] as { key: keyof typeof features; label: string; desc: string }[]).map((f) => (
+                  <Stack
+                    key={f.key}
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{ p: 2, bgcolor: "grey.50", borderRadius: 2 }}
+                  >
+                    <Box>
+                      <Typography fontWeight={500} color="grey.900">{f.label}</Typography>
+                      <Typography variant="body2" color="grey.600">{f.desc}</Typography>
+                    </Box>
+                    <Switch
+                      checked={features[f.key]}
+                      onChange={() => toggleFeature(f.key)}
+                    />
+                  </Stack>
+                ))}
+              </Stack>
+              <Button variant="contained" fullWidth sx={{ mt: 3, py: 1.5 }}>
+                Save General Settings
+              </Button>
+            </Paper>
           </Box>
         )}
 
-        {/* Categories */}
+        {/* ── Categories & Skills ── */}
         {tab === 1 && (
           <Box sx={{ p: 3 }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-              <Typography fontWeight={700} fontSize={17}>Service Categories</Typography>
-              <Button variant="contained" size="small" startIcon={<AddIcon />}>Add Category</Button>
-            </Stack>
-            <Stack gap={2}>
-              {CATEGORIES.map((cat) => (
-                <Paper key={cat.id} variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Box sx={{ flex: 1 }}>
-                      <Stack direction="row" alignItems="center" gap={1.5} mb={1}>
-                        <Typography fontWeight={700}>{cat.name}</Typography>
-                        <Chip label={cat.active ? "Active" : "Inactive"} size="small" color={cat.active ? "success" : "default"} />
-                      </Stack>
-                      <Stack direction="row" gap={1} flexWrap="wrap">
-                        {cat.subcategories.map((sub) => (
-                          <Chip key={sub} label={sub} size="small" variant="outlined" />
-                        ))}
-                        <Chip icon={<AddIcon />} label="Add subcategory" size="small" variant="outlined" color="primary" sx={{ cursor: "pointer" }} />
-                      </Stack>
-                    </Box>
-                    <IconButton size="small"><EditIcon fontSize="small" /></IconButton>
-                  </Stack>
-                </Paper>
-              ))}
-            </Stack>
-          </Box>
-        )}
+            {/* Service Categories */}
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, mb: 3 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography fontWeight={700} fontSize={20}>Service Categories</Typography>
+              </Stack>
 
-        {/* Pricing Rules */}
-        {tab === 2 && (
-          <Box sx={{ p: 3 }}>
-            <Typography fontWeight={700} fontSize={17} mb={3}>Commission & Pricing Rules</Typography>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-                  <Typography fontWeight={700} mb={2.5}>Commission Rates</Typography>
-                  <Stack gap={2}>
-                    {[
-                      { label: "Standard Commission", value: "20%" },
-                      { label: "Pro Seller Commission", value: "15%" },
-                      { label: "Top Rated Commission", value: "10%" },
-                      { label: "Featured Ad Commission", value: "5%" },
-                    ].map((r) => (
-                      <Stack key={r.label} direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="body2">{r.label}</Typography>
-                        <TextField size="small" defaultValue={r.value} sx={{ width: 90 }} />
-                      </Stack>
-                    ))}
-                  </Stack>
-                </Paper>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-                  <Typography fontWeight={700} mb={2.5}>Featured Ad Pricing</Typography>
-                  <Stack gap={2}>
-                    {[
-                      { label: "Basic Boost (7 days)", value: "$10" },
-                      { label: "Standard Boost (14 days)", value: "$18" },
-                      { label: "Premium Boost (30 days)", value: "$35" },
-                      { label: "Homepage Banner (7 days)", value: "$50" },
-                    ].map((r) => (
-                      <Stack key={r.label} direction="row" justifyContent="space-between" alignItems="center">
-                        <Typography variant="body2">{r.label}</Typography>
-                        <TextField size="small" defaultValue={r.value} sx={{ width: 90 }} />
-                      </Stack>
-                    ))}
-                  </Stack>
-                </Paper>
-              </Grid>
-            </Grid>
-            <Divider sx={{ my: 3 }} />
-            <Stack direction="row" justifyContent="flex-end">
-              <Button variant="contained" startIcon={<SaveIcon />}>Save Pricing Rules</Button>
-            </Stack>
-          </Box>
-        )}
+              {/* Add new category inline */}
+              <Stack direction="row" gap={1} mb={3}>
+                <AdminInput
+                  placeholder="New category name..."
+                  value={newCategoryName}
+                  onChange={(e) => setNewCategoryName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && addCategory()}
+                  sx={{ flex: 1 }}
+                />
+                <Button
+                  variant="contained"
+                  startIcon={addingCategory ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
+                  onClick={addCategory}
+                  disabled={addingCategory || !newCategoryName.trim()}
+                  sx={{ px: 3 }}
+                >
+                  Add
+                </Button>
+              </Stack>
 
-        {/* CMS */}
-        {tab === 3 && (
-          <Box sx={{ p: 3 }}>
-            <Typography fontWeight={700} fontSize={17} mb={3}>CMS & Static Pages</Typography>
-            <TableContainer>
-              <Table>
-                <TableHead>
-                  <TableRow sx={{ bgcolor: "grey.50" }}>
-                    {["Page", "Slug", "Last Updated", "Status", "Actions"].map(h => (
-                      <TableCell key={h} sx={{ fontWeight: 600, fontSize: 12, color: "text.secondary", textTransform: "uppercase" }}>{h}</TableCell>
-                    ))}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {[
-                    { page: "Homepage Hero", slug: "/", updated: "2 days ago", status: "Published" },
-                    { page: "About Us", slug: "/about", updated: "1 week ago", status: "Published" },
-                    { page: "Terms of Service", slug: "/terms", updated: "1 month ago", status: "Published" },
-                    { page: "Privacy Policy", slug: "/privacy", updated: "1 month ago", status: "Published" },
-                    { page: "FAQ", slug: "/faq", updated: "3 days ago", status: "Published" },
-                    { page: "Maintenance Page", slug: "/maintenance", updated: "Never", status: "Draft" },
-                  ].map((p, i) => (
-                    <TableRow key={i} hover>
-                      <TableCell><Typography variant="body2" fontWeight={500}>{p.page}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" sx={{ fontFamily: "monospace" }} color="text.secondary">{p.slug}</Typography></TableCell>
-                      <TableCell><Typography variant="caption" color="text.secondary">{p.updated}</Typography></TableCell>
-                      <TableCell><Chip label={p.status} size="small" color={p.status === "Published" ? "success" : "default"} /></TableCell>
-                      <TableCell>
-                        <Button size="small" variant="outlined" startIcon={<EditIcon />}>Edit</Button>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </TableContainer>
-          </Box>
-        )}
-
-        {/* Localization */}
-        {tab === 4 && (
-          <Box sx={{ p: 3 }}>
-            <Typography fontWeight={700} fontSize={17} mb={3}>Localization Settings</Typography>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Stack gap={3}>
-                  <Box>
-                    <Typography variant="body2" fontWeight={600} mb={1}>Default Language</Typography>
-                    <Select size="small" defaultValue="en" fullWidth>
-                      <MenuItem value="en">English</MenuItem>
-                      <MenuItem value="km">ខ្មែរ (Khmer)</MenuItem>
-                    </Select>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight={600} mb={1}>Default Currency</Typography>
-                    <Select size="small" defaultValue="usd" fullWidth>
-                      <MenuItem value="usd">USD ($)</MenuItem>
-                      <MenuItem value="khr">KHR (៛)</MenuItem>
-                    </Select>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight={600} mb={1}>Timezone</Typography>
-                    <Select size="small" defaultValue="asia_phnom_penh" fullWidth>
-                      <MenuItem value="asia_phnom_penh">Asia/Phnom_Penh (UTC+7)</MenuItem>
-                      <MenuItem value="utc">UTC</MenuItem>
-                    </Select>
-                  </Box>
-                  <Box>
-                    <Typography variant="body2" fontWeight={600} mb={1}>Date Format</Typography>
-                    <Select size="small" defaultValue="dd_mm_yyyy" fullWidth>
-                      <MenuItem value="dd_mm_yyyy">DD/MM/YYYY</MenuItem>
-                      <MenuItem value="mm_dd_yyyy">MM/DD/YYYY</MenuItem>
-                      <MenuItem value="yyyy_mm_dd">YYYY-MM-DD</MenuItem>
-                    </Select>
-                  </Box>
-                </Stack>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Typography variant="body2" fontWeight={600} mb={1.5}>Enabled Languages</Typography>
-                <Stack gap={1}>
-                  {[
-                    { lang: "English", code: "EN", enabled: true },
-                    { lang: "ខ្មែរ (Khmer)", code: "KM", enabled: true },
-                    { lang: "中文 (Chinese)", code: "ZH", enabled: false },
-                    { lang: "한국어 (Korean)", code: "KO", enabled: false },
-                  ].map((l) => (
-                    <Stack key={l.code} direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 1.5, border: "1px solid", borderColor: "grey.200", borderRadius: 2 }}>
+              {categoriesLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+                  <CircularProgress size={28} />
+                </Box>
+              ) : (
+                <Stack gap={1.5}>
+                  {categories.map((cat) => (
+                    <Stack
+                      key={cat.id}
+                      direction="row"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      sx={{ px: 2, py: 1.5, bgcolor: "grey.50", borderRadius: 2 }}
+                    >
                       <Stack direction="row" alignItems="center" gap={1.5}>
-                        <Chip label={l.code} size="small" />
-                        <Typography variant="body2">{l.lang}</Typography>
+                        <Switch
+                          checked={cat.is_active}
+                          onChange={() => toggleCategory(cat.id, cat.is_active)}
+                          size="small"
+                        />
+                        <Typography
+                          fontWeight={600}
+                          color={cat.is_active ? "grey.900" : "grey.400"}
+                          sx={{ textDecoration: cat.is_active ? "none" : "line-through" }}
+                        >
+                          {cat.category_name}
+                        </Typography>
                       </Stack>
-                      <Switch defaultChecked={l.enabled} size="small" />
+                      <Button
+                        size="small"
+                        sx={{ color: "error.main" }}
+                        onClick={() => deleteCategory(cat.id)}
+                      >
+                        Delete
+                      </Button>
                     </Stack>
                   ))}
+                  {categories.length === 0 && (
+                    <Typography variant="body2" color="grey.500" sx={{ py: 2, textAlign: "center" }}>
+                      No categories yet. Add one above.
+                    </Typography>
+                  )}
                 </Stack>
+              )}
+            </Paper>
+
+            {/* Popular Skills & Tags */}
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+              <Typography fontWeight={700} fontSize={20} mb={3}>Popular Skills & Tags</Typography>
+              <Box mb={2.5}>
+                <Typography variant="body2" fontWeight={500} color="grey.700" mb={1}>
+                  Add Skills (Cambodia-specific)
+                </Typography>
+                <Stack direction="row" gap={1}>
+                  <AdminInput
+                    placeholder="Enter skill name..."
+                    value={newSkillName}
+                    onChange={(e) => setNewSkillName(e.target.value)}
+                    onKeyDown={(e) => e.key === "Enter" && addSkill()}
+                    sx={{ flex: 1 }}
+                  />
+                  <Button
+                    variant="contained"
+                    startIcon={addingSkill ? <CircularProgress size={14} color="inherit" /> : null}
+                    onClick={addSkill}
+                    disabled={addingSkill || !newSkillName.trim()}
+                    sx={{ px: 3 }}
+                  >
+                    Add
+                  </Button>
+                </Stack>
+              </Box>
+
+              {skillsLoading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
+                  <CircularProgress size={28} />
+                </Box>
+              ) : (
+                <Stack direction="row" gap={1} flexWrap="wrap">
+                  {skills.map((skill) => (
+                    <Chip
+                      key={skill.id}
+                      label={skill.expertise_name}
+                      size="small"
+                      onDelete={() => deleteSkill(skill.id)}
+                      deleteIcon={<CloseIcon sx={{ fontSize: "14px !important" }} />}
+                      sx={{
+                        bgcolor: "#f3e8ff", color: "#6b21a8",
+                        "& .MuiChip-deleteIcon": { color: "#9333ea" },
+                      }}
+                    />
+                  ))}
+                  {skills.length === 0 && !skillsLoading && (
+                    <Typography variant="body2" color="grey.500">
+                      No skills yet. Add one above.
+                    </Typography>
+                  )}
+                </Stack>
+              )}
+            </Paper>
+          </Box>
+        )}
+
+        {/* ── Pricing Rules ── */}
+        {tab === 2 && (
+          <Box sx={{ p: 3 }}>
+            <Grid container spacing={3} sx={{ maxWidth: 896 }}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, height: "100%" }}>
+                  <Typography fontWeight={700} fontSize={20} mb={3}>Price Limits</Typography>
+                  <Stack gap={2.5}>
+                    <AdminInput label="Minimum Gig Price (USD)" type="number" defaultValue="5" fullWidth />
+                    <AdminInput label="Maximum Gig Price (USD)" type="number" defaultValue="10000" fullWidth />
+                    <AdminInput label="Price Step Size (USD)" type="number" defaultValue="5" fullWidth helperText="Minimum increment for pricing" />
+                  </Stack>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12, md: 6 }}>
+                <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, height: "100%" }}>
+                  <Typography fontWeight={700} fontSize={20} mb={3}>Currency Settings</Typography>
+                  <Stack gap={2.5}>
+                    <AdminInput label="Primary Currency" select fullWidth defaultValue="usd">
+                      <MenuItem value="usd">USD - US Dollar</MenuItem>
+                      <MenuItem value="khr">KHR - Cambodian Riel</MenuItem>
+                    </AdminInput>
+                    <Stack direction="row" alignItems="center" gap={1.5}>
+                      <Switch defaultChecked size="small" />
+                      <Typography variant="body2" color="grey.600">Allow both USD and KHR</Typography>
+                    </Stack>
+                    <AdminInput label="Exchange Rate (1 USD = KHR)" type="number" defaultValue="4100" fullWidth helperText="Updated automatically daily" />
+                  </Stack>
+                </Paper>
+              </Grid>
+
+              <Grid size={{ xs: 12 }}>
+                <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+                  <Typography fontWeight={700} fontSize={20} mb={3}>Promotional Credit Rules</Typography>
+                  <Stack gap={2.5}>
+                    <AdminInput label="New User Welcome Credit (USD)" type="number" defaultValue="10" fullWidth />
+                    <AdminInput label="Referral Bonus – Referrer (USD)" type="number" defaultValue="20" fullWidth />
+                    <AdminInput label="Referral Bonus – New User (USD)" type="number" defaultValue="10" fullWidth />
+                  </Stack>
+                  <Button variant="contained" fullWidth sx={{ mt: 3, py: 1.5 }}>
+                    Save Pricing Settings
+                  </Button>
+                </Paper>
               </Grid>
             </Grid>
-            <Divider sx={{ my: 3 }} />
-            <Stack direction="row" justifyContent="flex-end">
-              <Button variant="contained" startIcon={<SaveIcon />}>Save Localization</Button>
-            </Stack>
+          </Box>
+        )}
+
+        {/* ── CMS & Pages ── */}
+        {tab === 3 && (
+          <Box sx={{ p: 3 }}>
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, mb: 3 }}>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
+                <Typography fontWeight={700} fontSize={20}>Static Pages</Typography>
+                <Button variant="contained">Create New Page</Button>
+              </Stack>
+              <Stack gap={1.5}>
+                {PAGES.map((page, i) => (
+                  <Stack
+                    key={i}
+                    direction="row"
+                    justifyContent="space-between"
+                    alignItems="center"
+                    sx={{
+                      p: 2, border: "1px solid", borderColor: "grey.200", borderRadius: 2,
+                      "&:hover": { bgcolor: "grey.50" },
+                    }}
+                  >
+                    <Box sx={{ flex: 1 }}>
+                      <Typography fontWeight={500} color="grey.900">{page.title}</Typography>
+                      <Typography variant="body2" color="grey.600">{page.url}</Typography>
+                      <Typography variant="caption" color="grey.500">Last updated: {page.lastUpdated}</Typography>
+                    </Box>
+                    <Stack direction="row" alignItems="center" gap={1.5}>
+                      <Chip
+                        label={page.status}
+                        size="small"
+                        sx={page.status === "Published"
+                          ? { bgcolor: "#dcfce7", color: "#166534" }
+                          : { bgcolor: "grey.100", color: "grey.700" }
+                        }
+                      />
+                      <Button size="small" sx={{ color: "primary.main" }}>Edit</Button>
+                    </Stack>
+                  </Stack>
+                ))}
+              </Stack>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+              <Typography fontWeight={700} fontSize={20} mb={3}>Homepage Banners & Promotions</Typography>
+              <Stack gap={2}>
+                <Paper variant="outlined" sx={{ p: 2, borderRadius: 2 }}>
+                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
+                    <Box>
+                      <Typography fontWeight={500} color="grey.900">New Year Promotion 2025</Typography>
+                      <Typography variant="body2" color="grey.600">20% off for all first-time buyers</Typography>
+                    </Box>
+                    <Switch defaultChecked size="small" />
+                  </Stack>
+                  <Box sx={{
+                    width: "100%", height: 128,
+                    background: "linear-gradient(to right, #3b82f6, #9333ea)",
+                    borderRadius: 2, display: "flex", alignItems: "center", justifyContent: "center",
+                  }}>
+                    <Typography color="white" fontWeight={700} fontSize={20}>Banner Preview</Typography>
+                  </Box>
+                </Paper>
+                <Button
+                  fullWidth
+                  variant="outlined"
+                  sx={{
+                    py: 1.5, borderStyle: "dashed", borderWidth: 2, borderColor: "grey.300",
+                    color: "grey.600",
+                    "&:hover": { borderColor: "primary.main", color: "primary.main", bgcolor: "#eff6ff", borderStyle: "dashed" },
+                  }}
+                >
+                  + Add New Banner
+                </Button>
+              </Stack>
+            </Paper>
+          </Box>
+        )}
+
+        {/* ── Localization ── */}
+        {tab === 4 && (
+          <Box sx={{ p: 3, maxWidth: 896 }}>
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, mb: 3 }}>
+              <Typography fontWeight={700} fontSize={20} mb={3}>Language Settings</Typography>
+              <Stack gap={3}>
+                <AdminInput label="Default Language" select fullWidth defaultValue="en">
+                  <MenuItem value="en">English</MenuItem>
+                  <MenuItem value="km">ខ្មែរ (Khmer)</MenuItem>
+                </AdminInput>
+                <Box>
+                  <Typography variant="body2" fontWeight={500} color="grey.700" mb={1.5}>
+                    Supported Languages
+                  </Typography>
+                  <Stack gap={1.5}>
+                    {[
+                      { lang: "English", code: "en", completion: 100 },
+                      { lang: "ខ្មែរ (Khmer)", code: "km", completion: 87 },
+                    ].map((language) => (
+                      <Stack
+                        key={language.code}
+                        direction="row"
+                        justifyContent="space-between"
+                        alignItems="center"
+                        sx={{ p: 2, bgcolor: "grey.50", borderRadius: 2 }}
+                      >
+                        <Stack direction="row" alignItems="center" gap={1.5}>
+                          <Switch defaultChecked size="small" />
+                          <Box>
+                            <Typography fontWeight={500} color="grey.900">{language.lang}</Typography>
+                            <Typography variant="caption" color="grey.600">Code: {language.code}</Typography>
+                          </Box>
+                        </Stack>
+                        <Box sx={{ textAlign: "right" }}>
+                          <Typography variant="body2" fontWeight={500} color="grey.900">
+                            {language.completion}%
+                          </Typography>
+                          <Typography variant="caption" color="grey.500">Translation complete</Typography>
+                        </Box>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </Box>
+              </Stack>
+            </Paper>
+
+            <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
+              <Typography fontWeight={700} fontSize={20} mb={3}>Regional Settings</Typography>
+              <Stack gap={2.5}>
+                <AdminInput label="Timezone" select fullWidth defaultValue="phnom_penh">
+                  <MenuItem value="phnom_penh">Asia/Phnom_Penh (UTC+7)</MenuItem>
+                  <MenuItem value="bangkok">Asia/Bangkok (UTC+7)</MenuItem>
+                </AdminInput>
+                <AdminInput label="Date Format" select fullWidth defaultValue="dd_mm_yyyy">
+                  <MenuItem value="dd_mm_yyyy">DD/MM/YYYY</MenuItem>
+                  <MenuItem value="mm_dd_yyyy">MM/DD/YYYY</MenuItem>
+                  <MenuItem value="yyyy_mm_dd">YYYY-MM-DD</MenuItem>
+                </AdminInput>
+                <AdminInput label="Time Format" select fullWidth defaultValue="24">
+                  <MenuItem value="24">24-hour</MenuItem>
+                  <MenuItem value="12">12-hour (AM/PM)</MenuItem>
+                </AdminInput>
+              </Stack>
+              <Button variant="contained" fullWidth sx={{ mt: 3, py: 1.5 }}>
+                Save Localization Settings
+              </Button>
+            </Paper>
           </Box>
         )}
       </Paper>

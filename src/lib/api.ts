@@ -674,6 +674,41 @@ class ApiClient {
     const res = await this.get(`/api/admin/users?${query}`);
     return res.data;
   }
+
+  // ── Admin Categories ──────────────────────────────────────────────────────
+  async getAdminCategories(): Promise<AdminCategory[]> {
+    const res = await this.get("/api/admin/categories");
+    return res.data;
+  }
+
+  async createAdminCategory(name: string): Promise<AdminCategory> {
+    const res = await this.post("/api/admin/categories", { category_name: name });
+    return res.data;
+  }
+
+  async updateAdminCategory(id: number, data: Partial<{ category_name: string; is_active: boolean }>): Promise<AdminCategory> {
+    const res = await this.put(`/api/admin/categories/${id}`, data);
+    return res.data;
+  }
+
+  async deleteAdminCategory(id: number): Promise<void> {
+    await this.delete(`/api/admin/categories/${id}`);
+  }
+
+  // ── Admin Skills ──────────────────────────────────────────────────────────
+  async getAdminSkills(): Promise<AdminSkill[]> {
+    const res = await this.get("/api/admin/skills");
+    return res.data;
+  }
+
+  async createAdminSkill(name: string): Promise<AdminSkill> {
+    const res = await this.post("/api/admin/skills", { expertise_name: name });
+    return res.data;
+  }
+
+  async deleteAdminSkill(id: number): Promise<void> {
+    await this.delete(`/api/admin/skills/${id}`);
+  }
 }
 
 export interface AdminDashboardStats {
@@ -759,6 +794,21 @@ export interface AdminTransactionsResponse {
       total: number;
     };
   };
+}
+
+export interface AdminCategory {
+  id: number;
+  category_name: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AdminSkill {
+  id: number;
+  expertise_name: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export const api = new ApiClient();
