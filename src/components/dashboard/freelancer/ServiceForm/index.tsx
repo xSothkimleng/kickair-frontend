@@ -129,7 +129,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
 
   // Transform form data to API request format
   const transformFormData = (): CreateServiceRequest => {
-    const pricingOptions = [];
+    const pricingOptions: import("@/types/service").CreatePricingOptionRequest[] = [];
 
     // Only include enabled pricing tiers
     (["basic", "standard", "premium"] as const).forEach(tier => {

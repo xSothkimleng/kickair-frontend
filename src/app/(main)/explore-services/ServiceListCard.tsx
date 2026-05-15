@@ -16,7 +16,7 @@ export default function ServiceListCard({ service }: ServiceListCardProps) {
 
   const freelancerName = service.freelancer_profile?.user?.name || "Unknown";
   const freelancerAvatar = service.freelancer_profile?.user?.avatar_url || "";
-  const categoryName = service.category?.category_name || service.category?.name || "Uncategorized";
+  const categoryName = service.category?.category_name || "Uncategorized";
   const image = service.feature_image?.file_url || service.media?.[0]?.file_url || "";
   const lowestPrice = service.pricing_options?.length ? Math.min(...service.pricing_options.map(p => Number(p.price_raw))) : 0;
   const fastestDelivery = service.pricing_options?.length

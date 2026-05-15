@@ -78,7 +78,7 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
             </MenuItem>
             {categories.map(cat => (
               <MenuItem key={cat.id} value={cat.id}>
-                {cat.name}
+                {cat.category_name}
               </MenuItem>
             ))}
           </Select>

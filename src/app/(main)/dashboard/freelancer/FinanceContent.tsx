@@ -111,11 +111,9 @@ export default function FinanceContent() {
     return "#16a34a";
   };
 
-  // Bug #7: added "earning" and "clearance" — the actual types in a freelancer's wallet
   const getTransactionActivity = (transaction: Transaction) => {
     switch (transaction.type) {
       case "earning":    return transaction.status === "completed" ? "Earning Released" : "Earning in Escrow";
-      case "clearance":  return "Payment Received";
       case "payment":    return transaction.status === "completed" ? "Payment Received" : "Payment Pending";
       case "deposit":    return "Deposit";
       case "withdrawal": return "Withdrawal Request";

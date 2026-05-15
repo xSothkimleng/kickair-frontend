@@ -15,6 +15,7 @@ export type { FreelancerProfile, ClientProfile };
 export interface ServiceCategory {
   id: number;
   category_name: string;
+  name?: string;
   is_active: boolean;
   created_at: string;
   updated_at: string;
@@ -144,10 +145,10 @@ export interface ServiceDetailResponse {
 // Request types for creating/updating services
 export interface CreatePricingOptionRequest {
   title: string;
-  description: string;
+  description?: string;
   price: number;
-  revisions: string;
-  delivery_time: string;
+  revisions?: string;
+  delivery_time?: string;
 }
 
 export interface CreateServiceRequest {

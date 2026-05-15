@@ -63,7 +63,7 @@ export default function ServicesPage() {
 
   const sidebarCategories: FilterCategory[] = apiCategories.map(c => ({
     id: c.id.toString(),
-    label: c.name,
+    label: c.category_name,
   }));
 
   // --- Client-side filtering ---
