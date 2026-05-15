@@ -86,7 +86,7 @@ export default function FinanceContent() {
 
   // Derived transaction groups
   const escrowEarnings = transactions.filter(t => t.type === "earning" && t.status === "pending");
-  const completedPayments = transactions.filter(t => t.status === "completed" && (t.type === "clearance" || t.type === "earning"));
+  const completedPayments = transactions.filter(t => t.status === "completed" && t.type === "earning");
   const pendingWithdrawals = transactions.filter(t => t.type === "withdrawal" && t.status === "pending");
   const pendingWithdrawalsTotal = pendingWithdrawals.reduce((sum, t) => sum + parseFloat(t.amount_raw), 0);
 
