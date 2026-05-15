@@ -24,7 +24,7 @@ import { IdentityVerification } from "@/types/user";
 import DashboardHeader from "@/components/layout/dashboard/DashboardHeader";
 
 export default function KycPage() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const [kyc, setKyc] = useState<IdentityVerification | null | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -42,10 +42,15 @@ export default function KycPage() {
   useEffect(() => {
     apiClient
       .getKycStatus()
-      .then(setKyc)
+      .then(async (kycData) => {
+        setKyc(kycData);
+        if (kycData?.status === "approved") {
+          await refreshUser();
+        }
+      })
       .catch(() => setKyc(null))
       .finally(() => setLoading(false));
-  }, []);
+  }, [refreshUser]);
 
   const handleFileChange = (
     file: File | null,
@@ -173,7 +178,7 @@ export default function KycPage() {
                   {/* ID Document upload */}
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body2" fontWeight={600} sx={{ mb: 1 }}>
-                      1. ID Document (front)
+                      1. ID Document
                     </Typography>
                     <input
                       ref={idInputRef}

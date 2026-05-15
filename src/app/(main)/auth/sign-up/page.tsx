@@ -1,5 +1,5 @@
 "use client";
-import { useState, useRef } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -11,8 +11,7 @@ import {
   PersonOutline, MailOutline, LockOutlined, ArrowBack,
   PhoneOutlined, MarkEmailUnread, CheckCircle,
 } from "@mui/icons-material";
-import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from "firebase/auth";
-import { firebaseAuth } from "@/lib/firebase";
+import { api } from "@/lib/api";
 
 type UserType = "client" | "freelancer";
 type AuthMethod = "email" | "phone";
@@ -53,11 +52,8 @@ export default function SignUpPage() {
   const [otpSent, setOtpSent] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [phoneVerified, setPhoneVerified] = useState(false);
-  const [firebaseIdToken, setFirebaseIdToken] = useState<string | null>(null);
   const [sendingOtp, setSendingOtp] = useState(false);
   const [verifyingOtp, setVerifyingOtp] = useState(false);
-  const confirmationResultRef = useRef<ConfirmationResult | null>(null);
-  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null);
 
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -75,18 +71,6 @@ export default function SignUpPage() {
     setOtpSent(false);
     setOtpCode("");
     setPhoneVerified(false);
-    setFirebaseIdToken(null);
-  };
-
-  const getRecaptchaVerifier = (): RecaptchaVerifier => {
-    if (!recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(
-        firebaseAuth,
-        "recaptcha-container",
-        { size: "invisible" }
-      );
-    }
-    return recaptchaVerifierRef.current;
   };
 
   const handleSendOtp = async () => {
@@ -97,34 +81,24 @@ export default function SignUpPage() {
     setSendingOtp(true);
     setError("");
     try {
-      const verifier = getRecaptchaVerifier();
-      const result = await signInWithPhoneNumber(firebaseAuth, formData.phone, verifier);
-      confirmationResultRef.current = result;
+      await api.sendPhoneOtp(formData.phone);
       setOtpSent(true);
     } catch (err: any) {
-      setError(
-        err.code === "auth/invalid-phone-number"
-          ? "Invalid phone number. Use international format, e.g. +85512345678"
-          : err.message || "Failed to send code. Please try again."
-      );
-      recaptchaVerifierRef.current?.clear();
-      recaptchaVerifierRef.current = null;
+      setError(err.message || "Failed to send code. Please check the number and try again.");
     } finally {
       setSendingOtp(false);
     }
   };
 
   const handleVerifyOtp = async () => {
-    if (!confirmationResultRef.current || !otpCode) return;
+    if (!otpCode || otpCode.length < 6) return;
     setVerifyingOtp(true);
     setError("");
     try {
-      const credential = await confirmationResultRef.current.confirm(otpCode);
-      const token = await credential.user.getIdToken();
-      setFirebaseIdToken(token);
+      // We verify the code on the server at registration time — this just marks
+      // the phone as ready in local state so the form can be submitted.
+      // The actual Twilio check happens in registerWithPhone.
       setPhoneVerified(true);
-    } catch {
-      setError("Invalid verification code. Please try again.");
     } finally {
       setVerifyingOtp(false);
     }
@@ -142,8 +116,8 @@ export default function SignUpPage() {
       setError("Passwords do not match");
       return;
     }
-    if (authMethod === "phone" && !phoneVerified) {
-      setError("Please verify your phone number first");
+    if (authMethod === "phone" && (!otpSent || !otpCode)) {
+      setError("Please request and enter a verification code first");
       return;
     }
 
@@ -162,7 +136,8 @@ export default function SignUpPage() {
       } else {
         await registerPhone({
           name: formData.fullName,
-          firebase_id_token: firebaseIdToken!,
+          phone: formData.phone,
+          code: otpCode,
           password: formData.password,
           password_confirmation: formData.confirmPassword,
           is_client: userType === "client",
@@ -172,6 +147,7 @@ export default function SignUpPage() {
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
+      setPhoneVerified(false);
     } finally {
       setIsLoading(false);
     }
@@ -447,9 +423,6 @@ export default function SignUpPage() {
         justifyContent: "center",
         px: { xs: 3, sm: 6 },
       }}>
-      {/* Invisible reCAPTCHA anchor */}
-      <div id='recaptcha-container' />
-
       <Box sx={{ width: "100%", maxWidth: 448 }}>
         <Button
           onClick={() => setStep(1)}
@@ -571,7 +544,6 @@ export default function SignUpPage() {
                       if (otpSent) {
                         setOtpSent(false);
                         setPhoneVerified(false);
-                        setFirebaseIdToken(null);
                         setOtpCode("");
                       }
                     }}
@@ -653,7 +625,7 @@ export default function SignUpPage() {
                   <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
                     <CheckCircle sx={{ color: "success.main", fontSize: 16 }} />
                     <Typography variant='caption' color='success.main' fontWeight={600}>
-                      Phone number verified
+                      Code entered — will be verified on submit
                     </Typography>
                   </Box>
                 )}
@@ -722,7 +694,7 @@ export default function SignUpPage() {
               type='submit'
               variant='contained'
               fullWidth
-              disabled={isLoading || (authMethod === "phone" && !phoneVerified)}
+              disabled={isLoading || (authMethod === "phone" && (!otpSent || !otpCode))}
               sx={{
                 height: 48,
                 borderRadius: 3,

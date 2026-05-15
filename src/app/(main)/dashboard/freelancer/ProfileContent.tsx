@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import {
   Box,
@@ -56,6 +57,7 @@ type ProficiencyLevel = "basic" | "conversational" | "fluent" | "native";
 export default function ProfileContent() {
   const { user, refreshUser, loading: authLoading } = useAuth();
   const { data: dashboardData, refetch: refetchDashboard } = useFreelancerDashboard();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -180,8 +182,9 @@ export default function ProfileContent() {
         tagline: formData.tagline || undefined,
         about: formData.about || undefined,
         location: formData.location || undefined,
-        educations: educations.length > 0 ? educations : undefined,
-        certificates: certificates.length > 0 ? certificates : undefined,
+        // TODO: re-enable when Education & Certifications feature is ready
+        // educations: educations.length > 0 ? educations : undefined,
+        // certificates: certificates.length > 0 ? certificates : undefined,
         expertise_ids: selectedExpertiseIds.length > 0 ? selectedExpertiseIds : undefined,
         languages:
           selectedLanguages.length > 0
@@ -652,113 +655,16 @@ export default function ProfileContent() {
         />
       </Paper>
 
+      {/* TODO: re-enable Education & Certifications sections when feature is ready */}
       {/* Education */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Box>
-            <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Education</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mt: 0.5 }}>Optional</Typography>
-          </Box>
-          <Button
-            startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
-            onClick={() => handleOpenEducationDialog()}
-            sx={{
-              fontSize: 12,
-              color: "rgba(0, 0, 0, 0.6)",
-              textTransform: "none",
-              "&:hover": { color: "black", bgcolor: "transparent" },
-            }}>
-            Add Education
-          </Button>
-        </Box>
-
-        {educations.length > 0 ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {educations.map((edu, idx) => (
-              <Box
-                key={idx}
-                sx={{
-                  p: 2,
-                  border: "1px solid rgba(0, 0, 0, 0.1)",
-                  borderRadius: 3,
-                  transition: "border-color 0.3s",
-                  "&:hover": { borderColor: "rgba(0, 0, 0, 0.2)" },
-                }}>
-                <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-                  <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{edu.studies}</Typography>
-                    <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>{edu.facility}</Typography>
-                  </Box>
-                  <Stack direction='row' spacing={0.5}>
-                    <IconButton size='small' onClick={() => handleOpenEducationDialog(idx)}>
-                      <EditOutlined sx={{ fontSize: 16 }} />
-                    </IconButton>
-                    <IconButton size='small' onClick={() => handleRemoveEducation(idx)}>
-                      <DeleteOutline sx={{ fontSize: 16, color: "#ef4444" }} />
-                    </IconButton>
-                  </Stack>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        ) : (
-          <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.4)" }}>No education added yet</Typography>
-        )}
-      </Paper>
+      {/* <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
+        ...
+      </Paper> */}
 
       {/* Certifications */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Box>
-            <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Certifications</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mt: 0.5 }}>Optional</Typography>
-          </Box>
-          <Button
-            startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
-            onClick={() => handleOpenCertificateDialog()}
-            sx={{
-              fontSize: 12,
-              color: "rgba(0, 0, 0, 0.6)",
-              textTransform: "none",
-              "&:hover": { color: "black", bgcolor: "transparent" },
-            }}>
-            Add Certificate
-          </Button>
-        </Box>
-
-        {certificates.length > 0 ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            {certificates.map((cert, idx) => (
-              <Box
-                key={idx}
-                sx={{
-                  p: 2,
-                  border: "1px solid rgba(0, 0, 0, 0.1)",
-                  borderRadius: 3,
-                  transition: "border-color 0.3s",
-                  "&:hover": { borderColor: "rgba(0, 0, 0, 0.2)" },
-                }}>
-                <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-                  <Box>
-                    <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{cert.title}</Typography>
-                    <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>{cert.source}</Typography>
-                  </Box>
-                  <Stack direction='row' spacing={0.5}>
-                    <IconButton size='small' onClick={() => handleOpenCertificateDialog(idx)}>
-                      <EditOutlined sx={{ fontSize: 16 }} />
-                    </IconButton>
-                    <IconButton size='small' onClick={() => handleRemoveCertificate(idx)}>
-                      <DeleteOutline sx={{ fontSize: 16, color: "#ef4444" }} />
-                    </IconButton>
-                  </Stack>
-                </Box>
-              </Box>
-            ))}
-          </Box>
-        ) : (
-          <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.4)" }}>No certifications added yet</Typography>
-        )}
-      </Paper>
+      {/* <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
+        ...
+      </Paper> */}
 
       {/* Verification */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
@@ -799,6 +705,7 @@ export default function ProfileContent() {
             ) : (
               <Button
                 size='small'
+                onClick={() => router.push("/dashboard/kyc")}
                 sx={{
                   fontSize: 11,
                   textTransform: "none",
@@ -843,6 +750,7 @@ export default function ProfileContent() {
             ) : (
               <Button
                 size='small'
+                onClick={() => router.push("/settings")}
                 sx={{
                   fontSize: 11,
                   textTransform: "none",
@@ -912,73 +820,12 @@ export default function ProfileContent() {
         </Box>
       </Paper>
 
+      {/* TODO: re-enable Education & Certificate dialogs when feature is ready */}
       {/* Education Dialog */}
-      <Dialog open={educationDialog.open} onClose={() => setEducationDialog(prev => ({ ...prev, open: false }))}>
-        <DialogContent sx={{ minWidth: 400 }}>
-          <Typography sx={{ fontSize: 16, fontWeight: 600, color: "black" }}>
-            {educationDialog.editIndex !== null ? "Edit Education" : "Add Education"}
-          </Typography>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label='School/University'
-              value={educationDialog.data.facility}
-              onChange={e => setEducationDialog(prev => ({ ...prev, data: { ...prev.data, facility: e.target.value } }))}
-              fullWidth
-              slotProps={{ htmlInput: { maxLength: 255 } }}
-            />
-            <TextField
-              label='Degree/Field of Study'
-              value={educationDialog.data.studies}
-              onChange={e => setEducationDialog(prev => ({ ...prev, data: { ...prev.data, studies: e.target.value } }))}
-              fullWidth
-              slotProps={{ htmlInput: { maxLength: 255 } }}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setEducationDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
-          <Button
-            onClick={handleSaveEducation}
-            disabled={!educationDialog.data.facility || !educationDialog.data.studies}
-            variant='contained'>
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* <Dialog open={educationDialog.open} ... /> */}
 
       {/* Certificate Dialog */}
-      <Dialog open={certificateDialog.open} onClose={() => setCertificateDialog(prev => ({ ...prev, open: false }))}>
-        <DialogContent sx={{ minWidth: 400 }}>
-          <Typography sx={{ fontSize: 16, fontWeight: 600, color: "black" }}>
-            {certificateDialog.editIndex !== null ? "Edit Certificate" : "Add Certificate"}
-          </Typography>
-          <Stack spacing={2} sx={{ mt: 1 }}>
-            <TextField
-              label='Certificate Name'
-              value={certificateDialog.data.title}
-              onChange={e => setCertificateDialog(prev => ({ ...prev, data: { ...prev.data, title: e.target.value } }))}
-              fullWidth
-              slotProps={{ htmlInput: { maxLength: 255 } }}
-            />
-            <TextField
-              label='Issuing Organization'
-              value={certificateDialog.data.source}
-              onChange={e => setCertificateDialog(prev => ({ ...prev, data: { ...prev.data, source: e.target.value } }))}
-              fullWidth
-              slotProps={{ htmlInput: { maxLength: 255 } }}
-            />
-          </Stack>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCertificateDialog(prev => ({ ...prev, open: false }))}>Cancel</Button>
-          <Button
-            onClick={handleSaveCertificate}
-            disabled={!certificateDialog.data.title || !certificateDialog.data.source}
-            variant='contained'>
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* <Dialog open={certificateDialog.open} ... /> */}
 
       {/* Language Dialog */}
       <Dialog open={languageDialog.open} onClose={() => setLanguageDialog(prev => ({ ...prev, open: false }))}>

@@ -52,11 +52,12 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     return {
       title: service?.title || "",
       categoryId: service?.category_id || null,
-      searchTags: service?.search_tags || ["", "", "", "", ""],
+      searchTags: service?.search_tags?.filter((t: string) => t.trim()) || [],
       description: service?.description || "",
       location: service?.location || "Phnom Penh, Cambodia",
       pricing: {
         basic: {
+          enabled: !!basicOption,
           name: "Basic",
           description: basicOption?.description || "",
           revisions: String(basicOption?.revisions || "1"),
@@ -64,6 +65,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           price: basicOption?.price || "",
         },
         standard: {
+          enabled: isEditing ? !!standardOption : true,
           name: "Standard",
           description: standardOption?.description || "",
           revisions: String(standardOption?.revisions || "3"),
@@ -71,6 +73,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           price: standardOption?.price || "",
         },
         premium: {
+          enabled: !!premiumOption,
           name: "Premium",
           description: premiumOption?.description || "",
           revisions: String(premiumOption?.revisions || "Unlimited"),
@@ -128,34 +131,18 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   const transformFormData = (): CreateServiceRequest => {
     const pricingOptions = [];
 
-    // Only include pricing tiers that have a price set
-    if (formData.pricing.basic.price) {
+    // Only include enabled pricing tiers
+    (["basic", "standard", "premium"] as const).forEach(tier => {
+      const t = formData.pricing[tier];
+      if (!t.enabled) return;
       pricingOptions.push({
-        title: "Basic",
-        description: formData.pricing.basic.description,
-        price: parseFloat(formData.pricing.basic.price),
-        revisions: formData.pricing.basic.revisions,
-        delivery_time: `${formData.pricing.basic.deliveryTime} days`,
+        title: t.name,
+        description: t.description || undefined,
+        price: parseFloat(t.price) || 0,
+        revisions: t.revisions || undefined,
+        delivery_time: t.deliveryTime ? `${t.deliveryTime} days` : undefined,
       });
-    }
-    if (formData.pricing.standard.price) {
-      pricingOptions.push({
-        title: "Standard",
-        description: formData.pricing.standard.description,
-        price: parseFloat(formData.pricing.standard.price),
-        revisions: formData.pricing.standard.revisions,
-        delivery_time: `${formData.pricing.standard.deliveryTime} days`,
-      });
-    }
-    if (formData.pricing.premium.price) {
-      pricingOptions.push({
-        title: "Premium",
-        description: formData.pricing.premium.description,
-        price: parseFloat(formData.pricing.premium.price),
-        revisions: formData.pricing.premium.revisions,
-        delivery_time: `${formData.pricing.premium.deliveryTime} days`,
-      });
-    }
+    });
 
     // Filter out empty FAQs (both question and answer must be filled)
     const validFaqs = formData.faqs.filter(faq => faq.question.trim() && faq.answer.trim());
@@ -176,12 +163,16 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   const validateForm = (): string | null => {
     if (!formData.title.trim()) return "Please enter a service title";
     if (!formData.categoryId) return "Please select a category";
-    if (!formData.description.trim()) return "Please enter a service description";
 
-    const hasAtLeastOnePricingTier =
-      formData.pricing.basic.price || formData.pricing.standard.price || formData.pricing.premium.price;
+    const enabledTiers = (["basic", "standard", "premium"] as const).filter(t => formData.pricing[t].enabled);
+    if (enabledTiers.length === 0) return "Please enable at least one pricing tier";
 
-    if (!hasAtLeastOnePricingTier) return "Please set at least one pricing tier";
+    for (const t of enabledTiers) {
+      const tier = formData.pricing[t];
+      if (!tier.price) return `Please enter a price for the ${t} tier`;
+      if (!tier.revisions) return `Please enter revisions for the ${t} tier`;
+      if (!tier.deliveryTime) return `Please enter delivery time for the ${t} tier`;
+    }
 
     return null;
   };

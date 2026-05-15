@@ -15,10 +15,24 @@ import {
   CardContent,
   Avatar,
   Pagination,
+  Divider,
+  Collapse,
+  Paper,
 } from "@mui/material";
-import { ChevronLeftOutlined, NewReleasesOutlined, CheckCircleOutlineOutlined, CancelOutlined } from "@mui/icons-material";
+import {
+  ChevronLeftOutlined,
+  NewReleasesOutlined,
+  CheckCircleOutlineOutlined,
+  CancelOutlined,
+  AttachMoneyOutlined,
+  CalendarTodayOutlined,
+  CategoryOutlined,
+  KeyboardArrowDown,
+  InsertDriveFileOutlined,
+} from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { JobPost, Proposal, ProposalStatus } from "@/types/job";
+import RichTextDisplay from "@/components/ui/RichTextDisplay";
 
 type Filter = "all" | ProposalStatus;
 
@@ -67,6 +81,7 @@ export default function ProposalsInboxPage() {
   const [lastPage, setLastPage] = useState(1);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
+  const [showJobDetails, setShowJobDetails] = useState(false);
 
   useEffect(() => {
     if (!jobId) return;
@@ -148,9 +163,111 @@ export default function ProposalsInboxPage() {
                     sx={{ fontSize: 12, height: 24 }}
                   />
                 </Stack>
-                <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
+                <Typography sx={{ fontSize: 14, color: "text.secondary", mb: 2 }}>
                   {job.proposal_count} proposal{job.proposal_count !== 1 ? "s" : ""} received
                 </Typography>
+
+                {/* Job details collapsible */}
+                <Paper
+                  elevation={0}
+                  sx={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 3, overflow: "hidden", mb: 1 }}>
+                  <Box
+                    onClick={() => setShowJobDetails(v => !v)}
+                    sx={{
+                      display: "flex", alignItems: "center", justifyContent: "space-between",
+                      px: 3, py: 2, cursor: "pointer", userSelect: "none",
+                      bgcolor: showJobDetails ? "rgba(0,0,0,0.02)" : "white",
+                      "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
+                    }}>
+                    <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Job Details</Typography>
+                    <KeyboardArrowDown sx={{
+                      fontSize: 20, color: "text.disabled",
+                      transform: showJobDetails ? "rotate(180deg)" : "rotate(0deg)",
+                      transition: "transform 0.2s",
+                    }} />
+                  </Box>
+
+                  <Collapse in={showJobDetails}>
+                    <Divider />
+                    <Box sx={{ px: 3, py: 2.5 }}>
+                      {/* Meta row */}
+                      <Stack direction="row" flexWrap="wrap" gap={3} mb={2.5}>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <AttachMoneyOutlined sx={{ fontSize: 16, color: "text.disabled" }} />
+                          <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                            Budget: <Box component="span" sx={{ fontWeight: 600, color: "text.primary" }}>
+                              ${parseFloat(job.budget_min).toLocaleString()} – ${parseFloat(job.budget_max).toLocaleString()}
+                            </Box>
+                          </Typography>
+                        </Stack>
+                        <Stack direction="row" alignItems="center" spacing={0.75}>
+                          <CalendarTodayOutlined sx={{ fontSize: 16, color: "text.disabled" }} />
+                          <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                            Deadline: <Box component="span" sx={{ fontWeight: 600, color: "text.primary" }}>
+                              {formatDate(job.deadline)}
+                            </Box>
+                          </Typography>
+                        </Stack>
+                        {job.category && (
+                          <Stack direction="row" alignItems="center" spacing={0.75}>
+                            <CategoryOutlined sx={{ fontSize: 16, color: "text.disabled" }} />
+                            <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                              {job.category.category_name}
+                            </Typography>
+                          </Stack>
+                        )}
+                      </Stack>
+
+                      {/* Skills */}
+                      {job.skills?.length > 0 && (
+                        <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2.5}>
+                          {job.skills.map(s => (
+                            <Chip key={s.id} label={s.expertise_name} size="small"
+                              sx={{ fontSize: 12, height: 24, bgcolor: "rgba(0,0,0,0.05)", color: "text.secondary" }} />
+                          ))}
+                        </Stack>
+                      )}
+
+                      {/* Description */}
+                      <Divider sx={{ mb: 2 }} />
+                      <RichTextDisplay value={job.description} />
+
+                      {/* Attachments */}
+                      {job.media?.length > 0 && (
+                        <>
+                          <Divider sx={{ my: 2 }} />
+                          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "text.secondary", mb: 1.5 }}>
+                            ATTACHMENTS
+                          </Typography>
+                          <Stack direction="row" flexWrap="wrap" gap={1.5}>
+                            {job.media.map(m =>
+                              m.file_type === "image" ? (
+                                <Box key={m.id} component="a" href={m.file_url} target="_blank" rel="noopener noreferrer"
+                                  sx={{ display: "block", width: 100, height: 70, borderRadius: 2, overflow: "hidden", border: "1px solid rgba(0,0,0,0.08)", cursor: "pointer" }}>
+                                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                                  <img src={m.file_url} alt={m.file_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                                </Box>
+                              ) : (
+                                <Box key={m.id} component="a" href={m.file_url} target="_blank" rel="noopener noreferrer"
+                                  sx={{
+                                    display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+                                    width: 100, height: 70, borderRadius: 2, border: "1px solid rgba(0,0,0,0.08)",
+                                    bgcolor: "rgba(0,0,0,0.02)", cursor: "pointer", textDecoration: "none", gap: 0.5,
+                                    "&:hover": { bgcolor: "rgba(0,0,0,0.05)" },
+                                  }}>
+                                  <InsertDriveFileOutlined sx={{ fontSize: 24, color: "text.disabled" }} />
+                                  <Typography sx={{ fontSize: 10, color: "text.secondary", maxWidth: 80, textAlign: "center", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                                    {m.file_name}
+                                  </Typography>
+                                </Box>
+                              )
+                            )}
+                          </Stack>
+                        </>
+                      )}
+                    </Box>
+                  </Collapse>
+                </Paper>
               </>
             )
           )}

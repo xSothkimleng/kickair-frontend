@@ -35,10 +35,48 @@ import {
 import GavelIcon from "@mui/icons-material/Gavel";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
+import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import { api } from "@/lib/api";
-import { AdminDispute } from "@/types/order";
+import { AdminDispute, EvidenceFile } from "@/types/order";
 
 type StatusFilter = "open" | "resolved" | "all";
+
+function EvidenceList({ files }: { files: EvidenceFile[] | null }) {
+  if (!files || !files.length) {
+    return <Typography sx={{ fontSize: 13, color: "text.secondary" }}>No evidence submitted.</Typography>;
+  }
+  return (
+    <Stack direction="row" flexWrap="wrap" gap={1}>
+      {files.map((f, i) =>
+        f.file_type === "image" ? (
+          <Box
+            key={i}
+            component="a"
+            href={f.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ display: "block", width: 80, height: 56, borderRadius: 1.5, overflow: "hidden", border: "1px solid rgba(0,0,0,0.1)", cursor: "pointer", flexShrink: 0 }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={f.url} alt={f.file_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          </Box>
+        ) : (
+          <Box
+            key={i}
+            component="a"
+            href={f.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.5, py: 0.75, border: "1px solid rgba(0,0,0,0.1)", borderRadius: 1.5, textDecoration: "none", bgcolor: "rgba(0,0,0,0.02)", "&:hover": { bgcolor: "rgba(0,0,0,0.05)" } }}>
+            <InsertDriveFileIcon sx={{ fontSize: 16, color: "text.disabled" }} />
+            <Typography sx={{ fontSize: 12, color: "text.secondary", maxWidth: 120, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+              {f.file_name}
+            </Typography>
+          </Box>
+        )
+      )}
+    </Stack>
+  );
+}
 
 function formatDate(iso: string) {
   return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -245,17 +283,13 @@ export default function DisputeReviewSection() {
                               <Typography sx={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "text.secondary", mb: 1 }}>
                                 Client Evidence — {dispute.client.name}
                               </Typography>
-                              <Typography sx={{ fontSize: 13, color: dispute.client_evidence ? "text.primary" : "text.secondary" }}>
-                                {dispute.client_evidence ?? "No evidence submitted."}
-                              </Typography>
+                              <EvidenceList files={dispute.client_evidence} />
                             </Box>
                             <Box flex={1}>
                               <Typography sx={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", color: "text.secondary", mb: 1 }}>
                                 Freelancer Evidence — {dispute.freelancer.name}
                               </Typography>
-                              <Typography sx={{ fontSize: 13, color: dispute.freelancer_evidence ? "text.primary" : "text.secondary" }}>
-                                {dispute.freelancer_evidence ?? "No evidence submitted."}
-                              </Typography>
+                              <EvidenceList files={dispute.freelancer_evidence} />
                             </Box>
                           </Stack>
                           {dispute.admin_note && (

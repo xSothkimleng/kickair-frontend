@@ -9,6 +9,12 @@ export type OrderStatus =
   | "completed"
   | "cancelled";
 
+export interface EvidenceFile {
+  url: string;
+  file_name: string;
+  file_type: "image" | "pdf";
+}
+
 export interface Dispute {
   id: number;
   order_id: number;
@@ -17,8 +23,8 @@ export interface Dispute {
   status: "open" | "resolved";
   outcome: "full_freelancer" | "partial" | "full_client" | null;
   partial_freelancer_amount: string | null;
-  client_evidence: string | null;
-  freelancer_evidence: string | null;
+  client_evidence: EvidenceFile[] | null;
+  freelancer_evidence: EvidenceFile[] | null;
   admin_note: string | null;
   resolved_at: string | null;
   created_at: string;
@@ -29,8 +35,8 @@ export interface AdminDispute {
   status: "open" | "resolved";
   outcome: "full_freelancer" | "partial" | "full_client" | null;
   reason: string;
-  client_evidence: string | null;
-  freelancer_evidence: string | null;
+  client_evidence: EvidenceFile[] | null;
+  freelancer_evidence: EvidenceFile[] | null;
   admin_note: string | null;
   partial_freelancer_amount: string | null;
   resolved_at: string | null;
@@ -153,6 +159,7 @@ export interface Order {
   price: string | null;              // locked at creation time
   status: OrderStatus;
   delivery_note: string | null;
+  delivery_attachments: Array<{ url: string; file_name: string; file_type: string }>;
   revision_note: string | null;
   created_at: string;
   updated_at: string;
@@ -163,6 +170,7 @@ export interface Order {
   proposal?: OrderProposal;          // present for job-based orders
   service?: OrderService;            // present for service-based orders
   freelancer?: OrderFreelancerProfile;
+  conversation_id?: number | null;
 }
 
 export interface MyOrdersResponse {

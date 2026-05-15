@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import {
   Dialog,
   DialogContent,
@@ -23,14 +23,16 @@ import {
   LocationOn as LocationIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
-  ChatBubbleOutline as MessageIcon,
-  CheckCircle as CheckIcon,
+CheckCircle as CheckIcon,
   Star as StarIcon,
   StarBorder as StarBorderIcon,
   RateReview as ReviewIcon,
   ThumbUp as ApproveIcon,
   Gavel as DisputeIcon,
   Send as SendIcon,
+  AttachFile as AttachFileIcon,
+  InsertDriveFile as FileIcon,
+  Image as ImageIcon,
 } from "@mui/icons-material";
 import { Order, OrderStatus, Review } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
@@ -94,8 +96,13 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
   const [showRevisionForm, setShowRevisionForm] = useState(false);
   const [disputeReason, setDisputeReason] = useState("");
   const [showDisputeForm, setShowDisputeForm] = useState(false);
-  const [evidence, setEvidence] = useState("");
+  const [evidenceFiles, setEvidenceFiles] = useState<{ url: string; file_name: string; file_type: string }[]>([]);
+  const [separateEvidenceFiles, setSeparateEvidenceFiles] = useState<{ url: string; file_name: string; file_type: string }[]>([]);
+  const [uploadToken, setUploadToken] = useState<string | null>(null);
+  const [uploading, setUploading] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const evidenceFileInputRef = useRef<HTMLInputElement>(null);
 
   if (!order) return null;
 
@@ -191,13 +198,38 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
     }
   };
 
+  const handleFileUpload = async (files: FileList | null, setter: React.Dispatch<React.SetStateAction<{ url: string; file_name: string; file_type: string }[]>>, current: { url: string; file_name: string; file_type: string }[]) => {
+    if (!files || !files.length) return;
+    setUploading(true);
+    try {
+      let token = uploadToken;
+      if (!token) {
+        token = await api.getUploadToken();
+        setUploadToken(token);
+      }
+      for (const file of Array.from(files)) {
+        if (current.length >= 5) break;
+        const result = await api.uploadFormData("/api/temporary-uploads", file, { upload_token: token });
+        setter(prev => [...prev, { url: result.data.file_url, file_name: result.data.file_name, file_type: result.data.file_type }]);
+        current = [...current, { url: result.data.file_url, file_name: result.data.file_name, file_type: result.data.file_type }];
+      }
+    } catch {
+      setActionError("Failed to upload file. Please try again.");
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      if (evidenceFileInputRef.current) evidenceFileInputRef.current.value = "";
+    }
+  };
+
   const handleOpenDispute = async () => {
     if (!disputeReason.trim()) return;
     setSubmitting(true);
     setActionError(null);
     try {
-      await api.openDispute(order!.id, disputeReason);
+      await api.openDispute(order!.id, disputeReason, evidenceFiles.length ? evidenceFiles : undefined);
       setDisputeReason("");
+      setEvidenceFiles([]);
       setShowDisputeForm(false);
       onOrderUpdate?.();
       onClose();
@@ -209,12 +241,12 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
   };
 
   const handleSubmitEvidence = async () => {
-    if (!evidence.trim()) return;
+    if (!separateEvidenceFiles.length) return;
     setSubmitting(true);
     setActionError(null);
     try {
-      await api.submitDisputeEvidence(order!.id, evidence);
-      setEvidence("");
+      await api.submitDisputeEvidence(order!.id, separateEvidenceFiles);
+      setSeparateEvidenceFiles([]);
       onOrderUpdate?.();
     } catch {
       setActionError("Failed to submit evidence. Please try again.");
@@ -311,7 +343,42 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             <Alert severity="success" sx={{ borderRadius: 2 }}>
               <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Work Delivered!</Typography>
               {order.delivery_note && (
-                <Typography sx={{ fontSize: 12, mb: 1 }}>{order.delivery_note}</Typography>
+                <Typography sx={{ fontSize: 12, mb: order.delivery_attachments?.length ? 1 : 0 }}>{order.delivery_note}</Typography>
+              )}
+              {order.delivery_attachments?.length > 0 && (
+                <Stack spacing={0.5} sx={{ mt: 0.5 }}>
+                  <Typography sx={{ fontSize: 11, fontWeight: 600, color: "rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: 0.4 }}>
+                    Attachments
+                  </Typography>
+                  {order.delivery_attachments.map((f, i) => (
+                    <Stack
+                      key={i}
+                      component="a"
+                      href={f.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      direction="row"
+                      alignItems="center"
+                      spacing={0.75}
+                      sx={{
+                        px: 1.25, py: 0.75,
+                        bgcolor: "rgba(255,255,255,0.6)",
+                        borderRadius: 1.5,
+                        textDecoration: "none",
+                        color: "inherit",
+                        "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
+                        cursor: "pointer",
+                      }}
+                    >
+                      {f.file_type.startsWith("image/")
+                        ? <ImageIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.5)", flexShrink: 0 }} />
+                        : <FileIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.5)", flexShrink: 0 }} />}
+                      <Typography sx={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {f.file_name}
+                      </Typography>
+                    </Stack>
+                  ))}
+                </Stack>
               )}
             </Alert>
           )}
@@ -334,11 +401,11 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             <Alert icon={<DisputeIcon />} severity="error" sx={{ borderRadius: 2 }}>
               <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Dispute Opened</Typography>
               <Typography sx={{ fontSize: 12, mb: 1 }}>{order.dispute.reason}</Typography>
-              {order.dispute.client_evidence && (
+              {order.dispute.client_evidence?.length ? (
                 <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
-                  Your evidence has been submitted.
+                  Your evidence ({order.dispute.client_evidence.length} file{order.dispute.client_evidence.length !== 1 ? "s" : ""}) has been submitted.
                 </Typography>
-              )}
+              ) : null}
             </Alert>
           )}
 
@@ -357,9 +424,10 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
               </Typography>
             )}
             {service?.description && (
-              <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.7)", lineHeight: 1.6, mb: 1.5 }}>
-                {service.description.length > 150 ? `${service.description.slice(0, 150)}...` : service.description}
-              </Typography>
+              <Box
+                sx={{ fontSize: 13, color: "rgba(0,0,0,0.7)", lineHeight: 1.6, mb: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", "& p": { m: 0 }, "& *": { fontSize: "inherit" } }}
+                dangerouslySetInnerHTML={{ __html: service.description }}
+              />
             )}
             {service?.location && (
               <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
@@ -431,7 +499,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
                 <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
                   {isJobBased
                     ? `${order.proposal?.timeline_days ?? "N/A"} day${order.proposal?.timeline_days !== 1 ? "s" : ""} (timeline)`
-                    : `${pricingOption?.delivery_time || "N/A"} day${Number(pricingOption?.delivery_time) !== 1 ? "s" : ""}`}
+                    : (() => { const d = parseInt(String(pricingOption?.delivery_time ?? "")); return isNaN(d) ? "N/A" : `${d} day${d !== 1 ? "s" : ""}`; })()}
                 </Typography>
               </Box>
               {!isJobBased && (
@@ -474,26 +542,28 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
           {/* ── Delivered Actions ── */}
           {order.status === "delivered" && (
             <Stack spacing={1.5}>
-              <Button
-                fullWidth
-                variant="contained"
-                disabled={submitting}
-                startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <ApproveIcon sx={{ fontSize: 16 }} />}
-                onClick={handleApprove}
-                sx={{
-                  height: 44,
-                  bgcolor: "#16a34a",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  borderRadius: 28,
-                  textTransform: "none",
-                  boxShadow: "none",
-                  "&:hover": { bgcolor: "#15803d", boxShadow: "none" },
-                }}>
-                Approve & Release Payment
-              </Button>
+              {!showRevisionForm && !showDisputeForm && (
+                <Button
+                  fullWidth
+                  variant="contained"
+                  disabled={submitting}
+                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <ApproveIcon sx={{ fontSize: 16 }} />}
+                  onClick={handleApprove}
+                  sx={{
+                    height: 44,
+                    bgcolor: "#16a34a",
+                    fontSize: 13,
+                    fontWeight: 500,
+                    borderRadius: 28,
+                    textTransform: "none",
+                    boxShadow: "none",
+                    "&:hover": { bgcolor: "#15803d", boxShadow: "none" },
+                  }}>
+                  Approve & Release Payment
+                </Button>
+              )}
 
-              {!showRevisionForm ? (
+              {!showRevisionForm && !showDisputeForm ? (
                 <Button
                   fullWidth
                   variant="outlined"
@@ -545,23 +615,46 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             </Stack>
           )}
 
-          {/* Disputed: Add evidence */}
-          {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_evidence && (
+          {/* Disputed: Submit evidence (files) */}
+          {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_evidence?.length && (
             <Box>
-              <TextField
-                fullWidth
-                multiline
-                minRows={3}
-                placeholder="Submit your evidence to support your position..."
-                value={evidence}
-                onChange={e => setEvidence(e.target.value)}
-                size="small"
-                sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+              <Typography sx={{ fontSize: 12, fontWeight: 600, mb: 1, color: "rgba(0,0,0,0.6)" }}>
+                Submit your evidence
+              </Typography>
+              <input
+                ref={evidenceFileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,.pdf"
+                multiple
+                style={{ display: "none" }}
+                onChange={e => handleFileUpload(e.target.files, setSeparateEvidenceFiles, separateEvidenceFiles)}
               />
+              <Button
+                size="small"
+                startIcon={uploading ? <CircularProgress size={12} /> : <AttachFileIcon sx={{ fontSize: 14 }} />}
+                disabled={uploading || separateEvidenceFiles.length >= 5}
+                onClick={() => evidenceFileInputRef.current?.click()}
+                sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.5)", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 2, px: 1.5, py: 0.5, mb: 1, "&:hover": { borderColor: "rgba(0,0,0,0.4)", bgcolor: "rgba(0,0,0,0.02)" } }}>
+                {uploading ? "Uploading..." : "Attach files (images or PDF, max 5)"}
+              </Button>
+              {separateEvidenceFiles.length > 0 && (
+                <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1}>
+                  {separateEvidenceFiles.map((f, i) => (
+                    <Chip
+                      key={i}
+                      label={f.file_name.length > 22 ? f.file_name.slice(0, 20) + "…" : f.file_name}
+                      size="small"
+                      icon={f.file_type === "image" ? <ImageIcon sx={{ fontSize: 12 }} /> : <FileIcon sx={{ fontSize: 12 }} />}
+                      onDelete={() => setSeparateEvidenceFiles(prev => prev.filter((_, j) => j !== i))}
+                      sx={{ fontSize: 11, height: 24 }}
+                    />
+                  ))}
+                </Stack>
+              )}
               <Button
                 fullWidth
                 variant="contained"
-                disabled={submitting || !evidence.trim()}
+                disabled={submitting || !separateEvidenceFiles.length}
                 startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
                 onClick={handleSubmitEvidence}
                 sx={{
@@ -582,6 +675,14 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
           {/* Open Dispute — low prominence for active/delivered */}
           {(order.status === "active" || order.status === "delivered") && (
             <Box>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp,.pdf"
+                multiple
+                style={{ display: "none" }}
+                onChange={e => handleFileUpload(e.target.files, setEvidenceFiles, evidenceFiles)}
+              />
               {!showDisputeForm ? (
                 <Button
                   size="small"
@@ -605,8 +706,30 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
                     value={disputeReason}
                     onChange={e => setDisputeReason(e.target.value)}
                     size="small"
-                    sx={{ mb: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
+                    sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
                   />
+                  <Button
+                    size="small"
+                    startIcon={uploading ? <CircularProgress size={12} /> : <AttachFileIcon sx={{ fontSize: 14 }} />}
+                    disabled={uploading || evidenceFiles.length >= 5}
+                    onClick={() => fileInputRef.current?.click()}
+                    sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.5)", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 2, px: 1.5, py: 0.5, mb: 1, "&:hover": { borderColor: "rgba(0,0,0,0.4)", bgcolor: "rgba(0,0,0,0.02)" } }}>
+                    {uploading ? "Uploading..." : "Attach evidence (optional)"}
+                  </Button>
+                  {evidenceFiles.length > 0 && (
+                    <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1}>
+                      {evidenceFiles.map((f, i) => (
+                        <Chip
+                          key={i}
+                          label={f.file_name.length > 22 ? f.file_name.slice(0, 20) + "…" : f.file_name}
+                          size="small"
+                          icon={f.file_type === "image" ? <ImageIcon sx={{ fontSize: 12 }} /> : <FileIcon sx={{ fontSize: 12 }} />}
+                          onDelete={() => setEvidenceFiles(prev => prev.filter((_, j) => j !== i))}
+                          sx={{ fontSize: 11, height: 24 }}
+                        />
+                      ))}
+                    </Stack>
+                  )}
                   <Stack direction="row" spacing={1}>
                     <Button
                       size="small"
@@ -619,7 +742,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
                     </Button>
                     <Button
                       size="small"
-                      onClick={() => { setShowDisputeForm(false); setDisputeReason(""); }}
+                      onClick={() => { setShowDisputeForm(false); setDisputeReason(""); setEvidenceFiles([]); }}
                       sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
                       Cancel
                     </Button>
@@ -718,24 +841,6 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             </Card>
           )}
 
-          {/* Action Button */}
-          <Button
-            fullWidth
-            variant="contained"
-            startIcon={<MessageIcon sx={{ fontSize: 16 }} />}
-            sx={{
-              height: 44,
-              bgcolor: "#0071e3",
-              fontSize: 13,
-              fontWeight: 500,
-              borderRadius: 28,
-              textTransform: "none",
-              boxShadow: "none",
-              "&:hover": { bgcolor: "#0077ED", boxShadow: "none" },
-            }}
-          >
-            Message Freelancer
-          </Button>
         </Stack>
       </DialogContent>
     </Dialog>

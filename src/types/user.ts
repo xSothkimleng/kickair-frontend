@@ -55,10 +55,16 @@ export interface FreelancerProfileService {
   search_tags: string[] | null;
   location: string | null;
   orders_count: number;
+  rating_average: string | null;
+  rating_count: number;
   faqs: Array<{ question: string; answer: string }> | null;
   created_at: string;
   updated_at: string;
   pricing_options?: FreelancerProfileServicePricingOption[];
+  feature_image?: { file_url: string } | null;
+  media?: Array<{ file_url: string }>;
+  category?: { id: number; category_name: string; name?: string } | null;
+  freelancer_profile?: { user?: { name: string; avatar_url: string | null } | null } | null;
 }
 
 export interface FreelancerProfile {
@@ -159,7 +165,8 @@ export interface EmailRegisterData {
 
 export interface PhoneRegisterData {
   name: string;
-  firebase_id_token: string;
+  phone: string;
+  code: string;
   password: string;
   password_confirmation: string;
   is_client: boolean;

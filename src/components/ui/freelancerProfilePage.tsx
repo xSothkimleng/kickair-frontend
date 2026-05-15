@@ -9,8 +9,6 @@ import {
   Avatar,
   Button,
   Chip,
-  Card,
-  CardContent,
   IconButton,
   Pagination,
   CircularProgress,
@@ -23,30 +21,27 @@ import {
   Favorite,
   FavoriteBorder,
   Share,
-  ChevronRight,
   WorkspacePremium,
   Translate,
   School,
-  ShoppingBag,
-  ImageNotSupported,
   Star as StarIcon,
   RateReview as ReviewIcon,
   CheckCircle as CheckCircleIcon,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { FreelancerProfile } from "@/types/user";
+import { FreelancerProfile, FreelancerProfileService } from "@/types/user";
+import { Service } from "@/types/service";
+import ServiceCard from "@/app/(main)/explore-services/ServiceCard";
 import { api, FreelancerReview } from "@/lib/api";
 
 interface FreelancerProfilePageProps {
   profile: FreelancerProfile;
 }
 
-type Tab = "about" | "portfolio" | "services" | "reviews";
+type Tab = "about" | "services" | "reviews";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "about", label: "About" },
-  { id: "portfolio", label: "Portfolio" },
   { id: "services", label: "Services" },
   { id: "reviews", label: "Reviews" },
 ];
@@ -402,19 +397,6 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
             </Box>
           )}
 
-          {/* ── PORTFOLIO (placeholder) ── */}
-          {activeTab === "portfolio" && (
-            <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 6, textAlign: "center" }}>
-              <ImageNotSupported sx={{ fontSize: 48, color: "rgba(0,0,0,0.15)", mb: 2 }} />
-              <Typography sx={{ fontSize: 15, fontWeight: 500, color: "rgba(0,0,0,0.5)", mb: 1 }}>
-                No portfolio yet
-              </Typography>
-              <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.35)" }}>
-                Portfolio items will appear here once the freelancer adds them.
-              </Typography>
-            </Box>
-          )}
-
           {/* ── SERVICES ── */}
           {activeTab === "services" && (
             <Box>
@@ -424,83 +406,10 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                     display: "grid",
                     gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
                     gap: 3,
-                  }}
-                >
-                  {profile.services.map(service => {
-                    const lowestPrice = service.pricing_options?.length
-                      ? Math.min(...service.pricing_options.map(p => p.price_raw))
-                      : null;
-                    const fastestDelivery = service.pricing_options?.length
-                      ? Math.min(...service.pricing_options.map(p => p.delivery_time ?? Infinity))
-                      : null;
-
-                    return (
-                      <Link key={service.id} href={`/explore-services/${service.id}`} style={{ textDecoration: "none" }}>
-                        <Card
-                          elevation={0}
-                          sx={{
-                            borderRadius: 3,
-                            border: "1px solid rgba(0,0,0,0.08)",
-                            overflow: "hidden",
-                            cursor: "pointer",
-                            transition: "all 0.3s",
-                            "&:hover": {
-                              border: "1px solid rgba(0,0,0,0.18)",
-                              boxShadow: "0 8px 32px rgba(0,0,0,0.08)",
-                            },
-                          }}
-                        >
-                          <CardContent sx={{ p: 2.5 }}>
-                            <Typography
-                              sx={{
-                                fontSize: 14, fontWeight: 500, color: "black",
-                                mb: 2, lineHeight: 1.45,
-                                display: "-webkit-box",
-                                WebkitLineClamp: 2,
-                                WebkitBoxOrient: "vertical",
-                                overflow: "hidden",
-                              }}
-                            >
-                              {service.title}
-                            </Typography>
-
-                            <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mb: 2 }}>
-                              <ShoppingBag sx={{ fontSize: 13, color: "rgba(0,0,0,0.5)" }} />
-                              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)" }}>
-                                {service.orders_count} order{service.orders_count !== 1 ? "s" : ""}
-                              </Typography>
-                            </Box>
-
-                            <Box
-                              sx={{
-                                display: "flex", alignItems: "center", justifyContent: "space-between",
-                                pt: 2, borderTop: "1px solid rgba(0,0,0,0.07)",
-                              }}
-                            >
-                              <Box>
-                                {lowestPrice != null ? (
-                                  <>
-                                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)", mb: 0.25 }}>Starting at</Typography>
-                                    <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>${lowestPrice}</Typography>
-                                  </>
-                                ) : (
-                                  <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }}>Price on request</Typography>
-                                )}
-                              </Box>
-                              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                                {fastestDelivery != null && isFinite(fastestDelivery) && (
-                                  <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)" }}>
-                                    {fastestDelivery}d delivery
-                                  </Typography>
-                                )}
-                                <ChevronRight sx={{ fontSize: 18, color: "rgba(0,0,0,0.3)" }} />
-                              </Box>
-                            </Box>
-                          </CardContent>
-                        </Card>
-                      </Link>
-                    );
-                  })}
+                  }}>
+                  {profile.services.map((service: FreelancerProfileService) => (
+                    <ServiceCard key={service.id} service={service as unknown as Service} />
+                  ))}
                 </Box>
               ) : (
                 <Box sx={{ bgcolor: "white", borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 6, textAlign: "center" }}>

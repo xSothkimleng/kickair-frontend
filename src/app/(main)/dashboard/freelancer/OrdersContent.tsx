@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress } from "@mui/material";
-import { Message as MessageCircleIcon, CheckCircle as AcceptIcon, Cancel as CancelIcon, Send as DeliverIcon, Replay as ResubmitIcon } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress, Alert } from "@mui/material";
+import { Message as MessageCircleIcon, CheckCircle as AcceptIcon, Cancel as CancelIcon, Send as DeliverIcon, Replay as ResubmitIcon, HourglassTop as WaitingIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Order, OrderStatus, FreelancerOrdersResponse } from "@/types/order";
 import FreelancerOrderDetailModal from "@/components/dashboard/FreelancerOrderDetailModal";
 
 export default function OrdersContent() {
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<"all" | OrderStatus>("all");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -260,6 +262,16 @@ export default function OrdersContent() {
                     </Box>
                   </Stack>
 
+                  {/* Awaiting approval banner */}
+                  {order.status === "delivered" && (
+                    <Alert
+                      icon={<WaitingIcon sx={{ fontSize: 16 }} />}
+                      severity="warning"
+                      sx={{ mb: 2, py: 0.5, fontSize: 12, borderRadius: 2, bgcolor: "rgba(234, 179, 8, 0.08)", color: "#92400e", border: "1px solid rgba(234, 179, 8, 0.2)", "& .MuiAlert-icon": { color: "#d97706" } }}>
+                      Awaiting client approval — delivery submitted
+                    </Alert>
+                  )}
+
                   {/* Actions */}
                   <Grid
                     container
@@ -297,6 +309,8 @@ export default function OrdersContent() {
                         fullWidth
                         variant="contained"
                         startIcon={<MessageCircleIcon sx={{ fontSize: 14 }} />}
+                        onClick={() => order.conversation_id && router.push(`/dashboard/freelancer/messages?id=${order.conversation_id}`)}
+                        disabled={!order.conversation_id}
                         sx={{
                           fontSize: 12,
                           textTransform: "none",

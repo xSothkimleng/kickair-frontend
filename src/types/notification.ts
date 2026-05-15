@@ -5,6 +5,11 @@ export type NotificationType =
   | "order_placed"
   | "order_completed"
   | "order_cancelled"
+  | "work_delivered"
+  | "revision_requested"
+  | "payment_released"
+  | "dispute_opened"
+  | "dispute_resolved"
   | "review_received";
 
 export interface Notification {
@@ -12,7 +17,8 @@ export interface Notification {
   type: NotificationType;
   title: string;
   body: string;
-  data: Record<string, number>;
+  role: "freelancer" | "client" | null;
+  data: Record<string, number | string>;
   readAt: string | null;
   createdAt: string;
 }

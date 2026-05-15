@@ -33,7 +33,7 @@ export class EmailUnverifiedError extends Error {
     this.name = "EmailUnverifiedError";
   }
 }
-import { ClientDashboardData, FreelancerDashboardData } from "@/types/dashboard";
+import { ClientDashboardData, FreelancerDashboardData, LevelStats } from "@/types/dashboard";
 import { PaginatedNotificationsResponse } from "@/types/notification";
 import { Review } from "@/types/order";
 
@@ -177,6 +177,21 @@ class ApiClient {
     return response.data.user;
   }
 
+  async sendPhoneOtp(phone: string): Promise<void> {
+    await this.request("/api/auth/phone/send-otp", {
+      method: "POST",
+      body: JSON.stringify({ phone }),
+    });
+  }
+
+  async updatePhone(phone: string, code: string): Promise<User> {
+    const response = await this.request("/api/auth/phone/update", {
+      method: "POST",
+      body: JSON.stringify({ phone, code }),
+    });
+    return response.data;
+  }
+
   async resendVerificationEmail(): Promise<void> {
     await this.request("/api/auth/email/resend", { method: "POST" });
   }
@@ -199,6 +214,28 @@ class ApiClient {
   async getUser(): Promise<User> {
     const response = await this.request("/api/auth/me");
     return response.data.user;
+  }
+
+  async updateUserProfile(data: { name?: string; email?: string }): Promise<User> {
+    const response = await this.put("/api/auth/profile", data);
+    return response.data;
+  }
+
+  async changePassword(data: { current_password: string; password: string; password_confirmation: string }): Promise<void> {
+    await this.put("/api/auth/password", data);
+  }
+
+  async getSessions(): Promise<Array<{ id: number; name: string; last_used_at: string | null; created_at: string; current: boolean }>> {
+    const response = await this.get("/api/auth/sessions");
+    return response.data;
+  }
+
+  async revokeSession(tokenId: number): Promise<void> {
+    await this.delete(`/api/auth/sessions/${tokenId}`);
+  }
+
+  async revokeOtherSessions(): Promise<void> {
+    await this.delete("/api/auth/sessions/other");
   }
 
   async get(endpoint: string) {
@@ -381,6 +418,11 @@ class ApiClient {
     return response.data;
   }
 
+  async getLevelStats(): Promise<LevelStats> {
+    const response = await this.get("/api/freelancer-dashboard/level");
+    return response.data;
+  }
+
   // ============================================
   // Review Methods
   // ============================================
@@ -440,6 +482,10 @@ class ApiClient {
     return response.data;
   }
 
+  async deleteService(id: number): Promise<void> {
+    await this.delete(`/api/services/${id}`);
+  }
+
   async deleteJobPost(id: number): Promise<void> {
     await this.delete(`/api/job-posts/${id}`);
   }
@@ -492,27 +538,6 @@ class ApiClient {
   async rejectProposal(proposalId: number): Promise<Proposal> {
     const response = await this.post(`/api/proposals/${proposalId}/reject`, {});
     return response.data;
-  }
-
-  // ============================================
-  // Notification Methods
-  // ============================================
-
-  async getNotifications(page: number = 1): Promise<PaginatedNotificationsResponse> {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const raw: any = await this.get(`/api/notifications?page=${page}`);
-    // Normalize: handle both { data: [], meta: {} } and { data: { data: [], meta: {} } }
-    const items = Array.isArray(raw.data) ? raw.data : (Array.isArray(raw.data?.data) ? raw.data.data : []);
-    const meta = raw.meta ?? raw.data?.meta ?? null;
-    return { data: items, meta };
-  }
-
-  async markNotificationRead(id: string): Promise<void> {
-    await this.patch(`/api/notifications/${id}/read`, {});
-  }
-
-  async markAllNotificationsRead(): Promise<void> {
-    await this.post("/api/notifications/read-all", {});
   }
 
   // ============================================
@@ -617,8 +642,8 @@ class ApiClient {
   // Order Actions
   // ============================================
 
-  async deliverOrder(orderId: number, deliveryNote?: string): Promise<Order> {
-    const response = await this.post(`/api/orders/${orderId}/deliver`, { delivery_note: deliveryNote ?? null });
+  async deliverOrder(orderId: number, deliveryNote?: string, deliveryAttachments?: { url: string; file_name: string; file_type: string }[]): Promise<Order> {
+    const response = await this.post(`/api/orders/${orderId}/deliver`, { delivery_note: deliveryNote ?? null, delivery_attachments: deliveryAttachments ?? [] });
     return response.data;
   }
 
@@ -632,18 +657,18 @@ class ApiClient {
     return response.data;
   }
 
-  async resubmitOrder(orderId: number, deliveryNote?: string): Promise<Order> {
-    const response = await this.post(`/api/orders/${orderId}/resubmit`, { delivery_note: deliveryNote ?? null });
+  async resubmitOrder(orderId: number, deliveryNote?: string, deliveryAttachments?: { url: string; file_name: string; file_type: string }[]): Promise<Order> {
+    const response = await this.post(`/api/orders/${orderId}/resubmit`, { delivery_note: deliveryNote ?? null, delivery_attachments: deliveryAttachments ?? [] });
     return response.data;
   }
 
-  async openDispute(orderId: number, reason: string): Promise<{ dispute: AdminDispute; order_status: string }> {
-    const response = await this.post(`/api/orders/${orderId}/dispute`, { reason });
+  async openDispute(orderId: number, reason: string, evidenceFiles?: { url: string; file_name: string; file_type: string }[]): Promise<{ dispute: AdminDispute; order_status: string }> {
+    const response = await this.post(`/api/orders/${orderId}/dispute`, { reason, evidence_files: evidenceFiles ?? null });
     return response.data;
   }
 
-  async submitDisputeEvidence(orderId: number, evidence: string): Promise<void> {
-    await this.put(`/api/orders/${orderId}/dispute/evidence`, { evidence });
+  async submitDisputeEvidence(orderId: number, evidenceFiles: { url: string; file_name: string; file_type: string }[]): Promise<void> {
+    await this.put(`/api/orders/${orderId}/dispute/evidence`, { evidence_files: evidenceFiles });
   }
 
   // ── Admin Disputes ────────────────────────────────────────────────────────
@@ -652,12 +677,38 @@ class ApiClient {
     const params = new URLSearchParams({ page: String(page) });
     if (status) params.set("status", status);
     const response = await this.get(`/api/admin/disputes?${params}`);
-    return response;
+    return response.data;
   }
 
   async resolveDispute(disputeId: number, data: { outcome: string; partial_freelancer_amount?: number; admin_note: string }): Promise<AdminDispute> {
     const response = await this.post(`/api/admin/disputes/${disputeId}/resolve`, data);
     return response.data;
+  }
+
+  // ── Notifications ─────────────────────────────────────────────────────────
+
+  async getNotifications(page: number = 1): Promise<PaginatedNotificationsResponse> {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const paginator: any = (await this.get(`/api/notifications?page=${page}`)).data;
+    return {
+      data: paginator.data ?? [],
+      meta: paginator.current_page != null
+        ? { current_page: paginator.current_page, last_page: paginator.last_page, per_page: paginator.per_page, total: paginator.total }
+        : null,
+    };
+  }
+
+  async getUnreadCount(): Promise<number> {
+    const response = await this.get("/api/notifications/unread-count");
+    return response.data.count;
+  }
+
+  async markNotificationRead(id: string): Promise<void> {
+    await this.patch(`/api/notifications/${id}/read`, {});
+  }
+
+  async markAllNotificationsRead(): Promise<void> {
+    await this.post("/api/notifications/read-all", {});
   }
 
   async getAdminUsers(params: {

@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import {
   Box,
   Typography,
   Button,
+  Chip,
   TextField,
   Select,
   MenuItem,
@@ -43,6 +45,7 @@ const COMPANY_SIZES = [
 
 export default function ProfileContent() {
   const { user, refreshUser, loading: authLoading } = useAuth();
+  const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Form state
@@ -466,52 +469,105 @@ export default function ProfileContent() {
       {/* Verification Section */}
       <Paper
         elevation={0}
-        sx={{
-          background: "linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(37, 99, 235, 0.05) 100%)",
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "rgba(37, 99, 235, 0.2)",
-          p: 3,
-        }}>
-        <Stack direction='row' spacing={2} alignItems='flex-start'>
-          <ShieldIcon sx={{ fontSize: 24, color: "#2563eb", mt: 0.5 }} />
-          <Box flex={1}>
-            <Typography variant='body1' fontWeight={600} mb={0.5}>
-              Verify Your Identity
-            </Typography>
-            <Typography variant='body2' color='text.secondary' mb={2}>
-              Verified clients receive 3x more proposals from top freelancers. Complete verification to build trust and
-              credibility.
-            </Typography>
-            <Stack direction='row' spacing={2} alignItems='center'>
-              {user.is_verified_id ? (
-                <Typography variant='body2' color='success.main' fontWeight={500}>
-                  ID Verified
-                </Typography>
-              ) : (
-                <Button
-                  variant='contained'
+        sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", p: 3 }}>
+        <Typography variant='body1' fontWeight={600} mb={0.5}>
+          Verification
+        </Typography>
+        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
+          Verification is required to accept service requests from freelancers
+        </Typography>
+
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "start",
+              justifyContent: "space-between",
+              p: 2,
+              bgcolor: user.is_verified_id ? "rgba(34, 197, 94, 0.05)" : "rgba(0, 0, 0, 0.02)",
+              borderRadius: 3,
+            }}>
+            <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
+              <ShieldIcon sx={{ fontSize: 20, color: user.is_verified_id ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }} />
+              <Box>
+                <Typography
                   sx={{
-                    bgcolor: "#0071e3",
-                    color: "white",
-                    fontSize: 12,
-                    textTransform: "none",
-                    borderRadius: 10,
-                    "&:hover": {
-                      bgcolor: "#0077ED",
-                    },
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: user.is_verified_id ? "rgb(21, 128, 61)" : "rgba(0,0,0,0.6)",
+                    mb: 0.5,
                   }}>
-                  Start Verification
-                </Button>
-              )}
-              {user.is_verified_phone && (
-                <Typography variant='body2' color='success.main' fontWeight={500}>
-                  Phone Verified
+                  Identity Verification
                 </Typography>
-              )}
-            </Stack>
+                <Typography sx={{ fontSize: 11, color: user.is_verified_id ? "#16a34a" : "rgba(0,0,0,0.4)" }}>
+                  {user.is_verified_id ? "Your ID has been verified" : "Verify your identity to post jobs"}
+                </Typography>
+              </Box>
+            </Box>
+            {user.is_verified_id ? (
+              <Chip label='VERIFIED' sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }} />
+            ) : (
+              <Button
+                size='small'
+                onClick={() => router.push("/dashboard/kyc")}
+                sx={{
+                  fontSize: 11,
+                  textTransform: "none",
+                  bgcolor: "#0071e3",
+                  color: "white",
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "#0077ED" },
+                }}>
+                Verify Now
+              </Button>
+            )}
           </Box>
-        </Stack>
+
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "start",
+              justifyContent: "space-between",
+              p: 2,
+              bgcolor: user.is_verified_phone ? "rgba(34, 197, 94, 0.05)" : "rgba(0, 0, 0, 0.02)",
+              borderRadius: 3,
+            }}>
+            <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
+              <ShieldIcon sx={{ fontSize: 20, color: user.is_verified_phone ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }} />
+              <Box>
+                <Typography
+                  sx={{
+                    fontSize: 13,
+                    fontWeight: 500,
+                    color: user.is_verified_phone ? "rgb(21, 128, 61)" : "rgba(0,0,0,0.6)",
+                    mb: 0.5,
+                  }}>
+                  Phone Verification
+                </Typography>
+                <Typography sx={{ fontSize: 11, color: user.is_verified_phone ? "#16a34a" : "rgba(0,0,0,0.4)" }}>
+                  {user.is_verified_phone ? user.telephone || "Phone verified" : "Verify your phone number"}
+                </Typography>
+              </Box>
+            </Box>
+            {user.is_verified_phone ? (
+              <Chip label='VERIFIED' sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }} />
+            ) : (
+              <Button
+                size='small'
+                onClick={() => router.push("/settings")}
+                sx={{
+                  fontSize: 11,
+                  textTransform: "none",
+                  bgcolor: "#0071e3",
+                  color: "white",
+                  borderRadius: 2,
+                  "&:hover": { bgcolor: "#0077ED" },
+                }}>
+                Verify Now
+              </Button>
+            )}
+          </Box>
+        </Box>
       </Paper>
 
       {/* Snackbar for notifications */}

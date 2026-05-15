@@ -1,16 +1,18 @@
 "use client";
 
-import { Box, Button } from "@mui/material";
+import { Box, Button, Stack } from "@mui/material";
 import ServiceCard from "./ServiceCard";
+import ServiceListCard from "./ServiceListCard";
 import { Service } from "@/types/service";
 
 interface ServiceGridProps {
   services: Service[];
   searchQuery?: string;
   clearAllFilters: () => void;
+  view?: "grid" | "list";
 }
 
-export default function ServiceGrid({ services, searchQuery, clearAllFilters }: ServiceGridProps) {
+export default function ServiceGrid({ services, searchQuery, clearAllFilters, view = "grid" }: ServiceGridProps) {
   if (services.length === 0) {
     return (
       <Box sx={{ textAlign: "center", py: 10 }}>
@@ -37,6 +39,16 @@ export default function ServiceGrid({ services, searchQuery, clearAllFilters }: 
           Clear Filters
         </Button>
       </Box>
+    );
+  }
+
+  if (view === "list") {
+    return (
+      <Stack spacing={1.5}>
+        {services.map(service => (
+          <ServiceListCard key={service.id} service={service} />
+        ))}
+      </Stack>
     );
   }
 

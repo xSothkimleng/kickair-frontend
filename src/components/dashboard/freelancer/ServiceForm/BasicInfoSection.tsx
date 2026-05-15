@@ -1,8 +1,9 @@
-import { Box, Paper, Typography, TextField, Select, MenuItem } from "@mui/material";
+import { Box, Paper, Typography, TextField, Select, MenuItem, Chip, IconButton, InputAdornment } from "@mui/material";
 import RichTextEditor from "@/components/ui/RichTextEditor";
-import { RoomOutlined } from "@mui/icons-material";
+import { RoomOutlined, AddOutlined, CloseOutlined } from "@mui/icons-material";
 import { ServiceFormData, textFieldSx, textareaSx } from "../types";
 import { ServiceCategory } from "@/types/service";
+import { useState } from "react";
 
 interface BasicInfoSectionProps {
   formData: ServiceFormData;
@@ -12,10 +13,24 @@ interface BasicInfoSectionProps {
 }
 
 export default function BasicInfoSection({ formData, onFormDataChange, categories, categoriesLoading }: BasicInfoSectionProps) {
-  const handleTagChange = (index: number, value: string) => {
-    const newTags = [...formData.searchTags];
-    newTags[index] = value;
-    onFormDataChange({ ...formData, searchTags: newTags });
+  const [tagInput, setTagInput] = useState("");
+
+  const handleAddTag = () => {
+    const trimmed = tagInput.trim();
+    if (!trimmed || formData.searchTags.length >= 5 || formData.searchTags.includes(trimmed)) return;
+    onFormDataChange({ ...formData, searchTags: [...formData.searchTags, trimmed] });
+    setTagInput("");
+  };
+
+  const handleRemoveTag = (index: number) => {
+    onFormDataChange({ ...formData, searchTags: formData.searchTags.filter((_, i) => i !== index) });
+  };
+
+  const handleTagKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      handleAddTag();
+    }
   };
 
   return (
@@ -70,29 +85,64 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
         </Box>
 
         <Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Search Tags * (up to 5 keywords)</Typography>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)", mb: 1.5 }}>
-            Add keywords that buyers might search for. Our search engine will match these with buyer searches.
+          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>
+            Search Tags <span style={{ opacity: 0.5 }}>({formData.searchTags.length}/5)</span>
           </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-            {formData.searchTags.map((tag, index) => (
-              <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <TextField
-                  fullWidth
-                  value={tag}
-                  onChange={e => handleTagChange(index, e.target.value)}
-                  placeholder={`Keyword ${index + 1}`}
+          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)", mb: 1.5 }}>
+            Add keywords that buyers might search for. Press Enter or click + to add.
+          </Typography>
+
+          {formData.searchTags.length > 0 && (
+            <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1, mb: 1.5 }}>
+              {formData.searchTags.map((tag, index) => (
+                <Chip
+                  key={index}
+                  label={tag}
+                  onDelete={() => handleRemoveTag(index)}
+                  deleteIcon={<CloseOutlined sx={{ fontSize: "14px !important" }} />}
                   sx={{
-                    ...textFieldSx,
-                    "& .MuiOutlinedInput-root": {
-                      ...textFieldSx["& .MuiOutlinedInput-root"],
-                      height: 40,
-                    },
+                    fontSize: 12,
+                    height: 30,
+                    bgcolor: "rgba(0,0,0,0.06)",
+                    color: "black",
+                    "& .MuiChip-deleteIcon": { color: "rgba(0,0,0,0.4)", "&:hover": { color: "black" } },
                   }}
                 />
-              </Box>
-            ))}
-          </Box>
+              ))}
+            </Box>
+          )}
+
+          {formData.searchTags.length < 5 && (
+            <TextField
+              fullWidth
+              value={tagInput}
+              onChange={e => setTagInput(e.target.value)}
+              onKeyDown={handleTagKeyDown}
+              placeholder="Type a keyword and press Enter"
+              sx={{
+                ...textFieldSx,
+                "& .MuiOutlinedInput-root": {
+                  ...textFieldSx["& .MuiOutlinedInput-root"],
+                  height: 40,
+                },
+              }}
+              slotProps={{
+                input: {
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        size="small"
+                        onClick={handleAddTag}
+                        disabled={!tagInput.trim()}
+                        sx={{ color: tagInput.trim() ? "black" : "rgba(0,0,0,0.2)" }}>
+                        <AddOutlined sx={{ fontSize: 18 }} />
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                },
+              }}
+            />
+          )}
         </Box>
 
         <Box>

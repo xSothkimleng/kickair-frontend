@@ -13,6 +13,7 @@ export interface Service {
 }
 
 export interface PricingTier {
+  enabled: boolean;
   name: string;
   description: string;
   revisions: string;

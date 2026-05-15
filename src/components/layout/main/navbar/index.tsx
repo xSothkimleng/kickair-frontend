@@ -34,6 +34,7 @@ import { type DropdownType, type UserMode, type Language, LANGUAGES } from "./ty
 import { dropdownPanelSx, navBtnSx } from "./styles";
 import { DropdownItem } from "./DropdownItem";
 import { MobileDrawer } from "./MobileDrawer";
+import { NotificationBell } from "./NotificationBell";
 
 export default function MainNavbar() {
   const [activeDropdown, setActiveDropdown] = useState<DropdownType>(null);
@@ -511,8 +512,10 @@ export default function MainNavbar() {
             {loading ? (
               <CircularProgress size={24} sx={{ color: "rgba(0,0,0,0.6)" }} />
             ) : user ? (
-              // Logged in — profile dropdown
-              <Box sx={{ position: "relative" }}>
+              <>
+                <NotificationBell />
+                {/* Profile dropdown */}
+                <Box sx={{ position: "relative" }}>
                 <Button
                   onClick={() => handleDropdownToggle("profile")}
                   aria-haspopup='menu'
@@ -666,6 +669,7 @@ export default function MainNavbar() {
                   </Box>
                 )}
               </Box>
+              </>
             ) : (
               // Not logged in
               <Button

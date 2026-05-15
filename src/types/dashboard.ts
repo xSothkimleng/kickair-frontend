@@ -142,3 +142,18 @@ export interface FreelancerDashboardResponse {
   message: string;
   data: FreelancerDashboardData;
 }
+
+export interface LevelStats {
+  xp_points: number;
+  level: "Bronze" | "Silver" | "Gold" | "Platinum" | "Diamond";
+  current_level_threshold: number;
+  next_level_threshold: number | null;
+  level_progress_percent: number;
+  points_to_next_level: number;
+  completed_orders_count: number;
+  cancellation_count: number;
+  success_rate: number;
+  rating_average: string | null;
+  rating_count: number;
+  total_earnings: string;
+}

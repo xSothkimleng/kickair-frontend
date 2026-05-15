@@ -18,17 +18,32 @@ export default function PricingSection({ formData, onFormDataChange }: PricingSe
     });
   };
 
+  const handleTierToggle = (tier: "basic" | "standard" | "premium", enabled: boolean) => {
+    onFormDataChange({
+      ...formData,
+      pricing: {
+        ...formData.pricing,
+        [tier]: { ...formData.pricing[tier], enabled },
+      },
+    });
+  };
+
   return (
     <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
       <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>Pricing Options</Typography>
       <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
-        Offer three pricing tiers to give clients flexibility
+        Enable the tiers you want to offer. At least one tier is required.
       </Typography>
 
       <Grid container spacing={2}>
         {(["basic", "standard", "premium"] as const).map(tier => (
           <Grid size={{ xs: 12, md: 4 }} key={tier}>
-            <PricingTierCard tier={tier} data={formData.pricing[tier]} onChange={data => handleTierChange(tier, data)} />
+            <PricingTierCard
+              tier={tier}
+              data={formData.pricing[tier]}
+              onChange={data => handleTierChange(tier, data)}
+              onToggle={enabled => handleTierToggle(tier, enabled)}
+            />
           </Grid>
         ))}
       </Grid>

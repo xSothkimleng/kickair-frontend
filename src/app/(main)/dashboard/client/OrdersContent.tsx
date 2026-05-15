@@ -1,13 +1,15 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress } from "@mui/material";
-import { Message as MessageCircleIcon } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress, Alert } from "@mui/material";
+import { Message as MessageCircleIcon, NotificationsActive as ActionIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Order, OrderStatus, MyOrdersResponse, Review } from "@/types/order";
 import OrderDetailModal from "@/components/dashboard/OrderDetailModal";
 
 export default function OrdersContent() {
+  const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<"all" | OrderStatus>("all");
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,6 +233,16 @@ export default function OrdersContent() {
                   </Box>
                 </Stack>
 
+                {/* Delivery received banner */}
+                {order.status === "delivered" && (
+                  <Alert
+                    icon={<ActionIcon sx={{ fontSize: 16 }} />}
+                    severity="info"
+                    sx={{ mb: 2, py: 0.5, fontSize: 12, borderRadius: 2, bgcolor: "rgba(0, 113, 227, 0.06)", color: "#1e40af", border: "1px solid rgba(0, 113, 227, 0.2)", "& .MuiAlert-icon": { color: "#0071e3" } }}>
+                    Work delivered — please review and approve or request a revision
+                  </Alert>
+                )}
+
                 {/* Actions */}
                 <Grid
                   container
@@ -265,6 +277,8 @@ export default function OrdersContent() {
                       fullWidth
                       variant="contained"
                       startIcon={<MessageCircleIcon sx={{ fontSize: 14 }} />}
+                      onClick={() => order.conversation_id && router.push(`/dashboard/client/messages?id=${order.conversation_id}`)}
+                      disabled={!order.conversation_id}
                       sx={{
                         fontSize: 12,
                         textTransform: "none",
