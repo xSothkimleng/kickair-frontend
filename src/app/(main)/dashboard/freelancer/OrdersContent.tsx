@@ -6,7 +6,6 @@ import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, 
 import { Message as MessageCircleIcon, CheckCircle as AcceptIcon, Cancel as CancelIcon, Send as DeliverIcon, Replay as ResubmitIcon, HourglassTop as WaitingIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Order, OrderStatus, FreelancerOrdersResponse } from "@/types/order";
-import FreelancerOrderDetailModal from "@/components/dashboard/FreelancerOrderDetailModal";
 
 export default function OrdersContent() {
   const router = useRouter();
@@ -14,8 +13,6 @@ export default function OrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
   const fetchOrders = async () => {
@@ -83,13 +80,7 @@ export default function OrdersContent() {
   };
 
   const handleViewDetails = (order: Order) => {
-    setSelectedOrder(order);
-    setDetailModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setDetailModalOpen(false);
-    setSelectedOrder(null);
+    router.push(`/dashboard/freelancer/orders/${order.id}`);
   };
 
   const handleAcceptOrder = async (orderId: number) => {
@@ -128,10 +119,7 @@ export default function OrdersContent() {
     }
   };
 
-  const handleOrderUpdate = () => {
-    fetchOrders();
-    handleCloseModal();
-  };
+  const handleOrderUpdate = () => { fetchOrders(); };
 
   if (loading) {
     return (
@@ -422,17 +410,6 @@ export default function OrdersContent() {
         </Stack>
       )}
 
-      {/* Order Detail Modal */}
-      <FreelancerOrderDetailModal
-        open={detailModalOpen}
-        order={selectedOrder}
-        onClose={handleCloseModal}
-        onAccept={handleAcceptOrder}
-        onComplete={handleCompleteOrder}
-        onCancel={handleCancelOrder}
-        onOrderUpdate={handleOrderUpdate}
-        actionLoading={actionLoading}
-      />
     </Box>
   );
 }

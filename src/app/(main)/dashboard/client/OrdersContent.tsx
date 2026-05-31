@@ -5,8 +5,7 @@ import { useRouter } from "next/navigation";
 import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress, Alert } from "@mui/material";
 import { Message as MessageCircleIcon, NotificationsActive as ActionIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
-import { Order, OrderStatus, MyOrdersResponse, Review } from "@/types/order";
-import OrderDetailModal from "@/components/dashboard/OrderDetailModal";
+import { Order, OrderStatus, MyOrdersResponse } from "@/types/order";
 
 export default function OrdersContent() {
   const router = useRouter();
@@ -14,8 +13,6 @@ export default function OrdersContent() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-  const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -89,20 +86,7 @@ export default function OrdersContent() {
   };
 
   const handleViewDetails = (order: Order) => {
-    setSelectedOrder(order);
-    setDetailModalOpen(true);
-  };
-
-  const handleCloseModal = () => {
-    setDetailModalOpen(false);
-    setSelectedOrder(null);
-  };
-
-  const handleReviewSubmitted = (orderId: number, review: Review) => {
-    setOrders((prev) =>
-      prev.map((o) => (o.id === orderId ? { ...o, review } : o))
-    );
-    setSelectedOrder((prev) => (prev?.id === orderId ? { ...prev, review } : prev));
+    router.push(`/dashboard/orders/${order.id}`);
   };
 
   if (loading) {
@@ -300,14 +284,6 @@ export default function OrdersContent() {
         </Stack>
       )}
 
-      {/* Order Detail Modal */}
-      <OrderDetailModal
-        open={detailModalOpen}
-        order={selectedOrder}
-        onClose={handleCloseModal}
-        onReviewSubmitted={handleReviewSubmitted}
-        onOrderUpdate={handleOrderUpdate}
-      />
     </Box>
   );
 }
