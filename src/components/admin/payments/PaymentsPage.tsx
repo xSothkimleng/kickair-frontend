@@ -14,20 +14,7 @@ import BarChartIcon from "@mui/icons-material/BarChart";
 import DownloadIcon from "@mui/icons-material/Download";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PauseCircleIcon from "@mui/icons-material/PauseCircle";
-import { LineChart, BarChart } from "@mui/x-charts";
 import { api, AdminStats, AdminTransaction } from "@/lib/api";
-
-// Chart data stays as mock until a time-series endpoint is built
-const GMV_DATA = {
-  days: ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"],
-  gmv: [8200, 9100, 7800, 11200, 10500, 12847, 9300],
-  revenue: [1640, 1820, 1560, 2240, 2100, 2569, 1860],
-};
-
-const CATEGORY_REVENUE = {
-  categories: ["Design", "Translation", "Marketing", "Web Dev", "Writing"],
-  revenue: [8200, 5400, 6100, 9800, 3200],
-};
 
 function formatAmount(value: string | undefined): string {
   if (!value) return "$0.00";
@@ -311,32 +298,8 @@ export default function PaymentsPage() {
 
         {/* Revenue Charts */}
         {tab === 2 && (
-          <Box sx={{ p: 3 }}>
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, lg: 7 }}>
-                <Paper variant='outlined' sx={{ p: 2.5, borderRadius: 2 }}>
-                  <Typography fontWeight={700} mb={2}>GMV & Revenue (Last 7 Days)</Typography>
-                  <LineChart
-                    xAxis={[{ data: GMV_DATA.days, scaleType: "band" }]}
-                    series={[
-                      { data: GMV_DATA.gmv, label: "GMV ($)", color: "#3b82f6" },
-                      { data: GMV_DATA.revenue, label: "Revenue ($)", color: "#10b981" },
-                    ]}
-                    height={280}
-                  />
-                </Paper>
-              </Grid>
-              <Grid size={{ xs: 12, lg: 5 }}>
-                <Paper variant='outlined' sx={{ p: 2.5, borderRadius: 2 }}>
-                  <Typography fontWeight={700} mb={2}>Revenue by Category</Typography>
-                  <BarChart
-                    xAxis={[{ data: CATEGORY_REVENUE.categories, scaleType: "band" }]}
-                    series={[{ data: CATEGORY_REVENUE.revenue, label: "Revenue ($)", color: "#8b5cf6" }]}
-                    height={280}
-                  />
-                </Paper>
-              </Grid>
-            </Grid>
+          <Box sx={{ py: 12, textAlign: "center" }}>
+            <Typography variant="body2" color="text.disabled">Revenue chart data not yet available.</Typography>
           </Box>
         )}
 

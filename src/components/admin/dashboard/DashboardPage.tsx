@@ -6,7 +6,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Divider,
   Grid,
   Paper,
   Skeleton,
@@ -23,21 +22,13 @@ import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import { api, AdminDashboardStats } from "@/lib/api";
 import Link from "next/link";
 
-// ─── Static mock sections (no backend yet) ───────────────────────────────────
-
-const HEALTH_ALERTS = [
-  { type: "info", message: "Health monitoring not yet connected — coming soon.", time: "" },
-];
-
-const RECENT_ACTIVITY = [
-  { user: "—", action: "Audit log not yet available.", time: "", admin: "" },
-];
-
-const alertColors: Record<string, { bg: string; border: string }> = {
-  critical: { bg: "#fef2f2", border: "#ef4444" },
-  warning:  { bg: "#fffbeb", border: "#f59e0b" },
-  info:     { bg: "#eff6ff", border: "#3b82f6" },
-};
+function ComingSoon({ label }: { label: string }) {
+  return (
+    <Box sx={{ py: 5, textAlign: "center" }}>
+      <Typography variant="body2" color="text.disabled">{label}</Typography>
+    </Box>
+  );
+}
 
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -154,29 +145,7 @@ export default function DashboardPage() {
               <ErrorOutlineIcon sx={{ color: "warning.main" }} />
               <Typography fontWeight={700} fontSize={16}>Health & Alerts</Typography>
             </Stack>
-            <Stack gap={1.5}>
-              {HEALTH_ALERTS.map((alert, i) => (
-                <Box
-                  key={i}
-                  sx={{
-                    p: 2,
-                    borderRadius: 1.5,
-                    borderLeft: "4px solid",
-                    bgcolor: alertColors[alert.type].bg,
-                    borderColor: alertColors[alert.type].border,
-                  }}
-                >
-                  <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                    <Typography variant="body2" fontWeight={500}>{alert.message}</Typography>
-                    {alert.time && (
-                      <Typography variant="caption" color="text.secondary" sx={{ ml: 2, flexShrink: 0 }}>
-                        {alert.time}
-                      </Typography>
-                    )}
-                  </Stack>
-                </Box>
-              ))}
-            </Stack>
+            <ComingSoon label="Health monitoring not yet connected." />
           </Paper>
         </Grid>
 
@@ -236,24 +205,9 @@ export default function DashboardPage() {
       <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2.5}>
           <Typography fontWeight={700} fontSize={16}>Recent Admin Activity</Typography>
-          <Chip label="Audit log coming soon" size="small" variant="outlined" />
+          <Chip label="Coming soon" size="small" variant="outlined" />
         </Stack>
-        <Stack divider={<Divider />}>
-          {RECENT_ACTIVITY.map((activity, i) => (
-            <Stack
-              key={i}
-              direction="row"
-              justifyContent="space-between"
-              alignItems="center"
-              sx={{ py: 1.5, px: 1, borderRadius: 1, "&:hover": { bgcolor: "grey.50" } }}
-            >
-              <Box>
-                <Typography variant="body2" fontWeight={500}>{activity.user}</Typography>
-                <Typography variant="caption" color="text.secondary">{activity.action}</Typography>
-              </Box>
-            </Stack>
-          ))}
-        </Stack>
+        <ComingSoon label="Audit log not yet available." />
       </Paper>
     </Box>
   );

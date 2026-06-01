@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Box, Typography, Paper, Grid, Avatar, Button, Chip, CircularProgress, Stack } from "@mui/material";
 import { AttachMoney, ChatBubbleOutline, Star, VisibilityOutlined, ArrowRight, Shield } from "@mui/icons-material";
 import { useFreelancerDashboard } from "@/hooks/useFreelancerDashboard";
@@ -73,6 +74,7 @@ interface Props {
 }
 
 export default function DashboardContent({ onTabChange }: Props) {
+  const router = useRouter();
   const { data, loading, error } = useFreelancerDashboard();
 
   if (loading) {
@@ -255,7 +257,7 @@ export default function DashboardContent({ onTabChange }: Props) {
               transition: "all 0.3s",
               "&:hover": { borderColor: "rgba(0, 0, 0, 0.2)", "& .arrow-icon": { opacity: 1 } },
             }}
-            onClick={() => onTabChange("messages")}>
+            onClick={() => router.push("/dashboard/freelancer/messages")}>
             <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
               <ChatBubbleOutline sx={{ fontSize: 20, color: "#2563eb" }} />
               <ArrowRight className='arrow-icon' sx={{ fontSize: 16, color: "rgba(0, 0, 0, 0.4)", opacity: 0, transition: "opacity 0.3s" }} />
@@ -436,7 +438,7 @@ export default function DashboardContent({ onTabChange }: Props) {
               <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
                 <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Recent Messages</Typography>
                 <Button
-                  onClick={() => onTabChange("messages")}
+                  onClick={() => router.push("/dashboard/freelancer/messages")}
                   sx={{
                     fontSize: 11,
                     color: "#2563eb",
@@ -458,7 +460,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                   recentConversations.map((conv: DashboardConversation) => (
                     <Button
                       key={conv.conversationId}
-                      onClick={() => onTabChange("messages")}
+                      onClick={() => router.push("/dashboard/freelancer/messages")}
                       sx={{
                         width: "100%",
                         display: "flex",
@@ -563,7 +565,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                   )}
                 </Box>
                 <Button
-                  onClick={() => onTabChange("notifications")}
+                  onClick={() => {}}
                   sx={{
                     fontSize: 11,
                     color: "#2563eb",
@@ -620,7 +622,7 @@ export default function DashboardContent({ onTabChange }: Props) {
               </Box>
 
               <Button
-                onClick={() => onTabChange("notifications")}
+                onClick={() => {}}
                 sx={{
                   width: "100%",
                   mt: 1.5,

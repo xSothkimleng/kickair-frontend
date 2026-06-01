@@ -26,14 +26,14 @@ import CloseIcon from "@mui/icons-material/Close";
 import { useRouter, usePathname } from "next/navigation";
 
 const NAV_ITEMS = [
-  { id: "dashboard", label: "Dashboard", icon: DashboardIcon, path: "/admin" },
-  { id: "users", label: "User Management", icon: PeopleIcon, path: "/admin/users" },
-  { id: "marketplace", label: "Gigs & Jobs", icon: WorkIcon, path: "/admin/marketplace" },
-  { id: "trust", label: "Trust & Safety", icon: ShieldIcon, path: "/admin/trust" },
-  { id: "payments", label: "Payments & Finance", icon: AttachMoneyIcon, path: "/admin/payments" },
-  { id: "analytics", label: "Analytics", icon: BarChartIcon, path: "/admin/analytics" },
-  { id: "monitoring", label: "Technical Monitoring", icon: MonitorHeartIcon, path: "/admin/monitoring" },
-  { id: "config", label: "Configuration", icon: SettingsIcon, path: "/admin/config" },
+  { id: "dashboard",   label: "Dashboard",           icon: DashboardIcon,    path: "/admin" },
+  { id: "trust",       label: "Trust & Safety",       icon: ShieldIcon,       path: "/admin/trust" },
+  { id: "users",       label: "User Management",      icon: PeopleIcon,       path: "/admin/users" },
+  { id: "marketplace", label: "Services & Jobs",      icon: WorkIcon,         path: "/admin/marketplace" },
+  { id: "payments",    label: "Payments & Finance",   icon: AttachMoneyIcon,  path: "/admin/payments" },
+  { id: "analytics",   label: "Analytics",            icon: BarChartIcon,     path: "/admin/analytics" },
+  { id: "monitoring",  label: "Technical Monitoring", icon: MonitorHeartIcon, path: "/admin/monitoring" },
+  { id: "config",      label: "Configuration",        icon: SettingsIcon,     path: "/admin/config" },
 ];
 
 const SIDEBAR_EXPANDED = 260;

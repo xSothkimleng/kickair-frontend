@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Box, Typography, Button, Avatar, Chip, Card, CardContent, Grid, Stack, Badge, Paper, CircularProgress } from "@mui/material";
 import {
   LocationOn as MapPinIcon,
@@ -82,6 +83,7 @@ interface Props {
 }
 
 export default function DashboardContent({ onTabChange }: Props) {
+  const router = useRouter();
   const { data, loading, error } = useClientDashboard();
 
   if (loading) {
@@ -282,7 +284,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                 "& .arrow-icon": { opacity: 1 },
               },
             }}
-            onClick={() => onTabChange("messages")}>
+            onClick={() => router.push("/dashboard/client/messages")}>
             <CardContent>
               <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
                 <MessageCircleIcon sx={{ fontSize: 20, color: "#9333ea" }} />
@@ -573,7 +575,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                     Recent Messages
                   </Typography>
                   <Button
-                    onClick={() => onTabChange("messages")}
+                    onClick={() => router.push("/dashboard/client/messages")}
                     sx={{
                       fontSize: 11,
                       color: "#0071e3",
@@ -595,7 +597,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                     recentConversations.map((conv: DashboardConversation) => (
                       <Button
                         key={conv.conversationId}
-                        onClick={() => onTabChange("messages")}
+                        onClick={() => router.push("/dashboard/client/messages")}
                         sx={{
                           width: "100%",
                           p: 1.5,
@@ -679,7 +681,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                     )}
                   </Stack>
                   <Button
-                    onClick={() => onTabChange("notifications")}
+                    onClick={() => {}}
                     sx={{
                       fontSize: 11,
                       color: "#0071e3",
@@ -739,7 +741,7 @@ export default function DashboardContent({ onTabChange }: Props) {
 
                 <Button
                   fullWidth
-                  onClick={() => onTabChange("notifications")}
+                  onClick={() => {}}
                   sx={{
                     mt: 1.5,
                     fontSize: 11,
