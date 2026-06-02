@@ -5,9 +5,11 @@ import PricingTierCard from "./PricingTierCard";
 interface PricingSectionProps {
   formData: ServiceFormData;
   onFormDataChange: (data: ServiceFormData) => void;
+  fieldErrors?: Record<string, string>;
+  onClearTierError?: (key: string) => void;
 }
 
-export default function PricingSection({ formData, onFormDataChange }: PricingSectionProps) {
+export default function PricingSection({ formData, onFormDataChange, fieldErrors, onClearTierError }: PricingSectionProps) {
   const handleTierChange = (tier: "basic" | "standard" | "premium", data: ServiceFormData["pricing"]["basic"]) => {
     onFormDataChange({
       ...formData,
@@ -43,6 +45,12 @@ export default function PricingSection({ formData, onFormDataChange }: PricingSe
               data={formData.pricing[tier]}
               onChange={data => handleTierChange(tier, data)}
               onToggle={enabled => handleTierToggle(tier, enabled)}
+              errors={{
+                price:    fieldErrors?.[`${tier}_price`],
+                revisions: fieldErrors?.[`${tier}_revisions`],
+                delivery: fieldErrors?.[`${tier}_delivery`],
+              }}
+              onClearError={(field) => onClearTierError?.(`${tier}_${field}`)}
             />
           </Grid>
         ))}

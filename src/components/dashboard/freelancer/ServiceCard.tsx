@@ -1,5 +1,5 @@
-import { Box, Typography, IconButton } from "@mui/material";
-import { EditOutlined, VisibilityOutlined, DeleteOutlined } from "@mui/icons-material";
+import { Box, Typography, IconButton, Chip } from "@mui/material";
+import { EditOutlined, VisibilityOutlined, DeleteOutlined, InfoOutlined } from "@mui/icons-material";
 import { Service } from "@/types/service";
 
 interface ServiceCardProps {
@@ -9,11 +9,19 @@ interface ServiceCardProps {
   onDelete?: () => void;
 }
 
+const STATUS_CONFIG: Record<Service["status"], { label: string; color: string; bg: string }> = {
+  active: { label: "Active", color: "#16a34a", bg: "rgba(22, 163, 74, 0.1)" },
+  pending_review: { label: "Pending review", color: "#b45309", bg: "rgba(217, 119, 6, 0.12)" },
+  rejected: { label: "Rejected", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
+  draft: { label: "Draft", color: "#b45309", bg: "rgba(245, 158, 11, 0.1)" },
+};
+
 export default function ServiceCard({ service, onEdit, onView, onDelete }: ServiceCardProps) {
   // Get price range from pricing options
   const prices = service.pricing_options?.map(opt => parseFloat(opt.price)) || [];
   const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
   const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
+  const status = STATUS_CONFIG[service.status] ?? STATUS_CONFIG.active;
 
   return (
     <Box
@@ -28,7 +36,14 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
       }}>
       <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
         <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 500, color: "black", mb: 0.5 }}>{service.title}</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, flexWrap: "wrap" }}>
+            <Typography sx={{ fontSize: 15, fontWeight: 500, color: "black" }}>{service.title}</Typography>
+            <Chip
+              label={status.label}
+              size="small"
+              sx={{ height: 20, fontSize: 11, fontWeight: 600, color: status.color, bgcolor: status.bg, "& .MuiChip-label": { px: 1 } }}
+            />
+          </Box>
           <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1.5 }}>{service.category?.category_name || "Uncategorized"}</Typography>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
             <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{service.orders_count} orders</Typography>
@@ -80,6 +95,26 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
           </IconButton>
         </Box>
       </Box>
+
+      {service.status === "rejected" && (
+        <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", display: "flex", gap: 1, alignItems: "flex-start" }}>
+          <InfoOutlined sx={{ fontSize: 16, color: "#dc2626", mt: "1px" }} />
+          <Box>
+            <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#dc2626" }}>
+              Rejected by admin
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
+              {service.rejection_reason || "No reason provided. Edit your service to resubmit it for review."}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
+      {service.status === "pending_review" && (
+        <Typography sx={{ mt: 1, fontSize: 12, color: "#b45309" }}>
+          Awaiting admin approval — not visible to clients yet.
+        </Typography>
+      )}
     </Box>
   );
 }

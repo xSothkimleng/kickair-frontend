@@ -182,17 +182,24 @@ function PasswordField({
   placeholder,
   value,
   onChange,
+  required,
+  error,
+  helperText,
 }: {
   label: string;
   placeholder?: string;
   value: string;
   onChange: (v: string) => void;
+  required?: boolean;
+  error?: boolean;
+  helperText?: string;
 }) {
   const [show, setShow] = React.useState(false);
   return (
     <Box>
       <Typography component="label" sx={fieldLabelSx}>
         {label}
+        {required && <Typography component="span" sx={{ color: "#DC2626", ml: 0.25 }}> *</Typography>}
       </Typography>
       <TextField
         fullWidth
@@ -200,6 +207,8 @@ function PasswordField({
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
+        error={error}
+        helperText={helperText}
         sx={inputSx}
         InputProps={{
           endAdornment: (
@@ -333,6 +342,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [savingPassword, setSavingPassword] = React.useState(false);
   const [passwordMsg, setPasswordMsg] = React.useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [pwErrors, setPwErrors] = React.useState<{ current?: string; new?: string; confirm?: string }>({});
 
   // Sessions
   const [sessions, setSessions] = React.useState<Session[]>([]);
@@ -450,10 +460,14 @@ export default function SettingsPage() {
 
   const handleChangePassword = async () => {
     setPasswordMsg(null);
-    if (newPassword !== confirmPassword) {
-      setPasswordMsg({ type: "error", text: "New passwords do not match." });
-      return;
-    }
+    const errs: typeof pwErrors = {};
+    if (!currentPassword) errs.current = "Current password is required";
+    if (!newPassword) errs.new = "New password is required";
+    else if (newPassword.length < 8) errs.new = "Password must be at least 8 characters";
+    if (!confirmPassword) errs.confirm = "Please confirm your new password";
+    else if (newPassword && newPassword !== confirmPassword) errs.confirm = "Passwords do not match";
+    setPwErrors(errs);
+    if (Object.keys(errs).length > 0) return;
     setSavingPassword(true);
     try {
       await api.changePassword({
@@ -462,6 +476,7 @@ export default function SettingsPage() {
         password_confirmation: confirmPassword,
       });
       setPasswordMsg({ type: "success", text: "Password changed successfully." });
+      setPwErrors({});
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
@@ -638,7 +653,7 @@ export default function SettingsPage() {
           >
             <Box>
               <Typography component="label" sx={fieldLabelSx}>
-                Full name
+                Full name <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
               </Typography>
               <TextField
                 fullWidth
@@ -650,7 +665,7 @@ export default function SettingsPage() {
             <Box>
               <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
                 <Typography component="label" sx={{ ...fieldLabelSx, mb: 0 }}>
-                  Email
+                  Email <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
                 </Typography>
                 <StatusChip
                   label={emailVerified ? "Verified" : "Unverified"}
@@ -861,19 +876,28 @@ export default function SettingsPage() {
               label="Current password"
               placeholder="Enter current password"
               value={currentPassword}
-              onChange={setCurrentPassword}
+              onChange={(v) => { setCurrentPassword(v); setPwErrors(p => ({ ...p, current: undefined })); }}
+              required
+              error={!!pwErrors.current}
+              helperText={pwErrors.current}
             />
             <PasswordField
               label="New password"
-              placeholder="Enter new password"
+              placeholder="Enter new password (8+ characters)"
               value={newPassword}
-              onChange={setNewPassword}
+              onChange={(v) => { setNewPassword(v); setPwErrors(p => ({ ...p, new: undefined })); }}
+              required
+              error={!!pwErrors.new}
+              helperText={pwErrors.new}
             />
             <PasswordField
               label="Confirm new password"
               placeholder="Re-enter new password"
               value={confirmPassword}
-              onChange={setConfirmPassword}
+              onChange={(v) => { setConfirmPassword(v); setPwErrors(p => ({ ...p, confirm: undefined })); }}
+              required
+              error={!!pwErrors.confirm}
+              helperText={pwErrors.confirm}
             />
           </Stack>
 
@@ -886,7 +910,7 @@ export default function SettingsPage() {
           <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
             <Button
               variant="contained"
-              disabled={savingPassword || !currentPassword || !newPassword || !confirmPassword}
+              disabled={savingPassword}
               onClick={handleChangePassword}
               sx={primaryBtnSx}
             >

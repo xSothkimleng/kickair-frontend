@@ -1,11 +1,50 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
+import { registerBellRefresh } from "@/components/layout/GlobalNotificationToast";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import { Badge, IconButton, Popover, Box, Typography, CircularProgress, Divider, Button } from "@mui/material";
 import Link from "next/link";
 import { api } from "@/lib/api";
-import { Notification } from "@/types/notification";
+import { Notification, NotificationType } from "@/types/notification";
 import { useAuth } from "@/components/context/AuthContext";
+
+// ─── Routing map ─────────────────────────────────────────────────────────────
+
+const ORDER_TYPES: NotificationType[] = [
+  "order_placed", "order_completed", "order_cancelled",
+  "work_delivered", "revision_requested", "payment_released",
+  "dispute_opened", "dispute_resolved", "evidence_submitted", "review_received",
+];
+
+function getRoute(n: Notification): string | null {
+  const { type, role, data } = n;
+  const orderId = data.order_id;
+  const jobPostId = data.job_post_id;
+
+  if (ORDER_TYPES.includes(type) && orderId) {
+    if (role === "client")     return `/dashboard/orders/${orderId}`;
+    if (role === "freelancer") return `/dashboard/freelancer/orders/${orderId}`;
+    return null;
+  }
+
+  if (type === "proposal_submitted" && jobPostId) {
+    // Client receives this — go to their job post
+    return `/dashboard/client?tab=service`;
+  }
+
+  if (type === "proposal_accepted" && orderId) {
+    return `/dashboard/freelancer/orders/${orderId}`;
+  }
+
+  if (type === "proposal_rejected") {
+    return `/dashboard/freelancer?tab=proposals`;
+  }
+
+  return null;
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function timeAgo(dateStr: string): string {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -17,26 +56,19 @@ function timeAgo(dateStr: string): string {
   return `${Math.floor(hours / 24)}d ago`;
 }
 
+// ─── NotificationColumn ──────────────────────────────────────────────────────
+
 interface NotificationColumnProps {
   title: string;
   notifications: Notification[];
   onMarkRead: (id: string) => void;
+  onNavigate: (route: string) => void;
 }
 
-function NotificationColumn({ title, notifications, onMarkRead }: NotificationColumnProps) {
+function NotificationColumn({ title, notifications, onMarkRead, onNavigate }: NotificationColumnProps) {
   return (
     <Box sx={{ width: 280, display: "flex", flexDirection: "column" }}>
-      <Typography
-        sx={{
-          fontSize: 11,
-          fontWeight: 600,
-          textTransform: "uppercase",
-          letterSpacing: "0.05em",
-          color: "rgba(0,0,0,0.45)",
-          px: 2,
-          py: 1.25,
-          borderBottom: "1px solid rgba(0,0,0,0.06)",
-        }}>
+      <Typography sx={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(0,0,0,0.45)", px: 2, py: 1.25, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
         {title}
       </Typography>
       <Box sx={{ overflowY: "auto", maxHeight: 380 }}>
@@ -45,50 +77,60 @@ function NotificationColumn({ title, notifications, onMarkRead }: NotificationCo
             No notifications
           </Typography>
         ) : (
-          notifications.map(n => (
-            <Box
-              key={n.id}
-              onClick={() => !n.readAt && onMarkRead(n.id)}
-              sx={{
-                px: 2,
-                py: 1.5,
-                cursor: n.readAt ? "default" : "pointer",
-                bgcolor: n.readAt ? "transparent" : "rgba(25,118,210,0.04)",
-                borderBottom: "1px solid rgba(0,0,0,0.04)",
-                "&:hover": { bgcolor: "rgba(0,0,0,0.05)" },
-              }}>
-              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
-                <Typography
-                  sx={{
-                    fontSize: 12,
-                    fontWeight: n.readAt ? 400 : 600,
-                    color: "rgba(0,0,0,0.85)",
-                    lineHeight: 1.4,
-                  }}>
-                  {n.title}
+          notifications.map(n => {
+            const route = getRoute(n);
+            return (
+              <Box
+                key={n.id}
+                onClick={() => {
+                  if (!n.readAt) onMarkRead(n.id);
+                  if (route) onNavigate(route);
+                }}
+                sx={{
+                  px: 2,
+                  py: 1.5,
+                  cursor: route ? "pointer" : n.readAt ? "default" : "pointer",
+                  bgcolor: n.readAt ? "transparent" : "rgba(25,118,210,0.04)",
+                  borderBottom: "1px solid rgba(0,0,0,0.04)",
+                  "&:hover": { bgcolor: route ? "rgba(0,0,0,0.06)" : "rgba(0,0,0,0.03)" },
+                  transition: "background 0.12s",
+                }}
+              >
+                <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1 }}>
+                  <Typography sx={{ fontSize: 12, fontWeight: n.readAt ? 400 : 600, color: "rgba(0,0,0,0.85)", lineHeight: 1.4 }}>
+                    {n.title}
+                  </Typography>
+                  {!n.readAt && (
+                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#1976d2", flexShrink: 0, mt: 0.5 }} />
+                  )}
+                </Box>
+                <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.55)", mt: 0.25, lineHeight: 1.5 }}>
+                  {n.body}
                 </Typography>
-                {!n.readAt && (
-                  <Box
-                    sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#1976d2", flexShrink: 0, mt: 0.5 }}
-                  />
-                )}
+                <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.5 }}>
+                  <Typography sx={{ fontSize: 10, color: "rgba(0,0,0,0.35)" }}>
+                    {timeAgo(n.createdAt)}
+                  </Typography>
+                  {route && (
+                    <Typography sx={{ fontSize: 10, color: "#1976d2", fontWeight: 500 }}>
+                      View →
+                    </Typography>
+                  )}
+                </Box>
               </Box>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.55)", mt: 0.25, lineHeight: 1.5 }}>
-                {n.body}
-              </Typography>
-              <Typography sx={{ fontSize: 10, color: "rgba(0,0,0,0.35)", mt: 0.5 }}>
-                {timeAgo(n.createdAt)}
-              </Typography>
-            </Box>
-          ))
+            );
+          })
         )}
       </Box>
     </Box>
   );
 }
 
+// ─── Bell ─────────────────────────────────────────────────────────────────────
+
 export function NotificationBell() {
   const { user } = useAuth();
+  const router = useRouter();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -102,7 +144,7 @@ export function NotificationBell() {
       const count = await api.getUnreadCount();
       setUnreadCount(count);
     } catch {
-      // ignore network errors silently
+      // silent
     }
   }, []);
 
@@ -113,6 +155,11 @@ export function NotificationBell() {
     return () => clearInterval(id);
   }, [user, fetchUnreadCount]);
 
+  // Register so Pusher toasts can trigger an immediate count refresh
+  useEffect(() => {
+    registerBellRefresh(fetchUnreadCount);
+  }, [fetchUnreadCount]);
+
   const handleOpen = async (e: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(e.currentTarget);
     setLoading(true);
@@ -120,8 +167,12 @@ export function NotificationBell() {
       const res = await api.getNotifications();
       setNotifications(res.data);
       setUnreadCount(0);
+      // Persist "viewed" state on the server so the badge stays gone
+      if (res.data.some(n => !n.readAt)) {
+        api.markAllNotificationsRead().catch(() => {});
+      }
     } catch {
-      // ignore
+      // silent
     } finally {
       setLoading(false);
     }
@@ -132,21 +183,25 @@ export function NotificationBell() {
   const handleMarkRead = async (id: string) => {
     try {
       await api.markNotificationRead(id);
-      setNotifications(prev => prev.map(n => (n.id === id ? { ...n, readAt: new Date().toISOString() } : n)));
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, readAt: new Date().toISOString() } : n));
     } catch {
-      // ignore
+      // silent
     }
   };
 
-  // Null-role = legacy notifications without a role tag — show in all visible columns
+  const handleNavigate = (route: string) => {
+    handleClose();
+    router.push(route);
+  };
+
   const freelancerNotifs = notifications.filter(n => n.role === "freelancer" || n.role === null).slice(0, 5);
-  const clientNotifs = notifications.filter(n => n.role === "client" || n.role === null).slice(0, 5);
+  const clientNotifs    = notifications.filter(n => n.role === "client"     || n.role === null).slice(0, 5);
   const showTwo = isFreelancer && isClient;
 
   return (
     <>
-      <IconButton onClick={handleOpen} size='small' sx={{ color: "rgba(0,0,0,0.7)" }}>
-        <Badge badgeContent={unreadCount || null} color='error' max={99}>
+      <IconButton onClick={handleOpen} size="small" sx={{ color: "rgba(0,0,0,0.7)" }}>
+        <Badge badgeContent={unreadCount || null} color="error" max={99}>
           <NotificationsIcon sx={{ fontSize: 20 }} />
         </Badge>
       </IconButton>
@@ -157,16 +212,8 @@ export function NotificationBell() {
         onClose={handleClose}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 2,
-              boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)",
-              mt: 1,
-              overflow: "hidden",
-            },
-          },
-        }}>
+        slotProps={{ paper: { sx: { borderRadius: 2, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05)", mt: 1, overflow: "hidden" } } }}
+      >
         <Box sx={{ px: 2, py: 1.5, borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
           <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Notifications</Typography>
         </Box>
@@ -178,11 +225,11 @@ export function NotificationBell() {
         ) : (
           <Box sx={{ display: "flex" }}>
             {isFreelancer && (
-              <NotificationColumn title='Freelancer' notifications={freelancerNotifs} onMarkRead={handleMarkRead} />
+              <NotificationColumn title="Freelancer" notifications={freelancerNotifs} onMarkRead={handleMarkRead} onNavigate={handleNavigate} />
             )}
-            {showTwo && <Divider orientation='vertical' flexItem />}
+            {showTwo && <Divider orientation="vertical" flexItem />}
             {isClient && (
-              <NotificationColumn title='Client' notifications={clientNotifs} onMarkRead={handleMarkRead} />
+              <NotificationColumn title="Client" notifications={clientNotifs} onMarkRead={handleMarkRead} onNavigate={handleNavigate} />
             )}
           </Box>
         )}
@@ -190,9 +237,10 @@ export function NotificationBell() {
         <Box sx={{ borderTop: "1px solid rgba(0,0,0,0.08)", p: 1, textAlign: "center" }}>
           <Button
             component={Link as React.ElementType}
-            href='/notifications'
+            href="/notifications"
             onClick={handleClose}
-            sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.6)", "&:hover": { color: "black", bgcolor: "transparent" } }}>
+            sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.6)", "&:hover": { color: "black", bgcolor: "transparent" } }}
+          >
             View all notifications
           </Button>
         </Box>

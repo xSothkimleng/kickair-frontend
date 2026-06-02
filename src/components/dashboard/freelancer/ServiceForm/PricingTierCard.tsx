@@ -7,9 +7,11 @@ interface PricingTierCardProps {
   data: PricingTier;
   onChange: (data: PricingTier) => void;
   onToggle: (enabled: boolean) => void;
+  errors?: { price?: string; revisions?: string; delivery?: string };
+  onClearError?: (field: "price" | "revisions" | "delivery") => void;
 }
 
-export default function PricingTierCard({ tier, data, onChange, onToggle }: PricingTierCardProps) {
+export default function PricingTierCard({ tier, data, onChange, onToggle, errors, onClearError }: PricingTierCardProps) {
   const disabled = !data.enabled;
 
   return (
@@ -67,38 +69,48 @@ export default function PricingTierCard({ tier, data, onChange, onToggle }: Pric
           </Box>
 
           <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>Revisions *</Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>
+              Revisions <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
+            </Typography>
             <TextField
               fullWidth
               value={data.revisions}
-              onChange={e => onChange({ ...data, revisions: e.target.value })}
+              onChange={e => { onChange({ ...data, revisions: e.target.value }); onClearError?.("revisions"); }}
               placeholder="e.g., 3 or Unlimited"
+              error={!!errors?.revisions}
+              helperText={errors?.revisions}
               sx={smallTextFieldSx}
             />
           </Box>
 
           <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>Delivery Time (days) *</Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>
+              Delivery Time (days) <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
+            </Typography>
             <TextField
               fullWidth
               type="number"
               value={data.deliveryTime}
-              onChange={e => onChange({ ...data, deliveryTime: e.target.value })}
+              onChange={e => { onChange({ ...data, deliveryTime: e.target.value }); onClearError?.("delivery"); }}
+              error={!!errors?.delivery}
+              helperText={errors?.delivery}
               sx={smallTextFieldSx}
             />
           </Box>
 
           <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>Price (USD) *</Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>
+              Price (USD) <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
+            </Typography>
             <Box sx={{ position: "relative" }}>
               <Typography
                 sx={{
                   position: "absolute",
                   left: 12,
-                  top: "50%",
+                  top: errors?.price ? "38%" : "50%",
                   transform: "translateY(-50%)",
                   fontSize: 12,
-                  color: "rgba(0, 0, 0, 0.6)",
+                  color: errors?.price ? "#DC2626" : "rgba(0, 0, 0, 0.6)",
                   zIndex: 1,
                 }}>
                 $
@@ -107,14 +119,14 @@ export default function PricingTierCard({ tier, data, onChange, onToggle }: Pric
                 fullWidth
                 type="number"
                 value={data.price}
-                onChange={e => onChange({ ...data, price: e.target.value })}
+                onChange={e => { onChange({ ...data, price: e.target.value }); onClearError?.("price"); }}
+                error={!!errors?.price}
+                helperText={errors?.price}
                 sx={{
                   ...smallTextFieldSx,
                   "& .MuiOutlinedInput-root": {
                     ...smallTextFieldSx["& .MuiOutlinedInput-root"],
-                    "& input": {
-                      pl: 2.5,
-                    },
+                    "& input": { pl: 2.5 },
                   },
                 }}
               />

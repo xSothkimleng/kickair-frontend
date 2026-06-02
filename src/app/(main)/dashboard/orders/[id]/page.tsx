@@ -29,6 +29,7 @@ import {
 import { api } from "@/lib/api";
 import { Order, OrderStatus, MyOrdersResponse, Review } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
+import OrderTimeline from "@/components/dashboard/OrderTimeline";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -108,9 +109,6 @@ type UploadedFile = { url: string; file_name: string; file_type: string };
 
 function formatDate(d: string) {
   return new Date(d).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
-}
-function formatDateTime(d: string) {
-  return new Date(d).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
 // ─── Sub-components ──────────────────────────────────────────────────────────
@@ -418,20 +416,7 @@ export default function ClientOrderDetailPage() {
 
           {/* ── Section 4: Timeline ── */}
           <Box sx={CARD}>
-            <Typography sx={SEC_LABEL}>Timeline</Typography>
-            <Box sx={{ position: "relative", pl: "22px" }}>
-              <Box sx={{ position: "absolute", left: "4px", top: "7px", bottom: "7px", width: "1.5px", bgcolor: "#E2E8F0" }} />
-              {[
-                { label: "Order placed", date: order.created_at, done: true },
-                { label: "Last updated", date: order.updated_at, done: order.updated_at !== order.created_at },
-              ].map(({ label, date, done }, i) => (
-                <Box key={i} sx={{ position: "relative", pb: i === 0 ? 2.25 : 0 }}>
-                  <Box sx={{ position: "absolute", left: "-22px", top: "4px", width: 9, height: 9, borderRadius: "50%", bgcolor: done ? "#0F172A" : "#FFF", border: `2px solid ${done ? "#0F172A" : "#CBD5E1"}` }} />
-                  <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{label.charAt(0).toUpperCase() + label.slice(1)}</Typography>
-                  <Typography sx={{ fontSize: 12, color: "#64748B", mt: "1px" }}>{formatDateTime(date)}</Typography>
-                </Box>
-              ))}
-            </Box>
+            <OrderTimeline orderId={order.id} createdAt={order.created_at} />
           </Box>
 
           {/* ── Section 5: Status card ── */}

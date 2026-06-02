@@ -179,6 +179,16 @@ export interface MyOrdersResponse {
   data: Order[];
 }
 
+export type OrderEventActorRole = "client" | "freelancer" | "admin" | "system" | null;
+
+export interface OrderTimelineEvent {
+  id: number;
+  event_type: string;
+  description: string;
+  actor_role: OrderEventActorRole;
+  created_at: string;
+}
+
 export interface CreateOrderRequest {
   pricing_option_id: number;
 }

@@ -24,8 +24,8 @@ import {
   UpdateProposalRequest,
   JobPostFilters,
 } from "@/types/job";
-import { ServiceCategory } from "@/types/service";
-import { AdminDispute, Order } from "@/types/order";
+import { ServiceCategory, Service } from "@/types/service";
+import { AdminDispute, Order, OrderTimelineEvent } from "@/types/order";
 
 export class EmailUnverifiedError extends Error {
   constructor() {
@@ -709,6 +709,29 @@ class ApiClient {
 
   async markAllNotificationsRead(): Promise<void> {
     await this.post("/api/notifications/read-all", {});
+  }
+
+  // ── Admin: Service moderation ──────────────────────────────────────────────
+  async getAdminServices(status?: string): Promise<Service[]> {
+    const q = status ? `?status=${status}` : "";
+    const res = await this.get(`/api/admin/services${q}`);
+    return res.data?.data ?? res.data ?? [];
+  }
+  async approveService(id: number): Promise<void> { await this.post(`/api/admin/services/${id}/approve`, {}); }
+  async rejectService(id: number, reason?: string): Promise<void> { await this.post(`/api/admin/services/${id}/reject`, { reason }); }
+
+  // ── Admin: Job post moderation ─────────────────────────────────────────────
+  async getAdminJobPosts(status?: string): Promise<JobPost[]> {
+    const q = status ? `?status=${status}` : "";
+    const res = await this.get(`/api/admin/job-posts${q}`);
+    return res.data?.data ?? res.data ?? [];
+  }
+  async approveJobPost(id: number): Promise<void> { await this.post(`/api/admin/job-posts/${id}/approve`, {}); }
+  async rejectJobPost(id: number, reason?: string): Promise<void> { await this.post(`/api/admin/job-posts/${id}/reject`, { reason }); }
+
+  // ── Order timeline ─────────────────────────────────────────────────────────
+  async getOrderTimeline(orderId: number): Promise<{ data: OrderTimelineEvent[] }> {
+    return this.get(`/api/orders/${orderId}/timeline`);
   }
 
   async getAdminUsers(params: {

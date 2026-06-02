@@ -1,4 +1,4 @@
-import { Box, Paper, Typography, TextField, Select, MenuItem, Chip, IconButton, InputAdornment } from "@mui/material";
+import { Box, Paper, Typography, TextField, Select, MenuItem, Chip, IconButton, InputAdornment, FormControl, FormHelperText } from "@mui/material";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { RoomOutlined, AddOutlined, CloseOutlined } from "@mui/icons-material";
 import { ServiceFormData, textFieldSx, textareaSx } from "../types";
@@ -10,9 +10,10 @@ interface BasicInfoSectionProps {
   onFormDataChange: (data: ServiceFormData) => void;
   categories: ServiceCategory[];
   categoriesLoading: boolean;
+  fieldErrors?: { title?: string; category?: string };
 }
 
-export default function BasicInfoSection({ formData, onFormDataChange, categories, categoriesLoading }: BasicInfoSectionProps) {
+export default function BasicInfoSection({ formData, onFormDataChange, categories, categoriesLoading, fieldErrors }: BasicInfoSectionProps) {
   const [tagInput, setTagInput] = useState("");
 
   const handleAddTag = () => {
@@ -39,18 +40,25 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
 
       <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
         <Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Service Title *</Typography>
+          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>
+            Service Title <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
+          </Typography>
           <TextField
             fullWidth
             value={formData.title}
             onChange={e => onFormDataChange({ ...formData, title: e.target.value })}
             placeholder="e.g., I will create a modern logo design for your brand"
+            error={!!fieldErrors?.title}
+            helperText={fieldErrors?.title}
             sx={textFieldSx}
           />
         </Box>
 
         <Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Category *</Typography>
+          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>
+            Category <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
+          </Typography>
+          <FormControl fullWidth error={!!fieldErrors?.category}>
           <Select
             fullWidth
             value={formData.categoryId ?? ""}
@@ -82,6 +90,8 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
               </MenuItem>
             ))}
           </Select>
+          {fieldErrors?.category && <FormHelperText>{fieldErrors.category}</FormHelperText>}
+          </FormControl>
         </Box>
 
         <Box>

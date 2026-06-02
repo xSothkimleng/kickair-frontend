@@ -10,14 +10,20 @@ export type NotificationType =
   | "payment_released"
   | "dispute_opened"
   | "dispute_resolved"
-  | "review_received";
+  | "evidence_submitted"
+  | "review_received"
+  | "service_approved"
+  | "service_rejected"
+  | "admin_service_pending"
+  | "admin_job_pending"
+  | "admin_dispute_opened";
 
 export interface Notification {
   id: string;
   type: NotificationType;
   title: string;
   body: string;
-  role: "freelancer" | "client" | null;
+  role: "freelancer" | "client" | "admin" | null;
   data: Record<string, number | string>;
   readAt: string | null;
   createdAt: string;

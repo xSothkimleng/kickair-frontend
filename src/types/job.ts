@@ -1,6 +1,6 @@
 // Job Post + Proposal types
 
-export type JobPostStatus = "open" | "in_progress" | "completed" | "cancelled";
+export type JobPostStatus = "pending_review" | "open" | "in_progress" | "completed" | "cancelled" | "rejected";
 export type ProposalStatus = "pending" | "accepted" | "rejected" | "withdrawn";
 
 export interface JobCategory {

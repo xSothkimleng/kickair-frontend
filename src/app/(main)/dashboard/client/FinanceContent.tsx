@@ -18,6 +18,8 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  Alert,
+  InputAdornment,
 } from "@mui/material";
 import {
   Download as DownloadIcon,
@@ -531,46 +533,50 @@ export default function FinanceContent() {
       <Dialog
         open={topUpOpen}
         onClose={() => !topUpLoading && setTopUpOpen(false)}
-        slotProps={{ paper: { sx: { borderRadius: 3, width: 360, p: 2 } } }}>
-        <DialogTitle sx={{ fontWeight: 600, fontSize: 16, pb: 1 }}>Top Up Balance</DialogTitle>
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 4 } }}
+      >
+        <DialogTitle sx={{ fontSize: 20, fontWeight: 600, color: "black" }}>Top Up Balance</DialogTitle>
         <DialogContent>
-          <TextField
-            autoFocus
-            fullWidth
-            type='number'
-            label='Amount'
-            value={topUpAmount}
-            onChange={e => {
-              setTopUpAmount(e.target.value);
-              setTopUpError(null);
-            }}
-            slotProps={{ htmlInput: { min: 1, step: "0.01" } }}
-            error={!!topUpError}
-            helperText={topUpError ?? " "}
-            sx={{ mt: 1 }}
-          />
+          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", mb: 3 }}>
+            Current balance: <strong>${wallet ? parseFloat(wallet.available_balance_raw).toLocaleString() : "0"}</strong>
+          </Typography>
+          {topUpError && <Alert severity="error" sx={{ mb: 2 }}>{topUpError}</Alert>}
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            <Box>
+              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", mb: 1 }}>Amount (USD)</Typography>
+              <TextField
+                fullWidth
+                type="number"
+                value={topUpAmount}
+                onChange={e => { setTopUpAmount(e.target.value); setTopUpError(null); }}
+                placeholder="0.00"
+                disabled={topUpLoading}
+                slotProps={{ htmlInput: { min: 1, step: "0.01" } }}
+                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
+                sx={{ "& .MuiOutlinedInput-root": { height: 44, borderRadius: 3, fontSize: 14, "& fieldset": { borderColor: "rgba(0,0,0,0.1)" } } }}
+              />
+            </Box>
+            <Box sx={{ p: 2, bgcolor: "rgba(37,99,235,0.05)", borderRadius: 3 }}>
+              <Typography sx={{ fontSize: 11, color: "rgb(29,78,216)" }}>
+                <strong>Note:</strong> Top-up funds are added to your wallet balance and can be used for orders.
+              </Typography>
+            </Box>
+          </Box>
         </DialogContent>
-        <DialogActions sx={{ pt: 0 }}>
+        <DialogActions sx={{ p: 3, pt: 0 }}>
           <Button
-            onClick={() => setTopUpOpen(false)}
+            onClick={() => { setTopUpOpen(false); setTopUpError(null); }}
             disabled={topUpLoading}
-            sx={{ fontSize: 12, textTransform: "none", color: "text.secondary" }}>
+            sx={{ flex: 1, height: 44, fontSize: 13, color: "black", bgcolor: "rgba(0,0,0,0.05)", borderRadius: 10, textTransform: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
             Cancel
           </Button>
           <Button
-            variant='contained'
             onClick={handleTopUp}
             disabled={topUpLoading}
-            sx={{
-              fontSize: 12,
-              textTransform: "none",
-              borderRadius: 10,
-              bgcolor: "black",
-              color: "white",
-              boxShadow: "none",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.8)", boxShadow: "none" },
-            }}>
-            {topUpLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : "Confirm"}
+            sx={{ flex: 1, height: 44, fontSize: 13, color: "white", bgcolor: "black", borderRadius: 10, textTransform: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>
+            {topUpLoading ? <CircularProgress size={18} sx={{ color: "white" }} /> : "Confirm Top Up"}
           </Button>
         </DialogActions>
       </Dialog>

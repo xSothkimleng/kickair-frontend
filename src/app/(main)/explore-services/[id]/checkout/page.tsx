@@ -16,11 +16,13 @@ import PaymentOption, { PaymentMethod } from "@/components/checkout/PaymentOptio
 import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse, PricingOption } from "@/types/service";
 import { CreateOrderResponse } from "@/types/order";
+import { useAuth } from "@/components/context/AuthContext";
 
 function CheckoutContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
+  const { user } = useAuth();
 
   const serviceId = params.id as string;
   const pricingOptionId = searchParams.get("pricing_option_id");
@@ -96,6 +98,22 @@ function CheckoutContent() {
     );
   }
 
+  const isOwnService = !!(service && user?.is_freelancer && user.freelancer_profile?.id === service.freelancer_profile_id);
+
+  // Block own-service purchase
+  if (isOwnService) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Box sx={{ textAlign: "center" }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>You cannot purchase your own service</Typography>
+          <Button onClick={() => router.back()} variant="outlined" sx={{ textTransform: "none", borderRadius: 28 }}>
+            Go back
+          </Button>
+        </Box>
+      </Box>
+    );
+  }
+
   // Error state
   if (error || !service || !selectedPricing) {
     return (
@@ -123,9 +141,9 @@ function CheckoutContent() {
   }
 
   const freelancer = service.freelancer_profile;
-  const user = freelancer?.user;
-  const freelancerName = user?.name || "Unknown";
-  const freelancerAvatar = user?.avatar_url || "";
+  const freelancerUser = freelancer?.user;
+  const freelancerName = freelancerUser?.name || "Unknown";
+  const freelancerAvatar = freelancerUser?.avatar_url || "";
 
   const priceRaw = Number(selectedPricing.price_raw);
   const total = priceRaw;

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   Box, Paper, Typography, Stack, Tabs, Tab, TextField, Select, MenuItem,
   InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead,
-  TableRow, Chip, IconButton, CircularProgress, Alert,
+  TableRow, Chip, IconButton, CircularProgress, Alert, Button, Tooltip,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Snackbar,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
@@ -13,9 +14,12 @@ import PeopleIcon from "@mui/icons-material/People";
 import PersonIcon from "@mui/icons-material/Person";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { Service } from "@/types/service";
+import { JobPost } from "@/types/job";
 import DisputeReviewSection from "../trust/DisputeReviewSection";
 
 function EmptyState({ label }: { label: string }) {
@@ -26,24 +30,75 @@ function EmptyState({ label }: { label: string }) {
   );
 }
 
+type StatusChipColor = "success" | "warning" | "error" | "default";
+
+function StatusChip({ status }: { status: string }) {
+  const map: Record<string, { label: string; color: StatusChipColor }> = {
+    active: { label: "Active", color: "success" },
+    open: { label: "Open", color: "success" },
+    pending_review: { label: "Pending review", color: "warning" },
+    rejected: { label: "Rejected", color: "error" },
+    in_progress: { label: "In progress", color: "default" },
+    completed: { label: "Completed", color: "default" },
+    cancelled: { label: "Cancelled", color: "default" },
+  };
+  const cfg = map[status] ?? { label: status, color: "default" as StatusChipColor };
+  return <Chip label={cfg.label} size="small" color={cfg.color} variant={cfg.color === "default" ? "outlined" : "filled"} />;
+}
+
+const SERVICE_STATUS_FILTERS = [
+  { value: "pending_review", label: "Pending review" },
+  { value: "active", label: "Active" },
+  { value: "rejected", label: "Rejected" },
+  { value: "", label: "All" },
+];
+
+// What kind of entity a pending-reject dialog targets
+type RejectTarget = { kind: "service" | "job"; id: number; title: string } | null;
+
 export default function MarketplacePage() {
   const [tab, setTab] = useState(0);
   const router = useRouter();
 
+  // ── Services ──
   const [services, setServices] = useState<Service[]>([]);
   const [servicesLoading, setServicesLoading] = useState(false);
   const [servicesError, setServicesError] = useState<string | null>(null);
   const [serviceSearch, setServiceSearch] = useState("");
+  const [serviceStatus, setServiceStatus] = useState("pending_review");
 
-  useEffect(() => {
-    if (tab !== 0) return;
+  // ── Job posts (client gigs) ──
+  const [jobs, setJobs] = useState<JobPost[]>([]);
+  const [jobsLoading, setJobsLoading] = useState(false);
+  const [jobsError, setJobsError] = useState<string | null>(null);
+  const [jobStatus, setJobStatus] = useState("pending_review");
+
+  // ── Action state ──
+  const [actioningId, setActioningId] = useState<number | null>(null);
+  const [rejectTarget, setRejectTarget] = useState<RejectTarget>(null);
+  const [rejectReason, setRejectReason] = useState("");
+  const [toast, setToast] = useState<string | null>(null);
+
+  const loadServices = useCallback(() => {
     setServicesLoading(true);
     setServicesError(null);
-    api.get("/api/services")
-      .then((res) => setServices(res.data ?? []))
+    api.getAdminServices(serviceStatus)
+      .then((data) => setServices(data ?? []))
       .catch(() => setServicesError("Failed to load services."))
       .finally(() => setServicesLoading(false));
-  }, [tab]);
+  }, [serviceStatus]);
+
+  const loadJobs = useCallback(() => {
+    setJobsLoading(true);
+    setJobsError(null);
+    api.getAdminJobPosts(jobStatus)
+      .then((data) => setJobs(data ?? []))
+      .catch(() => setJobsError("Failed to load client gigs."))
+      .finally(() => setJobsLoading(false));
+  }, [jobStatus]);
+
+  useEffect(() => { if (tab === 0) loadServices(); }, [tab, loadServices]);
+  useEffect(() => { if (tab === 1) loadJobs(); }, [tab, loadJobs]);
 
   const filteredServices = services.filter(s =>
     s.title.toLowerCase().includes(serviceSearch.toLowerCase()) ||
@@ -54,6 +109,64 @@ export default function MarketplacePage() {
     const prices = s.pricing_options?.map(p => Number(p.price_raw)).filter(p => p > 0) ?? [];
     return prices.length ? Math.min(...prices) : null;
   };
+
+  // ── Approve / reject handlers ──
+  const approveService = async (id: number) => {
+    setActioningId(id);
+    try {
+      await api.approveService(id);
+      setToast("Service approved.");
+      loadServices();
+    } catch {
+      setToast("Failed to approve service.");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const approveJob = async (id: number) => {
+    setActioningId(id);
+    try {
+      await api.approveJobPost(id);
+      setToast("Job post approved.");
+      loadJobs();
+    } catch {
+      setToast("Failed to approve job post.");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const confirmReject = async () => {
+    if (!rejectTarget) return;
+    const { kind, id } = rejectTarget;
+    setActioningId(id);
+    try {
+      if (kind === "service") {
+        await api.rejectService(id, rejectReason.trim() || undefined);
+        setToast("Service rejected.");
+        loadServices();
+      } else {
+        await api.rejectJobPost(id, rejectReason.trim() || undefined);
+        setToast("Job post rejected.");
+        loadJobs();
+      }
+      setRejectTarget(null);
+      setRejectReason("");
+    } catch {
+      setToast("Failed to reject.");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const StatusFilter = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
+    <Select size="small" value={value} onChange={e => onChange(e.target.value)} sx={{ minWidth: 180 }}>
+      {SERVICE_STATUS_FILTERS.map(o => (
+        <MenuItem key={o.value || "all"} value={o.value}>{o.label}</MenuItem>
+      ))}
+    </Select>
+  );
 
   return (
     <Box sx={{ p: 4 }}>
@@ -75,36 +188,39 @@ export default function MarketplacePage() {
           <Tab icon={<ThumbUpIcon fontSize="small" />} iconPosition="start" label="Reviews" />
         </Tabs>
 
-        {/* ── Freelancer Services (real API) ── */}
+        {/* ── Freelancer Services (real API + moderation) ── */}
         {tab === 0 && (
           <Box>
             <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: "grey.200" }}>
               <Typography fontWeight={700} fontSize={17} mb={0.5}>Freelancer Services</Typography>
-              <Typography variant="body2" color="text.secondary" mb={2}>Services posted by freelancers on the platform</Typography>
-              <TextField
-                size="small"
-                placeholder="Search by title or freelancer…"
-                value={serviceSearch}
-                onChange={e => setServiceSearch(e.target.value)}
-                sx={{ width: 320 }}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: "text.disabled" }} /></InputAdornment> } }}
-              />
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                Review and approve services before they go live on the marketplace
+              </Typography>
+              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
+                <TextField
+                  size="small"
+                  placeholder="Search by title or freelancer…"
+                  value={serviceSearch}
+                  onChange={e => setServiceSearch(e.target.value)}
+                  sx={{ width: 320 }}
+                  slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: "text.disabled" }} /></InputAdornment> } }}
+                />
+                <StatusFilter value={serviceStatus} onChange={setServiceStatus} />
+              </Stack>
             </Box>
 
             {servicesLoading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-                <CircularProgress />
-              </Box>
+              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>
             ) : servicesError ? (
               <Box sx={{ p: 3 }}><Alert severity="error">{servicesError}</Alert></Box>
             ) : filteredServices.length === 0 ? (
-              <EmptyState label="No services found." />
+              <EmptyState label="No services found for this status." />
             ) : (
               <TableContainer>
                 <Table>
                   <TableHead>
                     <TableRow sx={{ bgcolor: "grey.50" }}>
-                      {["Service", "Freelancer", "Category", "Price from", "Rating", "Orders", "Actions"].map(h => (
+                      {["Service", "Freelancer", "Category", "Price from", "Status", "Actions"].map(h => (
                         <TableCell key={h} sx={{ fontWeight: 600, fontSize: 12, color: "text.secondary", textTransform: "uppercase" }}>{h}</TableCell>
                       ))}
                     </TableRow>
@@ -112,6 +228,8 @@ export default function MarketplacePage() {
                   <TableBody>
                     {filteredServices.map(s => {
                       const price = lowestPrice(s);
+                      const busy = actioningId === s.id;
+                      const isPending = s.status === "pending_review";
                       return (
                         <TableRow key={s.id} hover>
                           <TableCell>
@@ -132,20 +250,31 @@ export default function MarketplacePage() {
                               {price != null ? `$${price}` : "—"}
                             </Typography>
                           </TableCell>
+                          <TableCell><StatusChip status={s.status} /></TableCell>
                           <TableCell>
-                            {s.rating_count > 0 ? (
-                              <Typography variant="body2">{parseFloat(s.rating_average ?? "0").toFixed(1)} ★ ({s.rating_count})</Typography>
-                            ) : (
-                              <Typography variant="caption" color="text.disabled">No reviews</Typography>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            <Typography variant="body2" fontWeight={500}>{s.orders_count}</Typography>
-                          </TableCell>
-                          <TableCell>
-                            <IconButton size="small" onClick={() => router.push(`/explore-services/${s.id}`)}>
-                              <VisibilityIcon fontSize="small" color="primary" />
-                            </IconButton>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                              <Tooltip title="Preview">
+                                <IconButton size="small" onClick={() => router.push(`/explore-services/${s.id}`)}>
+                                  <VisibilityIcon fontSize="small" color="primary" />
+                                </IconButton>
+                              </Tooltip>
+                              {isPending && (
+                                <>
+                                  <Button
+                                    size="small" variant="contained" color="success" disabled={busy}
+                                    startIcon={busy ? <CircularProgress size={14} color="inherit" /> : <CheckCircleIcon fontSize="small" />}
+                                    onClick={() => approveService(s.id)}
+                                    sx={{ textTransform: "none" }}
+                                  >Approve</Button>
+                                  <Button
+                                    size="small" variant="outlined" color="error" disabled={busy}
+                                    startIcon={<CancelIcon fontSize="small" />}
+                                    onClick={() => { setRejectTarget({ kind: "service", id: s.id, title: s.title }); setRejectReason(""); }}
+                                    sx={{ textTransform: "none" }}
+                                  >Reject</Button>
+                                </>
+                              )}
+                            </Stack>
                           </TableCell>
                         </TableRow>
                       );
@@ -157,14 +286,79 @@ export default function MarketplacePage() {
           </Box>
         )}
 
-        {/* ── Client Gigs ── */}
+        {/* ── Client Gigs (job posts + moderation) ── */}
         {tab === 1 && (
           <Box>
             <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: "grey.200" }}>
               <Typography fontWeight={700} fontSize={17} mb={0.5}>Client Gigs</Typography>
-              <Typography variant="body2" color="text.secondary">Job listings posted by clients</Typography>
+              <Typography variant="body2" color="text.secondary" mb={2}>
+                Review and approve job listings before they go live
+              </Typography>
+              <StatusFilter value={jobStatus} onChange={setJobStatus} />
             </Box>
-            <EmptyState label="Client gig management coming soon." />
+
+            {jobsLoading ? (
+              <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}><CircularProgress /></Box>
+            ) : jobsError ? (
+              <Box sx={{ p: 3 }}><Alert severity="error">{jobsError}</Alert></Box>
+            ) : jobs.length === 0 ? (
+              <EmptyState label="No client gigs found for this status." />
+            ) : (
+              <TableContainer>
+                <Table>
+                  <TableHead>
+                    <TableRow sx={{ bgcolor: "grey.50" }}>
+                      {["Title", "Client", "Category", "Budget", "Status", "Actions"].map(h => (
+                        <TableCell key={h} sx={{ fontWeight: 600, fontSize: 12, color: "text.secondary", textTransform: "uppercase" }}>{h}</TableCell>
+                      ))}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {jobs.map(j => {
+                      const busy = actioningId === j.id;
+                      const isPending = j.status === "pending_review";
+                      const clientName = j.client_profile?.company_name || j.client_profile?.user?.name || "—";
+                      return (
+                        <TableRow key={j.id} hover>
+                          <TableCell><Typography variant="body2" fontWeight={500}>{j.title}</Typography></TableCell>
+                          <TableCell><Typography variant="body2" color="text.secondary">{clientName}</Typography></TableCell>
+                          <TableCell>
+                            {j.category ? (
+                              <Chip label={j.category.category_name} size="small" color="secondary" variant="outlined" />
+                            ) : <Typography variant="caption" color="text.disabled">—</Typography>}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight={500}>${j.budget_min} – ${j.budget_max}</Typography>
+                          </TableCell>
+                          <TableCell><StatusChip status={j.status} /></TableCell>
+                          <TableCell>
+                            <Stack direction="row" spacing={0.5} alignItems="center">
+                              {isPending && (
+                                <>
+                                  <Button
+                                    size="small" variant="contained" color="success" disabled={busy}
+                                    startIcon={busy ? <CircularProgress size={14} color="inherit" /> : <CheckCircleIcon fontSize="small" />}
+                                    onClick={() => approveJob(j.id)}
+                                    sx={{ textTransform: "none" }}
+                                  >Approve</Button>
+                                  <Button
+                                    size="small" variant="outlined" color="error" disabled={busy}
+                                    startIcon={<CancelIcon fontSize="small" />}
+                                    onClick={() => { setRejectTarget({ kind: "job", id: j.id, title: j.title }); setRejectReason(""); }}
+                                    sx={{ textTransform: "none" }}
+                                  >Reject</Button>
+                                </>
+                              )}
+                              {!isPending && <Typography variant="caption" color="text.disabled">—</Typography>}
+                            </Stack>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            )}
           </Box>
         )}
 
@@ -197,6 +391,39 @@ export default function MarketplacePage() {
           </Box>
         )}
       </Paper>
+
+      {/* ── Reject reason dialog ── */}
+      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} fullWidth maxWidth="sm">
+        <DialogTitle>Reject {rejectTarget?.kind === "job" ? "job post" : "service"}</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 2 }}>
+            Rejecting <strong>{rejectTarget?.title}</strong>. The owner will be notified. You can include an optional reason to help them fix and resubmit.
+          </DialogContentText>
+          <TextField
+            autoFocus fullWidth multiline minRows={3}
+            label="Reason (optional)"
+            value={rejectReason}
+            onChange={e => setRejectReason(e.target.value)}
+            slotProps={{ htmlInput: { maxLength: 500 } }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button onClick={() => setRejectTarget(null)} sx={{ textTransform: "none" }}>Cancel</Button>
+          <Button
+            variant="contained" color="error" onClick={confirmReject}
+            disabled={actioningId === rejectTarget?.id}
+            sx={{ textTransform: "none" }}
+          >Reject</Button>
+        </DialogActions>
+      </Dialog>
+
+      <Snackbar
+        open={!!toast}
+        autoHideDuration={3000}
+        onClose={() => setToast(null)}
+        message={toast}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </Box>
   );
 }

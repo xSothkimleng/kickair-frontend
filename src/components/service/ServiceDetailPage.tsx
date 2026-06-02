@@ -42,6 +42,7 @@ import {
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse } from "@/types/service";
+import { useAuth } from "@/components/context/AuthContext";
 
 interface ServiceDetailPageProps {
   serviceId: number;
@@ -49,6 +50,7 @@ interface ServiceDetailPageProps {
 
 export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const router = useRouter();
+  const { user: currentUser } = useAuth();
 
   // API state
   const [service, setService] = useState<Service | null>(null);
@@ -159,6 +161,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const user = freelancer?.user;
   const freelancerName = user?.name || "Unknown";
   const freelancerAvatar = user?.avatar_url || "";
+  const isOwnService = !!(currentUser?.is_freelancer && currentUser.freelancer_profile?.id === service.freelancer_profile_id);
   const pricingOptions = service.pricing_options || [];
   const media = service.media || [];
   const faqs = service.faqs || [];
@@ -591,25 +594,33 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
 
                       {/* CTA Buttons */}
                       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                        <Button
-                          fullWidth
-                          variant='contained'
-                          onClick={() =>
-                            router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`)
-                          }
-                          sx={{
-                            height: 44,
-                            bgcolor: "#0071e3",
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            borderRadius: 28,
-                            textTransform: "none",
-                            boxShadow: 1,
-                            color: "white",
-                            "&:hover": { bgcolor: "#0077ED", boxShadow: 2 },
-                          }}>
-                          Continue (${Number(selectedPricing.price_raw).toFixed(2)})
-                        </Button>
+                        {isOwnService ? (
+                          <Box sx={{ textAlign: "center", py: 1.25, px: 2, bgcolor: "rgba(0,0,0,0.04)", borderRadius: 28 }}>
+                            <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.5)", fontWeight: 500 }}>
+                              This is your own service
+                            </Typography>
+                          </Box>
+                        ) : (
+                          <Button
+                            fullWidth
+                            variant='contained'
+                            onClick={() =>
+                              router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`)
+                            }
+                            sx={{
+                              height: 44,
+                              bgcolor: "#0071e3",
+                              fontSize: "13px",
+                              fontWeight: 500,
+                              borderRadius: 28,
+                              textTransform: "none",
+                              boxShadow: 1,
+                              color: "white",
+                              "&:hover": { bgcolor: "#0077ED", boxShadow: 2 },
+                            }}>
+                            Continue (${Number(selectedPricing.price_raw).toFixed(2)})
+                          </Button>
+                        )}
                         <Button
                           fullWidth
                           variant='outlined'

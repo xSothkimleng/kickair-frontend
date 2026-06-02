@@ -5,6 +5,7 @@ import { Box, Paper, Typography, Button, CircularProgress, Dialog, DialogTitle, 
 import { AddOutlined, WorkOutlined } from "@mui/icons-material";
 import { Service } from "@/types/service";
 import ServiceCard from "@/components/dashboard/freelancer/ServiceCard";
+import DraftCard from "@/components/dashboard/freelancer/DraftCard";
 import ServiceForm from "@/components/dashboard/freelancer/ServiceForm";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
@@ -13,6 +14,7 @@ export default function ServicesContent() {
   const router = useRouter();
   const [view, setView] = useState<"list" | "create" | "edit">("list");
   const [editingService, setEditingService] = useState<Service | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
   const [services, setServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -36,8 +38,17 @@ export default function ServicesContent() {
     fetchServices();
   }, []);
 
-  const handleEditService = (service: Service) => {
-    setEditingService(service);
+  const handleEditService = async (service: Service) => {
+    setEditLoading(true);
+    try {
+      // Fetch full service detail so pricing_options, media, and faqs are all loaded
+      const response = await api.get(`/api/services/${service.id}`);
+      setEditingService(response.data);
+    } catch {
+      setEditingService(service); // fallback to list data
+    } finally {
+      setEditLoading(false);
+    }
     setView("edit");
   };
 
@@ -65,9 +76,20 @@ export default function ServicesContent() {
     fetchServices();
   };
 
+  if (editLoading) {
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   if (view === "create" || view === "edit") {
     return <ServiceForm service={editingService} onBack={handleBack} />;
   }
+
+  const drafts = services.filter(s => s.status === "draft");
+  const liveServices = services.filter(s => s.status !== "draft");
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -98,7 +120,7 @@ export default function ServicesContent() {
 
       {/* Active Services */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 3 }}>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>Active Services</Typography>
+        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>Your Services</Typography>
 
         {loading ? (
           <Box sx={{ textAlign: "center", py: 6 }}>
@@ -111,9 +133,9 @@ export default function ServicesContent() {
               Try again
             </Button>
           </Box>
-        ) : services.length > 0 ? (
+        ) : liveServices.length > 0 ? (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            {services.map(service => (
+            {liveServices.map(service => (
               <ServiceCard
                 key={service.id}
                 service={service}
@@ -149,18 +171,30 @@ export default function ServicesContent() {
         </DialogActions>
       </Dialog>
 
-      {/* Drafts */}
-      {/* {mockDrafts.length > 0 && (
+      {/* Drafts — private, never reviewed or public until published */}
+      {drafts.length > 0 && (
         <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 3 }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>Drafts</Typography>
-
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Drafts</Typography>
+            <Box sx={{ px: 1, py: 0.25, bgcolor: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", fontSize: 11, fontWeight: 600, borderRadius: 1 }}>
+              {drafts.length}
+            </Box>
+          </Box>
+          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.5)", mb: 2 }}>
+            Only you can see these. Continue editing and publish when you&apos;re ready for admin review.
+          </Typography>
           <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-            {mockDrafts.map(draft => (
-              <DraftCard key={draft.id} draft={draft} onContinueEditing={() => handleEditService(draft)} />
+            {drafts.map(draft => (
+              <DraftCard
+                key={draft.id}
+                draft={draft}
+                onContinueEditing={() => handleEditService(draft)}
+                onDelete={() => setDeleteTarget(draft)}
+              />
             ))}
           </Box>
         </Paper>
-      )} */}
+      )}
     </Box>
   );
 }

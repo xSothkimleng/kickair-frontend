@@ -2,10 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { Box, Paper, Typography, Button, Checkbox, FormControlLabel, CircularProgress } from "@mui/material";
-import { ChevronLeftOutlined } from "@mui/icons-material";
+import { ChevronLeftOutlined, RestoreOutlined } from "@mui/icons-material";
 import { Service, ServiceCategory, ServiceMedia, CreateServiceRequest, TemporaryUpload, UploadToken } from "@/types/service";
 import { ServiceFormData } from "../types";
 import { api } from "@/lib/api";
+import { useFormRecovery } from "@/hooks/useFormRecovery";
 import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
 import MediaGallerySection from "./MediaGallerySection";
@@ -30,7 +31,9 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
 
   // Submission state
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   // Media state for editing existing services
   const [media, setMedia] = useState<ServiceMedia[]>(service?.media || []);
@@ -95,6 +98,11 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   };
 
   const [formData, setFormData] = useState<ServiceFormData>(getInitialFormData);
+
+  // Local-storage recovery safety net (survives accidental tab close / crash).
+  const recoveryKey = isEditing ? `kickair:svc-recovery:edit:${service!.id}` : "kickair:svc-recovery:new";
+  const { recovered, clear: clearRecovery, discard: discardRecovery, dismiss: dismissRecovery } =
+    useFormRecovery<ServiceFormData>(recoveryKey, formData);
 
   // Fetch categories on mount
   useEffect(() => {
@@ -161,20 +169,27 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   };
 
   const validateForm = (): string | null => {
-    if (!formData.title.trim()) return "Please enter a service title";
-    if (!formData.categoryId) return "Please select a category";
+    const errs: Record<string, string> = {};
+
+    if (!formData.title.trim()) errs.title = "Service title is required";
+    if (!formData.categoryId) errs.category = "Please select a category";
 
     const enabledTiers = (["basic", "standard", "premium"] as const).filter(t => formData.pricing[t].enabled);
-    if (enabledTiers.length === 0) return "Please enable at least one pricing tier";
+    if (enabledTiers.length === 0) errs.noTier = "Please enable at least one pricing tier";
 
     for (const t of enabledTiers) {
       const tier = formData.pricing[t];
-      if (!tier.price) return `Please enter a price for the ${t} tier`;
-      if (!tier.revisions) return `Please enter revisions for the ${t} tier`;
-      if (!tier.deliveryTime) return `Please enter delivery time for the ${t} tier`;
+      if (!tier.price)        errs[`${t}_price`]    = "Price is required";
+      if (!tier.revisions)    errs[`${t}_revisions`] = "Revisions is required";
+      if (!tier.deliveryTime) errs[`${t}_delivery`]  = "Delivery time is required";
     }
 
-    return null;
+    setFieldErrors(errs);
+    if (Object.keys(errs).length === 0) return null;
+    if (errs.title) return errs.title;
+    if (errs.category) return errs.category;
+    if (errs.noTier) return errs.noTier;
+    return "Please fill in all required fields in the pricing section";
   };
 
   const handlePublish = async () => {
@@ -213,11 +228,35 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         }
       }
 
+      clearRecovery();
       onBack();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save service");
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Save as Draft — no validation, never enters the review queue, stays private.
+  const handleSaveDraft = async () => {
+    try {
+      setSavingDraft(true);
+      setError(null);
+
+      const requestData = { ...transformFormData(), save_as_draft: true };
+
+      if (isEditing && service) {
+        await api.put(`/api/services/${service.id}`, requestData);
+      } else {
+        await api.post("/api/services", requestData);
+      }
+
+      clearRecovery();
+      onBack();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to save draft");
+    } finally {
+      setSavingDraft(false);
     }
   };
 
@@ -250,13 +289,50 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         </Typography>
       </Box>
 
+      {/* Unsaved-changes recovery banner (local-storage safety net) */}
+      {recovered && (
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(245, 158, 11, 0.35)",
+            bgcolor: "rgba(245, 158, 11, 0.06)",
+            p: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            flexWrap: "wrap",
+          }}>
+          <RestoreOutlined sx={{ fontSize: 20, color: "#b45309" }} />
+          <Typography sx={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+            You have unsaved changes from a previous session.
+          </Typography>
+          <Button
+            onClick={() => { setFormData(recovered.data); dismissRecovery(); }}
+            sx={{ px: 2, height: 32, fontSize: 12, color: "white", bgcolor: "#b45309", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "#92400e" } }}>
+            Restore
+          </Button>
+          <Button
+            onClick={discardRecovery}
+            sx={{ px: 2, height: 32, fontSize: 12, color: "#92400e", bgcolor: "transparent", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "rgba(245,158,11,0.12)" } }}>
+            Discard
+          </Button>
+        </Paper>
+      )}
+
       <BasicInfoSection
         formData={formData}
-        onFormDataChange={setFormData}
+        onFormDataChange={(data) => { setFormData(data); setFieldErrors(prev => ({ ...prev, title: "", category: "" })); }}
         categories={categories}
         categoriesLoading={categoriesLoading}
+        fieldErrors={{ title: fieldErrors.title, category: fieldErrors.category }}
       />
-      <PricingSection formData={formData} onFormDataChange={setFormData} />
+      <PricingSection
+        formData={formData}
+        onFormDataChange={setFormData}
+        fieldErrors={fieldErrors}
+        onClearTierError={(key) => setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n; })}
+      />
       <MediaGallerySection
         serviceId={service?.id || null}
         media={media}
@@ -317,7 +393,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
           <Button
             onClick={handlePublish}
-            disabled={!formData.agreeToTerms || submitting}
+            disabled={!formData.agreeToTerms || submitting || savingDraft}
             sx={{
               px: 3,
               height: 44,
@@ -334,12 +410,12 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
                 color: "white",
               },
             }}>
-            {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : isEditing ? "Save Changes" : "Publish Service"}
+            {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : (service?.status === "draft" || !isEditing) ? "Publish Service" : "Save Changes"}
           </Button>
 
-          {/* TODO: Enable when API supports draft functionality */}
-          {/* <Button
+          <Button
             onClick={handleSaveDraft}
+            disabled={submitting || savingDraft}
             sx={{
               px: 3,
               height: 44,
@@ -352,8 +428,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
                 bgcolor: "rgba(0, 0, 0, 0.1)",
               },
             }}>
-            Save as Draft
-          </Button> */}
+            {savingDraft ? <CircularProgress size={18} sx={{ color: "rgba(0,0,0,0.5)" }} /> : "Save as Draft"}
+          </Button>
 
           <Button
             onClick={onBack}
