@@ -1,5 +1,5 @@
-import { Box, Typography, IconButton, Chip } from "@mui/material";
-import { EditOutlined, VisibilityOutlined, DeleteOutlined, InfoOutlined } from "@mui/icons-material";
+import { Box, Typography, IconButton, Chip, Button } from "@mui/material";
+import { EditOutlined, VisibilityOutlined, DeleteOutlined, InfoOutlined, ReplayOutlined } from "@mui/icons-material";
 import { Service } from "@/types/service";
 
 interface ServiceCardProps {
@@ -14,6 +14,7 @@ const STATUS_CONFIG: Record<Service["status"], { label: string; color: string; b
   pending_review: { label: "Pending review", color: "#b45309", bg: "rgba(217, 119, 6, 0.12)" },
   rejected: { label: "Rejected", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
   draft: { label: "Draft", color: "#b45309", bg: "rgba(245, 158, 11, 0.1)" },
+  disabled: { label: "Disabled", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
 };
 
 export default function ServiceCard({ service, onEdit, onView, onDelete }: ServiceCardProps) {
@@ -54,19 +55,38 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
           </Box>
         </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <IconButton
-            onClick={onEdit}
-            sx={{
-              p: 1,
-              color: "rgba(0, 0, 0, 0.6)",
-              borderRadius: 2,
-              "&:hover": {
-                color: "black",
-                bgcolor: "rgba(0, 0, 0, 0.05)",
-              },
-            }}>
-            <EditOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
+          {service.status === "rejected" ? (
+            <Button
+              onClick={onEdit}
+              startIcon={<ReplayOutlined sx={{ fontSize: 16 }} />}
+              sx={{
+                px: 1.5,
+                height: 32,
+                fontSize: 12,
+                fontWeight: 500,
+                color: "white",
+                bgcolor: "black",
+                borderRadius: 2,
+                textTransform: "none",
+                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+              }}>
+              Resubmit
+            </Button>
+          ) : (
+            <IconButton
+              onClick={onEdit}
+              sx={{
+                p: 1,
+                color: "rgba(0, 0, 0, 0.6)",
+                borderRadius: 2,
+                "&:hover": {
+                  color: "black",
+                  bgcolor: "rgba(0, 0, 0, 0.05)",
+                },
+              }}>
+              <EditOutlined sx={{ fontSize: 16 }} />
+            </IconButton>
+          )}
           <IconButton
             onClick={onView}
             sx={{
@@ -104,7 +124,21 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
               Rejected by admin
             </Typography>
             <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
-              {service.rejection_reason || "No reason provided. Edit your service to resubmit it for review."}
+              {service.rejection_reason || "No reason provided. Use Resubmit to send it for review again."}
+            </Typography>
+          </Box>
+        </Box>
+      )}
+
+      {service.status === "disabled" && (
+        <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", display: "flex", gap: 1, alignItems: "flex-start" }}>
+          <InfoOutlined sx={{ fontSize: 16, color: "#dc2626", mt: "1px" }} />
+          <Box>
+            <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#dc2626" }}>
+              Disabled by admin
+            </Typography>
+            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
+              {service.rejection_reason || "This service has been taken down. Contact support for details."}
             </Typography>
           </Box>
         </Box>
@@ -112,7 +146,7 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
 
       {service.status === "pending_review" && (
         <Typography sx={{ mt: 1, fontSize: 12, color: "#b45309" }}>
-          Awaiting admin approval — not visible to clients yet.
+          Awaiting admin approval — not visible to the public yet.
         </Typography>
       )}
     </Box>

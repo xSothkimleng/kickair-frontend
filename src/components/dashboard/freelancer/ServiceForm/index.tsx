@@ -168,11 +168,17 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     };
   };
 
+  // Count images across already-saved media and not-yet-saved temp uploads.
+  const imageCount =
+    media.filter(m => m.file_type === "image").length +
+    tempUploads.filter(t => t.file_type === "image").length;
+
   const validateForm = (): string | null => {
     const errs: Record<string, string> = {};
 
     if (!formData.title.trim()) errs.title = "Service title is required";
     if (!formData.categoryId) errs.category = "Please select a category";
+    if (imageCount === 0) errs.image = "Add at least one image";
 
     const enabledTiers = (["basic", "standard", "premium"] as const).filter(t => formData.pricing[t].enabled);
     if (enabledTiers.length === 0) errs.noTier = "Please enable at least one pricing tier";
@@ -186,10 +192,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
 
     setFieldErrors(errs);
     if (Object.keys(errs).length === 0) return null;
-    if (errs.title) return errs.title;
-    if (errs.category) return errs.category;
-    if (errs.noTier) return errs.noTier;
-    return "Please fill in all required fields in the pricing section";
+    // One friendly summary; each field shows its own red indicator below.
+    return "Please complete the required fields highlighted below before publishing.";
   };
 
   const handlePublish = async () => {
@@ -333,25 +337,31 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         fieldErrors={fieldErrors}
         onClearTierError={(key) => setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n; })}
       />
-      <MediaGallerySection
-        serviceId={service?.id || null}
-        media={media}
-        onMediaChange={updatedMedia => {
-          setMedia(updatedMedia);
-          // If the cover image was removed, clear local featureImageId
-          if (featureImageId && !updatedMedia.some(m => m.id === featureImageId)) {
-            setFeatureImageId(null);
-          }
-        }}
-        uploadToken={uploadToken}
-        tempUploads={tempUploads}
-        onTempUploadsChange={setTempUploads}
-        featureImageId={featureImageId}
-        onFeatureImageChange={setFeatureImageId}
-        desiredCoverTempId={desiredCoverTempId}
-        onDesiredCoverTempIdChange={setDesiredCoverTempId}
-        disabled={submitting}
-      />
+      <Box sx={fieldErrors.image ? { border: "1px solid #ef4444", borderRadius: 4 } : undefined}>
+        <MediaGallerySection
+          serviceId={service?.id || null}
+          media={media}
+          onMediaChange={updatedMedia => {
+            setMedia(updatedMedia);
+            // If the cover image was removed, clear local featureImageId
+            if (featureImageId && !updatedMedia.some(m => m.id === featureImageId)) {
+              setFeatureImageId(null);
+            }
+            setFieldErrors(prev => { const n = { ...prev }; delete n.image; return n; });
+          }}
+          uploadToken={uploadToken}
+          tempUploads={tempUploads}
+          onTempUploadsChange={(t) => { setTempUploads(t); setFieldErrors(prev => { const n = { ...prev }; delete n.image; return n; }); }}
+          featureImageId={featureImageId}
+          onFeatureImageChange={setFeatureImageId}
+          desiredCoverTempId={desiredCoverTempId}
+          onDesiredCoverTempIdChange={setDesiredCoverTempId}
+          disabled={submitting}
+        />
+      </Box>
+      {fieldErrors.image && (
+        <Typography sx={{ fontSize: 12, color: "#ef4444", mt: -1 }}>{fieldErrors.image}</Typography>
+      )}
       <FAQsSection formData={formData} onFormDataChange={setFormData} />
 
       {/* TODO: Enable when API supports these features */}
@@ -410,7 +420,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
                 color: "white",
               },
             }}>
-            {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : (service?.status === "draft" || !isEditing) ? "Publish Service" : "Save Changes"}
+            {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : service?.status === "rejected" ? "Resubmit" : (service?.status === "draft" || !isEditing) ? "Publish Service" : "Save Changes"}
           </Button>
 
           <Button

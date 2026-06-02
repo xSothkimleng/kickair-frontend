@@ -192,6 +192,29 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
       </Box>
 
       <Container sx={{ py: 4 }}>
+        {/* Owner-only status banners */}
+        {isOwnService && service.status === "pending_review" && (
+          <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.3)", display: "flex", gap: 1.25, alignItems: "flex-start" }}>
+            <AccessTime sx={{ fontSize: 18, color: "#b45309", mt: "1px" }} />
+            <Box>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#b45309" }}>Pending review</Typography>
+              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.7)" }}>
+                This is a preview. Your service is awaiting admin approval and is not visible to the public yet.
+              </Typography>
+            </Box>
+          </Box>
+        )}
+        {isOwnService && service.status === "rejected" && (
+          <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", border: "1px solid rgba(220, 38, 38, 0.25)", display: "flex", gap: 1.25, alignItems: "flex-start" }}>
+            <Shield sx={{ fontSize: 18, color: "#dc2626", mt: "1px" }} />
+            <Box>
+              <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#dc2626" }}>Rejected by admin</Typography>
+              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.7)" }}>
+                {service.rejection_reason || "No reason provided. Edit and resubmit your service for review."}
+              </Typography>
+            </Box>
+          </Box>
+        )}
         <Grid container spacing={4}>
           {/* Left Column - Service Details */}
           <Grid size={{ xs: 12, lg: 8 }}>

@@ -66,6 +66,7 @@ export interface JobPost {
   budget_max: string;
   deadline: string;
   status: JobPostStatus;
+  rejection_reason?: string | null;
   max_proposals: number;
   proposal_count: number;
   created_at: string;

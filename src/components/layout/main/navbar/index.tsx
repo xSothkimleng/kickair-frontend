@@ -551,6 +551,7 @@ export default function MainNavbar() {
                     role='menu'
                     sx={{
                       ...dropdownPanelSx,
+                      width: 260,
                       right: 0,
                       mt: 1,
                       borderRadius: 1.5,
@@ -608,10 +609,17 @@ export default function MainNavbar() {
                     {/* Menu items */}
                     <Box role='group' sx={{ py: 1 }}>
                       {[
+                        ...(user?.is_admin
+                          ? [{
+                              href: "/admin",
+                              icon: <ShieldIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                              label: "Go to Admin Dashboard",
+                            }]
+                          : []),
                         {
                           href: currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client",
                           icon: <BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
-                          label: currentMode === "freelancer" ? "Freelancer Profile" : "Client Profile",
+                          label: currentMode === "freelancer" ? "Freelancer Space" : "Client Space",
                         },
                         {
                           href: "/settings",

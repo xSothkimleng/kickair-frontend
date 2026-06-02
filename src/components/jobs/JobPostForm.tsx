@@ -9,6 +9,7 @@ import {
   Button,
   TextField,
   FormControl,
+  FormHelperText,
   InputLabel,
   Select,
   MenuItem,
@@ -81,6 +82,10 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+
+  const clearFieldError = (key: string) =>
+    setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
 
   useEffect(() => {
     const load = async () => {
@@ -99,12 +104,12 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   }, []);
 
   useEffect(() => {
-    if (isEditing) return;
+    // Need an upload token for both new posts and edits (to attach more files).
     api
       .getUploadToken()
       .then(setUploadToken)
       .catch(() => {});
-  }, [isEditing]);
+  }, []);
 
   const getFileType = (fileName: string): "image" | "pdf" | null => {
     const ext = fileName.split(".").pop()?.toLowerCase();
@@ -171,12 +176,20 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   };
 
   const handleSubmit = async () => {
-    if (!title.trim()) { setError("Title is required."); return; }
-    if (!categoryId) { setError("Category is required."); return; }
-    if (!description.trim()) { setError("Description is required."); return; }
-    if (!budgetMin || !budgetMax) { setError("Budget range is required."); return; }
-    if (Number(budgetMax) < Number(budgetMin)) { setError("Budget max must be ≥ budget min."); return; }
-    if (!deadline) { setError("Deadline is required."); return; }
+    const errs: Record<string, string> = {};
+    if (!title.trim()) errs.title = "Job title is required";
+    if (!categoryId) errs.category = "Please select a category";
+    if (!description.trim() || description === "<p></p>") errs.description = "Description is required";
+    if (!budgetMin) errs.budgetMin = "Required";
+    if (!budgetMax) errs.budgetMax = "Required";
+    if (budgetMin && budgetMax && Number(budgetMax) < Number(budgetMin)) errs.budgetMax = "Max must be ≥ min";
+    if (!deadline) errs.deadline = "Deadline is required";
+
+    setFieldErrors(errs);
+    if (Object.keys(errs).length > 0) {
+      setError("Please complete the required fields highlighted below before submitting.");
+      return;
+    }
 
     setSubmitting(true);
     setError(null);
@@ -261,18 +274,20 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
           <TextField
             label="Job Title"
             value={title}
-            onChange={e => setTitle(e.target.value)}
+            onChange={e => { setTitle(e.target.value); clearFieldError("title"); }}
             placeholder="e.g., Build a modern e-commerce website"
             fullWidth
+            error={!!fieldErrors.title}
+            helperText={fieldErrors.title}
             sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
           />
 
           {/* Category */}
-          <FormControl fullWidth disabled={refLoading}>
+          <FormControl fullWidth disabled={refLoading} error={!!fieldErrors.category}>
             <InputLabel sx={{ fontSize: 13 }}>Category</InputLabel>
             <Select
               value={categoryId}
-              onChange={e => setCategoryId(e.target.value as number)}
+              onChange={e => { setCategoryId(e.target.value as number); clearFieldError("category"); }}
               label="Category"
               sx={{ borderRadius: 2, fontSize: 13 }}>
               <MenuItem value="">
@@ -284,17 +299,23 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 </MenuItem>
               ))}
             </Select>
+            {fieldErrors.category && <FormHelperText>{fieldErrors.category}</FormHelperText>}
           </FormControl>
 
           {/* Description */}
           <Box>
-            <Typography sx={{ fontSize: 13, fontWeight: 500, mb: 1, color: "rgba(0,0,0,0.7)" }}>Description</Typography>
-            <RichTextEditor
-              value={description}
-              onChange={setDescription}
-              placeholder="Describe the project in detail — goals, features, requirements..."
-              minHeight={180}
-            />
+            <Typography sx={{ fontSize: 13, fontWeight: 500, mb: 1, color: fieldErrors.description ? "#d32f2f" : "rgba(0,0,0,0.7)" }}>Description</Typography>
+            <Box sx={fieldErrors.description ? { border: "1px solid #d32f2f", borderRadius: 2 } : undefined}>
+              <RichTextEditor
+                value={description}
+                onChange={(v) => { setDescription(v); clearFieldError("description"); }}
+                placeholder="Describe the project in detail — goals, features, requirements..."
+                minHeight={180}
+              />
+            </Box>
+            {fieldErrors.description && (
+              <Typography sx={{ fontSize: 12, color: "#d32f2f", mt: 0.5, ml: 0.5 }}>{fieldErrors.description}</Typography>
+            )}
           </Box>
 
           {/* Budget */}
@@ -304,9 +325,11 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 label="Budget Min (USD)"
                 type="number"
                 value={budgetMin}
-                onChange={e => setBudgetMin(e.target.value)}
+                onChange={e => { setBudgetMin(e.target.value); clearFieldError("budgetMin"); clearFieldError("budgetMax"); }}
                 placeholder="500"
                 fullWidth
+                error={!!fieldErrors.budgetMin}
+                helperText={fieldErrors.budgetMin}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -322,9 +345,11 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 label="Budget Max (USD)"
                 type="number"
                 value={budgetMax}
-                onChange={e => setBudgetMax(e.target.value)}
+                onChange={e => { setBudgetMax(e.target.value); clearFieldError("budgetMax"); }}
                 placeholder="2000"
                 fullWidth
+                error={!!fieldErrors.budgetMax}
+                helperText={fieldErrors.budgetMax}
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -344,8 +369,10 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 label="Deadline"
                 type="date"
                 value={deadline}
-                onChange={e => setDeadline(e.target.value)}
+                onChange={e => { setDeadline(e.target.value); clearFieldError("deadline"); }}
                 fullWidth
+                error={!!fieldErrors.deadline}
+                helperText={fieldErrors.deadline}
                 inputProps={{ min: today }}
                 InputLabelProps={{ shrink: true }}
                 sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
@@ -416,8 +443,8 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 </Grid>
               ))}
 
-              {/* Temp uploads for new job */}
-              {!isEditing && tempUploads.map(tempItem => (
+              {/* Newly added uploads (new job or edit) */}
+              {tempUploads.map(tempItem => (
                 <Grid size={{ xs: 6, sm: 4, md: 3 }} key={`temp-${tempItem.id}`}>
                   <Box
                     sx={{
@@ -465,8 +492,8 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 </Grid>
               ))}
 
-              {/* Upload button — new jobs only */}
-              {!isEditing && tempUploads.length < MAX_FILES && (
+              {/* Upload button */}
+              {tempUploads.length < MAX_FILES && (
                 <Grid size={{ xs: 6, sm: 4, md: 3 }}>
                   <Button
                     component="label"
@@ -516,11 +543,9 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 <InsertDriveFileOutlined sx={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }} />
                 <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)" }}>PDFs (10MB)</Typography>
               </Box>
-              {!isEditing && (
-                <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)", ml: "auto" }}>
-                  {tempUploads.length}/{MAX_FILES} files
-                </Typography>
-              )}
+              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)", ml: "auto" }}>
+                {tempUploads.length}/{MAX_FILES} new file{tempUploads.length !== 1 ? "s" : ""}
+              </Typography>
             </Box>
           </Box>
 
@@ -552,7 +577,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 bgcolor: "#0071e3",
                 "&:hover": { bgcolor: "#0077ED" },
               }}>
-              {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : isEditing ? "Save Changes" : "Post Job"}
+              {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : job?.status === "rejected" ? "Resubmit" : isEditing ? "Save Changes" : "Post Job"}
             </Button>
           </Stack>
         </Stack>

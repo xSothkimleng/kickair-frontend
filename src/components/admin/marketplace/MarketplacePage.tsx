@@ -16,7 +16,7 @@ import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
-import { useRouter } from "next/navigation";
+import BlockIcon from "@mui/icons-material/Block";
 import { api } from "@/lib/api";
 import { Service } from "@/types/service";
 import { JobPost } from "@/types/job";
@@ -41,6 +41,7 @@ function StatusChip({ status }: { status: string }) {
     in_progress: { label: "In progress", color: "default" },
     completed: { label: "Completed", color: "default" },
     cancelled: { label: "Cancelled", color: "default" },
+    disabled: { label: "Disabled", color: "error" },
   };
   const cfg = map[status] ?? { label: status, color: "default" as StatusChipColor };
   return <Chip label={cfg.label} size="small" color={cfg.color} variant={cfg.color === "default" ? "outlined" : "filled"} />;
@@ -50,15 +51,15 @@ const SERVICE_STATUS_FILTERS = [
   { value: "pending_review", label: "Pending review" },
   { value: "active", label: "Active" },
   { value: "rejected", label: "Rejected" },
+  { value: "disabled", label: "Disabled" },
   { value: "", label: "All" },
 ];
 
-// What kind of entity a pending-reject dialog targets
-type RejectTarget = { kind: "service" | "job"; id: number; title: string } | null;
+// What a reason-dialog targets. action: reject (pending) or disable (active takedown).
+type RejectTarget = { kind: "service" | "job"; id: number; title: string; action: "reject" | "disable" } | null;
 
 export default function MarketplacePage() {
   const [tab, setTab] = useState(0);
-  const router = useRouter();
 
   // ── Services ──
   const [services, setServices] = useState<Service[]>([]);
@@ -139,22 +140,40 @@ export default function MarketplacePage() {
 
   const confirmReject = async () => {
     if (!rejectTarget) return;
-    const { kind, id } = rejectTarget;
+    const { kind, id, action } = rejectTarget;
+    const reason = rejectReason.trim() || undefined;
     setActioningId(id);
     try {
-      if (kind === "service") {
-        await api.rejectService(id, rejectReason.trim() || undefined);
+      if (action === "disable") {
+        await api.disableService(id, reason);
+        setToast("Service disabled.");
+        loadServices();
+      } else if (kind === "service") {
+        await api.rejectService(id, reason);
         setToast("Service rejected.");
         loadServices();
       } else {
-        await api.rejectJobPost(id, rejectReason.trim() || undefined);
+        await api.rejectJobPost(id, reason);
         setToast("Job post rejected.");
         loadJobs();
       }
       setRejectTarget(null);
       setRejectReason("");
     } catch {
-      setToast("Failed to reject.");
+      setToast("Action failed. Please try again.");
+    } finally {
+      setActioningId(null);
+    }
+  };
+
+  const enableService = async (id: number) => {
+    setActioningId(id);
+    try {
+      await api.enableService(id);
+      setToast("Service re-enabled.");
+      loadServices();
+    } catch {
+      setToast("Failed to re-enable service.");
     } finally {
       setActioningId(null);
     }
@@ -182,7 +201,7 @@ export default function MarketplacePage() {
           sx={{ borderBottom: "1px solid", borderColor: "grey.200", px: 2 }}
         >
           <Tab icon={<WorkIcon fontSize="small" />} iconPosition="start" label="Freelancer Services" />
-          <Tab icon={<PeopleIcon fontSize="small" />} iconPosition="start" label="Client Gigs" />
+          <Tab icon={<PeopleIcon fontSize="small" />} iconPosition="start" label="Client Jobs" />
           <Tab icon={<PersonIcon fontSize="small" />} iconPosition="start" label="Freelancer Hiring" />
           <Tab icon={<WarningAmberIcon fontSize="small" />} iconPosition="start" label="Disputes" />
           <Tab icon={<ThumbUpIcon fontSize="small" />} iconPosition="start" label="Reviews" />
@@ -253,8 +272,8 @@ export default function MarketplacePage() {
                           <TableCell><StatusChip status={s.status} /></TableCell>
                           <TableCell>
                             <Stack direction="row" spacing={0.5} alignItems="center">
-                              <Tooltip title="Preview">
-                                <IconButton size="small" onClick={() => router.push(`/explore-services/${s.id}`)}>
+                              <Tooltip title="Preview in new tab">
+                                <IconButton size="small" onClick={() => window.open(`/explore-services/${s.id}`, "_blank", "noopener,noreferrer")}>
                                   <VisibilityIcon fontSize="small" color="primary" />
                                 </IconButton>
                               </Tooltip>
@@ -269,10 +288,26 @@ export default function MarketplacePage() {
                                   <Button
                                     size="small" variant="outlined" color="error" disabled={busy}
                                     startIcon={<CancelIcon fontSize="small" />}
-                                    onClick={() => { setRejectTarget({ kind: "service", id: s.id, title: s.title }); setRejectReason(""); }}
+                                    onClick={() => { setRejectTarget({ kind: "service", id: s.id, title: s.title, action: "reject" }); setRejectReason(""); }}
                                     sx={{ textTransform: "none" }}
                                   >Reject</Button>
                                 </>
+                              )}
+                              {s.status === "active" && (
+                                <Button
+                                  size="small" variant="outlined" color="error" disabled={busy}
+                                  startIcon={<BlockIcon fontSize="small" />}
+                                  onClick={() => { setRejectTarget({ kind: "service", id: s.id, title: s.title, action: "disable" }); setRejectReason(""); }}
+                                  sx={{ textTransform: "none" }}
+                                >Disable</Button>
+                              )}
+                              {s.status === "disabled" && (
+                                <Button
+                                  size="small" variant="contained" color="success" disabled={busy}
+                                  startIcon={busy ? <CircularProgress size={14} color="inherit" /> : <CheckCircleIcon fontSize="small" />}
+                                  onClick={() => enableService(s.id)}
+                                  sx={{ textTransform: "none" }}
+                                >Enable</Button>
                               )}
                             </Stack>
                           </TableCell>
@@ -286,11 +321,11 @@ export default function MarketplacePage() {
           </Box>
         )}
 
-        {/* ── Client Gigs (job posts + moderation) ── */}
+        {/* ── Client Jobs (job posts + moderation) ── */}
         {tab === 1 && (
           <Box>
             <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: "grey.200" }}>
-              <Typography fontWeight={700} fontSize={17} mb={0.5}>Client Gigs</Typography>
+              <Typography fontWeight={700} fontSize={17} mb={0.5}>Client Jobs</Typography>
               <Typography variant="body2" color="text.secondary" mb={2}>
                 Review and approve job listings before they go live
               </Typography>
@@ -302,7 +337,7 @@ export default function MarketplacePage() {
             ) : jobsError ? (
               <Box sx={{ p: 3 }}><Alert severity="error">{jobsError}</Alert></Box>
             ) : jobs.length === 0 ? (
-              <EmptyState label="No client gigs found for this status." />
+              <EmptyState label="No client jobs found for this status." />
             ) : (
               <TableContainer>
                 <Table>
@@ -344,7 +379,7 @@ export default function MarketplacePage() {
                                   <Button
                                     size="small" variant="outlined" color="error" disabled={busy}
                                     startIcon={<CancelIcon fontSize="small" />}
-                                    onClick={() => { setRejectTarget({ kind: "job", id: j.id, title: j.title }); setRejectReason(""); }}
+                                    onClick={() => { setRejectTarget({ kind: "job", id: j.id, title: j.title, action: "reject" }); setRejectReason(""); }}
                                     sx={{ textTransform: "none" }}
                                   >Reject</Button>
                                 </>
@@ -392,12 +427,20 @@ export default function MarketplacePage() {
         )}
       </Paper>
 
-      {/* ── Reject reason dialog ── */}
+      {/* ── Reason dialog (reject pending / disable active) ── */}
       <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} fullWidth maxWidth="sm">
-        <DialogTitle>Reject {rejectTarget?.kind === "job" ? "job post" : "service"}</DialogTitle>
+        <DialogTitle>
+          {rejectTarget?.action === "disable"
+            ? "Disable service"
+            : `Reject ${rejectTarget?.kind === "job" ? "job post" : "service"}`}
+        </DialogTitle>
         <DialogContent>
           <DialogContentText sx={{ mb: 2 }}>
-            Rejecting <strong>{rejectTarget?.title}</strong>. The owner will be notified. You can include an optional reason to help them fix and resubmit.
+            {rejectTarget?.action === "disable" ? (
+              <>Taking down <strong>{rejectTarget?.title}</strong>. It will be hidden from the public and the freelancer will be notified. You can re-enable it later.</>
+            ) : (
+              <>Rejecting <strong>{rejectTarget?.title}</strong>. The owner will be notified. You can include an optional reason to help them fix and resubmit.</>
+            )}
           </DialogContentText>
           <TextField
             autoFocus fullWidth multiline minRows={3}
@@ -413,7 +456,7 @@ export default function MarketplacePage() {
             variant="contained" color="error" onClick={confirmReject}
             disabled={actioningId === rejectTarget?.id}
             sx={{ textTransform: "none" }}
-          >Reject</Button>
+          >{rejectTarget?.action === "disable" ? "Disable" : "Reject"}</Button>
         </DialogActions>
       </Dialog>
 

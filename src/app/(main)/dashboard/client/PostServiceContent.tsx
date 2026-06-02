@@ -9,6 +9,8 @@ import {
   PeopleOutlineOutlined,
   AccessTimeOutlined,
   OpenInNewOutlined,
+  ReplayOutlined,
+  InfoOutlined,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
@@ -74,13 +76,14 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
   };
 
   const canCancel = job.status === "open" || job.status === "in_progress";
+  const isRejected = job.status === "rejected";
 
   return (
     <Box
       sx={{
         display: "flex",
-        alignItems: "center",
-        gap: 2,
+        flexDirection: "column",
+        gap: 1.5,
         p: 2.5,
         borderRadius: 3,
         border: "1px solid rgba(0,0,0,0.07)",
@@ -88,6 +91,7 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
         transition: "all 0.15s",
         "&:hover": { borderColor: "rgba(0,0,0,0.15)" },
       }}>
+      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
       {/* Icon */}
       <Avatar sx={{ width: 44, height: 44, bgcolor: "rgba(0,113,227,0.1)" }}>
         <WorkOutlined sx={{ fontSize: 20, color: "#0071e3" }} />
@@ -136,11 +140,29 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
           Proposals
         </Button>
 
-        <Tooltip title='Edit'>
-          <IconButton size='small' onClick={onEdit} sx={{ color: "rgba(0,0,0,0.5)" }}>
-            <EditOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
+        {isRejected ? (
+          <Button
+            size='small'
+            onClick={onEdit}
+            startIcon={<ReplayOutlined sx={{ fontSize: 15 }} />}
+            sx={{
+              fontSize: 12,
+              textTransform: "none",
+              borderRadius: 8,
+              bgcolor: "black",
+              color: "white",
+              px: 1.5,
+              "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
+            }}>
+            Resubmit
+          </Button>
+        ) : (
+          <Tooltip title='Edit'>
+            <IconButton size='small' onClick={onEdit} sx={{ color: "rgba(0,0,0,0.5)" }}>
+              <EditOutlined sx={{ fontSize: 16 }} />
+            </IconButton>
+          </Tooltip>
+        )}
 
         {canCancel && (
           <Button
@@ -158,6 +180,20 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
           </Button>
         )}
       </Stack>
+      </Box>
+
+      {/* Rejection reason (C9) */}
+      {isRejected && (
+        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", display: "flex", gap: 1, alignItems: "flex-start" }}>
+          <InfoOutlined sx={{ fontSize: 16, color: "#dc2626", mt: "1px" }} />
+          <Box>
+            <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#dc2626" }}>Rejected by admin</Typography>
+            <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.7)" }}>
+              {job.rejection_reason || "No reason provided. Use Resubmit to send it for review again."}
+            </Typography>
+          </Box>
+        </Box>
+      )}
     </Box>
   );
 }

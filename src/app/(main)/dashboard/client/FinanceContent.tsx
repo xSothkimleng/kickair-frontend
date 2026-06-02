@@ -23,7 +23,6 @@ import {
 } from "@mui/material";
 import {
   Download as DownloadIcon,
-  AttachMoney as DollarSignIcon,
   CreditCard as CreditCardIcon,
   Receipt as FileTextIcon,
   CheckCircle as CheckCircle2Icon,
@@ -238,92 +237,61 @@ export default function FinanceContent() {
 
       {/* Financial Overview Cards */}
       <Grid container spacing={2} mb={4}>
+        {/* Available Balance */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-            }}>
-            <CardContent>
-              <Stack spacing={1}>
-                <DollarSignIcon sx={{ fontSize: 20, color: "#2563eb" }} />
-                <Typography variant='h5' fontWeight={600}>
-                  ${wallet ? parseFloat(wallet.available_balance_raw).toLocaleString() : "0"}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Available Balance
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
+          <Paper elevation={0} sx={{ background: "linear-gradient(135deg, #000 0%, rgba(0,0,0,0.8) 100%)", borderRadius: 4, p: 3, color: "white" }}>
+            <Typography sx={{ fontSize: 11, color: "rgba(255,255,255,0.6)", mb: 1 }}>Available Balance</Typography>
+            <Typography sx={{ fontSize: 32, fontWeight: 600, mb: 2 }}>
+              ${wallet ? parseFloat(wallet.available_balance_raw).toLocaleString() : "0"}
+            </Typography>
+            <Button
+              onClick={() => { setTopUpOpen(true); setTopUpError(null); setTopUpAmount(""); }}
+              sx={{ width: "100%", height: 36, bgcolor: "white", color: "black", fontSize: 12, borderRadius: 2, textTransform: "none", fontWeight: 500, "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
+              Top Up
+            </Button>
+          </Paper>
         </Grid>
 
+        {/* Total Spent */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-            }}>
-            <CardContent>
-              <Stack spacing={1}>
-                <DollarSignIcon sx={{ fontSize: 20, color: "#2563eb" }} />
-                <Typography variant='h5' fontWeight={600}>
-                  ${wallet ? parseFloat(wallet.total_spent_raw).toLocaleString() : "0"}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Total Spent
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
+          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>Total Spent</Typography>
+              <Box sx={{ width: 8, height: 8, bgcolor: "#2563eb", borderRadius: "50%" }} />
+            </Box>
+            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
+              ${wallet ? parseFloat(wallet.total_spent_raw).toLocaleString() : "0"}
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Lifetime spending</Typography>
+          </Paper>
         </Grid>
 
+        {/* In Escrow */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-            }}>
-            <CardContent>
-              <Stack spacing={1}>
-                <ClockIcon sx={{ fontSize: 20, color: "#ea580c" }} />
-                <Typography variant='h5' fontWeight={600}>
-                  ${wallet ? parseFloat(wallet.pending_balance_raw).toLocaleString() : "0"}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  In Escrow
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
+          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>In Escrow</Typography>
+              <Box sx={{ width: 8, height: 8, bgcolor: "#ea580c", borderRadius: "50%" }} />
+            </Box>
+            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
+              ${wallet ? parseFloat(wallet.pending_balance_raw).toLocaleString() : "0"}
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Held until orders complete</Typography>
+          </Paper>
         </Grid>
 
+        {/* Total Balance */}
         <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-            }}>
-            <CardContent>
-              <Stack spacing={1}>
-                <CreditCardIcon sx={{ fontSize: 20, color: "#16a34a" }} />
-                <Typography variant='h5' fontWeight={600}>
-                  ${wallet ? wallet.total_balance_raw.toLocaleString() : "0"}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Total Balance
-                </Typography>
-              </Stack>
-            </CardContent>
-          </Card>
+          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
+              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>Total Balance</Typography>
+              <Box sx={{ width: 8, height: 8, bgcolor: "#16a34a", borderRadius: "50%" }} />
+            </Box>
+            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
+              ${wallet ? wallet.total_balance_raw.toLocaleString() : "0"}
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Available + Escrow</Typography>
+          </Paper>
         </Grid>
       </Grid>
 

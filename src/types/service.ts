@@ -90,7 +90,7 @@ export interface ServiceFAQ {
 
 export interface Service {
   id: number;
-  status: "draft" | "active" | "pending_review" | "rejected";
+  status: "draft" | "active" | "pending_review" | "rejected" | "disabled";
   rejection_reason?: string | null;
   freelancer_profile_id: number;
   category_id: number;

@@ -6,12 +6,19 @@ import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminNotificationBell from "@/components/admin/AdminNotificationBell";
 import GlobalNotificationToast from "@/components/layout/GlobalNotificationToast";
 import { useAuth } from "@/components/context/AuthContext";
-import { Box, CircularProgress } from "@mui/material";
+import { Box, CircularProgress, Button, Tooltip, IconButton } from "@mui/material";
+import LaunchIcon from "@mui/icons-material/Launch";
+import LogoutIcon from "@mui/icons-material/Logout";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const { user, loading } = useAuth();
+  const { user, loading, logout } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    await logout();
+    router.replace("/admin/login");
+  };
 
   // The admin login page lives inside this route group but must render bare —
   // without the authenticated shell or the redirect guard (which would loop).
@@ -57,7 +64,19 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             zIndex: 10,
           }}
         >
+          <Button
+            onClick={() => router.push("/")}
+            startIcon={<LaunchIcon sx={{ fontSize: 16 }} />}
+            sx={{ textTransform: "none", fontSize: 13, color: "text.secondary", "&:hover": { color: "text.primary", bgcolor: "grey.100" } }}
+          >
+            Switch to user site
+          </Button>
           <AdminNotificationBell />
+          <Tooltip title="Log out">
+            <IconButton onClick={handleLogout} size="small" sx={{ color: "text.secondary", "&:hover": { color: "error.main", bgcolor: "grey.100" } }}>
+              <LogoutIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Tooltip>
         </Box>
         <Box sx={{ flex: 1 }}>{children}</Box>
       </Box>

@@ -740,6 +740,8 @@ class ApiClient {
   }
   async approveService(id: number): Promise<void> { await this.post(`/api/admin/services/${id}/approve`, {}); }
   async rejectService(id: number, reason?: string): Promise<void> { await this.post(`/api/admin/services/${id}/reject`, { reason }); }
+  async disableService(id: number, reason?: string): Promise<void> { await this.post(`/api/admin/services/${id}/disable`, { reason }); }
+  async enableService(id: number): Promise<void> { await this.post(`/api/admin/services/${id}/enable`, {}); }
 
   // ── Admin: Job post moderation ─────────────────────────────────────────────
   async getAdminJobPosts(status?: string): Promise<JobPost[]> {
