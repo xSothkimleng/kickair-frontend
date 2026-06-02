@@ -60,6 +60,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       location: service?.location || "Phnom Penh, Cambodia",
       pricing: {
         basic: {
+          id: basicOption?.id,
           enabled: !!basicOption,
           name: "Basic",
           description: basicOption?.description || "",
@@ -68,6 +69,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           price: basicOption?.price || "",
         },
         standard: {
+          id: standardOption?.id,
           enabled: isEditing ? !!standardOption : true,
           name: "Standard",
           description: standardOption?.description || "",
@@ -76,6 +78,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           price: standardOption?.price || "",
         },
         premium: {
+          id: premiumOption?.id,
           enabled: !!premiumOption,
           name: "Premium",
           description: premiumOption?.description || "",
@@ -144,6 +147,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       const t = formData.pricing[tier];
       if (!t.enabled) return;
       pricingOptions.push({
+        ...(t.id ? { id: t.id } : {}),
         title: t.name,
         description: t.description || undefined,
         price: parseFloat(t.price) || 0,

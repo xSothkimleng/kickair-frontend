@@ -58,8 +58,9 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
 
       <Box sx={{ mt: 2, p: 2, bgcolor: "rgba(37, 99, 235, 0.05)", borderRadius: 3 }}>
         <Typography sx={{ fontSize: 11, color: "rgb(29, 78, 216)" }}>
-          <strong>Note:</strong> Once published, customers who purchase at a certain price will keep that price even if you edit it
-          later.
+          <strong>Note:</strong> You can update pricing anytime, but edits to a live service go back to admin review and the
+          listing is hidden until approved. Existing orders keep the exact price and details they were purchased with — only
+          new orders use the updated pricing.
         </Typography>
       </Box>
     </Paper>

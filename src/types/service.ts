@@ -146,6 +146,7 @@ export interface ServiceDetailResponse {
 
 // Request types for creating/updating services
 export interface CreatePricingOptionRequest {
+  id?: number; // present when editing an existing tier — backend upserts in place
   title: string;
   description?: string;
   price: number;

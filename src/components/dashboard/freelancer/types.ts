@@ -13,6 +13,7 @@ export interface Service {
 }
 
 export interface PricingTier {
+  id?: number; // present when editing an existing tier — lets the backend upsert in place
   enabled: boolean;
   name: string;
   description: string;
