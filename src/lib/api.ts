@@ -81,6 +81,21 @@ export interface FreelancerReviewsResponse {
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 const TOKEN_KEY = "auth_token";
 
+const GENERIC_SERVER_ERROR = "Something went wrong on our end. Please try again.";
+const NETWORK_ERROR = "Unable to reach the server. Check your connection and try again.";
+
+// Translates an API error response into a message safe to show the user.
+// Unexpected server failures (5xx) are masked behind a generic message while the
+// real developer error is logged to the browser console only. Intentional 4xx
+// errors (validation, auth, etc.) keep their server message — those are for the user.
+function toUserFacingError(status: number, body: { message?: string; debug?: unknown }): Error {
+  if (status >= 500) {
+    console.error(`[API ${status}]`, body?.debug ?? body?.message ?? "Server error");
+    return new Error(GENERIC_SERVER_ERROR);
+  }
+  return new Error(body?.message || `Request failed (${status})`);
+}
+
 class ApiClient {
   getToken(): string | null {
     if (typeof window === "undefined") return null;
@@ -100,22 +115,28 @@ class ApiClient {
     const url = `${API_URL}${endpoint}`;
     const token = this.getToken();
 
-    const response = await fetch(url, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers,
-      },
-    });
+    let response: Response;
+    try {
+      response = await fetch(url, {
+        ...options,
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+          ...(token && { Authorization: `Bearer ${token}` }),
+          ...options.headers,
+        },
+      });
+    } catch (networkErr) {
+      console.error("[API network error]", networkErr);
+      throw new Error(NETWORK_ERROR);
+    }
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Request failed" }));
       if (response.status === 403 && error.message === "Your email address is not verified.") {
         throw new EmailUnverifiedError();
       }
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw toUserFacingError(response.status, error);
     }
 
     return response.json();
@@ -285,7 +306,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Upload failed" }));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw toUserFacingError(response.status, error);
     }
 
     return response.json();
@@ -315,7 +336,7 @@ class ApiClient {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ message: "Upload failed" }));
-      throw new Error(error.message || `HTTP error! status: ${response.status}`);
+      throw toUserFacingError(response.status, error);
     }
 
     return response.json();

@@ -161,7 +161,7 @@ export default function AdminNotificationBell() {
 
         <Box sx={{ borderTop: "1px solid rgba(0,0,0,0.08)", p: 1, textAlign: "center" }}>
           <Button
-            onClick={() => { handleClose(); router.push("/notifications"); }}
+            onClick={() => { handleClose(); router.push("/admin/notifications"); }}
             sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.6)", "&:hover": { color: "black", bgcolor: "transparent" } }}
           >
             View all notifications

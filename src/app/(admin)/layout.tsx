@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import AdminNotificationBell from "@/components/admin/AdminNotificationBell";
 import GlobalNotificationToast from "@/components/layout/GlobalNotificationToast";
@@ -11,12 +11,22 @@ import { Box, CircularProgress } from "@mui/material";
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+
+  // The admin login page lives inside this route group but must render bare —
+  // without the authenticated shell or the redirect guard (which would loop).
+  const isLoginPage = pathname === "/admin/login";
 
   useEffect(() => {
+    if (isLoginPage) return;
     if (!loading && (!user || !user.is_admin)) {
-      router.replace("/auth/sign-in");
+      router.replace("/admin/login");
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, isLoginPage]);
+
+  if (isLoginPage) {
+    return <>{children}</>;
+  }
 
   if (loading || !user?.is_admin) {
     return (
