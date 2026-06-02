@@ -27,8 +27,9 @@ import {
   Star,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
-import { Order, OrderStatus } from "@/types/order";
+import { Order, OrderStatus, Dispute, EvidenceFile } from "@/types/order";
 import OrderTimeline from "@/components/dashboard/OrderTimeline";
+import DeliverablesReference from "@/components/dashboard/DeliverablesReference";
 
 // ─── Design tokens (same as client page) ─────────────────────────────────────
 
@@ -167,6 +168,69 @@ function PreviousSubmissions({ history }: { history?: DeliveryHistoryEntry[] }) 
   );
 }
 
+const OUTCOME_LABEL: Record<string, string> = {
+  full_freelancer: "Resolved in favor of the freelancer",
+  full_client: "Resolved in favor of the client — refunded",
+  partial: "Partial resolution — split between both parties",
+};
+
+function EvidenceParty({ label, files, statement }: { label: string; files: EvidenceFile[] | null; statement: string | null }) {
+  const has = (files?.length ?? 0) > 0 || !!statement;
+  return (
+    <Box sx={{ flex: 1, minWidth: 220 }}>
+      <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>{label}</Typography>
+      {!has ? (
+        <Typography sx={{ fontSize: 12, color: "#94A3B8" }}>No evidence submitted yet.</Typography>
+      ) : (
+        <>
+          {statement && <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mb: files?.length ? 1 : 0 }}>{statement}</Typography>}
+          {files?.length ? <Stack spacing={1}>{files.map((f, i) => <FileRow key={i} file={f} />)}</Stack> : null}
+        </>
+      )}
+    </Box>
+  );
+}
+
+function DisputeBlock({ dispute }: { dispute: Dispute }) {
+  const resolved = dispute.status === "resolved";
+  return (
+    <Box sx={CARD}>
+      <Box sx={{
+        display: "flex", alignItems: "flex-start", gap: 1.25, p: "12px 14px", mb: 2.25, fontSize: 13, fontWeight: 500, borderRadius: "8px",
+        ...(resolved
+          ? { bgcolor: "#F0FDF4", color: "#16A34A", border: "1px solid rgba(22,163,74,0.18)" }
+          : { bgcolor: "#FEF2F2", color: "#DC2626", border: "1px solid rgba(220,38,38,0.18)" }),
+      }}>
+        <Box component="span" sx={{ fontSize: 16, mt: "1px", flexShrink: 0 }}>{resolved ? "✓" : "⚠"}</Box>
+        {resolved ? "This dispute has been resolved by an admin." : "This order is under dispute. An admin will review it."}
+      </Box>
+
+      <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Dispute reason</Typography>
+      <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{dispute.reason}</Typography>
+
+      {resolved && (
+        <Box sx={{ mt: 1.75, p: "12px 14px", bgcolor: "#F1F5F9", borderRadius: "8px" }}>
+          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.5 }}>
+            Outcome: {OUTCOME_LABEL[dispute.outcome ?? ""] ?? "Resolved"}
+            {dispute.outcome === "partial" && dispute.partial_freelancer_amount
+              ? ` ($${dispute.partial_freelancer_amount} to freelancer)` : ""}
+          </Typography>
+          {dispute.admin_note && (
+            <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+              <strong>Admin note:</strong> {dispute.admin_note}
+            </Typography>
+          )}
+        </Box>
+      )}
+
+      <Box sx={{ display: "flex", gap: 2.5, flexWrap: "wrap", mt: 2.25 }}>
+        <EvidenceParty label="Client's evidence" files={dispute.client_evidence} statement={dispute.client_statement} />
+        <EvidenceParty label="Freelancer's evidence" files={dispute.freelancer_evidence} statement={dispute.freelancer_statement} />
+      </Box>
+    </Box>
+  );
+}
+
 function DialogDropzone({ onFiles, files, onRemove, uploading }: { onFiles: (fl: FileList) => void; files: UploadedFile[]; onRemove: (i: number) => void; uploading: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
@@ -222,6 +286,7 @@ export default function FreelancerOrderDetailPage() {
   const [resubmitFiles, setResubmitFiles] = useState<UploadedFile[]>([]);
   const [disputeFiles, setDisputeFiles] = useState<UploadedFile[]>([]);
   const [evidenceFiles, setEvidenceFiles] = useState<UploadedFile[]>([]);
+  const [evidenceStatement, setEvidenceStatement] = useState("");
   const [uploadToken, setUploadToken] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
@@ -304,11 +369,11 @@ export default function FreelancerOrderDetailPage() {
   };
 
   const handleSubmitEvidence = async () => {
-    if (!evidenceFiles.length) return;
+    if (!evidenceFiles.length && !evidenceStatement.trim()) return;
     setSubmitting(true); setActionError(null);
     try {
-      await api.submitDisputeEvidence(orderId, evidenceFiles);
-      setEvidenceFiles([]); setEvidenceOpen(false);
+      await api.submitDisputeEvidence(orderId, evidenceFiles, evidenceStatement.trim() || undefined);
+      setEvidenceFiles([]); setEvidenceStatement(""); setEvidenceOpen(false);
       await fetchOrder();
     } catch { setActionError("Failed to submit evidence."); }
     finally { setSubmitting(false); }
@@ -436,6 +501,9 @@ export default function FreelancerOrderDetailPage() {
             <OrderTimeline orderId={order.id} createdAt={order.created_at} />
           </Box>
 
+          {/* ── Deliverables & revisions — always visible, survives completion/dispute ── */}
+          <DeliverablesReference deliveryHistory={order.delivery_history} revisionHistory={order.revision_history} />
+
           {/* ── Section 5: Status card ── */}
 
           {/* Delivered — awaiting client */}
@@ -477,21 +545,7 @@ export default function FreelancerOrderDetailPage() {
           )}
 
           {/* Disputed */}
-          {order.status === "disputed" && order.dispute && (
-            <Box sx={CARD}>
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25, p: "12px 14px", bgcolor: "#FEF2F2", color: "#DC2626", border: "1px solid rgba(220,38,38,0.18)", borderRadius: "8px", mb: 2.25, fontSize: 13, fontWeight: 500 }}>
-                <Box component="span" sx={{ fontSize: 16, mt: "1px", flexShrink: 0 }}>⚠</Box>
-                This order is under dispute.
-              </Box>
-              <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Dispute reason</Typography>
-              <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{order.dispute.reason}</Typography>
-              {order.dispute.freelancer_evidence?.length ? (
-                <Typography sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.5, fontSize: 12, fontWeight: 600, color: "#64748B" }}>
-                  📎 Evidence submitted: {order.dispute.freelancer_evidence.length} file{order.dispute.freelancer_evidence.length !== 1 ? "s" : ""}
-                </Typography>
-              ) : null}
-            </Box>
-          )}
+          {order.dispute && <DisputeBlock dispute={order.dispute} />}
 
           {/* Completed */}
           {order.status === "completed" && (
@@ -554,7 +608,7 @@ export default function FreelancerOrderDetailPage() {
             )}
 
             {/* disputed — submit evidence */}
-            {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && (
+            {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && !order.dispute.freelancer_statement && (
               <Stack direction="row" justifyContent="flex-end">
                 <Button variant="outlined" onClick={() => setEvidenceOpen(true)} sx={BTN_OUTLINE}>Submit Evidence</Button>
               </Stack>
@@ -648,12 +702,15 @@ export default function FreelancerOrderDetailPage() {
           <Typography sx={{ fontSize: 13, color: "#64748B" }}>Add files and context to support your side of the dispute.</Typography>
         </Box>
         <DialogContent sx={{ p: "18px 24px 4px" }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Statement</Typography>
+          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Your statement</Typography>
+          <TextField multiline minRows={3} fullWidth placeholder="Explain your side of the dispute…" value={evidenceStatement} onChange={(e) => setEvidenceStatement(e.target.value)}
+            sx={{ "& .MuiOutlinedInput-root": { fontSize: 13, borderRadius: "8px", "& fieldset": { borderColor: "#E2E8F0" }, "&:hover fieldset": { borderColor: "#CBD5E1" }, "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" } } }} />
+          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mt: 2, mb: 0.75 }}>Supporting files (optional)</Typography>
           <DialogDropzone onFiles={(fl) => handleFileUpload(fl, setEvidenceFiles, evidenceFiles)} files={evidenceFiles} onRemove={(i) => setEvidenceFiles((p) => p.filter((_, j) => j !== i))} uploading={uploading} />
         </DialogContent>
         <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
-          <Button variant="outlined" onClick={() => { setEvidenceOpen(false); setEvidenceFiles([]); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="contained" disabled={submitting || !evidenceFiles.length} onClick={handleSubmitEvidence} sx={BTN_PRIMARY}>
+          <Button variant="outlined" onClick={() => { setEvidenceOpen(false); setEvidenceFiles([]); setEvidenceStatement(""); }} sx={BTN_OUTLINE}>Cancel</Button>
+          <Button variant="contained" disabled={submitting || (!evidenceFiles.length && !evidenceStatement.trim())} onClick={handleSubmitEvidence} sx={BTN_PRIMARY}>
             {submitting ? <CircularProgress size={14} color="inherit" /> : "Submit evidence"}
           </Button>
         </Stack>

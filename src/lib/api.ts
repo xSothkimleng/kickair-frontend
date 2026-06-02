@@ -688,8 +688,8 @@ class ApiClient {
     return response.data;
   }
 
-  async submitDisputeEvidence(orderId: number, evidenceFiles: { url: string; file_name: string; file_type: string }[]): Promise<void> {
-    await this.put(`/api/orders/${orderId}/dispute/evidence`, { evidence_files: evidenceFiles });
+  async submitDisputeEvidence(orderId: number, evidenceFiles: { url: string; file_name: string; file_type: string }[], statement?: string): Promise<void> {
+    await this.put(`/api/orders/${orderId}/dispute/evidence`, { evidence_files: evidenceFiles, statement });
   }
 
   // ── Admin Disputes ────────────────────────────────────────────────────────
@@ -701,9 +701,28 @@ class ApiClient {
     return response.data;
   }
 
+  async getAdminDispute(disputeId: number): Promise<AdminDispute> {
+    const response = await this.get(`/api/admin/disputes/${disputeId}`);
+    return response.data;
+  }
+
   async resolveDispute(disputeId: number, data: { outcome: string; partial_freelancer_amount?: number; admin_note: string }): Promise<AdminDispute> {
     const response = await this.post(`/api/admin/disputes/${disputeId}/resolve`, data);
     return response.data;
+  }
+
+  // ── Conversation messages (used by dashboards + admin dispute chat) ─────────
+  async getConversationMessages(conversationId: number): Promise<{ data: import("@/types/message").Message[] }> {
+    return this.get(`/api/conversations/${conversationId}/messages`);
+  }
+
+  async sendConversationMessage(conversationId: number, body: string): Promise<{ data: import("@/types/message").Message }> {
+    return this.post(`/api/conversations/${conversationId}/messages`, { body });
+  }
+
+  async getUnreadMessageCount(): Promise<number> {
+    const response = await this.get("/api/messages/unread-count");
+    return response.data.count;
   }
 
   // ── Notifications ─────────────────────────────────────────────────────────

@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { Snackbar, Alert, Typography, Box } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
+import ChatBubbleIcon from "@mui/icons-material/ChatBubbleOutline";
 import { useAuth } from "@/components/context/AuthContext";
 import { getEcho } from "@/lib/echo";
 import { Notification, NotificationType } from "@/types/notification";
@@ -11,12 +12,22 @@ interface Toast {
   id: string;
   title: string;
   body: string;
+  variant?: "notification" | "message";
 }
 
 // Re-export so NotificationBell can trigger a count refresh
 let _refreshBell: (() => void) | null = null;
 export function registerBellRefresh(fn: () => void) { _refreshBell = fn; }
 export function triggerBellRefresh() { _refreshBell?.(); }
+
+// Multiple subscribers (navbar MessageBell + dashboard message tab) may want a refresh,
+// so this uses a set rather than a single slot. Returns an unsubscribe function.
+const _messageRefreshers = new Set<() => void>();
+export function registerMessageRefresh(fn: () => void): () => void {
+  _messageRefreshers.add(fn);
+  return () => { _messageRefreshers.delete(fn); };
+}
+export function triggerMessageRefresh() { _messageRefreshers.forEach(fn => fn()); }
 
 export default function GlobalNotificationToast() {
   const { user } = useAuth();
@@ -34,10 +45,23 @@ export default function GlobalNotificationToast() {
     channel.listen(".notification.created", (data: Partial<Notification> & { created_at?: string }) => {
       setQueue(prev => [
         ...prev,
-        { id: data.id ?? String(Date.now()), title: data.title ?? "New notification", body: data.body ?? "" },
+        { id: data.id ?? String(Date.now()), title: data.title ?? "New notification", body: data.body ?? "", variant: "notification" },
       ]);
       // Refresh the bell badge
       triggerBellRefresh();
+    });
+
+    // New chat messages arrive on the user channel too (see MessageSent::broadcastOn),
+    // so we can show a toast + bump the message indicator without the chat being open.
+    channel.listen(".message.sent", (data: { message?: { id?: number; body?: string; type?: string; sender?: { name?: string } } }) => {
+      const msg = data.message;
+      const senderName = msg?.sender?.name ?? "Someone";
+      const preview = msg?.type === "file" ? "Sent a file" : (msg?.body || "New message");
+      setQueue(prev => [
+        ...prev,
+        { id: `msg-${msg?.id ?? Date.now()}`, title: `New message from ${senderName}`, body: preview, variant: "message" },
+      ]);
+      triggerMessageRefresh();
     });
 
     return () => {
@@ -58,7 +82,7 @@ export default function GlobalNotificationToast() {
       sx={{ top: { xs: 72, sm: 80 } }}
     >
       <Alert
-        icon={<NotificationsIcon sx={{ fontSize: 18 }} />}
+        icon={current?.variant === "message" ? <ChatBubbleIcon sx={{ fontSize: 18 }} /> : <NotificationsIcon sx={{ fontSize: 18 }} />}
         severity="info"
         onClose={handleClose}
         sx={{

@@ -1,9 +1,9 @@
-import { Box, Tabs, Tab, Container } from "@mui/material";
+import { Box, Tabs, Tab, Container, Badge } from "@mui/material";
 
 interface FreelancerTabsProps {
   activeTab: string;
   onTabChange: (tab: unknown) => void;
-  tabs?: { value: string; label: string }[];
+  tabs?: { value: string; label: string; badge?: number }[];
 }
 
 export default function FreelancerTabs({ activeTab, onTabChange, tabs }: FreelancerTabsProps) {
@@ -36,7 +36,25 @@ export default function FreelancerTabs({ activeTab, onTabChange, tabs }: Freelan
               bgcolor: "black",
             },
           }}>
-          {tabs && tabs.map(tab => <Tab key={tab.value} value={tab.value} label={tab.label} />)}
+          {tabs && tabs.map(tab => (
+            <Tab
+              key={tab.value}
+              value={tab.value}
+              label={
+                tab.badge ? (
+                  <Badge
+                    badgeContent={tab.badge}
+                    color="error"
+                    max={99}
+                    sx={{ "& .MuiBadge-badge": { right: -10, top: 2, fontSize: 10, height: 16, minWidth: 16 } }}>
+                    {tab.label}
+                  </Badge>
+                ) : (
+                  tab.label
+                )
+              }
+            />
+          ))}
         </Tabs>
       </Container>
     </Box>

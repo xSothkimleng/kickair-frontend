@@ -25,6 +25,8 @@ export interface Dispute {
   partial_freelancer_amount: string | null;
   client_evidence: EvidenceFile[] | null;
   freelancer_evidence: EvidenceFile[] | null;
+  client_statement: string | null;
+  freelancer_statement: string | null;
   admin_note: string | null;
   resolved_at: string | null;
   created_at: string;
@@ -37,6 +39,8 @@ export interface AdminDispute {
   reason: string;
   client_evidence: EvidenceFile[] | null;
   freelancer_evidence: EvidenceFile[] | null;
+  client_statement: string | null;
+  freelancer_statement: string | null;
   admin_note: string | null;
   partial_freelancer_amount: string | null;
   resolved_at: string | null;
@@ -45,6 +49,9 @@ export interface AdminDispute {
     id: number;
     price: string;
     title: string;
+    conversation_id: number | null;
+    delivery_history?: Array<{ note: string | null; attachments: Array<{ url: string; file_name: string; file_type: string }>; submitted_at: string }>;
+    revision_history?: Array<{ note: string | null; requested_at: string }>;
   };
   client: {
     id: number;
@@ -161,6 +168,7 @@ export interface Order {
   delivery_note: string | null;
   delivery_attachments: Array<{ url: string; file_name: string; file_type: string }>;
   delivery_history?: Array<{ note: string | null; attachments: Array<{ url: string; file_name: string; file_type: string }>; submitted_at: string }>;
+  revision_history?: Array<{ note: string | null; requested_at: string }>;
   revision_note: string | null;
   created_at: string;
   updated_at: string;
