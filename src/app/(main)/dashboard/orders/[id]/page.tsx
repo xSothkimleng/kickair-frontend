@@ -165,6 +165,33 @@ function FileRow({ file }: { file: UploadedFile }) {
   );
 }
 
+type DeliveryHistoryEntry = { note: string | null; attachments: UploadedFile[]; submitted_at: string };
+
+function PreviousSubmissions({ history }: { history?: DeliveryHistoryEntry[] }) {
+  if (!history || history.length <= 1) return null;
+  const prior = history.slice(0, -1).reverse(); // everything before the current delivery, newest first
+  return (
+    <Box sx={{ mt: 2.5, pt: 2, borderTop: "1px solid #F1F5F9" }}>
+      <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", letterSpacing: "0.06em", textTransform: "uppercase", mb: 1.25 }}>
+        Previous submissions ({prior.length})
+      </Typography>
+      <Stack spacing={1.5}>
+        {prior.map((sub, i) => (
+          <Box key={i} sx={{ p: "12px 14px", bgcolor: "#F8FAFC", border: "1px solid #F1F5F9", borderRadius: "8px" }}>
+            <Typography sx={{ fontSize: 11, color: "#94A3B8", mb: (sub.note || sub.attachments.length) ? 0.75 : 0 }}>
+              {new Date(sub.submitted_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
+            </Typography>
+            {sub.note && <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mb: sub.attachments.length ? 1 : 0 }}>{sub.note}</Typography>}
+            {sub.attachments.length > 0 && (
+              <Stack spacing={1}>{sub.attachments.map((f, j) => <FileRow key={j} file={f} />)}</Stack>
+            )}
+          </Box>
+        ))}
+      </Stack>
+    </Box>
+  );
+}
+
 function DialogDropzone({ onFiles, files, onRemove, uploading }: { onFiles: (fl: FileList) => void; files: UploadedFile[]; onRemove: (i: number) => void; uploading: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
@@ -439,6 +466,7 @@ export default function ClientOrderDetailPage() {
                   {order.delivery_attachments.map((f, i) => <FileRow key={i} file={f} />)}
                 </Stack>
               )}
+              <PreviousSubmissions history={order.delivery_history} />
             </Box>
           )}
 

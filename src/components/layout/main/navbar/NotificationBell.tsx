@@ -12,7 +12,7 @@ import { useAuth } from "@/components/context/AuthContext";
 // ─── Routing map ─────────────────────────────────────────────────────────────
 
 const ORDER_TYPES: NotificationType[] = [
-  "order_placed", "order_completed", "order_cancelled",
+  "order_placed", "order_accepted", "order_completed", "order_cancelled",
   "work_delivered", "revision_requested", "payment_released",
   "dispute_opened", "dispute_resolved", "evidence_submitted", "review_received",
 ];
@@ -20,25 +20,25 @@ const ORDER_TYPES: NotificationType[] = [
 function getRoute(n: Notification): string | null {
   const { type, role, data } = n;
   const orderId = data.order_id;
-  const jobPostId = data.job_post_id;
 
   if (ORDER_TYPES.includes(type) && orderId) {
-    if (role === "client")     return `/dashboard/orders/${orderId}`;
-    if (role === "freelancer") return `/dashboard/freelancer/orders/${orderId}`;
-    return null;
+    // Fall back to client view if role is somehow missing.
+    return role === "freelancer"
+      ? `/dashboard/freelancer/orders/${orderId}`
+      : `/dashboard/orders/${orderId}`;
   }
 
-  if (type === "proposal_submitted" && jobPostId) {
-    // Client receives this — go to their job post
+  if (type === "proposal_submitted") return `/dashboard/client?tab=service`;
+  if (type === "proposal_accepted" && orderId) return `/dashboard/freelancer/orders/${orderId}`;
+  if (type === "proposal_rejected") return `/dashboard/freelancer?tab=proposals`;
+
+  // Service moderation → freelancer's services tab
+  if (type === "service_approved" || type === "service_rejected" || type === "service_disabled") {
+    return `/dashboard/freelancer?tab=services`;
+  }
+  // Job moderation → client's jobs tab
+  if (type === "job_approved" || type === "job_rejected") {
     return `/dashboard/client?tab=service`;
-  }
-
-  if (type === "proposal_accepted" && orderId) {
-    return `/dashboard/freelancer/orders/${orderId}`;
-  }
-
-  if (type === "proposal_rejected") {
-    return `/dashboard/freelancer?tab=proposals`;
   }
 
   return null;
@@ -62,10 +62,11 @@ interface NotificationColumnProps {
   title: string;
   notifications: Notification[];
   onMarkRead: (id: string) => void;
-  onNavigate: (route: string) => void;
+  onNavigate: (route: string, id: string) => void;
+  navigatingId: string | null;
 }
 
-function NotificationColumn({ title, notifications, onMarkRead, onNavigate }: NotificationColumnProps) {
+function NotificationColumn({ title, notifications, onMarkRead, onNavigate, navigatingId }: NotificationColumnProps) {
   return (
     <Box sx={{ width: 280, display: "flex", flexDirection: "column" }}>
       <Typography sx={{ fontSize: 11, fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.05em", color: "rgba(0,0,0,0.45)", px: 2, py: 1.25, borderBottom: "1px solid rgba(0,0,0,0.06)" }}>
@@ -84,7 +85,7 @@ function NotificationColumn({ title, notifications, onMarkRead, onNavigate }: No
                 key={n.id}
                 onClick={() => {
                   if (!n.readAt) onMarkRead(n.id);
-                  if (route) onNavigate(route);
+                  if (route) onNavigate(route, n.id);
                 }}
                 sx={{
                   px: 2,
@@ -112,9 +113,13 @@ function NotificationColumn({ title, notifications, onMarkRead, onNavigate }: No
                     {timeAgo(n.createdAt)}
                   </Typography>
                   {route && (
-                    <Typography sx={{ fontSize: 10, color: "#1976d2", fontWeight: 500 }}>
-                      View →
-                    </Typography>
+                    navigatingId === n.id ? (
+                      <CircularProgress size={11} sx={{ color: "#1976d2" }} />
+                    ) : (
+                      <Typography sx={{ fontSize: 10, color: "#1976d2", fontWeight: 500 }}>
+                        View →
+                      </Typography>
+                    )
                   )}
                 </Box>
               </Box>
@@ -135,6 +140,7 @@ export function NotificationBell() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [navigatingId, setNavigatingId] = useState<string | null>(null);
 
   const isFreelancer = user?.is_freelancer ?? false;
   const isClient = user?.is_client ?? false;
@@ -189,9 +195,11 @@ export function NotificationBell() {
     }
   };
 
-  const handleNavigate = (route: string) => {
-    handleClose();
+  const handleNavigate = (route: string, id: string) => {
+    setNavigatingId(id);
     router.push(route);
+    // Brief indicator, then close the popover; navigation continues in the background.
+    setTimeout(() => { handleClose(); setNavigatingId(null); }, 400);
   };
 
   const freelancerNotifs = notifications.filter(n => n.role === "freelancer" || n.role === null).slice(0, 5);
@@ -225,11 +233,11 @@ export function NotificationBell() {
         ) : (
           <Box sx={{ display: "flex" }}>
             {isFreelancer && (
-              <NotificationColumn title="Freelancer" notifications={freelancerNotifs} onMarkRead={handleMarkRead} onNavigate={handleNavigate} />
+              <NotificationColumn title="Freelancer" notifications={freelancerNotifs} onMarkRead={handleMarkRead} onNavigate={handleNavigate} navigatingId={navigatingId} />
             )}
             {showTwo && <Divider orientation="vertical" flexItem />}
             {isClient && (
-              <NotificationColumn title="Client" notifications={clientNotifs} onMarkRead={handleMarkRead} onNavigate={handleNavigate} />
+              <NotificationColumn title="Client" notifications={clientNotifs} onMarkRead={handleMarkRead} onNavigate={handleNavigate} navigatingId={navigatingId} />
             )}
           </Box>
         )}

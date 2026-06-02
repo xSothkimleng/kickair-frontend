@@ -160,6 +160,7 @@ export interface Order {
   status: OrderStatus;
   delivery_note: string | null;
   delivery_attachments: Array<{ url: string; file_name: string; file_type: string }>;
+  delivery_history?: Array<{ note: string | null; attachments: Array<{ url: string; file_name: string; file_type: string }>; submitted_at: string }>;
   revision_note: string | null;
   created_at: string;
   updated_at: string;
