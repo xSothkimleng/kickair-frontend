@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/queryKeys";
 import {
   Box,
   Typography,
@@ -35,10 +37,6 @@ import { Wallet, Transaction } from "@/types/wallet";
 
 export default function FinanceContent() {
   const [activeFilter, setActiveFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
-  const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [topUpAmount, setTopUpAmount] = useState("");
   const [topUpLoading, setTopUpLoading] = useState(false);
@@ -59,9 +57,27 @@ export default function FinanceContent() {
     },
   ];
 
-  useEffect(() => {
-    fetchFinanceData();
-  }, []);
+  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: qk.wallet(),
+    queryFn: async () => {
+      const [walletResponse, transactionsResponse] = await Promise.all([
+        api.get("/api/wallet"),
+        api.get("/api/wallet/transactions"),
+      ]);
+      return {
+        wallet: walletResponse.data as Wallet,
+        transactions: (transactionsResponse.data ?? []) as Transaction[],
+      };
+    },
+  });
+  const wallet = data?.wallet ?? null;
+  const transactions = data?.transactions ?? [];
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch finance data") : null;
+  const queryClient = useQueryClient();
+  const fetchFinanceData = async () => {
+    await refetch();
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.client() });
+  };
 
   const handleTopUp = async () => {
     const amount = parseFloat(topUpAmount);
@@ -80,25 +96,6 @@ export default function FinanceContent() {
       setTopUpError(err instanceof Error ? err.message : "Deposit failed. Please try again.");
     } finally {
       setTopUpLoading(false);
-    }
-  };
-
-  const fetchFinanceData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      const [walletResponse, transactionsResponse] = await Promise.all([
-        api.get("/api/wallet"),
-        api.get("/api/wallet/transactions"),
-      ]);
-
-      setWallet(walletResponse.data);
-      setTransactions(transactionsResponse.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch finance data");
-    } finally {
-      setLoading(false);
     }
   };
 

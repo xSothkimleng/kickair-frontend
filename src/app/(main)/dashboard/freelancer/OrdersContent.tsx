@@ -1,36 +1,35 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress, Alert } from "@mui/material";
 import { Message as MessageCircleIcon, CheckCircle as AcceptIcon, Cancel as CancelIcon, Send as DeliverIcon, Replay as ResubmitIcon, HourglassTop as WaitingIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
+import { qk } from "@/lib/queryKeys";
 import { Order, OrderStatus, FreelancerOrdersResponse } from "@/types/order";
 
 export default function OrdersContent() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<"all" | OrderStatus>("all");
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<number | null>(null);
 
-  const fetchOrders = async () => {
-    try {
-      setLoading(true);
+  const { data: orders = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: qk.orders.list("freelancer"),
+    queryFn: async () => {
       const response: FreelancerOrdersResponse = await api.get("/api/freelancer-orders");
-      setOrders(response.data);
-      setError(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch orders");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return response.data;
+    },
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch orders") : null;
 
-  useEffect(() => {
-    fetchOrders();
-  }, []);
+  // After an action, refresh all order lists/details + wallet + dashboard.
+  const fetchOrders = async () => {
+    await queryClient.invalidateQueries({ queryKey: qk.orders.all() });
+    queryClient.invalidateQueries({ queryKey: qk.wallet() });
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.freelancer() });
+  };
 
   const filteredOrders = orders.filter(order => {
     if (activeFilter === "all") return true;
@@ -119,7 +118,6 @@ export default function OrdersContent() {
     }
   };
 
-  const handleOrderUpdate = () => { fetchOrders(); };
 
   if (loading) {
     return (

@@ -1,57 +1,45 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Box, Container, Typography, CircularProgress, Pagination, Button, Alert } from "@mui/material";
 import { TuneOutlined } from "@mui/icons-material";
 import { api } from "@/lib/api";
-import { JobPost, JobPostFilters } from "@/types/job";
-import { ServiceCategory } from "@/types/service";
-import { Expertise } from "@/types/user";
+import { qk } from "@/lib/queryKeys";
+import { useMarketplaceLive } from "@/hooks/useMarketplaceLive";
+import { JobPostFilters } from "@/types/job";
 import JobCard from "@/components/jobs/JobCard";
 import JobFilters from "@/components/jobs/JobFilters";
 
 export default function JobBoardPage() {
-  const [jobs, setJobs] = useState<JobPost[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastPage, setLastPage] = useState(1);
-  const [total, setTotal] = useState(0);
-
-  const [categories, setCategories] = useState<ServiceCategory[]>([]);
-  const [expertises, setExpertises] = useState<Expertise[]>([]);
-
   const [filters, setFilters] = useState<JobPostFilters>({ page: 1 });
   const [showFilters, setShowFilters] = useState(false);
 
-  // Load reference data once
-  useEffect(() => {
-    Promise.all([api.getServiceCategories(), api.getExpertises()])
-      .then(([cats, exps]) => {
-        setCategories(cats);
-        setExpertises(exps);
-      })
-      .catch(() => {});
-  }, []);
+  // Live: a newly approved job appears without a reload.
+  useMarketplaceLive("job");
 
-  const fetchJobs = useCallback(async (f: JobPostFilters) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const resp = await api.getJobPosts(f);
-      setJobs(resp.data);
-      setLastPage(resp.meta?.last_page ?? 1);
-      setTotal(resp.meta?.total ?? resp.data.length);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load job posts.");
-      setJobs([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // Reference data — rarely changes, so cache it longer.
+  const { data: refData } = useQuery({
+    queryKey: ["job-reference-data"],
+    queryFn: async () => {
+      const [cats, exps] = await Promise.all([api.getServiceCategories(), api.getExpertises()]);
+      return { categories: cats, expertises: exps };
+    },
+    staleTime: 5 * 60_000,
+  });
+  const categories = refData?.categories ?? [];
+  const expertises = refData?.expertises ?? [];
 
-  useEffect(() => {
-    fetchJobs(filters);
-  }, [filters, fetchJobs]);
+  const { data: jobsResp, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: qk.jobs.explore(filters as Record<string, unknown>),
+    queryFn: () => api.getJobPosts(filters),
+    placeholderData: keepPreviousData,
+  });
+  const jobs = jobsResp?.data ?? [];
+  const lastPage = jobsResp?.meta?.last_page ?? 1;
+  const total = jobsResp?.meta?.total ?? jobs.length;
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load job posts.") : null;
+  const fetchJobs = () => refetch();
 
   const handleFiltersChange = (newFilters: JobPostFilters) => {
     setFilters(newFilters);
@@ -111,7 +99,7 @@ export default function JobBoardPage() {
             severity='error'
             sx={{ mb: 3 }}
             action={
-              <Button color='inherit' size='small' onClick={() => fetchJobs(filters)}>
+              <Button color='inherit' size='small' onClick={() => fetchJobs()}>
                 Retry
               </Button>
             }>

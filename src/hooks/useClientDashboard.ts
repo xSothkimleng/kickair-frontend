@@ -1,30 +1,19 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-import { ClientDashboardData } from "@/types/dashboard";
+import { qk } from "@/lib/queryKeys";
 
 export function useClientDashboard() {
-  const [data, setData] = useState<ClientDashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: qk.dashboard.client(),
+    queryFn: () => api.getClientDashboard(),
+  });
 
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
-      const dashboard = await api.getClientDashboard();
-      setData(dashboard);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load dashboard");
-    } finally {
-      setLoading(false);
-    }
+  return {
+    data: data ?? null,
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Failed to load dashboard") : null,
+    refetch,
   };
-
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
-
-  return { data, loading, error, refetch: fetchDashboard };
 }

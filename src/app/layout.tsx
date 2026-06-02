@@ -6,6 +6,7 @@ import "./globals.css";
 
 import { Geist } from "next/font/google";
 import { AuthProvider } from "@/components/context/AuthContext";
+import Providers from "./providers";
 
 export const metadata: Metadata = {
   title: "KickAir",
@@ -27,7 +28,9 @@ export default function RootLayout({
       <body>
         <AppRouterCacheProvider options={{ key: "css", enableCssLayer: true }}>
           <ThemeProvider theme={theme}>
-            <AuthProvider>{children}</AuthProvider>
+            <Providers>
+              <AuthProvider>{children}</AuthProvider>
+            </Providers>
           </ThemeProvider>
         </AppRouterCacheProvider>
       </body>

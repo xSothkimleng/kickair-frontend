@@ -4,8 +4,10 @@ import { useEffect, useState } from "react";
 import { Snackbar, Alert, Typography, Box } from "@mui/material";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import ChatBubbleIcon from "@mui/icons-material/ChatBubbleOutline";
+import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/context/AuthContext";
 import { getEcho } from "@/lib/echo";
+import { invalidateForNotification } from "@/lib/realtimeInvalidation";
 import { Notification, NotificationType } from "@/types/notification";
 
 interface Toast {
@@ -31,6 +33,7 @@ export function triggerMessageRefresh() { _messageRefreshers.forEach(fn => fn())
 
 export default function GlobalNotificationToast() {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [queue, setQueue] = useState<Toast[]>([]);
   const current = queue[0] ?? null;
 
@@ -49,6 +52,8 @@ export default function GlobalNotificationToast() {
       ]);
       // Refresh the bell badge
       triggerBellRefresh();
+      // Refresh whatever page data this notification affects (live, no reload).
+      invalidateForNotification(queryClient, data.type);
     });
 
     // New chat messages arrive on the user channel too (see MessageSent::broadcastOn),
@@ -67,7 +72,7 @@ export default function GlobalNotificationToast() {
     return () => {
       try { echo.leave(`private-user.${user.id}`); } catch {}
     };
-  }, [user?.id]);
+  }, [user?.id, queryClient]);
 
   const handleClose = () => {
     setQueue(prev => prev.slice(1));

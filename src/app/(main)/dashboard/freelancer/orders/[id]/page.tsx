@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/queryKeys";
 import { useParams, useRouter } from "next/navigation";
 import {
   Box,
@@ -264,9 +266,6 @@ export default function FreelancerOrderDetailPage() {
   const router = useRouter();
   const orderId = Number(params.id);
 
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -290,22 +289,25 @@ export default function FreelancerOrderDetailPage() {
   const [uploadToken, setUploadToken] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const fetchOrder = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const queryClient = useQueryClient();
+  const { data: order = null, isLoading: loading, error: queryError } = useQuery({
+    queryKey: qk.orders.detail(orderId, "freelancer"),
+    queryFn: async () => {
       const response = await api.get("/api/freelancer-orders");
       const found = response.data.find((o: Order) => o.id === orderId);
-      if (!found) setError("Order not found.");
-      else setOrder(found);
-    } catch {
-      setError("Failed to load order.");
-    } finally {
-      setLoading(false);
-    }
-  }, [orderId]);
+      if (!found) throw new Error("Order not found.");
+      return found as Order;
+    },
+    enabled: Number.isFinite(orderId),
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load order.") : null;
 
-  useEffect(() => { fetchOrder(); }, [fetchOrder]);
+  // After an action, refresh this order + the lists, wallet, and dashboard that also reflect it.
+  const fetchOrder = async () => {
+    await queryClient.invalidateQueries({ queryKey: qk.orders.all() });
+    queryClient.invalidateQueries({ queryKey: qk.wallet() });
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.freelancer() });
+  };
 
   const handleFileUpload = async (files: FileList, setter: React.Dispatch<React.SetStateAction<UploadedFile[]>>, current: UploadedFile[]) => {
     setUploading(true);

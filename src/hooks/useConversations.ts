@@ -1,7 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useCallback } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
+import { qk } from "@/lib/queryKeys";
 import { Conversation } from "@/types/message";
 
 interface UseConversationsReturn {
@@ -13,41 +15,32 @@ interface UseConversationsReturn {
 }
 
 export function useConversations(): UseConversationsReturn {
-  const [conversations, setConversations] = useState<Conversation[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
 
-  const fetchConversations = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: qk.conversations(),
+    queryFn: async () => {
       const response = await api.get("/api/conversations");
-      setConversations(response.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch conversations");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+      return (response.data ?? []) as Conversation[];
+    },
+  });
 
   const updateConversation = useCallback(
     (conversationId: number, updates: Partial<Conversation>) => {
-      setConversations((prev) =>
-        prev.map((conv) => (conv.id === conversationId ? { ...conv, ...updates } : conv))
+      queryClient.setQueryData<Conversation[]>(qk.conversations(), (prev) =>
+        (prev ?? []).map((conv) => (conv.id === conversationId ? { ...conv, ...updates } : conv))
       );
     },
-    []
+    [queryClient]
   );
 
-  useEffect(() => {
-    fetchConversations();
-  }, [fetchConversations]);
-
   return {
-    conversations,
-    loading,
-    error,
-    refetch: fetchConversations,
+    conversations: data ?? [],
+    loading: isLoading,
+    error: error ? (error instanceof Error ? error.message : "Failed to fetch conversations") : null,
+    refetch: async () => {
+      await refetch();
+    },
     updateConversation,
   };
 }

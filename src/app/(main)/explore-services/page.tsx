@@ -1,13 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { Box, Container, Button, Typography, Fab, CircularProgress, Pagination, Alert } from "@mui/material";
 import { ChevronLeft, KeyboardArrowUp } from "@mui/icons-material";
 import FiltersSidebar, { Filters, FilterCategory } from "./FiltersSidebar";
 import ResultsToolbar, { SortValue } from "./ResultsToolbar";
 import ServiceGrid from "./ServiceGrid";
 import { api } from "@/lib/api";
-import { Service, ServiceCategory, ServicesListResponse, PaginationMeta } from "@/types/service";
+import { qk } from "@/lib/queryKeys";
+import { useMarketplaceLive } from "@/hooks/useMarketplaceLive";
+import { Service, ServicesListResponse } from "@/types/service";
 import Link from "next/link";
 
 const DEFAULT_BUDGET_MAX = 10000;
@@ -21,35 +24,33 @@ const defaultFilters = (budgetMax: number): Filters => ({
 });
 
 export default function ServicesPage() {
-  const [services, setServices] = useState<Service[]>([]);
-  const [apiCategories, setApiCategories] = useState<ServiceCategory[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<PaginationMeta | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const [filters, setFilters] = useState<Filters>(defaultFilters(DEFAULT_BUDGET_MAX));
   const [sort, setSort] = useState<SortValue>("relevant");
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  const fetchServices = useCallback(async (page: number = 1) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const response: ServicesListResponse = await api.get(`/api/services?page=${page}`);
-      setServices(response.data);
-      setPagination(response.meta);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load services");
-      setServices([]);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: qk.services.explore({ page: currentPage }),
+    queryFn: async () => {
+      const response: ServicesListResponse = await api.get(`/api/services?page=${currentPage}`);
+      return response;
+    },
+    placeholderData: keepPreviousData,
+  });
+  const services: Service[] = data?.data ?? [];
+  const pagination = data?.meta ?? null;
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load services") : null;
+  const fetchServices = () => refetch();
 
-  useEffect(() => { fetchServices(currentPage); }, [currentPage, fetchServices]);
+  const { data: apiCategories = [] } = useQuery({
+    queryKey: ["service-categories"],
+    queryFn: () => api.getServiceCategories(),
+    staleTime: 5 * 60_000,
+  });
 
-  useEffect(() => { api.getServiceCategories().then(setApiCategories).catch(() => {}); }, []);
+  // Live: a newly approved service appears without a reload.
+  useMarketplaceLive("service");
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -143,7 +144,7 @@ export default function ServicesPage() {
 
       <Container>
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }} action={<Button color="inherit" size="small" onClick={() => fetchServices(currentPage)}>Retry</Button>}>
+          <Alert severity="error" sx={{ mb: 3 }} action={<Button color="inherit" size="small" onClick={() => fetchServices()}>Retry</Button>}>
             {error}
           </Alert>
         )}

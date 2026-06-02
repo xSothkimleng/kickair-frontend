@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Paper, Typography, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
 import { AddOutlined, WorkOutlined } from "@mui/icons-material";
 import { Service } from "@/types/service";
@@ -8,35 +9,29 @@ import ServiceCard from "@/components/dashboard/freelancer/ServiceCard";
 import DraftCard from "@/components/dashboard/freelancer/DraftCard";
 import ServiceForm from "@/components/dashboard/freelancer/ServiceForm";
 import { api } from "@/lib/api";
+import { qk } from "@/lib/queryKeys";
 import { useRouter } from "next/navigation";
 
 export default function ServicesContent() {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [view, setView] = useState<"list" | "create" | "edit">("list");
   const [editingService, setEditingService] = useState<Service | null>(null);
   const [editLoading, setEditLoading] = useState(false);
-  const [services, setServices] = useState<Service[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const fetchServices = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const { data: services = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: qk.services.mine(),
+    queryFn: async () => {
       const response = await api.get("/api/my-services");
-      setServices(response.data);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch services");
-    } finally {
-      setLoading(false);
-    }
-  };
+      return (response.data ?? []) as Service[];
+    },
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch services") : null;
 
-  useEffect(() => {
-    fetchServices();
-  }, []);
+  // Refresh my services + the public explore list (edits/deletes affect both).
+  const fetchServices = () => queryClient.invalidateQueries({ queryKey: qk.services.all() });
 
   const handleEditService = async (service: Service) => {
     setEditLoading(true);

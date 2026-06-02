@@ -1,47 +1,31 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress, Alert } from "@mui/material";
 import { Message as MessageCircleIcon, NotificationsActive as ActionIcon } from "@mui/icons-material";
 import { api } from "@/lib/api";
+import { qk } from "@/lib/queryKeys";
 import { Order, OrderStatus, MyOrdersResponse } from "@/types/order";
 
 export default function OrdersContent() {
   const router = useRouter();
   const [activeFilter, setActiveFilter] = useState<"all" | OrderStatus>("all");
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        setLoading(true);
-        const response: MyOrdersResponse = await api.get("/api/my-orders");
-        setOrders(response.data);
-        setError(null);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Failed to fetch orders");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchOrders();
-  }, []);
+  const { data: orders = [], isLoading: loading, error: queryError } = useQuery({
+    queryKey: qk.orders.list("client"),
+    queryFn: async () => {
+      const response: MyOrdersResponse = await api.get("/api/my-orders");
+      return response.data;
+    },
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch orders") : null;
 
   const filteredOrders = orders.filter(order => {
     if (activeFilter === "all") return true;
     return order.status === activeFilter;
   });
-
-  const handleOrderUpdate = async () => {
-    try {
-      const response: MyOrdersResponse = await api.get("/api/my-orders");
-      setOrders(response.data);
-    } catch { /* silent refresh */ }
-  };
 
   const getStatusColor = (status: OrderStatus) => {
     switch (status) {

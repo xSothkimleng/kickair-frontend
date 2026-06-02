@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { qk } from "@/lib/queryKeys";
 import {
   Box,
   Paper,
@@ -18,7 +20,7 @@ import {
 import { DescriptionOutlined, NewReleasesOutlined } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
-import { Proposal, ProposalStatus } from "@/types/job";
+import { ProposalStatus } from "@/types/job";
 
 type Filter = "all" | ProposalStatus;
 
@@ -65,30 +67,18 @@ const FILTERS: { value: Filter; label: string }[] = [
 
 export default function ProposalsContent() {
   const router = useRouter();
-  const [proposals, setProposals] = useState<Proposal[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
-  const [lastPage, setLastPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
 
-  const fetchProposals = async (p: number) => {
-    try {
-      setLoading(true);
-      setError(null);
-      const resp = await api.getFreelancerProposals(p);
-      setProposals(resp.data);
-      setLastPage(resp.meta?.last_page ?? 1);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch proposals.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchProposals(page);
-  }, [page]);
+  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: qk.proposals.list({ page }),
+    queryFn: () => api.getFreelancerProposals(page),
+    placeholderData: keepPreviousData,
+  });
+  const proposals = data?.data ?? [];
+  const lastPage = data?.meta?.last_page ?? 1;
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch proposals.") : null;
+  const fetchProposals = () => refetch();
 
   const filtered =
     activeFilter === "all" ? proposals : proposals.filter(p => p.status === activeFilter);
@@ -132,7 +122,7 @@ export default function ProposalsContent() {
         ) : error ? (
           <Box sx={{ textAlign: "center", py: 6 }}>
             <Typography sx={{ fontSize: 13, color: "rgba(239,68,68,0.8)", mb: 2 }}>{error}</Typography>
-            <Button onClick={() => fetchProposals(page)} sx={{ fontSize: 12, textTransform: "none" }}>
+            <Button onClick={() => fetchProposals()} sx={{ fontSize: 12, textTransform: "none" }}>
               Try again
             </Button>
           </Box>

@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/queryKeys";
 import {
   Box,
   Paper,
@@ -31,30 +33,29 @@ export default function FinanceContent() {
   const [withdrawAmount, setWithdrawAmount] = useState("");
   const [withdrawLoading, setWithdrawLoading] = useState(false);
   const [withdrawError, setWithdrawError] = useState<string | null>(null);
-  const [wallet, setWallet] = useState<Wallet | null>(null);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchFinanceData();
-  }, []);
-
-  const fetchFinanceData = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+    queryKey: qk.wallet(),
+    queryFn: async () => {
       const [walletResponse, transactionsResponse] = await Promise.all([
         api.get("/api/wallet"),
         api.get("/api/wallet/transactions"),
       ]);
-      setWallet(walletResponse.data);
-      setTransactions(Array.isArray(transactionsResponse.data) ? transactionsResponse.data : transactionsResponse.data.data ?? []);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to fetch finance data");
-    } finally {
-      setLoading(false);
-    }
+      return {
+        wallet: walletResponse.data as Wallet,
+        transactions: (Array.isArray(transactionsResponse.data)
+          ? transactionsResponse.data
+          : transactionsResponse.data.data ?? []) as Transaction[],
+      };
+    },
+  });
+  const wallet = data?.wallet ?? null;
+  const transactions = data?.transactions ?? [];
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch finance data") : null;
+  const queryClient = useQueryClient();
+  const fetchFinanceData = async () => {
+    await refetch();
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.freelancer() });
   };
 
   const handleWithdraw = async () => {

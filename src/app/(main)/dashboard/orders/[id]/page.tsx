@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/queryKeys";
 import { useParams, useRouter } from "next/navigation";
 import {
   Box,
@@ -27,7 +29,7 @@ import {
   CheckCircle as CheckIcon,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
-import { Order, OrderStatus, MyOrdersResponse, Review, Dispute, EvidenceFile } from "@/types/order";
+import { Order, OrderStatus, MyOrdersResponse, Dispute, EvidenceFile } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
 import OrderTimeline from "@/components/dashboard/OrderTimeline";
 import DeliverablesReference from "@/components/dashboard/DeliverablesReference";
@@ -290,9 +292,6 @@ export default function ClientOrderDetailPage() {
   const { user } = useAuth();
   const orderId = Number(params.id);
 
-  const [order, setOrder] = useState<Order | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
@@ -315,22 +314,25 @@ export default function ClientOrderDetailPage() {
   const [uploadToken, setUploadToken] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
 
-  const fetchOrder = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
+  const queryClient = useQueryClient();
+  const { data: order = null, isLoading: loading, error: queryError } = useQuery({
+    queryKey: qk.orders.detail(orderId, "client"),
+    queryFn: async () => {
       const response: MyOrdersResponse = await api.get("/api/my-orders");
       const found = response.data.find((o: Order) => o.id === orderId);
-      if (!found) setError("Order not found.");
-      else setOrder(found);
-    } catch {
-      setError("Failed to load order.");
-    } finally {
-      setLoading(false);
-    }
-  }, [orderId]);
+      if (!found) throw new Error("Order not found.");
+      return found;
+    },
+    enabled: Number.isFinite(orderId),
+  });
+  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load order.") : null;
 
-  useEffect(() => { fetchOrder(); }, [fetchOrder]);
+  // After an action, refresh this order + the lists, wallet, and dashboard that also reflect it.
+  const fetchOrder = async () => {
+    await queryClient.invalidateQueries({ queryKey: qk.orders.all() });
+    queryClient.invalidateQueries({ queryKey: qk.wallet() });
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.client() });
+  };
 
   const handleFileUpload = async (files: FileList, setter: React.Dispatch<React.SetStateAction<UploadedFile[]>>, current: UploadedFile[]) => {
     setUploading(true);
@@ -383,8 +385,8 @@ export default function ClientOrderDetailPage() {
     if (rating === 0) { setSubmitReviewError("Please select a rating."); return; }
     setSubmitting(true); setSubmitReviewError(null);
     try {
-      const res = await api.submitReview(orderId, { rating, comment: comment.trim() || undefined });
-      setOrder((prev) => prev ? { ...prev, review: res.data } : prev);
+      await api.submitReview(orderId, { rating, comment: comment.trim() || undefined });
+      await fetchOrder();
     } catch { setSubmitReviewError("Failed to submit review."); }
     finally { setSubmitting(false); }
   };
