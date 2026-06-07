@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useState } from "react";
 import {
-  Box, Paper, Typography, Stack, Tabs, Tab, TextField, Select, MenuItem,
-  InputAdornment, Table, TableBody, TableCell, TableContainer, TableHead,
+  Box, Paper, Typography, Stack, Tabs, Tab,
+  Table, TableBody, TableCell, TableContainer, TableHead,
   TableRow, Chip, IconButton, CircularProgress, Alert, Button, Tooltip,
   Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Snackbar,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { SearchInput, SelectInput, TextArea } from "@/components/ui/inputs";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import WorkIcon from "@mui/icons-material/Work";
 import PeopleIcon from "@mui/icons-material/People";
@@ -21,6 +21,7 @@ import { api } from "@/lib/api";
 import { Service } from "@/types/service";
 import { JobPost } from "@/types/job";
 import DisputeReviewSection from "../trust/DisputeReviewSection";
+import { registerAdminRefresh } from "@/components/layout/GlobalNotificationToast";
 
 function EmptyState({ label }: { label: string }) {
   return (
@@ -101,6 +102,12 @@ export default function MarketplacePage() {
   useEffect(() => { if (tab === 0) loadServices(); }, [tab, loadServices]);
   useEffect(() => { if (tab === 1) loadJobs(); }, [tab, loadJobs]);
 
+  // Live: a new service/job submission pushes an admin alert — refetch the open tab.
+  useEffect(() => registerAdminRefresh((type) => {
+    if (type === "admin_service_pending" && tab === 0) loadServices();
+    if (type === "admin_job_pending" && tab === 1) loadJobs();
+  }), [tab, loadServices, loadJobs]);
+
   const filteredServices = services.filter(s =>
     s.title.toLowerCase().includes(serviceSearch.toLowerCase()) ||
     (s.freelancer_profile?.user?.name ?? "").toLowerCase().includes(serviceSearch.toLowerCase())
@@ -180,11 +187,14 @@ export default function MarketplacePage() {
   };
 
   const StatusFilter = ({ value, onChange }: { value: string; onChange: (v: string) => void }) => (
-    <Select size="small" value={value} onChange={e => onChange(e.target.value)} sx={{ minWidth: 180 }}>
-      {SERVICE_STATUS_FILTERS.map(o => (
-        <MenuItem key={o.value || "all"} value={o.value}>{o.label}</MenuItem>
-      ))}
-    </Select>
+    <Box sx={{ minWidth: 180 }}>
+      <SelectInput
+        size="sm"
+        value={value}
+        onChange={v => onChange(String(v))}
+        options={SERVICE_STATUS_FILTERS}
+      />
+    </Box>
   );
 
   return (
@@ -215,15 +225,15 @@ export default function MarketplacePage() {
               <Typography variant="body2" color="text.secondary" mb={2}>
                 Review and approve services before they go live on the marketplace
               </Typography>
-              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap>
-                <TextField
-                  size="small"
-                  placeholder="Search by title or freelancer…"
-                  value={serviceSearch}
-                  onChange={e => setServiceSearch(e.target.value)}
-                  sx={{ width: 320 }}
-                  slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchIcon fontSize="small" sx={{ color: "text.disabled" }} /></InputAdornment> } }}
-                />
+              <Stack direction="row" spacing={2} flexWrap="wrap" useFlexGap alignItems="center">
+                <Box sx={{ width: 320 }}>
+                  <SearchInput
+                    size="sm"
+                    placeholder="Search by title or freelancer…"
+                    value={serviceSearch}
+                    onChange={setServiceSearch}
+                  />
+                </Box>
                 <StatusFilter value={serviceStatus} onChange={setServiceStatus} />
               </Stack>
             </Box>
@@ -442,12 +452,12 @@ export default function MarketplacePage() {
               <>Rejecting <strong>{rejectTarget?.title}</strong>. The owner will be notified. You can include an optional reason to help them fix and resubmit.</>
             )}
           </DialogContentText>
-          <TextField
-            autoFocus fullWidth multiline minRows={3}
+          <TextArea
             label="Reason (optional)"
+            minRows={3}
+            maxLength={500}
             value={rejectReason}
-            onChange={e => setRejectReason(e.target.value)}
-            slotProps={{ htmlInput: { maxLength: 500 } }}
+            onChange={setRejectReason}
           />
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2 }}>

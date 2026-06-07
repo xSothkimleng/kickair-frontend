@@ -2,40 +2,16 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  TextField,
-  FormControl,
-  FormHelperText,
-  InputLabel,
-  Select,
-  MenuItem,
-  Autocomplete,
-  Chip,
-  Stack,
-  Grid,
-  InputAdornment,
-  IconButton,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import {
-  ChevronLeftOutlined,
-  AttachMoney as DollarIcon,
-  CloudUploadOutlined,
-  CloseOutlined,
-  InsertDriveFileOutlined,
-  ImageOutlined,
-} from "@mui/icons-material";
+import { Box, Paper, Typography, Button, Stack, Grid, IconButton, CircularProgress, Alert } from "@mui/material";
+import { ChevronLeftOutlined, CloudUploadOutlined, CloseOutlined, InsertDriveFileOutlined, ImageOutlined, RestoreOutlined } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { JobPost, CreateJobPostRequest } from "@/types/job";
 import { ServiceCategory } from "@/types/service";
 import { TemporaryUpload } from "@/types/service";
 import { Expertise } from "@/types/user";
 import RichTextEditor from "@/components/ui/RichTextEditor";
+import { TextInput, SelectInput, MultiSelectInput, DatePicker } from "@/components/ui/inputs";
+import { useFormRecovery } from "@/hooks/useFormRecovery";
 
 const FILE_LIMITS = {
   image: { extensions: ["jpg", "jpeg", "png", "gif", "webp"], maxSizeMB: 5 },
@@ -55,7 +31,15 @@ interface JobPostFormProps {
   onSaved: (job: JobPost) => void;
 }
 
-const today = new Date().toISOString().split("T")[0];
+const parseYmd = (s: string): Date | null => {
+  if (!s) return null;
+  // Accept both "YYYY-MM-DD" and full ISO timestamps ("YYYY-MM-DDT…") from the API.
+  const [y, m, d] = s.slice(0, 10).split("-").map(Number);
+  if (!y || !m || !d) return null;
+  const date = new Date(y, m - 1, d);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+const toYmd = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) {
   const isEditing = !!job;
@@ -81,11 +65,43 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   );
 
   const [submitting, setSubmitting] = useState(false);
+  const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   const clearFieldError = (key: string) =>
     setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n; });
+
+  // Local-storage recovery safety net (survives accidental tab close / crash). Mirrors
+  // ServiceForm — snapshots the text fields; uploads are handled server-side separately.
+  const formSnapshot = { title, categoryId, description, budgetMin, budgetMax, deadline, maxProposals, selectedSkills };
+  const recoveryKey = isEditing ? `kickair:job-recovery:edit:${job!.id}` : "kickair:job-recovery:new";
+  const { recovered, clear: clearRecovery, discard: discardRecovery, dismiss: dismissRecovery } =
+    useFormRecovery<typeof formSnapshot>(recoveryKey, formSnapshot);
+
+  const restoreDraft = (data: typeof formSnapshot) => {
+    setTitle(data.title);
+    setCategoryId(data.categoryId);
+    setDescription(data.description);
+    setBudgetMin(data.budgetMin);
+    setBudgetMax(data.budgetMax);
+    setDeadline(data.deadline);
+    setMaxProposals(data.maxProposals);
+    setSelectedSkills(data.selectedSkills);
+    dismissRecovery();
+  };
+
+  const minDeadline = (() => { const t = new Date(); t.setDate(t.getDate() + 1); return t; })();
+
+  // "Save as Draft" only makes sense before a post is live — offer it for new posts and
+  // for ones still in the pre-publish states (draft / pending review / rejected).
+  const canSaveDraft = !isEditing || ["draft", "pending_review", "rejected"].includes(job!.status);
+
+  const primaryLabel =
+    job?.status === "rejected" ? "Resubmit"
+      : !isEditing ? "Post Job"
+        : job?.status === "draft" ? "Publish Job"
+          : "Save Changes";
 
   useEffect(() => {
     const load = async () => {
@@ -175,42 +191,54 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     }
   };
 
-  const handleSubmit = async () => {
-    const errs: Record<string, string> = {};
-    if (!title.trim()) errs.title = "Job title is required";
-    if (!categoryId) errs.category = "Please select a category";
-    if (!description.trim() || description === "<p></p>") errs.description = "Description is required";
-    if (!budgetMin) errs.budgetMin = "Required";
-    if (!budgetMax) errs.budgetMax = "Required";
-    if (budgetMin && budgetMax && Number(budgetMax) < Number(budgetMin)) errs.budgetMax = "Max must be ≥ min";
-    if (!deadline) errs.deadline = "Deadline is required";
+  // A draft can be saved incomplete — only the publish path ("Post Job"/"Publish Job")
+  // enforces the required fields. Empty values are sent as null so the backend stores a
+  // genuinely blank draft (rather than "0"/invalid) that the publish gate later checks.
+  const handleSave = async (asDraft: boolean) => {
+    if (!asDraft) {
+      const errs: Record<string, string> = {};
+      if (!title.trim()) errs.title = "Job title is required";
+      if (!categoryId) errs.category = "Please select a category";
+      if (!description.trim() || description === "<p></p>") errs.description = "Description is required";
+      if (!budgetMin) errs.budgetMin = "Required";
+      if (!budgetMax) errs.budgetMax = "Required";
+      if (budgetMin && budgetMax && Number(budgetMax) < Number(budgetMin)) errs.budgetMax = "Max must be ≥ min";
+      if (!deadline) errs.deadline = "Deadline is required";
 
-    setFieldErrors(errs);
-    if (Object.keys(errs).length > 0) {
-      setError("Please complete the required fields highlighted below before submitting.");
-      return;
+      setFieldErrors(errs);
+      if (Object.keys(errs).length > 0) {
+        setError("Please complete the required fields highlighted below before submitting.");
+        return;
+      }
+    } else {
+      setFieldErrors({});
     }
 
-    setSubmitting(true);
+    if (asDraft) setSavingDraft(true);
+    else setSubmitting(true);
     setError(null);
     try {
+      const hasDescription = !!description.trim() && description !== "<p></p>";
       const payload: CreateJobPostRequest = {
-        category_id: categoryId as number,
+        category_id: categoryId === "" ? null : (categoryId as number),
         title: title.trim(),
-        description,
-        budget_min: Number(budgetMin),
-        budget_max: Number(budgetMax),
-        deadline,
+        description: hasDescription ? description : null,
+        budget_min: budgetMin === "" ? null : Number(budgetMin),
+        budget_max: budgetMax === "" ? null : Number(budgetMax),
+        deadline: deadline || null,
         ...(maxProposals ? { max_proposals: Number(maxProposals) } : {}),
         ...(selectedSkills.length ? { skill_ids: selectedSkills.map(s => s.id) } : {}),
         ...(uploadToken && tempUploads.length ? { upload_token: uploadToken } : {}),
+        ...(asDraft ? { save_as_draft: true } : {}),
       };
       const saved = isEditing ? await api.updateJobPost(job!.id, payload) : await api.createJobPost(payload);
+      clearRecovery();
       onSaved(saved);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save job post.");
     } finally {
       setSubmitting(false);
+      setSavingDraft(false);
     }
   };
 
@@ -269,38 +297,57 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
           </Alert>
         )}
 
+        {/* Unsaved-changes recovery banner (local-storage safety net) */}
+        {recovered && (
+          <Box
+            sx={{
+              borderRadius: 3,
+              border: "1px solid rgba(245, 158, 11, 0.35)",
+              bgcolor: "rgba(245, 158, 11, 0.06)",
+              p: 2,
+              mb: 3,
+              display: "flex",
+              alignItems: "center",
+              gap: 1.5,
+              flexWrap: "wrap",
+            }}>
+            <RestoreOutlined sx={{ fontSize: 20, color: "#b45309" }} />
+            <Typography sx={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+              You have unsaved changes from a previous session.
+            </Typography>
+            <Button
+              onClick={() => restoreDraft(recovered.data)}
+              sx={{ px: 2, height: 32, fontSize: 12, color: "white", bgcolor: "#b45309", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "#92400e" } }}>
+              Restore
+            </Button>
+            <Button
+              onClick={discardRecovery}
+              sx={{ px: 2, height: 32, fontSize: 12, color: "#92400e", bgcolor: "transparent", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "rgba(245,158,11,0.12)" } }}>
+              Discard
+            </Button>
+          </Box>
+        )}
+
         <Stack spacing={3}>
           {/* Title */}
-          <TextField
+          <TextInput
             label="Job Title"
             value={title}
-            onChange={e => { setTitle(e.target.value); clearFieldError("title"); }}
+            onChange={v => { setTitle(v); clearFieldError("title"); }}
             placeholder="e.g., Build a modern e-commerce website"
-            fullWidth
-            error={!!fieldErrors.title}
-            helperText={fieldErrors.title}
-            sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
+            error={fieldErrors.title}
           />
 
           {/* Category */}
-          <FormControl fullWidth disabled={refLoading} error={!!fieldErrors.category}>
-            <InputLabel sx={{ fontSize: 13 }}>Category</InputLabel>
-            <Select
-              value={categoryId}
-              onChange={e => { setCategoryId(e.target.value as number); clearFieldError("category"); }}
-              label="Category"
-              sx={{ borderRadius: 2, fontSize: 13 }}>
-              <MenuItem value="">
-                <em>Select a category</em>
-              </MenuItem>
-              {categories.map(c => (
-                <MenuItem key={c.id} value={c.id}>
-                  {c.name}
-                </MenuItem>
-              ))}
-            </Select>
-            {fieldErrors.category && <FormHelperText>{fieldErrors.category}</FormHelperText>}
-          </FormControl>
+          <SelectInput
+            label="Category"
+            value={categoryId}
+            onChange={v => { setCategoryId(Number(v)); clearFieldError("category"); }}
+            options={categories.map(c => ({ value: c.id, label: c.name ?? c.category_name }))}
+            placeholder="Select a category"
+            disabled={refLoading}
+            error={fieldErrors.category}
+          />
 
           {/* Description */}
           <Box>
@@ -321,43 +368,25 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
           {/* Budget */}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              <TextInput
                 label="Budget Min (USD)"
-                type="number"
-                value={budgetMin}
-                onChange={e => { setBudgetMin(e.target.value); clearFieldError("budgetMin"); clearFieldError("budgetMax"); }}
+                inputMode="decimal"
+                value={budgetMin === "" ? "" : String(budgetMin)}
+                onChange={v => { setBudgetMin(v); clearFieldError("budgetMin"); clearFieldError("budgetMax"); }}
                 placeholder="500"
-                fullWidth
-                error={!!fieldErrors.budgetMin}
-                helperText={fieldErrors.budgetMin}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <DollarIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
+                error={fieldErrors.budgetMin}
+                startIcon="$"
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              <TextInput
                 label="Budget Max (USD)"
-                type="number"
-                value={budgetMax}
-                onChange={e => { setBudgetMax(e.target.value); clearFieldError("budgetMax"); }}
+                inputMode="decimal"
+                value={budgetMax === "" ? "" : String(budgetMax)}
+                onChange={v => { setBudgetMax(v); clearFieldError("budgetMax"); }}
                 placeholder="2000"
-                fullWidth
-                error={!!fieldErrors.budgetMax}
-                helperText={fieldErrors.budgetMax}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <DollarIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
+                error={fieldErrors.budgetMax}
+                startIcon="$"
               />
             </Grid>
           </Grid>
@@ -365,59 +394,33 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
           {/* Deadline + Max Proposals */}
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              <DatePicker
                 label="Deadline"
-                type="date"
-                value={deadline}
-                onChange={e => { setDeadline(e.target.value); clearFieldError("deadline"); }}
-                fullWidth
-                error={!!fieldErrors.deadline}
-                helperText={fieldErrors.deadline}
-                inputProps={{ min: today }}
-                InputLabelProps={{ shrink: true }}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
+                value={parseYmd(deadline)}
+                onChange={d => { setDeadline(toYmd(d)); clearFieldError("deadline"); }}
+                minDate={minDeadline}
+                error={fieldErrors.deadline}
               />
             </Grid>
             <Grid size={{ xs: 12, sm: 6 }}>
-              <TextField
+              <TextInput
                 label="Max Proposals (optional)"
-                type="number"
+                inputMode="numeric"
                 value={maxProposals}
-                onChange={e => setMaxProposals(e.target.value)}
+                onChange={setMaxProposals}
                 placeholder="50"
-                fullWidth
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
               />
             </Grid>
           </Grid>
 
           {/* Required Skills */}
-          <Autocomplete
-            multiple
-            options={expertises}
-            getOptionLabel={o => o.expertise_name}
-            value={selectedSkills}
-            onChange={(_, v) => setSelectedSkills(v)}
-            loading={refLoading}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  label={option.expertise_name}
-                  size="small"
-                  {...getTagProps({ index })}
-                  key={option.id}
-                  sx={{ fontSize: 12, height: 26 }}
-                />
-              ))
-            }
-            renderInput={params => (
-              <TextField
-                {...params}
-                label="Required Skills (optional)"
-                placeholder="Search skills..."
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
-              />
-            )}
+          <MultiSelectInput
+            label="Required Skills (optional)"
+            value={selectedSkills.map(s => s.id)}
+            onChange={ids => setSelectedSkills((ids as number[]).map(id => expertises.find(e => e.id === id)).filter(Boolean) as Expertise[])}
+            options={expertises.map(e => ({ value: e.id, label: e.expertise_name }))}
+            placeholder="Select skills"
+            disabled={refLoading}
           />
 
           {/* Attachments — gallery grid */}
@@ -554,6 +557,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
             <Button
               variant="outlined"
               onClick={onBack}
+              disabled={submitting || savingDraft}
               sx={{
                 flex: 1,
                 fontSize: 13,
@@ -565,10 +569,26 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
               }}>
               Cancel
             </Button>
+            {canSaveDraft && (
+              <Button
+                onClick={() => handleSave(true)}
+                disabled={submitting || savingDraft}
+                sx={{
+                  flex: 1,
+                  fontSize: 13,
+                  textTransform: "none",
+                  borderRadius: 10,
+                  color: "black",
+                  bgcolor: "rgba(0,0,0,0.05)",
+                  "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
+                }}>
+                {savingDraft ? <CircularProgress size={18} sx={{ color: "rgba(0,0,0,0.5)" }} /> : "Save as Draft"}
+              </Button>
+            )}
             <Button
               variant="contained"
-              disabled={submitting}
-              onClick={handleSubmit}
+              disabled={submitting || savingDraft}
+              onClick={() => handleSave(false)}
               sx={{
                 flex: 1,
                 fontSize: 13,
@@ -577,7 +597,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 bgcolor: "#0071e3",
                 "&:hover": { bgcolor: "#0077ED" },
               }}>
-              {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : job?.status === "rejected" ? "Resubmit" : isEditing ? "Save Changes" : "Post Job"}
+              {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : primaryLabel}
             </Button>
           </Stack>
         </Stack>

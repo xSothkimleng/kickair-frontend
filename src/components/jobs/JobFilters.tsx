@@ -3,13 +3,6 @@
 import {
   Box,
   Typography,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  TextField,
-  Autocomplete,
-  Chip,
   Button,
   Stack,
   Divider,
@@ -17,6 +10,7 @@ import {
 import { ServiceCategory } from "@/types/service";
 import { Expertise } from "@/types/user";
 import { JobPostFilters } from "@/types/job";
+import { SelectInput, NumberInput, MultiSelectInput } from "@/components/ui/inputs";
 
 interface JobFiltersProps {
   categories: ServiceCategory[];
@@ -26,8 +20,6 @@ interface JobFiltersProps {
 }
 
 export default function JobFilters({ categories, expertises, filters, onChange }: JobFiltersProps) {
-  const selectedSkills = expertises.filter(e => filters.skill_ids?.includes(e.id));
-
   const update = (patch: Partial<JobPostFilters>) => {
     onChange({ ...filters, ...patch, page: 1 });
   };
@@ -51,19 +43,14 @@ export default function JobFilters({ categories, expertises, filters, onChange }
 
       <Stack spacing={2.5}>
         {/* Category */}
-        <FormControl fullWidth size="small">
-          <InputLabel sx={{ fontSize: 13 }}>Category</InputLabel>
-          <Select
-            value={filters.category_id ?? ""}
-            onChange={e => update({ category_id: e.target.value ? Number(e.target.value) : undefined })}
-            label="Category"
-            sx={{ borderRadius: 2, fontSize: 13 }}>
-            <MenuItem value=""><em>All categories</em></MenuItem>
-            {categories.map(c => (
-              <MenuItem key={c.id} value={c.id}>{c.name}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <SelectInput
+          label="Category"
+          size="sm"
+          value={filters.category_id ?? ""}
+          onChange={v => update({ category_id: v ? Number(v) : undefined })}
+          options={categories.map(c => ({ value: c.id, label: c.name ?? "" }))}
+          placeholder="All categories"
+        />
 
         <Divider />
 
@@ -73,23 +60,19 @@ export default function JobFilters({ categories, expertises, filters, onChange }
             Budget (USD)
           </Typography>
           <Stack spacing={1.5}>
-            <TextField
+            <NumberInput
               label="Min"
-              type="number"
-              size="small"
-              value={filters.budget_min ?? ""}
-              onChange={e => update({ budget_min: e.target.value ? Number(e.target.value) : undefined })}
+              size="sm"
+              value={filters.budget_min ?? null}
+              onChange={v => update({ budget_min: v ?? undefined })}
               placeholder="0"
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
             />
-            <TextField
+            <NumberInput
               label="Max"
-              type="number"
-              size="small"
-              value={filters.budget_max ?? ""}
-              onChange={e => update({ budget_max: e.target.value ? Number(e.target.value) : undefined })}
+              size="sm"
+              value={filters.budget_max ?? null}
+              onChange={v => update({ budget_max: v ?? undefined })}
               placeholder="10,000"
-              sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
             />
           </Stack>
         </Box>
@@ -101,31 +84,12 @@ export default function JobFilters({ categories, expertises, filters, onChange }
           <Typography sx={{ fontSize: 13, fontWeight: 500, mb: 1.5, color: "rgba(0,0,0,0.7)" }}>
             Required Skills
           </Typography>
-          <Autocomplete
-            multiple
-            size="small"
-            options={expertises}
-            getOptionLabel={o => o.expertise_name}
-            value={selectedSkills}
-            onChange={(_, v) => update({ skill_ids: v.length ? v.map(s => s.id) : undefined })}
-            renderTags={(value, getTagProps) =>
-              value.map((option, index) => (
-                <Chip
-                  label={option.expertise_name}
-                  size="small"
-                  {...getTagProps({ index })}
-                  key={option.id}
-                  sx={{ fontSize: 11, height: 22 }}
-                />
-              ))
-            }
-            renderInput={params => (
-              <TextField
-                {...params}
-                placeholder={selectedSkills.length ? "" : "Any skill"}
-                sx={{ "& .MuiOutlinedInput-root": { borderRadius: 2, fontSize: 13 } }}
-              />
-            )}
+          <MultiSelectInput
+            size="sm"
+            value={filters.skill_ids ?? []}
+            onChange={ids => update({ skill_ids: ids.length ? ids.map(Number) : undefined })}
+            options={expertises.map(e => ({ value: e.id, label: e.expertise_name }))}
+            placeholder="Any skill"
           />
         </Box>
       </Stack>

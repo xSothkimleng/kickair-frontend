@@ -7,23 +7,16 @@ import {
   Box,
   Paper,
   Typography,
-  TextField,
   Button,
   Avatar,
   Chip,
   IconButton,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   CircularProgress,
   Alert,
   Snackbar,
   Skeleton,
   Stack,
-  Autocomplete,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
 } from "@mui/material";
@@ -40,6 +33,7 @@ import {
   EditOutlined,
   StarRounded,
 } from "@mui/icons-material";
+import { TextInput, SelectInput, MultiSelectInput } from "@/components/ui/inputs";
 import { useAuth } from "@/components/context/AuthContext";
 import { useFreelancerDashboard } from "@/hooks/useFreelancerDashboard";
 import { api } from "@/lib/api";
@@ -350,12 +344,6 @@ export default function ProfileContent() {
     setHasUnsavedChanges(true);
   };
 
-  // Expertise handlers
-  const handleExpertiseChange = (_: unknown, newValue: Expertise[]) => {
-    setSelectedExpertiseIds(newValue.map(exp => exp.id));
-    setHasUnsavedChanges(true);
-  };
-
   if (authLoading || loadingReferenceData) {
     return (
       <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -383,8 +371,6 @@ export default function ProfileContent() {
       </Box>
     );
   }
-
-  const selectedExpertiseObjects = expertises.filter(exp => selectedExpertiseIds.includes(exp.id));
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
@@ -443,37 +429,12 @@ export default function ProfileContent() {
           <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
             <Box>
               <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>Name</Typography>
-              <TextField
-                fullWidth
-                value={user.name}
-                disabled
-                helperText='Name is managed in account settings'
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    height: 44,
-                    borderRadius: 3,
-                    bgcolor: "rgba(0, 0, 0, 0.05)",
-                    fontSize: 13,
-                  },
-                }}
-              />
+              <TextInput value={user.name} disabled helper='Name is managed in account settings' />
             </Box>
 
             <Box>
               <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Email</Typography>
-              <TextField
-                fullWidth
-                value={user.email}
-                disabled
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    height: 44,
-                    borderRadius: 3,
-                    bgcolor: "rgba(0, 0, 0, 0.05)",
-                    fontSize: 13,
-                  },
-                }}
-              />
+              <TextInput value={user.email} disabled />
             </Box>
 
             <Box
@@ -500,23 +461,10 @@ export default function ProfileContent() {
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
           <Box>
             <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Short Tagline (max 255 characters)</Typography>
-            <TextField
-              fullWidth
+            <TextInput
               value={formData.tagline}
-              onChange={e => handleInputChange("tagline", e.target.value)}
+              onChange={v => handleInputChange("tagline", v.slice(0, 255))}
               placeholder='e.g., Creative Designer Specializing in Branding'
-              slotProps={{ htmlInput: { maxLength: 255 } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  height: 44,
-                  borderRadius: 3,
-                  bgcolor: "white",
-                  fontSize: 13,
-                  "& fieldset": { borderColor: "rgba(0, 0, 0, 0.1)" },
-                  "&:hover fieldset": { borderColor: "rgba(0, 0, 0, 0.2)" },
-                  "&.Mui-focused fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", borderWidth: 1 },
-                },
-              }}
             />
           </Box>
 
@@ -526,23 +474,10 @@ export default function ProfileContent() {
               <RoomOutlined sx={{ fontSize: 14 }} />
               Location
             </Typography>
-            <TextField
-              fullWidth
+            <TextInput
               value={formData.location}
-              onChange={e => handleInputChange("location", e.target.value)}
+              onChange={v => handleInputChange("location", v.slice(0, 255))}
               placeholder='City, Country'
-              slotProps={{ htmlInput: { maxLength: 255 } }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  height: 44,
-                  borderRadius: 3,
-                  bgcolor: "white",
-                  fontSize: 13,
-                  "& fieldset": { borderColor: "rgba(0, 0, 0, 0.1)" },
-                  "&:hover fieldset": { borderColor: "rgba(0, 0, 0, 0.2)" },
-                  "&.Mui-focused fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", borderWidth: 1 },
-                },
-              }}
             />
           </Box>
 
@@ -608,50 +543,14 @@ export default function ProfileContent() {
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
         <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 3 }}>Skills & Expertise</Typography>
 
-        <Autocomplete
-          multiple
-          options={expertises}
-          getOptionLabel={option => option.expertise_name}
-          value={selectedExpertiseObjects}
-          onChange={handleExpertiseChange}
-          renderInput={params => (
-            <TextField
-              {...params}
-              placeholder='Select your skills and expertise'
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 3,
-                  fontSize: 13,
-                  "& fieldset": { borderColor: "rgba(0, 0, 0, 0.1)" },
-                  "&:hover fieldset": { borderColor: "rgba(0, 0, 0, 0.2)" },
-                  "&.Mui-focused fieldset": { borderColor: "rgba(0, 0, 0, 0.2)", borderWidth: 1 },
-                },
-              }}
-            />
-          )}
-          renderTags={(value, getTagProps) =>
-            value.map((option, index) => {
-              const tagProps = getTagProps({ index });
-              return (
-                <Chip
-                  label={option.expertise_name}
-                  {...tagProps}
-                  key={option.id}
-                  deleteIcon={<CloseOutlined sx={{ fontSize: 12 }} />}
-                  sx={{
-                    height: 28,
-                    bgcolor: "rgba(0, 0, 0, 0.05)",
-                    fontSize: 12,
-                    color: "black",
-                    "& .MuiChip-deleteIcon": {
-                      color: "rgba(0, 0, 0, 0.6)",
-                      "&:hover": { color: "#ef4444" },
-                    },
-                  }}
-                />
-              );
-            })
-          }
+        <MultiSelectInput
+          value={selectedExpertiseIds}
+          onChange={ids => {
+            setSelectedExpertiseIds(ids as number[]);
+            setHasUnsavedChanges(true);
+          }}
+          options={expertises.map(exp => ({ value: exp.id, label: exp.expertise_name }))}
+          placeholder='Select your skills and expertise'
         />
       </Paper>
 
@@ -832,26 +731,25 @@ export default function ProfileContent() {
         <DialogContent sx={{ minWidth: 400 }}>
           <Typography sx={{ fontSize: 16, fontWeight: 600, color: "black" }}>Add Language</Typography>
           <Stack spacing={2} sx={{ mt: 1 }}>
-            <Autocomplete
-              options={languages.filter(l => !selectedLanguages.some(sl => sl.language_id === l.id))}
-              getOptionLabel={option => option.name}
-              value={languageDialog.selectedLanguage}
-              onChange={(_, newValue) => setLanguageDialog(prev => ({ ...prev, selectedLanguage: newValue }))}
-              renderInput={params => <TextField {...params} label='Language' />}
+            <SelectInput
+              label='Language'
+              value={languageDialog.selectedLanguage?.id ?? ""}
+              onChange={v =>
+                setLanguageDialog(prev => ({
+                  ...prev,
+                  selectedLanguage: languages.find(l => l.id === Number(v)) ?? null,
+                }))
+              }
+              options={languages
+                .filter(l => !selectedLanguages.some(sl => sl.language_id === l.id))
+                .map(l => ({ value: l.id, label: l.name }))}
             />
-            <FormControl fullWidth>
-              <InputLabel>Proficiency</InputLabel>
-              <Select
-                value={languageDialog.proficiency}
-                onChange={e => setLanguageDialog(prev => ({ ...prev, proficiency: e.target.value as ProficiencyLevel }))}
-                label='Proficiency'>
-                {PROFICIENCY_OPTIONS.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SelectInput
+              label='Proficiency'
+              value={languageDialog.proficiency}
+              onChange={v => setLanguageDialog(prev => ({ ...prev, proficiency: v as ProficiencyLevel }))}
+              options={PROFICIENCY_OPTIONS.map(option => ({ value: option.value, label: option.label }))}
+            />
           </Stack>
         </DialogContent>
         <DialogActions>

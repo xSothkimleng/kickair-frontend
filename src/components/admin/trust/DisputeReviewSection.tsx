@@ -23,6 +23,7 @@ import GavelIcon from "@mui/icons-material/Gavel";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { api } from "@/lib/api";
 import { AdminDispute } from "@/types/order";
+import { registerAdminRefresh } from "@/components/layout/GlobalNotificationToast";
 
 type StatusFilter = "open" | "resolved" | "all";
 
@@ -65,6 +66,11 @@ export default function DisputeReviewSection() {
   useEffect(() => {
     fetchDisputes();
   }, [fetchDisputes]);
+
+  // Live: a newly opened dispute pushes an admin alert — refetch the queue.
+  useEffect(() => registerAdminRefresh((type) => {
+    if (type === "admin_dispute_opened") fetchDisputes();
+  }), [fetchDisputes]);
 
   return (
     <Box mb={4}>

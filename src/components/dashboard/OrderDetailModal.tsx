@@ -12,7 +12,6 @@ import {
   Chip,
   Button,
   Card,
-  TextField,
   CircularProgress,
   Alert,
 } from "@mui/material";
@@ -37,6 +36,7 @@ CheckCircle as CheckIcon,
 import { Order, OrderStatus, Review } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
+import { TextArea } from "@/components/ui/inputs";
 
 interface OrderDetailModalProps {
   open: boolean;
@@ -584,16 +584,14 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
                 </Button>
               ) : (
                 <Box>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    placeholder="Describe what you'd like changed..."
-                    value={revisionNote}
-                    onChange={e => setRevisionNote(e.target.value)}
-                    size="small"
-                    sx={{ mb: 1, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                  />
+                  <Box sx={{ mb: 1 }}>
+                    <TextArea
+                      minRows={2}
+                      placeholder="Describe what you'd like changed..."
+                      value={revisionNote}
+                      onChange={setRevisionNote}
+                    />
+                  </Box>
                   <Stack direction="row" spacing={1}>
                     <Button
                       size="small"
@@ -698,16 +696,14 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
                 </Button>
               ) : (
                 <Box>
-                  <TextField
-                    fullWidth
-                    multiline
-                    minRows={2}
-                    placeholder="Describe the reason for the dispute..."
-                    value={disputeReason}
-                    onChange={e => setDisputeReason(e.target.value)}
-                    size="small"
-                    sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                  />
+                  <Box sx={{ mb: 1.5 }}>
+                    <TextArea
+                      minRows={2}
+                      placeholder="Describe the reason for the dispute..."
+                      value={disputeReason}
+                      onChange={setDisputeReason}
+                    />
+                  </Box>
                   <Button
                     size="small"
                     startIcon={uploading ? <CircularProgress size={12} /> : <AttachFileIcon sx={{ fontSize: 14 }} />}
@@ -790,28 +786,15 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
                 <InteractiveStars value={rating} onChange={setRating} />
               </Box>
 
-              <TextField
-                multiline
-                rows={3}
-                fullWidth
-                placeholder="Share your experience (optional)"
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                inputProps={{ maxLength: 1000 }}
-                sx={{
-                  mb: 1,
-                  "& .MuiOutlinedInput-root": {
-                    borderRadius: 2,
-                    fontSize: 13,
-                    "& fieldset": { borderColor: "rgba(0,0,0,0.12)" },
-                    "&:hover fieldset": { borderColor: "rgba(0,0,0,0.25)" },
-                    "&.Mui-focused fieldset": { borderColor: "#0071e3" },
-                  },
-                }}
-              />
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)", textAlign: "right", mb: 1.5 }}>
-                {comment.length}/1000
-              </Typography>
+              <Box sx={{ mb: 1.5 }}>
+                <TextArea
+                  minRows={3}
+                  placeholder="Share your experience (optional)"
+                  value={comment}
+                  onChange={setComment}
+                  maxLength={1000}
+                />
+              </Box>
 
               {submitError && (
                 <Alert severity="error" sx={{ mb: 1.5, borderRadius: 2, fontSize: 13 }}>

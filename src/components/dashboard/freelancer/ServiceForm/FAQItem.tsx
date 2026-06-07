@@ -1,6 +1,7 @@
-import { Box, TextField, IconButton, Typography } from "@mui/material";
+import { Box, IconButton } from "@mui/material";
 import { CloseOutlined } from "@mui/icons-material";
-import { FAQ, textFieldSx, textareaSx } from "../types";
+import { TextInput, TextArea } from "@/components/ui/inputs";
+import { FAQ } from "../types";
 
 interface FAQItemProps {
   faq: FAQ;
@@ -16,51 +17,26 @@ export default function FAQItem({ faq, onChange, onRemove }: FAQItemProps) {
     <Box sx={{ p: 2.5, border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 3, bgcolor: "rgba(0, 0, 0, 0.01)" }}>
       <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
         <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
-          <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
-              <Typography sx={{ fontSize: 11, fontWeight: 500, color: "rgba(0, 0, 0, 0.7)" }}>Question</Typography>
-              <Typography sx={{ fontSize: 10, color: "rgba(0, 0, 0, 0.4)" }}>
-                {faq.question.length}/{MAX_QUESTION_LENGTH}
-              </Typography>
-            </Box>
-            <TextField
-              fullWidth
-              value={faq.question}
-              onChange={e => onChange({ ...faq, question: e.target.value.slice(0, MAX_QUESTION_LENGTH) })}
-              placeholder="e.g., How many revisions do you offer?"
-              sx={textFieldSx}
-            />
-          </Box>
-          <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
-              <Typography sx={{ fontSize: 11, fontWeight: 500, color: "rgba(0, 0, 0, 0.7)" }}>Answer</Typography>
-              <Typography sx={{ fontSize: 10, color: "rgba(0, 0, 0, 0.4)" }}>
-                {faq.answer.length}/{MAX_ANSWER_LENGTH}
-              </Typography>
-            </Box>
-            <TextField
-              fullWidth
-              multiline
-              rows={3}
-              value={faq.answer}
-              onChange={e => onChange({ ...faq, answer: e.target.value.slice(0, MAX_ANSWER_LENGTH) })}
-              placeholder="Provide a clear and helpful answer..."
-              sx={textareaSx}
-            />
-          </Box>
+          <TextInput
+            label="Question"
+            helper={`${faq.question.length}/${MAX_QUESTION_LENGTH}`}
+            value={faq.question}
+            onChange={(v) => onChange({ ...faq, question: v.slice(0, MAX_QUESTION_LENGTH) })}
+            placeholder="e.g., How many revisions do you offer?"
+          />
+          <TextArea
+            label="Answer"
+            value={faq.answer}
+            onChange={(v) => onChange({ ...faq, answer: v })}
+            placeholder="Provide a clear and helpful answer…"
+            minRows={3}
+            maxLength={MAX_ANSWER_LENGTH}
+          />
         </Box>
 
         <IconButton
           onClick={onRemove}
-          sx={{
-            p: 1,
-            color: "rgba(0, 0, 0, 0.3)",
-            borderRadius: 2,
-            "&:hover": {
-              color: "#ef4444",
-              bgcolor: "rgba(239, 68, 68, 0.05)",
-            },
-          }}>
+          sx={{ p: 1, color: "rgba(0, 0, 0, 0.3)", borderRadius: 2, "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.05)" } }}>
           <CloseOutlined sx={{ fontSize: 16 }} />
         </IconButton>
       </Box>

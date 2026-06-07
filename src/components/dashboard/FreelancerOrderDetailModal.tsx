@@ -13,7 +13,6 @@ import {
   Button,
   Card,
   CircularProgress,
-  TextField,
   Alert,
 } from "@mui/material";
 import {
@@ -35,6 +34,7 @@ import {
 } from "@mui/icons-material";
 import { Order, OrderStatus } from "@/types/order";
 import { api } from "@/lib/api";
+import { TextArea } from "@/components/ui/inputs";
 
 interface FreelancerOrderDetailModalProps {
   open: boolean;
@@ -596,16 +596,14 @@ export default function FreelancerOrderDetailModal({
             {/* Active: Submit Delivery */}
             {order.status === "active" && !showDisputeForm && (
               <Box>
-                <TextField
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  placeholder="Add a delivery note for the client (optional)..."
-                  value={deliveryNote}
-                  onChange={e => setDeliveryNote(e.target.value)}
-                  size="small"
-                  sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                />
+                <Box sx={{ mb: 1.5 }}>
+                  <TextArea
+                    minRows={2}
+                    placeholder="Add a delivery note for the client (optional)..."
+                    value={deliveryNote}
+                    onChange={setDeliveryNote}
+                  />
+                </Box>
                 {/* Delivery file attachments */}
                 <input
                   ref={deliveryFileInputRef}
@@ -669,16 +667,14 @@ export default function FreelancerOrderDetailModal({
             {/* Revision Requested: Resubmit */}
             {order.status === "revision_requested" && !showDisputeForm && (
               <Box>
-                <TextField
-                  fullWidth
-                  multiline
-                  minRows={2}
-                  placeholder="Describe what you changed in this revision..."
-                  value={deliveryNote}
-                  onChange={e => setDeliveryNote(e.target.value)}
-                  size="small"
-                  sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                />
+                <Box sx={{ mb: 1.5 }}>
+                  <TextArea
+                    minRows={2}
+                    placeholder="Describe what you changed in this revision..."
+                    value={deliveryNote}
+                    onChange={setDeliveryNote}
+                  />
+                </Box>
                 {/* Delivery file attachments */}
                 <input
                   ref={deliveryFileInputRef}
@@ -822,16 +818,14 @@ export default function FreelancerOrderDetailModal({
                   </Button>
                 ) : (
                   <Box>
-                    <TextField
-                      fullWidth
-                      multiline
-                      minRows={2}
-                      placeholder="Describe the reason for the dispute..."
-                      value={disputeReason}
-                      onChange={e => setDisputeReason(e.target.value)}
-                      size="small"
-                      sx={{ mb: 1.5, "& .MuiOutlinedInput-root": { borderRadius: 2 } }}
-                    />
+                    <Box sx={{ mb: 1.5 }}>
+                      <TextArea
+                        minRows={2}
+                        placeholder="Describe the reason for the dispute..."
+                        value={disputeReason}
+                        onChange={setDisputeReason}
+                      />
+                    </Box>
                     <Button
                       size="small"
                       startIcon={uploading ? <CircularProgress size={12} /> : <AttachFileIcon sx={{ fontSize: 14 }} />}

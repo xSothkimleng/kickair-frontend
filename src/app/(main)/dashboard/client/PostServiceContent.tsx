@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Paper, Typography, Button, Chip, Stack, CircularProgress, Avatar, IconButton, Tooltip } from "@mui/material";
+import { Box, Paper, Typography, Button, Chip, Stack, CircularProgress, Avatar, IconButton, Tooltip, Alert } from "@mui/material";
 import {
   AddOutlined,
   WorkOutlined,
@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { JobPost, JobPostStatus } from "@/types/job";
 import JobPostForm from "@/components/jobs/JobPostForm";
+import JobDraftCard from "@/components/jobs/JobDraftCard";
 
 type View = "list" | "create" | "edit";
 
@@ -204,6 +205,11 @@ export default function PostServiceContent() {
   const [jobs, setJobs] = useState<JobPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  // Draft actions (publish / delete) report their own success/failure separately from
+  // the list-fetch error, and track which draft is mid-action for per-card spinners.
+  const [actionMsg, setActionMsg] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [publishingId, setPublishingId] = useState<number | null>(null);
+  const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const fetchJobs = async () => {
     try {
@@ -233,17 +239,57 @@ export default function PostServiceContent() {
     fetchJobs();
   };
 
-  const handleSaved = () => {
+  // The backend decides the final status: a fully-verified user goes to review, an
+  // unverified one is kept as a draft even if they hit "Post Job". Reflect that back.
+  const handleSaved = (saved: JobPost) => {
     handleBack();
+    setActionMsg(
+      saved.status === "draft"
+        ? { type: "success", text: "Saved as a draft. Verify your account, then publish it when you're ready." }
+        : { type: "success", text: "Job submitted for review." },
+    );
   };
 
   const handleCancelled = (id: number) => {
     setJobs(prev => prev.map(j => (j.id === id ? { ...j, status: "cancelled" as JobPostStatus } : j)));
   };
 
+  // Publish a draft → sends it to admin review. The backend enforces the publish gate
+  // (KYC / verified contacts) and returns a 403 with the reason if the user isn't eligible.
+  const handlePublishDraft = async (job: JobPost) => {
+    setPublishingId(job.id);
+    setActionMsg(null);
+    try {
+      const updated = await api.publishJobPost(job.id);
+      setJobs(prev => prev.map(j => (j.id === job.id ? { ...j, status: updated.status } : j)));
+      setActionMsg({ type: "success", text: "Job submitted for review." });
+    } catch (err) {
+      setActionMsg({ type: "error", text: err instanceof Error ? err.message : "Failed to publish job." });
+    } finally {
+      setPublishingId(null);
+    }
+  };
+
+  const handleDeleteDraft = async (job: JobPost) => {
+    if (!confirm("Delete this draft? This cannot be undone.")) return;
+    setDeletingId(job.id);
+    setActionMsg(null);
+    try {
+      await api.deleteJobPost(job.id);
+      setJobs(prev => prev.filter(j => j.id !== job.id));
+    } catch (err) {
+      setActionMsg({ type: "error", text: err instanceof Error ? err.message : "Failed to delete draft." });
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
   if (view === "create" || view === "edit") {
     return <JobPostForm job={editingJob} onBack={handleBack} onSaved={handleSaved} />;
   }
+
+  const drafts = jobs.filter(j => j.status === "draft");
+  const liveJobs = jobs.filter(j => j.status !== "draft");
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
@@ -272,6 +318,13 @@ export default function PostServiceContent() {
         </Button>
       </Box>
 
+      {/* Draft publish / delete feedback (incl. publish-gate messages) */}
+      {actionMsg && (
+        <Alert severity={actionMsg.type} onClose={() => setActionMsg(null)} sx={{ borderRadius: 2, fontSize: 13 }}>
+          {actionMsg.text}
+        </Alert>
+      )}
+
       {/* Job List */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
         <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>All Jobs</Typography>
@@ -287,12 +340,19 @@ export default function PostServiceContent() {
               Try again
             </Button>
           </Box>
-        ) : jobs.length > 0 ? (
+        ) : liveJobs.length > 0 ? (
           <Stack spacing={1.5}>
-            {jobs.map(job => (
+            {liveJobs.map(job => (
               <JobRow key={job.id} job={job} onEdit={() => handleEdit(job)} onCancelled={handleCancelled} />
             ))}
           </Stack>
+        ) : drafts.length > 0 ? (
+          <Box sx={{ textAlign: "center", py: 6 }}>
+            <WorkOutlined sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
+            <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+              No published jobs yet — publish a draft below to start receiving proposals.
+            </Typography>
+          </Box>
         ) : (
           <Box sx={{ textAlign: "center", py: 6 }}>
             <WorkOutlined sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
@@ -313,6 +373,34 @@ export default function PostServiceContent() {
           </Box>
         )}
       </Paper>
+
+      {/* Drafts — private, never reviewed or public until published */}
+      {drafts.length > 0 && (
+        <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
+            <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Drafts</Typography>
+            <Box sx={{ px: 1, py: 0.25, bgcolor: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", fontSize: 11, fontWeight: 600, borderRadius: 1 }}>
+              {drafts.length}
+            </Box>
+          </Box>
+          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)", mb: 2 }}>
+            Only you can see these. Continue editing and publish when you&apos;re ready for admin review.
+          </Typography>
+          <Stack spacing={1.5}>
+            {drafts.map(draft => (
+              <JobDraftCard
+                key={draft.id}
+                draft={draft}
+                onContinueEditing={() => handleEdit(draft)}
+                onPublish={() => handlePublishDraft(draft)}
+                onDelete={() => handleDeleteDraft(draft)}
+                publishing={publishingId === draft.id}
+                deleting={deletingId === draft.id}
+              />
+            ))}
+          </Stack>
+        </Paper>
+      )}
     </Box>
   );
 }

@@ -13,7 +13,7 @@ export interface MobileDrawerProps {
   onClose: () => void;
   selectedLanguage: Language;
   onLanguageChange: (lang: Language) => void;
-  user: { name: string; avatar_url?: string | null } | null;
+  user: { name: string; avatar_url?: string | null; is_freelancer?: boolean; is_client?: boolean } | null;
   loading: boolean;
   onLogout: () => Promise<void>;
   currentMode: UserMode;
@@ -240,27 +240,33 @@ export function MobileDrawer({
                   Mode
                 </Typography>
                 <Box sx={{ display: "flex", gap: 1 }}>
-                  {(["freelancer", "client"] as const).map(mode => (
-                    <Button
-                      key={mode}
-                      onClick={() => {
-                        onModeSwitch(mode);
-                        onClose();
-                      }}
-                      sx={{
-                        flex: 1,
-                        px: 1.5,
-                        py: 1,
-                        fontSize: 12,
-                        borderRadius: 2,
-                        textTransform: "none",
-                        bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
-                        color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
-                        "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
-                      }}>
-                      {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                    </Button>
-                  ))}
+                  {(["freelancer", "client"] as const).map(mode => {
+                    const hasRole = mode === "freelancer" ? !!user?.is_freelancer : !!user?.is_client;
+                    const label = hasRole
+                      ? mode.charAt(0).toUpperCase() + mode.slice(1)
+                      : mode === "freelancer" ? "Start selling" : "Start hiring";
+                    return (
+                      <Button
+                        key={mode}
+                        onClick={() => {
+                          onModeSwitch(mode);
+                          onClose();
+                        }}
+                        sx={{
+                          flex: 1,
+                          px: 1.5,
+                          py: 1,
+                          fontSize: 12,
+                          borderRadius: 2,
+                          textTransform: "none",
+                          bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
+                          color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
+                          "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
+                        }}>
+                        {label}
+                      </Button>
+                    );
+                  })}
                 </Box>
               </Box>
 

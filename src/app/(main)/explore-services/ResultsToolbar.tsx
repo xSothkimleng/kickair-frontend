@@ -1,13 +1,20 @@
 "use client";
 
 import * as React from "react";
-import { Box, Stack, TextField, InputAdornment, Typography, Select, MenuItem, ToggleButtonGroup, ToggleButton } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
+import { Box, Stack, Typography, ToggleButtonGroup, ToggleButton } from "@mui/material";
 import GridViewIcon from "@mui/icons-material/GridView";
 import ViewListIcon from "@mui/icons-material/ViewList";
-import CloseIcon from "@mui/icons-material/Close";
+import { SearchInput, SelectInput } from "@/components/ui/inputs";
 
 export type SortValue = "relevant" | "price_asc" | "price_desc" | "rating" | "newest";
+
+const SORT_OPTIONS: { value: SortValue; label: string }[] = [
+  { value: "relevant", label: "Most Relevant" },
+  { value: "price_asc", label: "Price: Low to High" },
+  { value: "price_desc", label: "Price: High to Low" },
+  { value: "rating", label: "Highest Rated" },
+  { value: "newest", label: "Newest" },
+];
 
 interface ResultsToolbarProps {
   query: string;
@@ -36,13 +43,11 @@ function Kbd({ children }: { children: React.ReactNode }) {
 }
 
 export default function ResultsToolbar({ query, onQueryChange, sort, onSortChange, view, onViewChange, totalShown, totalAll }: ResultsToolbarProps) {
-  const inputRef = React.useRef<HTMLInputElement>(null);
-
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        inputRef.current?.focus();
+        document.getElementById("results-toolbar-search")?.focus();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -52,58 +57,19 @@ export default function ResultsToolbar({ query, onQueryChange, sort, onSortChang
   return (
     <Box>
       <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
-        <TextField
-          inputRef={inputRef}
-          fullWidth
+        <SearchInput
+          id="results-toolbar-search"
           value={query}
-          onChange={e => onQueryChange(e.target.value)}
+          onChange={onQueryChange}
           placeholder="Search services, skills, or sellers…"
-          slotProps={{
-            input: {
-              startAdornment: (
-                <InputAdornment position="start">
-                  <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
-                </InputAdornment>
-              ),
-              endAdornment: query ? (
-                <InputAdornment position="end">
-                  <CloseIcon
-                    sx={{ fontSize: 16, color: "text.disabled", cursor: "pointer", "&:hover": { color: "text.primary" } }}
-                    onClick={() => onQueryChange("")}
-                  />
-                </InputAdornment>
-              ) : undefined,
-            },
-          }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              height: 44, fontSize: 14, borderRadius: "10px",
-              backgroundColor: "#FFFFFF", boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-              "& fieldset": { borderColor: "#E2E8F0" },
-              "&:hover fieldset": { borderColor: "#CBD5E1" },
-              "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" },
-              "&.Mui-focused": { boxShadow: "0 0 0 3px rgba(15, 23, 42, 0.06)" },
-            },
-            "& .MuiOutlinedInput-input": { color: "#0F172A", "&::placeholder": { color: "#94A3B8", opacity: 1 } },
-          }}
         />
-        <Select
-          value={sort}
-          onChange={e => onSortChange(e.target.value as SortValue)}
-          sx={{
-            height: 44, minWidth: 180, borderRadius: "10px",
-            backgroundColor: "#FFFFFF", fontSize: 13, fontWeight: 500, color: "#0F172A",
-            boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-            "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E2E8F0" },
-            "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: "#CBD5E1" },
-            "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: "#0F172A", borderWidth: "1px" },
-          }}>
-          <MenuItem value="relevant">Most Relevant</MenuItem>
-          <MenuItem value="price_asc">Price: Low to High</MenuItem>
-          <MenuItem value="price_desc">Price: High to Low</MenuItem>
-          <MenuItem value="rating">Highest Rated</MenuItem>
-          <MenuItem value="newest">Newest</MenuItem>
-        </Select>
+        <Box sx={{ minWidth: 180 }}>
+          <SelectInput
+            value={sort}
+            onChange={v => onSortChange(v as SortValue)}
+            options={SORT_OPTIONS}
+          />
+        </Box>
       </Stack>
 
       <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>

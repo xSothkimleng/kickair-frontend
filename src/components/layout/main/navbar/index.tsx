@@ -28,7 +28,6 @@ import {
   Container,
 } from "@mui/material";
 import { useAuth } from "@/components/context/AuthContext";
-import { api } from "@/lib/api";
 import { useRouter, usePathname } from "next/navigation";
 import { type DropdownType, type UserMode, type Language, LANGUAGES } from "./types";
 import { dropdownPanelSx, navBtnSx } from "./styles";
@@ -49,7 +48,7 @@ export default function MainNavbar() {
   // Wraps both click-based dropdowns (language + profile) for the outside-click handler
   const clickDropdownRef = useRef<HTMLDivElement>(null);
 
-  const { user, loading, logout, refreshUser } = useAuth();
+  const { user, loading, logout, enableRole } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
@@ -146,17 +145,15 @@ export default function MainNavbar() {
     setProfileDialogError(null);
   };
 
+  // Enable the second account role (Start selling / Start hiring). No KYC gate — this
+  // just flips the role flag and creates the missing profile, then drops the user into
+  // that dashboard. The publish gate still applies when they create a service or job.
   const handleCreateProfile = async () => {
     if (!profileDialogType) return;
     setProfileDialogLoading(true);
     setProfileDialogError(null);
     try {
-      if (profileDialogType === "freelancer") {
-        await api.createFreelancerProfile({});
-      } else {
-        await api.createClientProfile({});
-      }
-      await refreshUser();
+      await enableRole(profileDialogType);
       setProfileDialogOpen(false);
       setProfileDialogType(null);
       setActiveDropdown(null);
@@ -587,24 +584,32 @@ export default function MainNavbar() {
                         Mode
                       </Typography>
                       <Box sx={{ display: "flex", gap: 1 }}>
-                        {(["freelancer", "client"] as const).map(mode => (
-                          <Button
-                            key={mode}
-                            onClick={() => handleModeSwitch(mode)}
-                            sx={{
-                              flex: 1,
-                              px: 1.5,
-                              py: 1,
-                              fontSize: 12,
-                              borderRadius: 2,
-                              textTransform: "none",
-                              bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
-                              color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
-                              "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
-                            }}>
-                            {mode.charAt(0).toUpperCase() + mode.slice(1)}
-                          </Button>
-                        ))}
+                        {(["freelancer", "client"] as const).map(mode => {
+                          const hasRole = mode === "freelancer" ? isFreelancer : isClient;
+                          // For a role the user doesn't have yet, the button doubles as the
+                          // "Start selling / Start hiring" CTA that opens the enable-role dialog.
+                          const label = hasRole
+                            ? mode.charAt(0).toUpperCase() + mode.slice(1)
+                            : mode === "freelancer" ? "Start selling" : "Start hiring";
+                          return (
+                            <Button
+                              key={mode}
+                              onClick={() => handleModeSwitch(mode)}
+                              sx={{
+                                flex: 1,
+                                px: 1.5,
+                                py: 1,
+                                fontSize: 12,
+                                borderRadius: 2,
+                                textTransform: "none",
+                                bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
+                                color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
+                                "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
+                              }}>
+                              {label}
+                            </Button>
+                          );
+                        })}
                       </Box>
                     </Box>
 
@@ -723,17 +728,19 @@ export default function MainNavbar() {
           onModeSwitch={handleModeSwitch}
         />
 
-        {/* ── Create Profile Dialog ─────────────────────────────────────────────── */}
+        {/* ── Enable second role dialog (Start selling / Start hiring) ───────────── */}
         <Dialog
           open={profileDialogOpen}
           onClose={handleDialogClose}
           slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 400, p: 1 } } }}>
           <DialogTitle sx={{ fontSize: 18, fontWeight: 600, pb: 1 }}>
-            Create {profileDialogType === "freelancer" ? "Freelancer" : "Client"} Profile
+            {profileDialogType === "freelancer" ? "Start selling on KickAir" : "Start hiring on KickAir"}
           </DialogTitle>
           <DialogContent>
             <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }}>
-              You don&apos;t have a {profileDialogType} profile yet. Would you like to create one?
+              {profileDialogType === "freelancer"
+                ? "Enable your freelancer account to offer services and apply to jobs. It's free — you can set up your profile next."
+                : "Enable your client account to post jobs and hire freelancers. It's free and only takes a moment."}
             </Typography>
             {profileDialogError && <Typography sx={{ fontSize: 13, color: "#dc2626", mt: 1.5 }}>{profileDialogError}</Typography>}
           </DialogContent>
@@ -761,7 +768,7 @@ export default function MainNavbar() {
                 borderRadius: 2,
                 "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
               }}>
-              {profileDialogLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : "Create Profile"}
+              {profileDialogLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : profileDialogType === "freelancer" ? "Start selling" : "Start hiring"}
             </Button>
           </DialogActions>
         </Dialog>

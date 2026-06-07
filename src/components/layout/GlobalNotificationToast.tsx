@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/context/AuthContext";
 import { getEcho } from "@/lib/echo";
 import { invalidateForNotification } from "@/lib/realtimeInvalidation";
-import { Notification, NotificationType } from "@/types/notification";
+import { Notification } from "@/types/notification";
 
 interface Toast {
   id: string;
@@ -31,6 +31,16 @@ export function registerMessageRefresh(fn: () => void): () => void {
 }
 export function triggerMessageRefresh() { _messageRefreshers.forEach(fn => fn()); }
 
+// Admin work-queues (KYC review, marketplace approvals, disputes) use manual fetch, so
+// they subscribe here to refetch live when a relevant admin notification arrives. The
+// callback receives the notification type so each queue can ignore unrelated ones.
+const _adminRefreshers = new Set<(type?: string) => void>();
+export function registerAdminRefresh(fn: (type?: string) => void): () => void {
+  _adminRefreshers.add(fn);
+  return () => { _adminRefreshers.delete(fn); };
+}
+export function triggerAdminRefresh(type?: string) { _adminRefreshers.forEach(fn => fn(type)); }
+
 export default function GlobalNotificationToast() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -45,7 +55,7 @@ export default function GlobalNotificationToast() {
 
     const channel = echo.private(`user.${user.id}`);
 
-    channel.listen(".notification.created", (data: Partial<Notification> & { created_at?: string }) => {
+    channel.listen(".notification.created", (data: Partial<Notification> & { created_at?: string; role?: string }) => {
       setQueue(prev => [
         ...prev,
         { id: data.id ?? String(Date.now()), title: data.title ?? "New notification", body: data.body ?? "", variant: "notification" },
@@ -54,6 +64,8 @@ export default function GlobalNotificationToast() {
       triggerBellRefresh();
       // Refresh whatever page data this notification affects (live, no reload).
       invalidateForNotification(queryClient, data.type);
+      // Admin alerts also nudge the open admin work-queue to refetch.
+      if (data.role === "admin") triggerAdminRefresh(data.type);
     });
 
     // New chat messages arrive on the user channel too (see MessageSent::broadcastOn),

@@ -1,6 +1,7 @@
-import { Box, Typography, TextField, Switch, FormControlLabel } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import RichTextEditor from "@/components/ui/RichTextEditor";
-import { PricingTier, smallTextFieldSx } from "../types";
+import { TextInput, Switch } from "@/components/ui/inputs";
+import { PricingTier } from "../types";
 
 interface PricingTierCardProps {
   tier: "basic" | "standard" | "premium";
@@ -25,113 +26,53 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
         transition: "all 0.2s",
       }}>
       <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: disabled ? 0 : 2 }}>
-        <Typography
-          sx={{
-            fontSize: 13,
-            fontWeight: 600,
-            color: disabled ? "rgba(0, 0, 0, 0.3)" : "black",
-            textTransform: "capitalize",
-          }}>
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: disabled ? "rgba(0, 0, 0, 0.3)" : "black", textTransform: "capitalize" }}>
           {tier}
         </Typography>
-        <FormControlLabel
-            control={
-              <Switch
-                checked={data.enabled}
-                onChange={e => onToggle(e.target.checked)}
-                size="small"
-                sx={{
-                  "& .MuiSwitch-switchBase.Mui-checked": { color: "black" },
-                  "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: "black" },
-                }}
-              />
-            }
-            label={<Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)" }}>{data.enabled ? "On" : "Off"}</Typography>}
-            sx={{ mr: 0 }}
-          />
+        <Switch checked={data.enabled} onChange={onToggle} />
       </Box>
 
       {!disabled && (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>Name</Typography>
-            <TextField fullWidth value={data.name} onChange={e => onChange({ ...data, name: e.target.value })} sx={smallTextFieldSx} />
-          </Box>
+          <TextInput size="sm" label="Name" value={data.name} onChange={(v) => onChange({ ...data, name: v })} />
 
           <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>Description <span style={{ opacity: 0.4 }}>(optional)</span></Typography>
-            <RichTextEditor
-              value={data.description}
-              onChange={html => onChange({ ...data, description: html })}
-              placeholder="What's included?"
-              minHeight={80}
-            />
-          </Box>
-
-          <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>
-              Revisions <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#334155", mb: 0.875 }}>
+              Description <Typography component="span" sx={{ color: "rgba(0,0,0,0.4)" }}>(optional)</Typography>
             </Typography>
-            <TextField
-              fullWidth
-              value={data.revisions}
-              onChange={e => { onChange({ ...data, revisions: e.target.value }); onClearError?.("revisions"); }}
-              placeholder="e.g., 3 or Unlimited"
-              error={!!errors?.revisions}
-              helperText={errors?.revisions}
-              sx={smallTextFieldSx}
-            />
+            <RichTextEditor value={data.description} onChange={(html) => onChange({ ...data, description: html })} placeholder="What's included?" minHeight={80} />
           </Box>
 
-          <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>
-              Delivery Time (days) <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
-            </Typography>
-            <TextField
-              fullWidth
-              type="number"
-              value={data.deliveryTime}
-              onChange={e => { onChange({ ...data, deliveryTime: e.target.value }); onClearError?.("delivery"); }}
-              error={!!errors?.delivery}
-              helperText={errors?.delivery}
-              sx={smallTextFieldSx}
-            />
-          </Box>
+          <TextInput
+            size="sm"
+            label="Revisions"
+            required
+            value={data.revisions}
+            onChange={(v) => { onChange({ ...data, revisions: v }); onClearError?.("revisions"); }}
+            placeholder="e.g., 3 or Unlimited"
+            error={errors?.revisions}
+          />
 
-          <Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.5 }}>
-              Price (USD) <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
-            </Typography>
-            <Box sx={{ position: "relative" }}>
-              <Typography
-                sx={{
-                  position: "absolute",
-                  left: 12,
-                  top: errors?.price ? "38%" : "50%",
-                  transform: "translateY(-50%)",
-                  fontSize: 12,
-                  color: errors?.price ? "#DC2626" : "rgba(0, 0, 0, 0.6)",
-                  zIndex: 1,
-                }}>
-                $
-              </Typography>
-              <TextField
-                fullWidth
-                type="number"
-                value={data.price}
-                onChange={e => { onChange({ ...data, price: e.target.value }); onClearError?.("price"); }}
-                error={!!errors?.price}
-                helperText={errors?.price}
-                sx={{
-                  ...smallTextFieldSx,
-                  "& .MuiOutlinedInput-root": {
-                    ...smallTextFieldSx["& .MuiOutlinedInput-root"],
-                    "& input": { pl: 2.5 },
-                  },
-                }}
-              />
-            </Box>
-          </Box>
+          <TextInput
+            size="sm"
+            label="Delivery Time (days)"
+            required
+            inputMode="numeric"
+            value={data.deliveryTime}
+            onChange={(v) => { onChange({ ...data, deliveryTime: v }); onClearError?.("delivery"); }}
+            error={errors?.delivery}
+          />
+
+          <TextInput
+            size="sm"
+            label="Price (USD)"
+            required
+            inputMode="decimal"
+            value={data.price}
+            onChange={(v) => { onChange({ ...data, price: v }); onClearError?.("price"); }}
+            error={errors?.price}
+            startIcon="$"
+          />
         </Box>
       )}
     </Box>

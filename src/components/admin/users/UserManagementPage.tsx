@@ -7,15 +7,9 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Collapse,
-  Divider,
   Grid,
-  IconButton,
-  InputAdornment,
-  MenuItem,
   Pagination,
   Paper,
-  Select,
   Stack,
   Table,
   TableBody,
@@ -23,17 +17,13 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
-  Tooltip,
   Typography,
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import EditIcon from "@mui/icons-material/Edit";
+import { useRouter } from "next/navigation";
+import { SearchInput, SelectInput } from "@/components/ui/inputs";
 import ShieldIcon from "@mui/icons-material/Shield";
-import EmailIcon from "@mui/icons-material/Email";
-import PersonOffIcon from "@mui/icons-material/PersonOff";
-import BlockIcon from "@mui/icons-material/Block";
 import BadgeIcon from "@mui/icons-material/Badge";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import { api, AdminUser } from "@/lib/api";
 
 const ROLES = [
@@ -51,7 +41,7 @@ function roleLabel(user: AdminUser): string {
   return "—";
 }
 
-function kycColor(status: string | null) {
+function kycColor(status: string | null): "success" | "warning" | "error" | "default" {
   if (status === "approved") return "success";
   if (status === "pending") return "warning";
   if (status === "rejected") return "error";
@@ -69,6 +59,7 @@ function formatDate(iso: string) {
 }
 
 export default function UserManagementPage() {
+  const router = useRouter();
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
@@ -77,8 +68,9 @@ export default function UserManagementPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [kycFilter, setKycFilter] = useState("all");
-  const [selectedUser, setSelectedUser] = useState<number | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const openUser = (id: number) => router.push(`/admin/users/${id}`);
 
   const fetchUsers = useCallback(async (p: number, s: string, r: string, k: string) => {
     setLoading(true);
@@ -143,36 +135,42 @@ export default function UserManagementPage() {
       <Paper variant="outlined" sx={{ borderRadius: 2 }}>
         <Box sx={{ p: 3, borderBottom: "1px solid", borderColor: "grey.200" }}>
           <Typography fontWeight={700} fontSize={18} mb={2.5}>User Directory</Typography>
-          <Stack direction={{ xs: "column", md: "row" }} gap={2}>
-            <TextField
-              size="small"
-              placeholder="Search by name, email or phone..."
-              value={search}
-              onChange={e => setSearch(e.target.value)}
-              sx={{ flex: 1 }}
-              slotProps={{
-                input: {
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <SearchIcon fontSize="small" sx={{ color: "text.disabled" }} />
-                    </InputAdornment>
-                  ),
-                },
-              }}
-            />
-            <Select size="small" value={roleFilter} onChange={e => setRoleFilter(e.target.value)} sx={{ minWidth: 140 }}>
-              <MenuItem value="all">All Roles</MenuItem>
-              <MenuItem value="freelancer">Freelancer</MenuItem>
-              <MenuItem value="client">Client</MenuItem>
-              <MenuItem value="both">Both</MenuItem>
-            </Select>
-            <Select size="small" value={kycFilter} onChange={e => setKycFilter(e.target.value)} sx={{ minWidth: 140 }}>
-              <MenuItem value="all">All KYC</MenuItem>
-              <MenuItem value="pending">KYC Pending</MenuItem>
-              <MenuItem value="approved">KYC Approved</MenuItem>
-              <MenuItem value="rejected">KYC Rejected</MenuItem>
-              <MenuItem value="none">No KYC</MenuItem>
-            </Select>
+          <Stack direction={{ xs: "column", md: "row" }} gap={2} alignItems={{ md: "center" }}>
+            <Box sx={{ flex: 1, width: "100%" }}>
+              <SearchInput
+                size="sm"
+                placeholder="Search by name, email or phone..."
+                value={search}
+                onChange={setSearch}
+              />
+            </Box>
+            <Box sx={{ minWidth: 140 }}>
+              <SelectInput
+                size="sm"
+                value={roleFilter}
+                onChange={v => setRoleFilter(String(v))}
+                options={[
+                  { value: "all", label: "All Roles" },
+                  { value: "freelancer", label: "Freelancer" },
+                  { value: "client", label: "Client" },
+                  { value: "both", label: "Both" },
+                ]}
+              />
+            </Box>
+            <Box sx={{ minWidth: 140 }}>
+              <SelectInput
+                size="sm"
+                value={kycFilter}
+                onChange={v => setKycFilter(String(v))}
+                options={[
+                  { value: "all", label: "All KYC" },
+                  { value: "pending", label: "KYC Pending" },
+                  { value: "approved", label: "KYC Approved" },
+                  { value: "rejected", label: "KYC Rejected" },
+                  { value: "none", label: "No KYC" },
+                ]}
+              />
+            </Box>
           </Stack>
         </Box>
 
@@ -198,12 +196,11 @@ export default function UserManagementPage() {
               </TableHead>
               <TableBody>
                 {users.map(user => (
-                  <>
                     <TableRow
                       key={user.id}
                       hover
                       sx={{ cursor: "pointer" }}
-                      onClick={() => setSelectedUser(selectedUser === user.id ? null : user.id)}
+                      onClick={() => openUser(user.id)}
                     >
                       <TableCell>
                         <Stack direction="row" alignItems="center" gap={1.5}>
@@ -227,7 +224,7 @@ export default function UserManagementPage() {
                           <Chip
                             label={kycLabel(user)}
                             size="small"
-                            color={kycColor(user.is_verified_id ? "approved" : user.kyc_status) as any}
+                            color={kycColor(user.is_verified_id ? "approved" : user.kyc_status)}
                             variant="outlined"
                           />
                           {user.is_verified_id && <BadgeIcon sx={{ fontSize: 14, color: "success.main" }} />}
@@ -247,62 +244,17 @@ export default function UserManagementPage() {
                         <Typography variant="body2" color="text.secondary">{formatDate(user.created_at)}</Typography>
                       </TableCell>
                       <TableCell onClick={e => e.stopPropagation()}>
-                        <Stack direction="row" gap={0.5}>
-                          <Tooltip title="Edit user">
-                            <IconButton size="small"><EditIcon fontSize="small" /></IconButton>
-                          </Tooltip>
-                        </Stack>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          endIcon={<ChevronRightIcon fontSize="small" />}
+                          onClick={() => openUser(user.id)}
+                          sx={{ textTransform: "none", borderRadius: 2 }}
+                        >
+                          View
+                        </Button>
                       </TableCell>
                     </TableRow>
-
-                    {/* Expandable detail panel */}
-                    <TableRow key={`detail-${user.id}`}>
-                      <TableCell colSpan={6} sx={{ p: 0, border: 0 }}>
-                        <Collapse in={selectedUser === user.id} unmountOnExit>
-                          <Box sx={{ p: 3, bgcolor: "grey.50", borderTop: "1px solid", borderColor: "grey.200" }}>
-                            <Typography fontWeight={700} mb={2}>User Details: {user.name}</Typography>
-                            <Grid container spacing={3}>
-                              <Grid size={{ xs: 12, md: 4 }}>
-                                <Typography variant="caption" fontWeight={600} color="text.secondary" textTransform="uppercase">Profile</Typography>
-                                <Stack gap={0.5} mt={1}>
-                                  {[
-                                    ["Email", user.email ?? "—"],
-                                    ["Phone", user.telephone ?? "—"],
-                                    ["Role", roleLabel(user)],
-                                    ["Joined", formatDate(user.created_at)],
-                                    ["Email verified", user.email_verified_at ? formatDate(user.email_verified_at) : "No"],
-                                  ].map(([k, v]) => (
-                                    <Typography key={k} variant="body2">
-                                      <Box component="span" color="text.secondary">{k}: </Box>{v}
-                                    </Typography>
-                                  ))}
-                                </Stack>
-                              </Grid>
-                              <Grid size={{ xs: 12, md: 4 }}>
-                                <Typography variant="caption" fontWeight={600} color="text.secondary" textTransform="uppercase">Activity</Typography>
-                                <Stack gap={0.5} mt={1}>
-                                  <Typography variant="body2"><Box component="span" color="text.secondary">KYC: </Box>{kycLabel(user)}</Typography>
-                                  <Typography variant="body2"><Box component="span" color="text.secondary">Rating: </Box>{user.freelancer_rating ? `${parseFloat(user.freelancer_rating).toFixed(1)} ★` : "—"}</Typography>
-                                  <Typography variant="body2"><Box component="span" color="text.secondary">Completed orders: </Box>{user.completed_orders ?? 0}</Typography>
-                                </Stack>
-                              </Grid>
-                              <Grid size={{ xs: 12, md: 4 }}>
-                                <Typography variant="caption" fontWeight={600} color="text.secondary" textTransform="uppercase">Quick Actions</Typography>
-                                <Stack gap={1} mt={1}>
-                                  <Button size="small" variant="contained" color="inherit" startIcon={<EmailIcon />} fullWidth disabled>Send Email</Button>
-                                  <Button size="small" variant="contained" color="warning" startIcon={<PersonOffIcon />} fullWidth disabled>Suspend User</Button>
-                                  <Button size="small" variant="contained" color="error" startIcon={<BlockIcon />} fullWidth disabled>Ban User</Button>
-                                </Stack>
-                                <Typography variant="caption" color="text.disabled" sx={{ mt: 1, display: "block" }}>
-                                  Suspend/Ban coming soon
-                                </Typography>
-                              </Grid>
-                            </Grid>
-                          </Box>
-                        </Collapse>
-                      </TableCell>
-                    </TableRow>
-                  </>
                 ))}
               </TableBody>
             </Table>

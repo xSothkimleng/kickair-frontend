@@ -1,14 +1,14 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, TextField, Button, InputAdornment } from "@mui/material";
-import { Search, CheckCircle } from "@mui/icons-material";
+import { Box, Typography, Button } from "@mui/material";
+import { CheckCircle } from "@mui/icons-material";
+import { SearchInput } from "@/components/ui/inputs";
 
 export default function HeroSection() {
   const [searchQuery, setSearchQuery] = useState("");
 
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSearch = () => {
     // Your search logic here
   };
 
@@ -58,70 +58,41 @@ export default function HeroSection() {
 
         {/* Search Bar */}
         <Box sx={{ maxWidth: "768px", mx: "auto", width: "100%" }}>
-          <Box component="form" onSubmit={handleSearch} sx={{ position: "relative" }}>
-            <TextField
-              fullWidth
-              type="text"
-              placeholder="Search for any service..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <Search sx={{ color: "rgba(0, 0, 0, 0.4)", fontSize: 20 }} />
-                  </InputAdornment>
-                ),
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <Button
-                      type="submit"
-                      variant="contained"
-                      sx={{
-                        px: 3,
-                        py: 1.25,
-                        bgcolor: "#0071e3",
-                        color: "white",
-                        borderRadius: "50px",
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        textTransform: "none",
-                        boxShadow: "none",
-                        "&:hover": {
-                          bgcolor: "#0077ed",
-                          boxShadow: "none",
-                        },
-                      }}
-                    >
-                      Search
-                    </Button>
-                  </InputAdornment>
-                ),
-              }}
+          <Box
+            component="form"
+            onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
+            sx={{ display: "flex", alignItems: "stretch", gap: 1.5 }}
+          >
+            <Box sx={{ flex: 1 }}>
+              <SearchInput
+                placeholder="Search for any service..."
+                value={searchQuery}
+                onChange={setSearchQuery}
+                onEnter={handleSearch}
+              />
+            </Box>
+            <Button
+              type="submit"
+              variant="contained"
               sx={{
-                "& .MuiOutlinedInput-root": {
-                  height: "56px",
-                  borderRadius: "50px",
-                  bgcolor: "white",
-                  "& fieldset": {
-                    borderColor: "rgba(0, 0, 0, 0.1)",
-                  },
-                  "&:hover fieldset": {
-                    borderColor: "rgba(0, 0, 0, 0.2)",
-                  },
-                  "&.Mui-focused fieldset": {
-                    borderColor: "#0071e3",
-                    borderWidth: "2px",
-                  },
-                },
-                "& .MuiOutlinedInput-input": {
-                  color: "black",
-                  "&::placeholder": {
-                    color: "rgba(0, 0, 0, 0.4)",
-                    opacity: 1,
-                  },
+                px: 3,
+                py: 1.25,
+                bgcolor: "#0071e3",
+                color: "white",
+                borderRadius: "50px",
+                fontSize: "13px",
+                fontWeight: 600,
+                textTransform: "none",
+                boxShadow: "none",
+                flexShrink: 0,
+                "&:hover": {
+                  bgcolor: "#0077ed",
+                  boxShadow: "none",
                 },
               }}
-            />
+            >
+              Search
+            </Button>
           </Box>
           <Typography
             sx={{

@@ -1,5 +1,6 @@
-import { Box, Paper, Typography, TextField, Switch, Checkbox, FormControlLabel, Grid } from "@mui/material";
-import { ServiceFormData, textareaSx } from "../types";
+import { Box, Paper, Typography, Grid } from "@mui/material";
+import { TextInput, TextArea, Checkbox, Switch } from "@/components/ui/inputs";
+import { ServiceFormData } from "../types";
 
 interface CustomOrdersSectionProps {
   formData: ServiceFormData;
@@ -25,18 +26,7 @@ export default function CustomOrdersSection({ formData, onFormDataChange }: Cust
             Allow clients to request custom quotes with their own budget and requirements
           </Typography>
         </Box>
-        <Switch
-          checked={customOrders.enabled}
-          onChange={e => handleChange("enabled", e.target.checked)}
-          sx={{
-            "& .MuiSwitch-switchBase.Mui-checked": {
-              color: "black",
-            },
-            "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": {
-              bgcolor: "black",
-            },
-          }}
-        />
+        <Switch checked={customOrders.enabled} onChange={(c) => handleChange("enabled", c)} />
       </Box>
 
       {customOrders.enabled && (
@@ -50,150 +40,51 @@ export default function CustomOrdersSection({ formData, onFormDataChange }: Cust
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
-              <FormControlLabel
-                control={
-                  <Checkbox
-                    checked={customOrders.acceptHourlyRate}
-                    onChange={e => handleChange("acceptHourlyRate", e.target.checked)}
-                    sx={{
-                      color: "rgba(0, 0, 0, 0.2)",
-                      "&.Mui-checked": {
-                        color: "black",
-                      },
-                    }}
-                  />
-                }
-                label={<Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>Accept hourly rate projects</Typography>}
-                sx={{ mb: 1.5 }}
-              />
+              <Box sx={{ mb: 1.5 }}>
+                <Checkbox
+                  checked={customOrders.acceptHourlyRate}
+                  onChange={(c) => handleChange("acceptHourlyRate", c)}
+                  label="Accept hourly rate projects"
+                />
+              </Box>
 
               {customOrders.acceptHourlyRate && (
-                <Box>
-                  <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Hourly Rate (USD/hour) *</Typography>
-                  <Box sx={{ position: "relative" }}>
-                    <Typography
-                      sx={{
-                        position: "absolute",
-                        left: 12,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        fontSize: 12,
-                        color: "rgba(0, 0, 0, 0.6)",
-                        zIndex: 1,
-                      }}>
-                      $
-                    </Typography>
-                    <Typography
-                      sx={{
-                        position: "absolute",
-                        right: 12,
-                        top: "50%",
-                        transform: "translateY(-50%)",
-                        fontSize: 12,
-                        color: "rgba(0, 0, 0, 0.4)",
-                        zIndex: 1,
-                      }}>
-                      /hour
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      type="number"
-                      value={customOrders.hourlyRate}
-                      onChange={e => handleChange("hourlyRate", e.target.value)}
-                      placeholder="50"
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          height: 40,
-                          borderRadius: 2,
-                          bgcolor: "white",
-                          fontSize: 12,
-                          "& input": {
-                            pl: 2.5,
-                            pr: 5,
-                          },
-                          "& fieldset": {
-                            borderColor: "rgba(0, 0, 0, 0.1)",
-                          },
-                          "&:hover fieldset": {
-                            borderColor: "rgba(0, 0, 0, 0.2)",
-                          },
-                          "&.Mui-focused fieldset": {
-                            borderColor: "rgba(0, 0, 0, 0.2)",
-                            borderWidth: 1,
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
-                </Box>
+                <TextInput
+                  size="sm"
+                  label="Hourly Rate (USD/hour)"
+                  required
+                  inputMode="decimal"
+                  value={customOrders.hourlyRate}
+                  onChange={(v) => handleChange("hourlyRate", v)}
+                  placeholder="50"
+                  startIcon="$"
+                  endIcon="/hour"
+                />
               )}
             </Grid>
 
             <Grid size={{ xs: 12, md: 6 }}>
-              <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Minimum Budget (USD)</Typography>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)", mb: 1 }}>
-                Set a minimum project budget for custom orders
-              </Typography>
-              <Box sx={{ position: "relative" }}>
-                <Typography
-                  sx={{
-                    position: "absolute",
-                    left: 12,
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    fontSize: 12,
-                    color: "rgba(0, 0, 0, 0.6)",
-                    zIndex: 1,
-                  }}>
-                  $
-                </Typography>
-                <TextField
-                  fullWidth
-                  type="number"
-                  value={customOrders.minimumBudget}
-                  onChange={e => handleChange("minimumBudget", e.target.value)}
-                  placeholder="100"
-                  sx={{
-                    "& .MuiOutlinedInput-root": {
-                      height: 40,
-                      borderRadius: 2,
-                      bgcolor: "white",
-                      fontSize: 12,
-                      "& input": {
-                        pl: 2.5,
-                      },
-                      "& fieldset": {
-                        borderColor: "rgba(0, 0, 0, 0.1)",
-                      },
-                      "&:hover fieldset": {
-                        borderColor: "rgba(0, 0, 0, 0.2)",
-                      },
-                      "&.Mui-focused fieldset": {
-                        borderColor: "rgba(0, 0, 0, 0.2)",
-                        borderWidth: 1,
-                      },
-                    },
-                  }}
-                />
-              </Box>
+              <TextInput
+                size="sm"
+                label="Minimum Budget (USD)"
+                helper="Set a minimum project budget for custom orders"
+                inputMode="decimal"
+                value={customOrders.minimumBudget}
+                onChange={(v) => handleChange("minimumBudget", v)}
+                placeholder="100"
+                startIcon="$"
+              />
             </Grid>
           </Grid>
 
-          <Box>
-            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>Instructions for Clients</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)", mb: 1 }}>
-              Tell clients what information they should provide in their custom order request
-            </Typography>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              value={customOrders.customInstructions}
-              onChange={e => handleChange("customInstructions", e.target.value)}
-              placeholder={`Please provide:\n• Project description\n• Timeline expectations\n• Budget range\n• Any reference materials`}
-              sx={textareaSx}
-            />
-          </Box>
+          <TextArea
+            label="Instructions for Clients"
+            helper="Tell clients what information they should provide in their custom order request"
+            value={customOrders.customInstructions}
+            onChange={(v) => handleChange("customInstructions", v)}
+            placeholder={"Please provide:\n• Project description\n• Timeline expectations\n• Budget range\n• Any reference materials"}
+            minRows={4}
+          />
 
           <Box sx={{ display: "flex", alignItems: "start", gap: 1.5, p: 2, bgcolor: "rgba(37, 99, 235, 0.05)", borderRadius: 3 }}>
             <Box sx={{ flex: 1 }}>

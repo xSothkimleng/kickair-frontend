@@ -19,6 +19,7 @@ interface AuthContextType {
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
   resendVerification: () => Promise<void>;
+  enableRole: (role: "client" | "freelancer") => Promise<User>;
   setUser: (user: User | null) => void;
 }
 
@@ -125,6 +126,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await api.resendVerificationEmail();
   };
 
+  const enableRole = async (role: "client" | "freelancer"): Promise<User> => {
+    const updated = await api.enableRole(role);
+    setUser(updated);
+    return updated;
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -139,6 +146,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         logout,
         refreshUser,
         resendVerification,
+        enableRole,
         setUser,
       }}
     >

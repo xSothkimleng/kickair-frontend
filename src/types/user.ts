@@ -103,11 +103,19 @@ export interface ClientProfile {
 
 export type KycStatus = 'pending' | 'approved' | 'rejected';
 
+// Channel for delivering a phone verification code. Telegram is primary, SMS the fallback.
+export type OtpChannel = 'telegram' | 'sms';
+
+// Document type the user verified with. null on legacy submissions made before the revamp.
+export type KycDocumentType = 'national_id' | 'passport' | 'drivers_license';
+
 export interface IdentityVerification {
   id: number;
   status: KycStatus;
   admin_note: string | null;
+  document_type: KycDocumentType | null;
   id_document_url: string | null;
+  id_document_back_url: string | null;
   selfie_url: string | null;
   submitted_at: string;
   reviewed_at: string | null;

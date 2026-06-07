@@ -20,7 +20,8 @@ export type NotificationType =
   | "service_rejected"
   | "admin_service_pending"
   | "admin_job_pending"
-  | "admin_dispute_opened";
+  | "admin_dispute_opened"
+  | "admin_kyc_pending";
 
 export interface Notification {
   id: string;

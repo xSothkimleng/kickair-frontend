@@ -9,6 +9,7 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import StorefrontIcon from "@mui/icons-material/Storefront";
 import WorkIcon from "@mui/icons-material/Work";
 import GavelIcon from "@mui/icons-material/Gavel";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import { api } from "@/lib/api";
 import { Notification, NotificationType } from "@/types/notification";
@@ -19,6 +20,7 @@ const ICON_FOR: Partial<Record<NotificationType, { icon: React.ReactNode; color:
   admin_service_pending: { icon: <StorefrontIcon sx={{ fontSize: 16 }} />, color: "#d97706" },
   admin_job_pending:     { icon: <WorkIcon sx={{ fontSize: 16 }} />,       color: "#d97706" },
   admin_dispute_opened:  { icon: <GavelIcon sx={{ fontSize: 16 }} />,      color: "#dc2626" },
+  admin_kyc_pending:     { icon: <VerifiedUserIcon sx={{ fontSize: 16 }} />, color: "#2563eb" },
 };
 
 function timeAgo(dateStr: string): string {

@@ -1,6 +1,6 @@
 // Job Post + Proposal types
 
-export type JobPostStatus = "pending_review" | "open" | "in_progress" | "completed" | "cancelled" | "rejected";
+export type JobPostStatus = "draft" | "pending_review" | "open" | "in_progress" | "completed" | "cancelled" | "rejected";
 export type ProposalStatus = "pending" | "accepted" | "rejected" | "withdrawn";
 
 export interface JobCategory {
@@ -111,15 +111,18 @@ export interface PaginatedResponse<T> {
 }
 
 export interface CreateJobPostRequest {
-  category_id: number;
+  // Nullable fields may be empty while saving a draft; they're required to publish.
+  category_id: number | null;
   title: string;
-  description: string;
-  budget_min: number;
-  budget_max: number;
-  deadline: string;
+  description: string | null;
+  budget_min: number | null;
+  budget_max: number | null;
+  deadline: string | null;
   max_proposals?: number;
   skill_ids?: number[];
   upload_token?: string;
+  // When true the post is kept private as a draft instead of being sent to admin review.
+  save_as_draft?: boolean;
 }
 
 export type UpdateJobPostRequest = Partial<CreateJobPostRequest>;

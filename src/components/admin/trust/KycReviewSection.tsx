@@ -19,19 +19,26 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  TextField,
   ToggleButton,
   ToggleButtonGroup,
   Typography,
 } from "@mui/material";
+import { TextArea } from "@/components/ui/inputs";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import { api } from "@/lib/api";
 import { AdminKycSubmission } from "@/types/user";
+import { registerAdminRefresh } from "@/components/layout/GlobalNotificationToast";
 
 type StatusFilter = "all" | "pending" | "approved" | "rejected";
+
+const DOC_TYPE_LABEL: Record<string, string> = {
+  national_id: "National ID",
+  passport: "Passport",
+  drivers_license: "Driver's License",
+};
 
 function statusChipColor(status: string) {
   if (status === "approved") return "success";
@@ -72,6 +79,11 @@ export default function KycReviewSection() {
   useEffect(() => {
     fetchSubmissions();
   }, [fetchSubmissions]);
+
+  // Live: a new KYC submission pushes an admin alert — refetch the queue.
+  useEffect(() => registerAdminRefresh((type) => {
+    if (type === "admin_kyc_pending") fetchSubmissions();
+  }), [fetchSubmissions]);
 
   const handleApprove = async (kyc: AdminKycSubmission) => {
     setActionLoading(kyc.id);
@@ -215,36 +227,29 @@ export default function KycReviewSection() {
 
       {/* Document preview dialog */}
       <Dialog open={!!previewKyc} onClose={() => setPreviewKyc(null)} maxWidth="md" fullWidth>
-        <DialogTitle>KYC Documents — {previewKyc?.user.name}</DialogTitle>
+        <DialogTitle>
+          KYC Documents — {previewKyc?.user.name}
+          {previewKyc?.document_type && (
+            <Chip label={DOC_TYPE_LABEL[previewKyc.document_type] ?? previewKyc.document_type} size="small" sx={{ ml: 1.5, textTransform: "capitalize" }} />
+          )}
+        </DialogTitle>
         <DialogContent>
-          <Stack direction={{ xs: "column", sm: "row" }} gap={2} sx={{ mt: 1 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" fontWeight={600} gutterBottom>ID Document</Typography>
-              {previewKyc?.id_document_url ? (
-                <Box
-                  component="img"
-                  src={previewKyc.id_document_url}
-                  alt="ID document"
-                  sx={{ width: "100%", borderRadius: 2, border: 1, borderColor: "divider" }}
-                />
-              ) : (
-                <Typography variant="body2" color="text.secondary">No image available</Typography>
-              )}
-            </Box>
-            <Box sx={{ flex: 1 }}>
-              <Typography variant="body2" fontWeight={600} gutterBottom>Selfie with ID</Typography>
-              {previewKyc?.selfie_url ? (
-                <Box
-                  component="img"
-                  src={previewKyc.selfie_url}
-                  alt="Selfie"
-                  sx={{ width: "100%", borderRadius: 2, border: 1, borderColor: "divider" }}
-                />
-              ) : (
-                <Typography variant="body2" color="text.secondary">No image available</Typography>
-              )}
-            </Box>
-          </Stack>
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(auto-fit, minmax(180px, 1fr))" }, gap: 2, mt: 1 }}>
+            {[
+              { label: previewKyc?.document_type === "passport" ? "Passport" : "ID front", url: previewKyc?.id_document_url },
+              ...(previewKyc?.id_document_back_url ? [{ label: "ID back", url: previewKyc.id_document_back_url }] : []),
+              { label: "Live selfie", url: previewKyc?.selfie_url },
+            ].map((doc) => (
+              <Box key={doc.label}>
+                <Typography variant="body2" fontWeight={600} gutterBottom>{doc.label}</Typography>
+                {doc.url ? (
+                  <Box component="img" src={doc.url} alt={doc.label} sx={{ width: "100%", borderRadius: 2, border: 1, borderColor: "divider" }} />
+                ) : (
+                  <Typography variant="body2" color="text.secondary">No image available</Typography>
+                )}
+              </Box>
+            ))}
+          </Box>
         </DialogContent>
         <DialogActions>
           {previewKyc?.status === "pending" && (
@@ -274,15 +279,12 @@ export default function KycReviewSection() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
             Please provide a reason. The user will see this message and can resubmit.
           </Typography>
-          <TextField
+          <TextArea
             label="Rejection reason"
-            fullWidth
-            multiline
-            rows={3}
+            minRows={3}
             value={rejectNote}
-            onChange={e => { setRejectNote(e.target.value); setRejectError(""); }}
-            error={!!rejectError}
-            helperText={rejectError}
+            onChange={v => { setRejectNote(v); setRejectError(""); }}
+            error={rejectError || undefined}
             placeholder="e.g. Document is blurry or expired."
           />
         </DialogContent>

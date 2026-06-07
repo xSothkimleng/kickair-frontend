@@ -1,754 +1,222 @@
 "use client";
+
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import {
-  Box, Paper, Typography, TextField, Button, Divider,
-  InputAdornment, Grid, Alert, Tabs, Tab, CircularProgress,
-} from "@mui/material";
+import { Box, Paper, Typography, Button, Divider, Alert, Select, MenuItem } from "@mui/material";
+import { ArrowBack } from "@mui/icons-material";
 import { useAuth } from "@/components/context/AuthContext";
-import {
-  PersonOutline, MailOutline, LockOutlined, ArrowBack,
-  PhoneOutlined, MarkEmailUnread, CheckCircle,
-} from "@mui/icons-material";
 import { api } from "@/lib/api";
+import GoogleButton from "@/components/auth/GoogleButton";
+import {
+  TextInput, PasswordInput, PhoneInput, OtpInput, SegmentedControl,
+  FieldLabel, FieldHelper, fieldSx, tokens,
+} from "@/components/ui/inputs";
+import { OtpChannel } from "@/types/user";
 
-type UserType = "client" | "freelancer";
-type AuthMethod = "email" | "phone";
-type Step = 1 | 2 | 3;
-
-const inputSx = (theme: any) => ({
-  "& .MuiOutlinedInput-root": {
-    height: 48,
-    borderRadius: 3,
-    backgroundColor: "background.default",
-    "&:hover fieldset": { borderColor: "divider" },
-    "&.Mui-focused fieldset": { borderWidth: 2, borderColor: "primary.main" },
-  },
-  "& input:-webkit-autofill, & input:-webkit-autofill:hover, & input:-webkit-autofill:focus": {
-    WebkitBoxShadow: `0 0 0 1000px ${theme.palette.background.default} inset`,
-    WebkitTextFillColor: theme.palette.text.primary,
-    caretColor: theme.palette.text.primary,
-  },
-});
+type Role = "client" | "freelancer";
+type Method = "email" | "phone";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const { registerEmail, registerPhone, resendVerification } = useAuth();
+  const { registerEmail, registerPhone } = useAuth();
 
-  const [step, setStep] = useState<Step>(1);
-  const [userType, setUserType] = useState<UserType | null>(null);
-  const [authMethod, setAuthMethod] = useState<AuthMethod>("email");
-
-  const [formData, setFormData] = useState({
-    fullName: "",
-    email: "",
-    phone: "",
-    password: "",
-    confirmPassword: "",
-  });
-
-  // OTP state
-  const [otpSent, setOtpSent] = useState(false);
-  const [otpCode, setOtpCode] = useState("");
-  const [phoneVerified, setPhoneVerified] = useState(false);
-  const [sendingOtp, setSendingOtp] = useState(false);
-  const [verifyingOtp, setVerifyingOtp] = useState(false);
-
+  const [step, setStep] = useState<"form" | "otp">("form");
+  const [role, setRole] = useState<Role>("client");
+  const [method, setMethod] = useState<Method>("email");
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
+  const [channel, setChannel] = useState<OtpChannel>("telegram");
+  const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
-  const [resending, setResending] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
-  const [resendError, setResendError] = useState("");
 
-  const handleChange = (field: string, value: string) => {
-    setFormData(prev => ({ ...prev, [field]: value }));
+  const e164Phone = () => `+855${phone.replace(/\D/g, "").replace(/^0+/, "")}`;
+  const destination = () => (role === "freelancer" ? "/dashboard/freelancer" : "/explore-services");
+  const roleFlags = () => ({ is_client: role === "client", is_freelancer: role === "freelancer" });
+
+  const validateForm = (): string | null => {
+    if (!name.trim()) return "Please enter your full name.";
+    if (method === "email") {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return "Enter a valid email address.";
+    } else if (!phone.replace(/\D/g, "")) {
+      return "Please enter your phone number.";
+    }
+    if (password.length < 8) return "Password must be at least 8 characters.";
+    if (confirm !== password) return "Passwords don't match.";
+    return null;
   };
 
-  const handleMethodChange = (_: React.SyntheticEvent, value: AuthMethod) => {
-    setAuthMethod(value);
-    setError("");
-    setOtpSent(false);
-    setOtpCode("");
-    setPhoneVerified(false);
-  };
-
-  const handleSendOtp = async () => {
-    if (!formData.phone) {
-      setError("Please enter your phone number");
+  const handleFormSubmit = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    const validationError = validateForm();
+    if (validationError) {
+      setError(validationError);
       return;
     }
-    setSendingOtp(true);
     setError("");
-    try {
-      await api.sendPhoneOtp(formData.phone);
-      setOtpSent(true);
-    } catch (err: any) {
-      setError(err.message || "Failed to send code. Please check the number and try again.");
-    } finally {
-      setSendingOtp(false);
-    }
-  };
-
-  const handleVerifyOtp = async () => {
-    if (!otpCode || otpCode.length < 6) return;
-    setVerifyingOtp(true);
-    setError("");
-    try {
-      // We verify the code on the server at registration time — this just marks
-      // the phone as ready in local state so the form can be submitted.
-      // The actual Twilio check happens in registerWithPhone.
-      setPhoneVerified(true);
-    } finally {
-      setVerifyingOtp(false);
-    }
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters");
-      return;
-    }
-    if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match");
-      return;
-    }
-    if (authMethod === "phone" && (!otpSent || !otpCode)) {
-      setError("Please request and enter a verification code first");
-      return;
-    }
-
     setIsLoading(true);
+
     try {
-      if (authMethod === "email") {
-        await registerEmail({
-          name: formData.fullName,
-          email: formData.email,
-          password: formData.password,
-          password_confirmation: formData.confirmPassword,
-          is_client: userType === "client",
-          is_freelancer: userType === "freelancer",
-        });
-        setStep(3);
+      if (method === "email") {
+        await registerEmail({ name: name.trim(), email: email.trim(), password, password_confirmation: confirm, ...roleFlags() });
+        router.push(destination());
       } else {
-        await registerPhone({
-          name: formData.fullName,
-          phone: formData.phone,
-          code: otpCode,
-          password: formData.password,
-          password_confirmation: formData.confirmPassword,
-          is_client: userType === "client",
-          is_freelancer: userType === "freelancer",
-        });
-        router.push(userType === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client");
+        await api.sendPhoneOtp(e164Phone(), channel);
+        setStep("otp");
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Registration failed. Please try again.");
-      setPhoneVerified(false);
+      setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleResend = async () => {
-    setResending(true);
-    setResendError("");
-    setResendSuccess(false);
+  const resendWith = async (next: OtpChannel) => {
+    setChannel(next);
+    setError("");
+    setIsLoading(true);
     try {
-      await resendVerification();
-      setResendSuccess(true);
-    } catch {
-      setResendError("Failed to resend. Please try again.");
+      await api.sendPhoneOtp(e164Phone(), next);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not resend the code.");
     } finally {
-      setResending(false);
+      setIsLoading(false);
     }
   };
 
-  const selectionCardSx = {
-    borderRadius: 6,
-    border: 2,
-    borderColor: "divider",
-    p: { xs: 4, md: 6 },
-    textAlign: "center" as const,
-    cursor: "pointer",
-    transition: "all 0.2s",
-    "&:hover": { borderColor: "primary.main", boxShadow: 3 },
+  const handleVerify = async (ev: React.FormEvent) => {
+    ev.preventDefault();
+    setError("");
+    setIsLoading(true);
+    try {
+      await registerPhone({ name: name.trim(), phone: e164Phone(), code: code.trim(), password, password_confirmation: confirm, ...roleFlags() });
+      router.push(destination());
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Invalid or expired code.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  // ─── Step 1: Client vs Freelancer ────────────────────────────────────────────
-  if (step === 1) {
-    return (
-      <Box
-        sx={{
-          bgcolor: "#F5F5F7",
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          px: { xs: 3, sm: 6 },
-        }}>
-        <Box sx={{ width: "100%", maxWidth: 1024 }}>
-          <Link href='/auth/sign-in' style={{ textDecoration: "none" }}>
-            <Button
-              startIcon={<ArrowBack />}
-              sx={{
-                color: "text.secondary",
-                textTransform: "none",
-                mb: 4,
-                "&:hover": { color: "text.primary", backgroundColor: "transparent" },
-              }}>
-              <Typography variant='body2'>Back to Sign In</Typography>
-            </Button>
-          </Link>
-
-          <Box sx={{ textAlign: "center" }}>
-            <Typography
-              component='h1'
-              sx={{ mb: 1, fontWeight: "bold", color: "text.primary", fontSize: { xs: "1.875rem", md: "2.25rem" } }}>
-              Join as a client or freelancer
-            </Typography>
-            <Typography variant='body1' color='text.secondary' mb={4}>
-              Choose how you want to use KickAir
-            </Typography>
-
-            <Grid container spacing={3} sx={{ maxWidth: 768, mx: "auto", mb: 4 }}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper
-                  elevation={0}
-                  onClick={() => { setUserType("client"); setStep(2); }}
-                  sx={selectionCardSx}>
-                  <Typography variant='h6' sx={{ mb: 1, color: "text.primary" }}>
-                    I&apos;m a client
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary'>
-                    Find talented freelancers for your next project
-                  </Typography>
-                </Paper>
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <Paper
-                  elevation={0}
-                  onClick={() => { setUserType("freelancer"); setStep(2); }}
-                  sx={selectionCardSx}>
-                  <Typography variant='h6' sx={{ mb: 1, color: "text.primary" }}>
-                    I&apos;m a freelancer
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary'>
-                    Showcase your skills and get hired for amazing projects
-                  </Typography>
-                </Paper>
-              </Grid>
-            </Grid>
-
-            <Typography color='text.secondary'>
-              Already have an account?{" "}
-              <Link href='/auth/sign-in' style={{ textDecoration: "none" }}>
-                <Button
-                  sx={{
-                    textTransform: "none",
-                    fontSize: "1rem",
-                    p: 0,
-                    minWidth: "auto",
-                    verticalAlign: "baseline",
-                    fontWeight: "bold",
-                    color: "black",
-                    "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
-                  }}>
-                  Sign In
-                </Button>
-              </Link>
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    );
-  }
-
-  // ─── Step 3: Email pending ────────────────────────────────────────────────────
-  if (step === 3) {
-    return (
-      <Box
-        sx={{
-          bgcolor: "#F5F5F7",
-          minHeight: "100vh",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          px: { xs: 3, sm: 6 },
-        }}>
-        <Box sx={{ width: "100%", maxWidth: 448 }}>
-          <Paper
-            elevation={0}
-            sx={{ borderRadius: 6, border: 1, borderColor: "divider", p: { xs: 4, md: 6 }, textAlign: "center" }}>
-            <Box sx={{ position: "relative", width: 88, height: 88, mx: "auto", mb: 4 }}>
-              <Box
-                sx={{
-                  position: "absolute",
-                  inset: -10,
-                  borderRadius: "50%",
-                  bgcolor: "primary.main",
-                  opacity: 0.1,
-                }}
-              />
-              <Box
-                sx={{
-                  width: 88,
-                  height: 88,
-                  borderRadius: "50%",
-                  bgcolor: "primary.main",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                <MarkEmailUnread sx={{ fontSize: 40, color: "primary.contrastText" }} />
-              </Box>
-            </Box>
-
-            <Typography variant='h4' fontWeight={700} mb={1.5} color='text.primary'>
-              Check your inbox
-            </Typography>
-            <Typography variant='body1' color='text.secondary' mb={2}>
-              We sent a verification link to
-            </Typography>
-
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.75,
-                bgcolor: "action.hover",
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 2,
-                px: 2,
-                py: 0.75,
-                mb: 3.5,
-              }}>
-              <MailOutline sx={{ fontSize: 16, color: "text.secondary" }} />
-              <Typography variant='body2' fontWeight={600} color='text.primary'>
-                {formData.email}
-              </Typography>
-            </Box>
-
-            <Typography variant='body2' color='text.secondary' mb={4} sx={{ lineHeight: 1.75 }}>
-              Click the link in the email to activate your account.{" "}
-              <Box component='span' sx={{ color: "text.primary", fontWeight: 600 }}>
-                Check your spam folder
-              </Box>{" "}
-              if you don&apos;t see it within a few minutes.
-            </Typography>
-
-            {resendSuccess && (
-              <Alert severity='success' sx={{ mb: 3, borderRadius: 2, textAlign: "left" }}>
-                Verification email resent successfully!
-              </Alert>
-            )}
-            {resendError && (
-              <Alert severity='error' sx={{ mb: 3, borderRadius: 2, textAlign: "left" }}>
-                {resendError}
-              </Alert>
-            )}
-
-            <Button
-              variant='contained'
-              fullWidth
-              onClick={handleResend}
-              disabled={resending || resendSuccess}
-              sx={{
-                height: 48,
-                borderRadius: 3,
-                textTransform: "none",
-                fontWeight: 500,
-                mb: 2,
-                color: "white !important",
-                "&:hover": { backgroundColor: "primary.dark" },
-              }}>
-              {resending ? "Sending..." : resendSuccess ? "Email sent" : "Resend verification email"}
-            </Button>
-
-            <Divider sx={{ mb: 2 }} />
-
-            <Link href='/auth/sign-in' style={{ textDecoration: "none" }}>
-              <Button
-                variant='text'
-                fullWidth
-                startIcon={<ArrowBack sx={{ fontSize: 16 }} />}
-                sx={{
-                  height: 44,
-                  borderRadius: 3,
-                  textTransform: "none",
-                  color: "text.secondary",
-                  "&:hover": { color: "text.primary", bgcolor: "action.hover" },
-                }}>
-                Back to Sign In
-              </Button>
-            </Link>
-          </Paper>
-
-          <Typography
-            variant='caption'
-            sx={{ display: "block", textAlign: "center", color: "text.secondary", mt: 2, lineHeight: 1.6 }}>
-            Wrong email address?{" "}
-            <Button
-              onClick={() => setStep(2)}
-              sx={{
-                textTransform: "none",
-                fontSize: "0.75rem",
-                p: 0,
-                minWidth: "auto",
-                color: "text.primary",
-                fontWeight: 600,
-                verticalAlign: "baseline",
-                "&:hover": { backgroundColor: "transparent", textDecoration: "underline" },
-              }}>
-              Go back and change it
-            </Button>
-          </Typography>
-        </Box>
-      </Box>
-    );
-  }
-
-  // ─── Step 2: Registration form ────────────────────────────────────────────────
   return (
-    <Box
-      sx={{
-        bgcolor: "#F5F5F7",
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        px: { xs: 3, sm: 6 },
-      }}>
-      <Box sx={{ width: "100%", maxWidth: 448 }}>
-        <Button
-          onClick={() => setStep(1)}
-          startIcon={<ArrowBack />}
-          sx={{
-            color: "text.secondary",
-            textTransform: "none",
-            mb: 1,
-            "&:hover": { color: "text.primary", backgroundColor: "transparent" },
-          }}>
-          <Typography variant='body2'>Back</Typography>
-        </Button>
-
-        <Paper elevation={0} sx={{ borderRadius: 6, border: 1, borderColor: "divider", p: 4 }}>
-          <Box sx={{ textAlign: "center", mb: 1 }}>
-            <Typography variant='h4' component='h1' sx={{ fontWeight: "bold", mb: 1, color: "text.primary" }}>
-              {userType === "freelancer" ? "Create Freelancer Account" : "Create Client Account"}
-            </Typography>
+    <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, sm: 6 }, py: 4, backgroundColor: tokens.page }}>
+      <Box sx={{ width: "100%", maxWidth: 420 }}>
+        <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid ${tokens.border}`, p: { xs: 3, sm: 4 }, boxShadow: "0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.07)" }}>
+          <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
+            <Box component="img" src="/assets/images/kickair-logo.png" alt="KickAir" sx={{ height: 36 }} />
           </Box>
 
-          <Tabs
-            value={authMethod}
-            onChange={handleMethodChange}
-            variant='fullWidth'
-            sx={{
-              mb: 3,
-              "& .MuiTabs-indicator": { borderRadius: 2 },
-              "& .MuiTab-root": { textTransform: "none", fontWeight: 500 },
-            }}>
-            <Tab value='email' label='Email' icon={<MailOutline fontSize='small' />} iconPosition='start' />
-            <Tab value='phone' label='Phone' icon={<PhoneOutlined fontSize='small' />} iconPosition='start' />
-          </Tabs>
-
-          <Box component='form' onSubmit={handleSubmit}>
-            {error && (
-              <Alert severity='error' sx={{ mb: 3 }}>
-                {error}
-              </Alert>
-            )}
-
-            {/* Full Name */}
-            <Box sx={{ mb: 2.5 }}>
-              <Typography
-                component='label'
-                htmlFor='fullName'
-                variant='body2'
-                sx={{ display: "block", mb: 1, color: "text.primary" }}>
-                Full Name
+          {step === "form" ? (
+            <>
+              <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
+                Create your account
               </Typography>
-              <TextField
-                id='fullName'
-                type='text'
-                placeholder='John Doe'
-                value={formData.fullName}
-                onChange={e => handleChange("fullName", e.target.value)}
-                fullWidth
-                required
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <PersonOutline sx={{ color: "text.secondary" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={inputSx}
-              />
-            </Box>
+              <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 2.5 }}>Join KickAir</Typography>
 
-            {/* Email field */}
-            {authMethod === "email" && (
-              <Box sx={{ mb: 2.5 }}>
-                <Typography
-                  component='label'
-                  htmlFor='email'
-                  variant='body2'
-                  sx={{ display: "block", mb: 1, color: "text.primary" }}>
-                  Email Address
-                </Typography>
-                <TextField
-                  id='email'
-                  type='email'
-                  placeholder='you@example.com'
-                  value={formData.email}
-                  onChange={e => handleChange("email", e.target.value)}
+              {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
+
+              <Box component="form" onSubmit={handleFormSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <SegmentedControl
                   fullWidth
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position='start'>
-                        <MailOutline sx={{ color: "text.secondary" }} />
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={inputSx}
+                  ariaLabel="Account type"
+                  value={role}
+                  onChange={(v) => setRole(v as Role)}
+                  options={[
+                    { value: "client", label: "I want to hire", sub: "Client" },
+                    { value: "freelancer", label: "I want to work", sub: "Freelancer" },
+                  ]}
                 />
-              </Box>
-            )}
 
-            {/* Phone + OTP section */}
-            {authMethod === "phone" && (
-              <Box sx={{ mb: 2.5 }}>
-                <Typography
-                  component='label'
-                  htmlFor='phone'
-                  variant='body2'
-                  sx={{ display: "block", mb: 1, color: "text.primary" }}>
-                  Phone Number
-                </Typography>
+                <GoogleButton label="Continue with Google" />
 
-                {/* Phone input row */}
-                <Box sx={{ display: "flex", gap: 1, mb: otpSent ? 1.5 : 0 }}>
-                  <TextField
-                    id='phone'
-                    type='tel'
-                    placeholder='+855 12 345 678'
-                    value={formData.phone}
-                    onChange={e => {
-                      handleChange("phone", e.target.value);
-                      if (otpSent) {
-                        setOtpSent(false);
-                        setPhoneVerified(false);
-                        setOtpCode("");
-                      }
-                    }}
-                    disabled={phoneVerified}
-                    fullWidth
-                    required
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position='start'>
-                          <PhoneOutlined sx={{ color: "text.secondary" }} />
-                        </InputAdornment>
-                      ),
-                      endAdornment: phoneVerified ? (
-                        <InputAdornment position='end'>
-                          <CheckCircle sx={{ color: "success.main", fontSize: 20 }} />
-                        </InputAdornment>
-                      ) : null,
-                    }}
-                    sx={inputSx}
-                  />
-                  {!phoneVerified && (
-                    <Button
-                      variant='outlined'
-                      onClick={handleSendOtp}
-                      disabled={sendingOtp || !formData.phone}
-                      sx={{
-                        minWidth: 110,
-                        height: 48,
-                        borderRadius: 3,
-                        textTransform: "none",
-                        flexShrink: 0,
-                        fontSize: "0.8rem",
-                      }}>
-                      {sendingOtp ? <CircularProgress size={16} /> : otpSent ? "Resend" : "Send Code"}
-                    </Button>
-                  )}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                  <Divider sx={{ flex: 1, borderColor: tokens.border }} />
+                  <Typography sx={{ fontSize: 13, color: tokens.muted }}>or</Typography>
+                  <Divider sx={{ flex: 1, borderColor: tokens.border }} />
                 </Box>
 
-                <Typography variant='caption' color='text.secondary'>
-                  Include country code, e.g. +855 for Cambodia
-                </Typography>
+                <TextInput label="Full name" placeholder="Sok Dara" value={name} onChange={setName} autoComplete="name" disabled={isLoading} />
 
-                {/* OTP input row */}
-                {otpSent && !phoneVerified && (
-                  <Box sx={{ mt: 1.5 }}>
-                    <Typography variant='body2' sx={{ mb: 1, color: "text.primary" }}>
-                      Verification Code
-                    </Typography>
-                    <Box sx={{ display: "flex", gap: 1 }}>
-                      <TextField
-                        type='text'
-                        placeholder='6-digit code'
-                        value={otpCode}
-                        onChange={e => setOtpCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                        inputProps={{ maxLength: 6, style: { letterSpacing: "0.3em", textAlign: "center" } }}
-                        fullWidth
-                        sx={inputSx}
-                      />
-                      <Button
-                        variant='contained'
-                        onClick={handleVerifyOtp}
-                        disabled={verifyingOtp || otpCode.length < 6}
-                        sx={{
-                          minWidth: 90,
-                          height: 48,
-                          borderRadius: 3,
-                          textTransform: "none",
-                          flexShrink: 0,
-                          color: "white",
-                          fontSize: "0.8rem",
-                        }}>
-                        {verifyingOtp ? <CircularProgress size={16} color='inherit' /> : "Verify"}
-                      </Button>
+                {/* Combined contact: Email/Phone picker + input */}
+                <Box>
+                  <FieldLabel>Contact</FieldLabel>
+                  <Box sx={{ display: "flex", gap: 1 }}>
+                    <Select
+                      value={method}
+                      onChange={(e) => { setMethod(e.target.value as Method); setEmail(""); setPhone(""); }}
+                      disabled={isLoading}
+                      sx={{ ...fieldSx("md"), minWidth: 104 }}>
+                      <MenuItem value="email">Email</MenuItem>
+                      <MenuItem value="phone">Phone</MenuItem>
+                    </Select>
+                    <Box sx={{ flex: 1 }}>
+                      {method === "email"
+                        ? <TextInput type="email" placeholder="you@example.com" value={email} onChange={setEmail} autoComplete="email" disabled={isLoading} />
+                        : <PhoneInput placeholder="12 345 678" value={phone} onChange={setPhone} disabled={isLoading} />}
                     </Box>
                   </Box>
-                )}
+                  <FieldHelper>
+                    {method === "email" ? "We'll send a verification link here." : "Cambodian number — we'll text you a code to verify."}
+                  </FieldHelper>
+                </Box>
 
-                {phoneVerified && (
-                  <Box sx={{ mt: 1, display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <CheckCircle sx={{ color: "success.main", fontSize: 16 }} />
-                    <Typography variant='caption' color='success.main' fontWeight={600}>
-                      Code entered — will be verified on submit
-                    </Typography>
-                  </Box>
-                )}
+                <PasswordInput label="Password" placeholder="Create a password" value={password} onChange={setPassword} autoComplete="new-password" helper="At least 8 characters" disabled={isLoading} />
+                <PasswordInput label="Confirm password" placeholder="Re-enter your password" value={confirm} onChange={setConfirm} autoComplete="new-password" disabled={isLoading} />
+
+                <Button type="submit" variant="contained" fullWidth disabled={isLoading}
+                  sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
+                  {isLoading ? "Creating account…" : "Create account"}
+                </Button>
               </Box>
-            )}
 
-            {/* Password */}
-            <Box sx={{ mb: 2.5 }}>
-              <Typography
-                component='label'
-                htmlFor='password'
-                variant='body2'
-                sx={{ display: "block", mb: 1, color: "text.primary" }}>
-                Password
+              <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body, mt: 2.5 }}>
+                Already have an account?{" "}
+                <Box component="a" onClick={() => router.push("/auth/sign-in")} sx={{ color: tokens.accent, fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
+                  Sign in
+                </Box>
               </Typography>
-              <TextField
-                id='password'
-                type='password'
-                placeholder='Create a strong password'
-                value={formData.password}
-                onChange={e => handleChange("password", e.target.value)}
-                fullWidth
-                required
-                inputProps={{ minLength: 8 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <LockOutlined sx={{ color: "text.secondary" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={inputSx}
-              />
-            </Box>
-
-            {/* Confirm Password */}
-            <Box sx={{ mb: 2.5 }}>
-              <Typography
-                component='label'
-                htmlFor='confirmPassword'
-                variant='body2'
-                sx={{ display: "block", mb: 1, color: "text.primary" }}>
-                Confirm Password
+              <Typography sx={{ textAlign: "center", fontSize: 12, color: tokens.muted, lineHeight: 1.5, mt: 2 }}>
+                By continuing, you agree to KickAir&rsquo;s Terms of Service and Privacy Policy.
               </Typography>
-              <TextField
-                id='confirmPassword'
-                type='password'
-                placeholder='Re-enter your password'
-                value={formData.confirmPassword}
-                onChange={e => handleChange("confirmPassword", e.target.value)}
-                fullWidth
-                required
-                inputProps={{ minLength: 8 }}
-                InputProps={{
-                  startAdornment: (
-                    <InputAdornment position='start'>
-                      <LockOutlined sx={{ color: "text.secondary" }} />
-                    </InputAdornment>
-                  ),
-                }}
-                sx={inputSx}
-              />
-            </Box>
-
-            <Button
-              type='submit'
-              variant='contained'
-              fullWidth
-              disabled={isLoading || (authMethod === "phone" && (!otpSent || !otpCode))}
-              sx={{
-                height: 48,
-                borderRadius: 3,
-                textTransform: "none",
-                fontSize: "1rem",
-                fontWeight: 500,
-                mt: 3,
-                color: "white",
-                "&:hover": { backgroundColor: "primary.dark" },
-              }}>
-              {isLoading ? "Creating Account..." : "Create Account"}
-            </Button>
-
-            <Box sx={{ position: "relative", my: 4 }}>
-              <Divider />
-              <Typography
-                variant='body2'
-                sx={{
-                  position: "absolute",
-                  top: "50%",
-                  left: "50%",
-                  transform: "translate(-50%, -50%)",
-                  px: 2,
-                  backgroundColor: "background.paper",
-                  color: "text.secondary",
-                }}>
-                Already have an account?
-              </Typography>
-            </Box>
-
-            <Link href='/auth/sign-in' style={{ textDecoration: "none" }}>
-              <Button
-                type='button'
-                variant='outlined'
-                fullWidth
-                sx={{
-                  height: 48,
-                  borderRadius: 3,
-                  textTransform: "none",
-                  fontSize: "1rem",
-                  fontWeight: 500,
-                  borderColor: "divider",
-                  color: "text.primary",
-                  "&:hover": { borderColor: "divider", backgroundColor: "action.hover" },
-                }}>
-                Sign In Instead
+            </>
+          ) : (
+            <>
+              <Button onClick={() => { setStep("form"); setCode(""); setError(""); }} startIcon={<ArrowBack />}
+                sx={{ color: tokens.muted, textTransform: "none", mb: 1, ml: -1, "&:hover": { backgroundColor: "transparent", color: tokens.body } }}>
+                Back
               </Button>
-            </Link>
-          </Box>
-        </Paper>
+              <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
+                Verify your phone
+              </Typography>
+              <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 2.5 }}>
+                We sent a 6-digit code to {e164Phone()} via {channel === "telegram" ? "Telegram" : "SMS"}.
+              </Typography>
 
-        <Typography variant='caption' sx={{ display: "block", textAlign: "center", color: "text.secondary", mt: 1 }}>
-          By creating an account, you agree to KickAir&apos;s Terms of Service and Privacy Policy
-        </Typography>
+              {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
+
+              <Box component="form" onSubmit={handleVerify} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+                <OtpInput value={code} onChange={setCode} autoFocus disabled={isLoading} />
+
+                <Button type="submit" variant="contained" fullWidth disabled={isLoading || code.length < 6}
+                  sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
+                  {isLoading ? "Verifying…" : "Verify & create account"}
+                </Button>
+              </Box>
+
+              <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 2 }}>
+                <Button onClick={() => resendWith(channel)} disabled={isLoading} sx={{ fontSize: 13, color: tokens.muted, textTransform: "none" }}>
+                  Resend code
+                </Button>
+                <Button onClick={() => resendWith(channel === "telegram" ? "sms" : "telegram")} disabled={isLoading} sx={{ fontSize: 13, color: tokens.accent, textTransform: "none" }}>
+                  {channel === "telegram" ? "Use SMS instead" : "Use Telegram instead"}
+                </Button>
+              </Box>
+            </>
+          )}
+        </Paper>
       </Box>
     </Box>
   );

@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import {
   Box, Grid, Paper, Typography, Stack, Tabs, Tab,
-  Switch, Button, Chip, MenuItem, CircularProgress,
+  Switch, Button, Chip, CircularProgress,
 } from "@mui/material";
 import SettingsIcon from "@mui/icons-material/Settings";
 import CategoryIcon from "@mui/icons-material/Category";
@@ -14,7 +14,7 @@ import AddIcon from "@mui/icons-material/Add";
 import ImageIcon from "@mui/icons-material/Image";
 import UploadIcon from "@mui/icons-material/Upload";
 import CloseIcon from "@mui/icons-material/Close";
-import AdminInput from "@/components/admin/ui/AdminInput";
+import { TextInput, SelectInput } from "@/components/ui/inputs";
 import { api, AdminCategory, AdminSkill } from "@/lib/api";
 
 const PAGES = [
@@ -48,6 +48,28 @@ export default function ConfigPage() {
   const [skillsLoading, setSkillsLoading] = useState(true);
   const [newSkillName, setNewSkillName] = useState("");
   const [addingSkill, setAddingSkill] = useState(false);
+
+  // Platform information
+  const [marketplaceName, setMarketplaceName] = useState("Kickair");
+  const [tagline, setTagline] = useState("Cambodia's Premier Freelancing Platform");
+  const [contactEmail, setContactEmail] = useState("support@kickair.com");
+  const [supportPhone, setSupportPhone] = useState("+855 12 345 678");
+
+  // Pricing rules
+  const [minGigPrice, setMinGigPrice] = useState("5");
+  const [maxGigPrice, setMaxGigPrice] = useState("10000");
+  const [priceStep, setPriceStep] = useState("5");
+  const [primaryCurrency, setPrimaryCurrency] = useState("usd");
+  const [exchangeRate, setExchangeRate] = useState("4100");
+  const [welcomeCredit, setWelcomeCredit] = useState("10");
+  const [referralReferrer, setReferralReferrer] = useState("20");
+  const [referralNewUser, setReferralNewUser] = useState("10");
+
+  // Localization
+  const [defaultLanguage, setDefaultLanguage] = useState("en");
+  const [timezone, setTimezone] = useState("phnom_penh");
+  const [dateFormat, setDateFormat] = useState("dd_mm_yyyy");
+  const [timeFormat, setTimeFormat] = useState("24");
 
   useEffect(() => {
     api.getAdminCategories()
@@ -149,11 +171,11 @@ export default function ConfigPage() {
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, mb: 3 }}>
               <Typography fontWeight={700} fontSize={20} mb={3}>Platform Information</Typography>
               <Stack gap={3}>
-                <AdminInput label="Marketplace Name" defaultValue="Kickair" fullWidth />
-                <AdminInput label="Tagline" defaultValue="Cambodia's Premier Freelancing Platform" fullWidth />
+                <TextInput label="Marketplace Name" value={marketplaceName} onChange={setMarketplaceName} />
+                <TextInput label="Tagline" value={tagline} onChange={setTagline} />
                 <Stack direction="row" gap={2}>
-                  <AdminInput label="Contact Email" type="email" defaultValue="support@kickair.com" fullWidth />
-                  <AdminInput label="Support Phone" type="tel" defaultValue="+855 12 345 678" fullWidth />
+                  <TextInput label="Contact Email" type="email" value={contactEmail} onChange={setContactEmail} />
+                  <TextInput label="Support Phone" type="tel" value={supportPhone} onChange={setSupportPhone} />
                 </Stack>
                 <Box>
                   <Typography variant="body2" fontWeight={500} color="grey.700" mb={1.5}>
@@ -220,14 +242,15 @@ export default function ConfigPage() {
               </Stack>
 
               {/* Add new category inline */}
-              <Stack direction="row" gap={1} mb={3}>
-                <AdminInput
-                  placeholder="New category name..."
-                  value={newCategoryName}
-                  onChange={(e) => setNewCategoryName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addCategory()}
-                  sx={{ flex: 1 }}
-                />
+              <Stack direction="row" gap={1} mb={3} alignItems="flex-start">
+                <Box sx={{ flex: 1 }}>
+                  <TextInput
+                    placeholder="New category name..."
+                    value={newCategoryName}
+                    onChange={setNewCategoryName}
+                    onKeyDown={(e) => e.key === "Enter" && addCategory()}
+                  />
+                </Box>
                 <Button
                   variant="contained"
                   startIcon={addingCategory ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
@@ -292,14 +315,15 @@ export default function ConfigPage() {
                 <Typography variant="body2" fontWeight={500} color="grey.700" mb={1}>
                   Add Skills (Cambodia-specific)
                 </Typography>
-                <Stack direction="row" gap={1}>
-                  <AdminInput
-                    placeholder="Enter skill name..."
-                    value={newSkillName}
-                    onChange={(e) => setNewSkillName(e.target.value)}
-                    onKeyDown={(e) => e.key === "Enter" && addSkill()}
-                    sx={{ flex: 1 }}
-                  />
+                <Stack direction="row" gap={1} alignItems="flex-start">
+                  <Box sx={{ flex: 1 }}>
+                    <TextInput
+                      placeholder="Enter skill name..."
+                      value={newSkillName}
+                      onChange={setNewSkillName}
+                      onKeyDown={(e) => e.key === "Enter" && addSkill()}
+                    />
+                  </Box>
                   <Button
                     variant="contained"
                     startIcon={addingSkill ? <CircularProgress size={14} color="inherit" /> : null}
@@ -350,9 +374,9 @@ export default function ConfigPage() {
                 <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, height: "100%" }}>
                   <Typography fontWeight={700} fontSize={20} mb={3}>Price Limits</Typography>
                   <Stack gap={2.5}>
-                    <AdminInput label="Minimum Gig Price (USD)" type="number" defaultValue="5" fullWidth />
-                    <AdminInput label="Maximum Gig Price (USD)" type="number" defaultValue="10000" fullWidth />
-                    <AdminInput label="Price Step Size (USD)" type="number" defaultValue="5" fullWidth helperText="Minimum increment for pricing" />
+                    <TextInput label="Minimum Gig Price (USD)" type="number" inputMode="numeric" value={minGigPrice} onChange={setMinGigPrice} />
+                    <TextInput label="Maximum Gig Price (USD)" type="number" inputMode="numeric" value={maxGigPrice} onChange={setMaxGigPrice} />
+                    <TextInput label="Price Step Size (USD)" type="number" inputMode="numeric" value={priceStep} onChange={setPriceStep} helper="Minimum increment for pricing" />
                   </Stack>
                 </Paper>
               </Grid>
@@ -361,15 +385,20 @@ export default function ConfigPage() {
                 <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, height: "100%" }}>
                   <Typography fontWeight={700} fontSize={20} mb={3}>Currency Settings</Typography>
                   <Stack gap={2.5}>
-                    <AdminInput label="Primary Currency" select fullWidth defaultValue="usd">
-                      <MenuItem value="usd">USD - US Dollar</MenuItem>
-                      <MenuItem value="khr">KHR - Cambodian Riel</MenuItem>
-                    </AdminInput>
+                    <SelectInput
+                      label="Primary Currency"
+                      value={primaryCurrency}
+                      onChange={(v) => setPrimaryCurrency(String(v))}
+                      options={[
+                        { value: "usd", label: "USD - US Dollar" },
+                        { value: "khr", label: "KHR - Cambodian Riel" },
+                      ]}
+                    />
                     <Stack direction="row" alignItems="center" gap={1.5}>
                       <Switch defaultChecked size="small" />
                       <Typography variant="body2" color="grey.600">Allow both USD and KHR</Typography>
                     </Stack>
-                    <AdminInput label="Exchange Rate (1 USD = KHR)" type="number" defaultValue="4100" fullWidth helperText="Updated automatically daily" />
+                    <TextInput label="Exchange Rate (1 USD = KHR)" type="number" inputMode="numeric" value={exchangeRate} onChange={setExchangeRate} helper="Updated automatically daily" />
                   </Stack>
                 </Paper>
               </Grid>
@@ -378,9 +407,9 @@ export default function ConfigPage() {
                 <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
                   <Typography fontWeight={700} fontSize={20} mb={3}>Promotional Credit Rules</Typography>
                   <Stack gap={2.5}>
-                    <AdminInput label="New User Welcome Credit (USD)" type="number" defaultValue="10" fullWidth />
-                    <AdminInput label="Referral Bonus – Referrer (USD)" type="number" defaultValue="20" fullWidth />
-                    <AdminInput label="Referral Bonus – New User (USD)" type="number" defaultValue="10" fullWidth />
+                    <TextInput label="New User Welcome Credit (USD)" type="number" inputMode="numeric" value={welcomeCredit} onChange={setWelcomeCredit} />
+                    <TextInput label="Referral Bonus – Referrer (USD)" type="number" inputMode="numeric" value={referralReferrer} onChange={setReferralReferrer} />
+                    <TextInput label="Referral Bonus – New User (USD)" type="number" inputMode="numeric" value={referralNewUser} onChange={setReferralNewUser} />
                   </Stack>
                   <Button variant="contained" fullWidth sx={{ mt: 3, py: 1.5 }}>
                     Save Pricing Settings
@@ -473,10 +502,15 @@ export default function ConfigPage() {
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 2, mb: 3 }}>
               <Typography fontWeight={700} fontSize={20} mb={3}>Language Settings</Typography>
               <Stack gap={3}>
-                <AdminInput label="Default Language" select fullWidth defaultValue="en">
-                  <MenuItem value="en">English</MenuItem>
-                  <MenuItem value="km">ខ្មែរ (Khmer)</MenuItem>
-                </AdminInput>
+                <SelectInput
+                  label="Default Language"
+                  value={defaultLanguage}
+                  onChange={(v) => setDefaultLanguage(String(v))}
+                  options={[
+                    { value: "en", label: "English" },
+                    { value: "km", label: "ខ្មែរ (Khmer)" },
+                  ]}
+                />
                 <Box>
                   <Typography variant="body2" fontWeight={500} color="grey.700" mb={1.5}>
                     Supported Languages
@@ -516,19 +550,34 @@ export default function ConfigPage() {
             <Paper variant="outlined" sx={{ p: 3, borderRadius: 2 }}>
               <Typography fontWeight={700} fontSize={20} mb={3}>Regional Settings</Typography>
               <Stack gap={2.5}>
-                <AdminInput label="Timezone" select fullWidth defaultValue="phnom_penh">
-                  <MenuItem value="phnom_penh">Asia/Phnom_Penh (UTC+7)</MenuItem>
-                  <MenuItem value="bangkok">Asia/Bangkok (UTC+7)</MenuItem>
-                </AdminInput>
-                <AdminInput label="Date Format" select fullWidth defaultValue="dd_mm_yyyy">
-                  <MenuItem value="dd_mm_yyyy">DD/MM/YYYY</MenuItem>
-                  <MenuItem value="mm_dd_yyyy">MM/DD/YYYY</MenuItem>
-                  <MenuItem value="yyyy_mm_dd">YYYY-MM-DD</MenuItem>
-                </AdminInput>
-                <AdminInput label="Time Format" select fullWidth defaultValue="24">
-                  <MenuItem value="24">24-hour</MenuItem>
-                  <MenuItem value="12">12-hour (AM/PM)</MenuItem>
-                </AdminInput>
+                <SelectInput
+                  label="Timezone"
+                  value={timezone}
+                  onChange={(v) => setTimezone(String(v))}
+                  options={[
+                    { value: "phnom_penh", label: "Asia/Phnom_Penh (UTC+7)" },
+                    { value: "bangkok", label: "Asia/Bangkok (UTC+7)" },
+                  ]}
+                />
+                <SelectInput
+                  label="Date Format"
+                  value={dateFormat}
+                  onChange={(v) => setDateFormat(String(v))}
+                  options={[
+                    { value: "dd_mm_yyyy", label: "DD/MM/YYYY" },
+                    { value: "mm_dd_yyyy", label: "MM/DD/YYYY" },
+                    { value: "yyyy_mm_dd", label: "YYYY-MM-DD" },
+                  ]}
+                />
+                <SelectInput
+                  label="Time Format"
+                  value={timeFormat}
+                  onChange={(v) => setTimeFormat(String(v))}
+                  options={[
+                    { value: "24", label: "24-hour" },
+                    { value: "12", label: "12-hour (AM/PM)" },
+                  ]}
+                />
               </Stack>
               <Button variant="contained" fullWidth sx={{ mt: 3, py: 1.5 }}>
                 Save Localization Settings

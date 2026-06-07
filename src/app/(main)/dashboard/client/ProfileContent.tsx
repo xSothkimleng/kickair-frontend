@@ -8,17 +8,11 @@ import {
   Typography,
   Button,
   Chip,
-  TextField,
-  Select,
-  MenuItem,
-  FormControl,
-  InputLabel,
   Card,
   CardContent,
   Avatar,
   Stack,
   Paper,
-  InputAdornment,
   CircularProgress,
   Alert,
   Snackbar,
@@ -34,6 +28,7 @@ import {
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { Industry, ClientProfileRequest } from "@/types/user";
+import { TextInput, SelectInput } from "@/components/ui/inputs";
 
 const COMPANY_SIZES = [
   { value: "1-10", label: "1-10 employees" },
@@ -337,120 +332,51 @@ export default function ProfileContent() {
 
           {/* Basic Information */}
           <Stack spacing={3}>
-            <TextField
+            <TextInput
               label='Full Name'
               value={user.name}
               disabled
-              fullWidth
-              helperText='Name is managed in account settings'
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  fontSize: 13,
-                },
-              }}
+              helper='Name is managed in account settings'
             />
 
-            <TextField
+            <TextInput
               label='Company Name'
               value={formData.company_name}
-              onChange={e => handleInputChange("company_name", e.target.value)}
+              onChange={v => handleInputChange("company_name", v)}
               placeholder='Your company name'
-              fullWidth
-              inputProps={{ maxLength: 255 }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  fontSize: 13,
-                },
-              }}
             />
 
-            <FormControl fullWidth>
-              <InputLabel sx={{ fontSize: 13 }}>Industry</InputLabel>
-              <Select
-                value={formData.industry_id}
-                onChange={e => handleInputChange("industry_id", e.target.value)}
-                label='Industry'
-                disabled={loadingIndustries}
-                sx={{
-                  borderRadius: 2,
-                  fontSize: 13,
-                }}>
-                <MenuItem value=''>
-                  <em>Select an industry</em>
-                </MenuItem>
-                {industries.map(industry => (
-                  <MenuItem key={industry.id} value={industry.id}>
-                    {industry.name}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SelectInput
+              label='Industry'
+              value={formData.industry_id}
+              onChange={v => handleInputChange("industry_id", v)}
+              options={industries.map(industry => ({ value: industry.id, label: industry.name ?? "" }))}
+              placeholder='Select an industry'
+              disabled={loadingIndustries}
+            />
 
-            <FormControl fullWidth>
-              <InputLabel sx={{ fontSize: 13 }}>Company Size</InputLabel>
-              <Select
-                value={formData.company_size}
-                onChange={e => handleInputChange("company_size", e.target.value)}
-                label='Company Size'
-                sx={{
-                  borderRadius: 2,
-                  fontSize: 13,
-                }}>
-                <MenuItem value=''>
-                  <em>Select company size</em>
-                </MenuItem>
-                {COMPANY_SIZES.map(size => (
-                  <MenuItem key={size.value} value={size.value}>
-                    {size.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+            <SelectInput
+              label='Company Size'
+              value={formData.company_size}
+              onChange={v => handleInputChange("company_size", v)}
+              options={COMPANY_SIZES.map(size => ({ value: size.value, label: size.label }))}
+              placeholder='Select company size'
+            />
 
-            <TextField
+            <TextInput
               label='Location'
               value={formData.location}
-              onChange={e => handleInputChange("location", e.target.value)}
+              onChange={v => handleInputChange("location", v)}
               placeholder='City, Country'
-              fullWidth
-              inputProps={{ maxLength: 255 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <MapPinIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  fontSize: 13,
-                },
-              }}
+              startIcon={<MapPinIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
             />
 
-            <TextField
+            <TextInput
               label='Website'
               value={formData.website}
-              onChange={e => handleInputChange("website", e.target.value)}
+              onChange={v => handleInputChange("website", v)}
               placeholder='https://yourwebsite.com'
-              fullWidth
-              inputProps={{ maxLength: 255 }}
-              InputProps={{
-                startAdornment: (
-                  <InputAdornment position='start'>
-                    <GlobeIcon sx={{ fontSize: 16, color: "text.secondary" }} />
-                  </InputAdornment>
-                ),
-              }}
-              sx={{
-                "& .MuiOutlinedInput-root": {
-                  borderRadius: 2,
-                  fontSize: 13,
-                },
-              }}
+              startIcon={<GlobeIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
             />
 
             <Box>

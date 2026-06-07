@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Box,
   Container,
@@ -8,13 +8,8 @@ import {
   Typography,
   Checkbox,
   FormControlLabel,
-  TextField,
-  Select,
-  MenuItem,
   Chip,
   Fab,
-  InputAdornment,
-  SelectChangeEvent,
   CircularProgress,
   Alert,
   Pagination,
@@ -27,7 +22,6 @@ import {
 } from "@mui/material";
 import {
   TuneOutlined,
-  Search as SearchIcon,
   KeyboardArrowUp,
   KeyboardArrowDown,
   Close as CloseIcon,
@@ -38,26 +32,15 @@ import { FreelancerCard } from "@/components/layout/card/FreelancerCard";
 import { FreelancerListCard } from "@/components/layout/card/FreelancerListCard";
 import { api } from "@/lib/api";
 import { FreelancerProfile } from "@/types/user";
+import { SearchInput, SelectInput } from "@/components/ui/inputs";
 
 // ─── shared tokens ────────────────────────────────────────────────────────────
 
-const inputSx = {
-  "& .MuiOutlinedInput-root": {
-    height: 36,
-    fontSize: 13,
-    borderRadius: "8px",
-    backgroundColor: "#FFFFFF",
-    "& fieldset": { borderColor: "#E2E8F0" },
-    "&:hover fieldset": { borderColor: "#CBD5E1" },
-    "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" },
-    "&.Mui-focused": { boxShadow: "0 0 0 3px rgba(15,23,42,0.06)" },
-  },
-  "& .MuiOutlinedInput-input": {
-    padding: "0 12px",
-    color: "#0F172A",
-    "&::placeholder": { color: "#94A3B8", opacity: 1 },
-  },
-};
+const SORT_OPTIONS = [
+  { value: "relevant", label: "Most Relevant" },
+  { value: "name-asc", label: "Name: A–Z" },
+  { value: "name-desc", label: "Name: Z–A" },
+];
 
 const activeChipSx = {
   height: 26,
@@ -155,23 +138,14 @@ function CheckboxFacet({
 
   return (
     <>
-      <TextField
-        placeholder={searchPlaceholder}
-        value={searchValue}
-        onChange={(e) => onSearchChange(e.target.value)}
-        fullWidth
-        size="small"
-        sx={{ ...inputSx, mb: 1 }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon sx={{ fontSize: 16, color: "text.disabled" }} />
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
+      <Box sx={{ mb: 1 }}>
+        <SearchInput
+          size="sm"
+          placeholder={searchPlaceholder}
+          value={searchValue}
+          onChange={onSearchChange}
+        />
+      </Box>
       <Box
         sx={{
           maxHeight: 200,
@@ -269,8 +243,6 @@ export default function FindFreelancersPage() {
   const [languageSearch, setLanguageSearch] = useState("");
   const [expertiseSearch, setExpertiseSearch] = useState("");
 
-  const searchRef = useRef<HTMLInputElement>(null);
-
   const fetchProfiles = useCallback(async (page: number = 1) => {
     setLoading(true);
     setError(null);
@@ -303,7 +275,7 @@ export default function FindFreelancersPage() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        searchRef.current?.focus();
+        document.getElementById("find-freelancer-search")?.focus();
       }
     };
     window.addEventListener("keydown", onKey);
@@ -697,88 +669,21 @@ export default function FindFreelancersPage() {
             {/* Results toolbar */}
             <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
               {/* Keyword search */}
-              <TextField
-                inputRef={searchRef}
-                fullWidth
+              <SearchInput
+                id="find-freelancer-search"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={setQuery}
                 placeholder="Search freelancers by name, skill, or expertise…"
-                slotProps={{
-                  input: {
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <SearchIcon sx={{ fontSize: 18, color: "text.disabled" }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: query ? (
-                      <InputAdornment position="end">
-                        <CloseIcon
-                          sx={{ fontSize: 16, color: "text.disabled", cursor: "pointer", "&:hover": { color: "text.primary" } }}
-                          onClick={() => setQuery("")}
-                        />
-                      </InputAdornment>
-                    ) : undefined,
-                  },
-                }}
-                sx={{
-                  "& .MuiOutlinedInput-root": {
-                    height: 44,
-                    fontSize: 14,
-                    borderRadius: "10px",
-                    backgroundColor: "#FFFFFF",
-                    boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
-                    "& fieldset": { borderColor: "#E2E8F0" },
-                    "&:hover fieldset": { borderColor: "#CBD5E1" },
-                    "&.Mui-focused fieldset": {
-                      borderColor: "#0F172A",
-                      borderWidth: "1px",
-                    },
-                    "&.Mui-focused": {
-                      boxShadow: "0 0 0 3px rgba(15,23,42,0.06)",
-                    },
-                  },
-                  "& .MuiOutlinedInput-input": {
-                    color: "#0F172A",
-                    "&::placeholder": { color: "#94A3B8", opacity: 1 },
-                  },
-                }}
               />
 
               {/* Sort */}
-              <Select
-                value={sortBy}
-                onChange={(e: SelectChangeEvent) => setSortBy(e.target.value)}
-                sx={{
-                  height: 44,
-                  minWidth: 180,
-                  borderRadius: "10px",
-                  backgroundColor: "#FFFFFF",
-                  fontSize: 13,
-                  fontWeight: 500,
-                  color: "#0F172A",
-                  boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
-                  "& .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#E2E8F0",
-                  },
-                  "&:hover .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#CBD5E1",
-                  },
-                  "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
-                    borderColor: "#0F172A",
-                    borderWidth: "1px",
-                  },
-                }}
-              >
-                <MenuItem value="relevant" sx={{ fontSize: 13 }}>
-                  Most Relevant
-                </MenuItem>
-                <MenuItem value="name-asc" sx={{ fontSize: 13 }}>
-                  Name: A–Z
-                </MenuItem>
-                <MenuItem value="name-desc" sx={{ fontSize: 13 }}>
-                  Name: Z–A
-                </MenuItem>
-              </Select>
+              <Box sx={{ minWidth: 180 }}>
+                <SelectInput
+                  value={sortBy}
+                  onChange={(v) => setSortBy(String(v))}
+                  options={SORT_OPTIONS}
+                />
+              </Box>
             </Stack>
 
             {/* Count + view toggle row */}

@@ -8,9 +8,6 @@ import {
   Typography,
   Avatar,
   Button,
-  TextField,
-  InputAdornment,
-  IconButton,
   Chip,
   Alert,
   Dialog,
@@ -21,8 +18,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
-import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
-import VisibilityOffOutlinedIcon from "@mui/icons-material/VisibilityOffOutlined";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
@@ -33,6 +28,7 @@ import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { TextInput, PasswordInput, OtpInput } from "@/components/ui/inputs";
 
 // ─── Style tokens ──────────────────────────────────────────────────────────────
 
@@ -41,24 +37,6 @@ const sectionSx = {
   border: "1px solid rgba(15, 23, 42, 0.08)",
   borderRadius: "14px",
   p: { xs: 3, sm: "28px 32px" },
-};
-
-const inputSx = {
-  "& .MuiOutlinedInput-root": {
-    height: 40,
-    fontSize: 14,
-    borderRadius: "8px",
-    backgroundColor: "#FFFFFF",
-    "& fieldset": { borderColor: "#E2E8F0" },
-    "&:hover fieldset": { borderColor: "#CBD5E1" },
-    "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" },
-    "&.Mui-focused": { boxShadow: "0 0 0 3px rgba(15, 23, 42, 0.06)" },
-  },
-  "& .MuiOutlinedInput-input": {
-    p: "0 12px",
-    color: "#0F172A",
-    "&::placeholder": { color: "#94A3B8", opacity: 1 },
-  },
 };
 
 const fieldLabelSx = {
@@ -177,65 +155,6 @@ function Section({
   );
 }
 
-function PasswordField({
-  label,
-  placeholder,
-  value,
-  onChange,
-  required,
-  error,
-  helperText,
-}: {
-  label: string;
-  placeholder?: string;
-  value: string;
-  onChange: (v: string) => void;
-  required?: boolean;
-  error?: boolean;
-  helperText?: string;
-}) {
-  const [show, setShow] = React.useState(false);
-  return (
-    <Box>
-      <Typography component="label" sx={fieldLabelSx}>
-        {label}
-        {required && <Typography component="span" sx={{ color: "#DC2626", ml: 0.25 }}> *</Typography>}
-      </Typography>
-      <TextField
-        fullWidth
-        type={show ? "text" : "password"}
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder={placeholder}
-        error={error}
-        helperText={helperText}
-        sx={inputSx}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                onClick={() => setShow((v) => !v)}
-                edge="end"
-                disableRipple
-                sx={{
-                  color: "text.disabled",
-                  "&:hover": { color: "text.primary", backgroundColor: "#F1F5F9" },
-                }}
-              >
-                {show ? (
-                  <VisibilityOffOutlinedIcon sx={{ fontSize: 18 }} />
-                ) : (
-                  <VisibilityOutlinedIcon sx={{ fontSize: 18 }} />
-                )}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
-    </Box>
-  );
-}
-
 type KycStatus = "not_submitted" | "pending" | "verified" | "rejected";
 
 function KycCard({ status, onSubmit }: { status: KycStatus; onSubmit: () => void }) {
@@ -320,6 +239,7 @@ export default function SettingsPage() {
   const [name, setName] = React.useState(user?.name ?? "");
   const [email, setEmail] = React.useState(user?.email ?? "");
   const [savingProfile, setSavingProfile] = React.useState(false);
+  const [addingEmail, setAddingEmail] = React.useState(false);
   const [profileMsg, setProfileMsg] = React.useState<{ type: "success" | "error"; text: string } | null>(null);
 
   // Avatar
@@ -368,6 +288,9 @@ export default function SettingsPage() {
       .finally(() => setSessionsLoading(false));
   }, []);
 
+  // Phone-only accounts (signed up with a phone, no email) can add an email here as a
+  // second contact. Accounts that already have an email edit it via updateProfile instead.
+  const hasEmail = !!user?.email;
   const emailVerified = !!user?.email_verified_at;
   const emailChanged = email !== (user?.email ?? "");
 
@@ -440,11 +363,13 @@ export default function SettingsPage() {
     setSavingProfile(true);
     setProfileMsg(null);
     try {
-      const updatedUser = await api.updateUserProfile({ name, email });
+      // Phone-only accounts add their email through handleAddEmail, not here — only send
+      // the email field for accounts that already have one (so we never blank it out).
+      const updatedUser = await api.updateUserProfile({ name, ...(hasEmail ? { email } : {}) });
       setUser(updatedUser);
       setProfileMsg({
         type: "success",
-        text: emailChanged
+        text: hasEmail && emailChanged
           ? "Profile saved. A verification link has been sent to your new email."
           : "Profile saved successfully.",
       });
@@ -455,6 +380,24 @@ export default function SettingsPage() {
       });
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleAddEmail = async () => {
+    if (!email.trim()) return;
+    setAddingEmail(true);
+    setProfileMsg(null);
+    try {
+      const updatedUser = await api.addEmail(email.trim());
+      setUser(updatedUser);
+      setProfileMsg({ type: "success", text: "Email added — check your inbox to verify it." });
+    } catch (err) {
+      setProfileMsg({
+        type: "error",
+        text: err instanceof Error ? err.message : "Failed to add email.",
+      });
+    } finally {
+      setAddingEmail(false);
     }
   };
 
@@ -643,46 +586,35 @@ export default function SettingsPage() {
         </Section>
 
         {/* 2. Personal information */}
-        <Section title="Personal information" description="Your name and contact email.">
+        <Section
+          title="Personal information"
+          description={hasEmail ? "Your name and contact email." : "Your name and account contacts."}
+        >
           <Box
             sx={{
               display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" },
+              gridTemplateColumns: { xs: "1fr", sm: hasEmail ? "1fr 1fr" : "1fr" },
               gap: 2,
             }}
           >
-            <Box>
-              <Typography component="label" sx={fieldLabelSx}>
-                Full name <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
-              </Typography>
-              <TextField
-                fullWidth
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                sx={inputSx}
-              />
-            </Box>
-            <Box>
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
-                <Typography component="label" sx={{ ...fieldLabelSx, mb: 0 }}>
-                  Email <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
-                </Typography>
-                <StatusChip
-                  label={emailVerified ? "Verified" : "Unverified"}
-                  variant={emailVerified ? "success" : "warn"}
-                />
-              </Stack>
-              <TextField
-                fullWidth
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                sx={inputSx}
-              />
-            </Box>
+            <TextInput label="Full name" required value={name} onChange={setName} />
+            {hasEmail && (
+              <Box>
+                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
+                  <Typography component="label" sx={{ ...fieldLabelSx, mb: 0 }}>
+                    Email <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
+                  </Typography>
+                  <StatusChip
+                    label={emailVerified ? "Verified" : "Unverified"}
+                    variant={emailVerified ? "success" : "warn"}
+                  />
+                </Stack>
+                <TextInput type="email" value={email} onChange={setEmail} />
+              </Box>
+            )}
           </Box>
 
-          {emailChanged && (
+          {hasEmail && emailChanged && (
             <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mt: 1.5 }}>
               <InfoOutlinedIcon sx={{ fontSize: 14, color: "text.disabled", mt: "2px" }} />
               <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
@@ -707,6 +639,43 @@ export default function SettingsPage() {
               {savingProfile ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Save changes"}
             </Button>
           </Stack>
+
+          {/* Add email — phone-only accounts add their email here as a second contact */}
+          {!hasEmail && (
+            <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid #F1F5F9" }}>
+              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
+                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Email address</Typography>
+                <StatusChip label="Not added" variant="neutral" />
+              </Stack>
+              <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 1.75, maxWidth: 480 }}>
+                Add an email as a second way to sign in and to receive order notifications. We&apos;ll
+                send a verification link to confirm it.
+              </Typography>
+              <Stack
+                direction={{ xs: "column", sm: "row" }}
+                spacing={1.5}
+                alignItems={{ xs: "stretch", sm: "flex-start" }}
+              >
+                <Box sx={{ flex: 1 }}>
+                  <TextInput
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={setEmail}
+                    disabled={addingEmail}
+                  />
+                </Box>
+                <Button
+                  variant="contained"
+                  onClick={handleAddEmail}
+                  disabled={addingEmail || !email.trim()}
+                  sx={{ ...primaryBtnSx, whiteSpace: "nowrap" }}
+                >
+                  {addingEmail ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Add email"}
+                </Button>
+              </Stack>
+            </Box>
+          )}
         </Section>
 
         {/* 3. Phone number */}
@@ -729,14 +698,9 @@ export default function SettingsPage() {
             spacing={1.5}
             alignItems={{ xs: "stretch", sm: "center" }}
           >
-            <TextField
-              fullWidth
-              type="tel"
-              value={phone || ""}
-              placeholder="No phone number added"
-              disabled
-              sx={inputSx}
-            />
+            <Box sx={{ flex: 1 }}>
+              <TextInput type="tel" value={phone || ""} placeholder="No phone number added" disabled />
+            </Box>
             {phone && (
               <StatusChip
                 label={phoneVerified ? "Verified" : "Unverified"}
@@ -798,21 +762,17 @@ export default function SettingsPage() {
 
             <Stack spacing={1.5}>
               {/* Phone input + send code */}
-              <Stack direction="row" spacing={1}>
-                <TextField
-                  fullWidth
-                  type="tel"
-                  placeholder={phone || "+855 12 345 678"}
-                  value={newPhone}
-                  onChange={e => {
-                    setNewPhone(e.target.value);
-                    setPhoneOtpSent(false);
-                    setPhoneCode("");
-                  }}
-                  disabled={savingPhone}
-                  size="small"
-                  sx={inputSx}
-                />
+              <Stack direction="row" spacing={1} alignItems="flex-start">
+                <Box sx={{ flex: 1 }}>
+                  <TextInput
+                    type="tel"
+                    placeholder={phone || "+855 12 345 678"}
+                    value={newPhone}
+                    onChange={(v) => { setNewPhone(v); setPhoneOtpSent(false); setPhoneCode(""); }}
+                    disabled={savingPhone}
+                    size="sm"
+                  />
+                </Box>
                 <Button
                   variant="outlined"
                   onClick={handleSendPhoneOtp}
@@ -831,17 +791,7 @@ export default function SettingsPage() {
 
               {/* Code input — shown after OTP sent */}
               {phoneOtpSent && (
-                <TextField
-                  fullWidth
-                  type="text"
-                  placeholder="Enter 6-digit code"
-                  value={phoneCode}
-                  onChange={e => setPhoneCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
-                  disabled={savingPhone}
-                  size="small"
-                  inputProps={{ maxLength: 6, style: { letterSpacing: "0.3em", textAlign: "center" } }}
-                  sx={inputSx}
-                />
+                <OtpInput value={phoneCode} onChange={setPhoneCode} disabled={savingPhone} autoFocus />
               )}
             </Stack>
           </DialogContent>
@@ -872,32 +822,29 @@ export default function SettingsPage() {
           description="Use at least 8 characters with a mix of letters, numbers, and symbols."
         >
           <Stack spacing={2}>
-            <PasswordField
+            <PasswordInput
               label="Current password"
               placeholder="Enter current password"
               value={currentPassword}
               onChange={(v) => { setCurrentPassword(v); setPwErrors(p => ({ ...p, current: undefined })); }}
               required
-              error={!!pwErrors.current}
-              helperText={pwErrors.current}
+              error={pwErrors.current}
             />
-            <PasswordField
+            <PasswordInput
               label="New password"
               placeholder="Enter new password (8+ characters)"
               value={newPassword}
               onChange={(v) => { setNewPassword(v); setPwErrors(p => ({ ...p, new: undefined })); }}
               required
-              error={!!pwErrors.new}
-              helperText={pwErrors.new}
+              error={pwErrors.new}
             />
-            <PasswordField
+            <PasswordInput
               label="Confirm new password"
               placeholder="Re-enter new password"
               value={confirmPassword}
               onChange={(v) => { setConfirmPassword(v); setPwErrors(p => ({ ...p, confirm: undefined })); }}
               required
-              error={!!pwErrors.confirm}
-              helperText={pwErrors.confirm}
+              error={pwErrors.confirm}
             />
           </Stack>
 

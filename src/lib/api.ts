@@ -13,6 +13,7 @@ import {
   FreelancerProfilesListResponse,
   IdentityVerification,
   AdminKycSubmission,
+  OtpChannel,
 } from "@/types/user";
 import {
   JobPost,
@@ -198,11 +199,20 @@ class ApiClient {
     return response.data.user;
   }
 
-  async sendPhoneOtp(phone: string): Promise<void> {
+  async sendPhoneOtp(phone: string, channel: OtpChannel = "telegram"): Promise<void> {
     await this.request("/api/auth/phone/send-otp", {
       method: "POST",
-      body: JSON.stringify({ phone }),
+      body: JSON.stringify({ phone, channel }),
     });
+  }
+
+  // Enable the second account role (Start selling / Start hiring). No KYC gate.
+  async enableRole(role: "client" | "freelancer"): Promise<User> {
+    const response = await this.request("/api/account/enable-role", {
+      method: "POST",
+      body: JSON.stringify({ role }),
+    });
+    return response.data;
   }
 
   async updatePhone(phone: string, code: string): Promise<User> {
@@ -217,11 +227,14 @@ class ApiClient {
     await this.request("/api/auth/email/resend", { method: "POST" });
   }
 
-  async addEmail(email: string): Promise<void> {
-    await this.request("/api/auth/add-email", {
+  // Add an email to an account that signed up with phone only. Sends a verification
+  // link and returns the updated user. Backend rejects accounts that already have one.
+  async addEmail(email: string): Promise<User> {
+    const response = await this.request("/api/auth/add-email", {
       method: "POST",
       body: JSON.stringify({ email }),
     });
+    return response.data;
   }
 
   async logout(): Promise<void> {
@@ -511,6 +524,18 @@ class ApiClient {
     await this.delete(`/api/job-posts/${id}`);
   }
 
+  // Publish a draft → sends it to admin review. Enforces the publish gate (KYC,
+  // optionally a verified email + phone); throws with the gate message if blocked.
+  async publishService(id: number): Promise<Service> {
+    const response = await this.post(`/api/services/${id}/publish`, {});
+    return response.data;
+  }
+
+  async publishJobPost(id: number): Promise<JobPost> {
+    const response = await this.post(`/api/job-posts/${id}/publish`, {});
+    return response.data;
+  }
+
   async getClientJobPosts(page: number = 1): Promise<PaginatedResponse<JobPost>> {
     return this.get(`/api/client/job-posts?page=${page}`);
   }
@@ -607,9 +632,13 @@ class ApiClient {
     return response.data ?? null;
   }
 
-  async submitKyc(idDocument: File, selfie: File): Promise<IdentityVerification> {
+  // Submit KYC: a document type, the front (and back, for ID cards/licenses) of the
+  // document, and a live selfie. `back` is null for passports.
+  async submitKyc(documentType: string, front: File, back: File | null, selfie: File): Promise<IdentityVerification> {
     const formData = new FormData();
-    formData.append("id_document", idDocument);
+    formData.append("document_type", documentType);
+    formData.append("id_document", front);
+    if (back) formData.append("document_back", back);
     formData.append("selfie", selfie);
 
     const url = `${API_URL}/api/kyc/submit`;
@@ -791,6 +820,12 @@ class ApiClient {
     return res.data;
   }
 
+  // Full detail for one user (admin User Detail page).
+  async getAdminUser(id: number): Promise<AdminUserDetail> {
+    const res = await this.get(`/api/admin/users/${id}`);
+    return res.data;
+  }
+
   // ── Admin Categories ──────────────────────────────────────────────────────
   async getAdminCategories(): Promise<AdminCategory[]> {
     const res = await this.get("/api/admin/categories");
@@ -867,6 +902,69 @@ export interface AdminUser {
   freelancer_rating: string | null;
   completed_orders: number | null;
   created_at: string;
+}
+
+export interface AdminUserKycDocument {
+  label: string;
+  url: string;
+  kind: "doc" | "selfie";
+}
+
+export interface AdminUserKyc {
+  id: number;
+  status: "pending" | "approved" | "rejected";
+  document_type: string | null;
+  submitted_at: string;
+  reviewed_at: string | null;
+  reviewer: string | null;
+  admin_note: string | null;
+  documents: AdminUserKycDocument[];
+}
+
+export interface AdminUserDetail {
+  id: number;
+  name: string;
+  email: string | null;
+  telephone: string | null;
+  avatar_url: string | null;
+  is_client: boolean;
+  is_freelancer: boolean;
+  is_verified_id: boolean;
+  is_verified_phone: boolean;
+  email_verified_at: string | null;
+  created_at: string;
+  last_active_at: string | null;
+  location: string | null;
+  freelancer_profile: {
+    tagline: string | null;
+    about: string | null;
+    location: string | null;
+    level: string;
+    rating: number | null;
+    rating_count: number;
+    completed_orders: number;
+    skills: string[];
+    languages: { name: string; proficiency: string }[];
+  } | null;
+  client_profile: {
+    company_name: string | null;
+    industry: string | null;
+    location: string | null;
+    website: string | null;
+    about: string | null;
+  } | null;
+  activity: {
+    orders_placed?: number;
+    orders_completed_as_client?: number;
+    job_posts?: number;
+    total_spent?: number;
+    orders_completed?: number;
+    services?: number;
+    rating?: number | null;
+    reviews?: number;
+    total_earned?: number;
+  };
+  kyc: AdminUserKyc | null;
 }
 
 export interface AdminStats {
