@@ -1,20 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Paper, Typography, Button, Chip, Stack, CircularProgress, Avatar, IconButton, Tooltip, Alert } from "@mui/material";
-import {
-  AddOutlined,
-  WorkOutlined,
-  EditOutlined,
-  PeopleOutlineOutlined,
-  AccessTimeOutlined,
-  ChevronRightOutlined,
-  ReplayOutlined,
-  InfoOutlined,
-} from "@mui/icons-material";
+import { Box, Paper, Typography, Button, Stack, CircularProgress, Alert } from "@mui/material";
+import { AddOutlined, WorkOutlined, EditOutlined, ReplayOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { JobPost, JobPostStatus } from "@/types/job";
+import { tokens } from "@/theme";
+import { StatusPill, KebabMenu, Facts, Banner, Chevron, mgCardSx, type CardTone, type Fact, type MenuAction } from "@/components/dashboard/ManagementCard";
 import JobPostForm from "@/components/jobs/JobPostForm";
 import JobDraftCard from "@/components/jobs/JobDraftCard";
 
@@ -34,23 +27,17 @@ function formatCurrency(value: string) {
   return num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
-function statusColor(status: JobPostStatus) {
-  switch (status) {
-    case "open":
-      return { bgcolor: "rgba(22,163,74,0.1)", color: "#15803d" };
-    case "in_progress":
-      return { bgcolor: "rgba(37,99,235,0.1)", color: "#1e40af" };
-    case "completed":
-      return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
-    case "cancelled":
-      return { bgcolor: "rgba(239,68,68,0.1)", color: "#b91c1c" };
-    default:
-      return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
-  }
-}
-
-function statusLabel(status: JobPostStatus) {
-  return status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase());
+const JOB_TONE: Record<JobPostStatus, { tone: CardTone; label: string }> = {
+  draft: { tone: "neutral", label: "Draft" },
+  pending_review: { tone: "pending", label: "Pending review" },
+  open: { tone: "success", label: "Open" },
+  in_progress: { tone: "info", label: "In progress" },
+  completed: { tone: "neutral", label: "Completed" },
+  cancelled: { tone: "neutral", label: "Cancelled" },
+  rejected: { tone: "error", label: "Rejected" },
+};
+function daysLeft(dateStr: string) {
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000);
 }
 
 interface JobRowProps {
@@ -61,127 +48,59 @@ interface JobRowProps {
 
 function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
   const router = useRouter();
-  const [cancelling, setCancelling] = useState(false);
+  const cfg = JOB_TONE[job.status] ?? JOB_TONE.open;
+  const dl = job.deadline ? daysLeft(job.deadline) : null;
 
   const handleCancel = async () => {
     if (!confirm("Cancel this job post? This cannot be undone.")) return;
-    setCancelling(true);
     try {
       await api.deleteJobPost(job.id);
       onCancelled(job.id);
     } catch (err) {
       alert(err instanceof Error ? err.message : "Failed to cancel job post.");
-    } finally {
-      setCancelling(false);
     }
   };
 
-  const canCancel = job.status === "open" || job.status === "in_progress";
-  const isRejected = job.status === "rejected";
+  const facts: Fact[] = [
+    { label: "Budget · USD", mono: true, value: `${formatCurrency(job.budget_min)} – ${formatCurrency(job.budget_max)}` },
+    { label: "Proposals", value: job.proposal_count ? `${job.proposal_count} proposal${job.proposal_count === 1 ? "" : "s"}` : "None yet", color: job.proposal_count ? undefined : tokens.text3 },
+  ];
+  if ((job.status === "open" || job.status === "in_progress") && job.deadline) {
+    facts.push({
+      label: "Deadline",
+      value: dl !== null && dl <= 0 ? "Overdue" : dl !== null && dl <= 7 ? `In ${dl} day${dl === 1 ? "" : "s"}` : formatDate(job.deadline),
+      color: dl !== null && dl <= 3 ? tokens.errorText : undefined,
+    });
+  }
+
+  const edit: MenuAction = { icon: <EditOutlined sx={{ fontSize: 18 }} />, label: "Edit job", onClick: onEdit };
+  const menu: MenuAction[] =
+    job.status === "rejected"
+      ? [edit, { icon: <ReplayOutlined sx={{ fontSize: 18 }} />, label: "Resubmit for review", onClick: onEdit }]
+      : job.status === "open" || job.status === "in_progress"
+        ? [edit, { sep: true, label: "" }, { icon: <CloseOutlined sx={{ fontSize: 18 }} />, label: "Cancel job", danger: true, onClick: handleCancel }]
+        : job.status === "pending_review"
+          ? [edit]
+          : [];
 
   return (
     <Box
+      role="button"
+      tabIndex={0}
       onClick={() => router.push(`/dashboard/jobs/${job.id}/proposals`)}
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        gap: 1.5,
-        p: 2.5,
-        borderRadius: 3,
-        border: "1px solid rgba(0,0,0,0.07)",
-        bgcolor: "white",
-        cursor: "pointer",
-        transition: "all 0.15s",
-        "&:hover": { borderColor: "rgba(0,0,0,0.15)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" },
-      }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-      {/* Icon */}
-      <Avatar sx={{ width: 44, height: 44, bgcolor: "rgba(0,113,227,0.1)" }}>
-        <WorkOutlined sx={{ fontSize: 20, color: "#0071e3" }} />
-      </Avatar>
-
-      {/* Info */}
-      <Box flex={1} minWidth={0}>
-        <Typography sx={{ fontSize: 14, fontWeight: 600, mb: 0.25 }} noWrap>
-          {job.title}
-        </Typography>
-        <Stack direction='row' spacing={2} alignItems='center'>
-          <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-            {formatCurrency(job.budget_min)} – {formatCurrency(job.budget_max)}
-          </Typography>
-          <Stack direction='row' spacing={0.5} alignItems='center'>
-            <PeopleOutlineOutlined sx={{ fontSize: 13, color: "text.secondary" }} />
-            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-              {job.proposal_count} proposal{job.proposal_count !== 1 ? "s" : ""}
-            </Typography>
-          </Stack>
-          <Stack direction='row' spacing={0.5} alignItems='center'>
-            <AccessTimeOutlined sx={{ fontSize: 13, color: "text.secondary" }} />
-            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>Due {formatDate(job.deadline)}</Typography>
-          </Stack>
-        </Stack>
-      </Box>
-
-      {/* Status */}
-      <Chip label={statusLabel(job.status)} size='small' sx={{ fontSize: 11, height: 24, ...statusColor(job.status) }} />
-
-      {/* Actions (clicks here must not trigger the card's navigation) */}
-      <Stack direction='row' spacing={0.5} alignItems='center' onClick={e => e.stopPropagation()}>
-        {isRejected ? (
-          <Button
-            size='small'
-            onClick={onEdit}
-            startIcon={<ReplayOutlined sx={{ fontSize: 15 }} />}
-            sx={{
-              fontSize: 12,
-              textTransform: "none",
-              borderRadius: 8,
-              bgcolor: "black",
-              color: "white",
-              px: 1.5,
-              "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-            }}>
-            Resubmit
-          </Button>
-        ) : (
-          <Tooltip title='Edit'>
-            <IconButton size='small' onClick={onEdit} sx={{ color: "rgba(0,0,0,0.5)" }}>
-              <EditOutlined sx={{ fontSize: 16 }} />
-            </IconButton>
-          </Tooltip>
-        )}
-
-        {canCancel && (
-          <Button
-            size='small'
-            disabled={cancelling}
-            onClick={handleCancel}
-            sx={{
-              fontSize: 11,
-              textTransform: "none",
-              borderRadius: 8,
-              color: "#b91c1c",
-              "&:hover": { bgcolor: "rgba(239,68,68,0.05)" },
-            }}>
-            {cancelling ? <CircularProgress size={12} /> : "Cancel"}
-          </Button>
-        )}
-      </Stack>
-      <ChevronRightOutlined sx={{ fontSize: 20, color: "rgba(0,0,0,0.25)", flexShrink: 0 }} />
-      </Box>
-
-      {/* Rejection reason (C9) */}
-      {isRejected && (
-        <Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", display: "flex", gap: 1, alignItems: "flex-start" }}>
-          <InfoOutlined sx={{ fontSize: 16, color: "#dc2626", mt: "1px" }} />
-          <Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#dc2626" }}>Rejected by admin</Typography>
-            <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.7)" }}>
-              {job.rejection_reason || "No reason provided. Use Resubmit to send it for review again."}
-            </Typography>
-          </Box>
+      sx={{ ...mgCardSx, display: "flex", alignItems: "center", gap: 2, p: "20px 22px" }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.625, flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5 }}>
+          <StatusPill tone={cfg.tone} label={cfg.label} />
+          <KebabMenu items={menu} />
         </Box>
-      )}
+        <Typography sx={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 }}>{job.title}</Typography>
+        <Facts items={facts} />
+        {job.status === "rejected" && (
+          <Banner tone="error" icon={<InfoOutlined sx={{ fontSize: 16 }} />} label="Rejected by admin" text={job.rejection_reason || "No reason provided. Use Resubmit to send it for review again."} />
+        )}
+      </Box>
+      <Chevron />
     </Box>
   );
 }

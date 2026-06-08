@@ -9,6 +9,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { Box, CircularProgress, Button, Tooltip, IconButton } from "@mui/material";
 import LaunchIcon from "@mui/icons-material/Launch";
 import LogoutIcon from "@mui/icons-material/Logout";
+import { tokens } from "@/theme";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { user, loading, logout } = useAuth();
@@ -44,24 +45,24 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   }
 
   return (
-    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: "grey.50" }}>
+    <Box sx={{ display: "flex", minHeight: "100vh", bgcolor: tokens.canvas }}>
       <GlobalNotificationToast />
       <AdminSidebar />
-      <Box component='main' sx={{ flex: 1, overflow: "auto", display: "flex", flexDirection: "column" }}>
+      <Box component='main' sx={{ flex: 1, minWidth: 0, overflow: "auto", display: "flex", flexDirection: "column" }}>
         <Box
           sx={{
             display: "flex",
             alignItems: "center",
             justifyContent: "flex-end",
             gap: 1,
-            px: 3,
-            height: 56,
-            borderBottom: "1px solid",
-            borderColor: "grey.200",
-            bgcolor: "white",
+            px: 3.5,
+            height: 64,
+            borderBottom: `1px solid ${tokens.border}`,
+            bgcolor: "rgba(255,255,255,0.82)",
+            backdropFilter: "blur(8px)",
             position: "sticky",
             top: 0,
-            zIndex: 10,
+            zIndex: 20,
           }}
         >
           <Button

@@ -1,6 +1,20 @@
-import { Box, Typography, IconButton, Chip, Button } from "@mui/material";
-import { EditOutlined, VisibilityOutlined, DeleteOutlined, InfoOutlined, ReplayOutlined } from "@mui/icons-material";
+"use client";
+
+import { Box, Typography } from "@mui/material";
+import {
+  EditOutlined,
+  VisibilityOutlined,
+  DeleteOutlined,
+  ReplayOutlined,
+  InfoOutlined,
+  AccessTimeOutlined,
+} from "@mui/icons-material";
 import { Service } from "@/types/service";
+import { tokens } from "@/theme";
+import {
+  StatusPill, CategoryPill, KebabMenu, Facts, Banner, CoverThumb, Chevron, mgCardSx,
+  type CardTone, type Fact, type MenuAction,
+} from "@/components/dashboard/ManagementCard";
 
 interface ServiceCardProps {
   service: Service;
@@ -9,146 +23,65 @@ interface ServiceCardProps {
   onDelete?: () => void;
 }
 
-const STATUS_CONFIG: Record<Service["status"], { label: string; color: string; bg: string }> = {
-  active: { label: "Active", color: "#16a34a", bg: "rgba(22, 163, 74, 0.1)" },
-  pending_review: { label: "Pending review", color: "#b45309", bg: "rgba(217, 119, 6, 0.12)" },
-  rejected: { label: "Rejected", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
-  draft: { label: "Draft", color: "#b45309", bg: "rgba(245, 158, 11, 0.1)" },
-  disabled: { label: "Disabled", color: "#dc2626", bg: "rgba(220, 38, 38, 0.1)" },
+const SERVICE_TONE: Record<Service["status"], { tone: CardTone; label: string }> = {
+  active: { tone: "success", label: "Active" },
+  pending_review: { tone: "pending", label: "Pending review" },
+  rejected: { tone: "error", label: "Rejected" },
+  draft: { tone: "neutral", label: "Draft" },
+  disabled: { tone: "neutral", label: "Disabled" },
 };
 
+const usd = (v: string | number) => "$" + Number(v).toLocaleString("en-US", { maximumFractionDigits: 0 });
+
 export default function ServiceCard({ service, onEdit, onView, onDelete }: ServiceCardProps) {
-  // Get price range from pricing options
-  const prices = service.pricing_options?.map(opt => parseFloat(opt.price)) || [];
-  const minPrice = prices.length > 0 ? Math.min(...prices) : 0;
-  const maxPrice = prices.length > 0 ? Math.max(...prices) : 0;
-  const status = STATUS_CONFIG[service.status] ?? STATUS_CONFIG.active;
+  const cfg = SERVICE_TONE[service.status] ?? SERVICE_TONE.active;
+  const muted = service.status === "disabled" || service.status === "draft";
+
+  const prices = service.pricing_options?.map(o => parseFloat(o.price)).filter(p => p > 0) ?? [];
+  const minPrice = prices.length ? Math.min(...prices) : 0;
+  const maxPrice = prices.length ? Math.max(...prices) : 0;
+
+  const facts: Fact[] = [
+    { label: "Orders", value: service.orders_count ? `${service.orders_count} order${service.orders_count === 1 ? "" : "s"}` : "No orders yet", color: service.orders_count ? undefined : tokens.text3 },
+    { label: "Price · USD", mono: true, value: prices.length ? `${usd(minPrice)} – ${usd(maxPrice)}` : "—" },
+  ];
+
+  const edit: MenuAction = { icon: <EditOutlined sx={{ fontSize: 18 }} />, label: "Edit service", onClick: onEdit };
+  const view: MenuAction = { icon: <VisibilityOutlined sx={{ fontSize: 18 }} />, label: service.status === "active" || service.status === "disabled" ? "View public page" : "Preview", onClick: onView };
+  const del: MenuAction = { icon: <DeleteOutlined sx={{ fontSize: 18 }} />, label: "Delete service", danger: true, onClick: onDelete };
+  const resubmit: MenuAction = { icon: <ReplayOutlined sx={{ fontSize: 18 }} />, label: service.status === "disabled" ? "Request re-review" : "Resubmit for review", onClick: onEdit };
+  const menu: MenuAction[] =
+    service.status === "rejected" || service.status === "disabled"
+      ? [edit, resubmit, view, { sep: true, label: "" }, del]
+      : [edit, view, { sep: true, label: "" }, del];
+
+  const banner =
+    service.status === "rejected" ? <Banner tone="error" icon={<InfoOutlined sx={{ fontSize: 16 }} />} label="Rejected by admin" text={service.rejection_reason || "No reason provided. Use Resubmit to send it for review again."} />
+      : service.status === "disabled" ? <Banner tone="error" icon={<InfoOutlined sx={{ fontSize: 16 }} />} label="Disabled by admin" text={service.rejection_reason || "This service has been taken down. Contact support for details."} />
+        : service.status === "pending_review" ? <Banner tone="quiet" icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />} label="Awaiting admin approval — not public yet" />
+          : service.status === "draft" ? <Banner tone="quiet" icon={<EditOutlined sx={{ fontSize: 16 }} />} label="Draft — only you can see this" />
+            : null;
 
   return (
     <Box
-      sx={{
-        p: 2,
-        border: "1px solid rgba(0, 0, 0, 0.1)",
-        borderRadius: 3,
-        transition: "border-color 0.3s",
-        "&:hover": {
-          borderColor: "rgba(0, 0, 0, 0.2)",
-        },
-      }}>
-      <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between" }}>
-        <Box sx={{ flex: 1 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5, flexWrap: "wrap" }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 500, color: "black" }}>{service.title}</Typography>
-            <Chip
-              label={status.label}
-              size="small"
-              sx={{ height: 20, fontSize: 11, fontWeight: 600, color: status.color, bgcolor: status.bg, "& .MuiChip-label": { px: 1 } }}
-            />
+      role="button"
+      tabIndex={0}
+      onClick={() => (onView ? onView() : onEdit())}
+      sx={{ ...mgCardSx, ...(muted ? { bgcolor: tokens.surface2 } : {}), display: "flex", alignItems: "center", gap: 2.25, p: 2.25 }}>
+      <CoverThumb src={service.feature_image?.file_url} size={92} radius={12} />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: 1, minWidth: 0 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5 }}>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", minWidth: 0, alignItems: "center" }}>
+            <CategoryPill>{service.category?.category_name || "Uncategorized"}</CategoryPill>
+            <StatusPill tone={cfg.tone} label={cfg.label} />
           </Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1.5 }}>{service.category?.category_name || "Uncategorized"}</Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{service.orders_count} orders</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>•</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
-              ${minPrice} - ${maxPrice}
-            </Typography>
-          </Box>
+          <KebabMenu items={menu} />
         </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          {service.status === "rejected" ? (
-            <Button
-              onClick={onEdit}
-              startIcon={<ReplayOutlined sx={{ fontSize: 16 }} />}
-              sx={{
-                px: 1.5,
-                height: 32,
-                fontSize: 12,
-                fontWeight: 500,
-                color: "white",
-                bgcolor: "black",
-                borderRadius: 2,
-                textTransform: "none",
-                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-              }}>
-              Resubmit
-            </Button>
-          ) : (
-            <IconButton
-              onClick={onEdit}
-              sx={{
-                p: 1,
-                color: "rgba(0, 0, 0, 0.6)",
-                borderRadius: 2,
-                "&:hover": {
-                  color: "black",
-                  bgcolor: "rgba(0, 0, 0, 0.05)",
-                },
-              }}>
-              <EditOutlined sx={{ fontSize: 16 }} />
-            </IconButton>
-          )}
-          <IconButton
-            onClick={onView}
-            sx={{
-              p: 1,
-              color: "rgba(0, 0, 0, 0.6)",
-              borderRadius: 2,
-              "&:hover": {
-                color: "black",
-                bgcolor: "rgba(0, 0, 0, 0.05)",
-              },
-            }}>
-            <VisibilityOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
-          <IconButton
-            onClick={onDelete}
-            sx={{
-              p: 1,
-              color: "rgba(239, 68, 68, 0.6)",
-              borderRadius: 2,
-              "&:hover": {
-                color: "#ef4444",
-                bgcolor: "rgba(239, 68, 68, 0.05)",
-              },
-            }}>
-            <DeleteOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Box>
+        <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25, color: muted ? tokens.text2 : tokens.text }}>{service.title}</Typography>
+        <Facts items={facts} />
+        {banner}
       </Box>
-
-      {service.status === "rejected" && (
-        <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", display: "flex", gap: 1, alignItems: "flex-start" }}>
-          <InfoOutlined sx={{ fontSize: 16, color: "#dc2626", mt: "1px" }} />
-          <Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#dc2626" }}>
-              Rejected by admin
-            </Typography>
-            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
-              {service.rejection_reason || "No reason provided. Use Resubmit to send it for review again."}
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
-      {service.status === "disabled" && (
-        <Box sx={{ mt: 1.5, p: 1.5, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", display: "flex", gap: 1, alignItems: "flex-start" }}>
-          <InfoOutlined sx={{ fontSize: 16, color: "#dc2626", mt: "1px" }} />
-          <Box>
-            <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#dc2626" }}>
-              Disabled by admin
-            </Typography>
-            <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
-              {service.rejection_reason || "This service has been taken down. Contact support for details."}
-            </Typography>
-          </Box>
-        </Box>
-      )}
-
-      {service.status === "pending_review" && (
-        <Typography sx={{ mt: 1, fontSize: 12, color: "#b45309" }}>
-          Awaiting admin approval — not visible to the public yet.
-        </Typography>
-      )}
+      <Chevron />
     </Box>
   );
 }

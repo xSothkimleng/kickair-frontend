@@ -2,30 +2,34 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { qk } from "@/lib/queryKeys";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  Grid,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  CircularProgress,
-} from "@mui/material";
+  AccountBalanceWallet as WalletIcon,
+  ArrowUpward as ArrowUpIcon,
+  ArrowDownward as ArrowDownIcon,
+  VerifiedUser as ShieldIcon,
+  AccessTime as ClockIcon,
+} from "@mui/icons-material";
+import { qk } from "@/lib/queryKeys";
 import { api } from "@/lib/api";
 import { Wallet, Transaction } from "@/types/wallet";
-import { WithdrawDialog } from "@/components/payment";
+import { tokens } from "@/theme";
+import { StatusChip, WithdrawDialog, fmtUsd } from "@/components/payment";
+
+type Filter = "all" | "completed" | "pending" | "failed";
+const FILTERS: [Filter, string][] = [
+  ["all", "All"],
+  ["completed", "Completed"],
+  ["pending", "Pending"],
+  ["failed", "Failed"],
+];
 
 export default function FinanceContent() {
-  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [filter, setFilter] = useState<Filter>("all");
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const queryClient = useQueryClient();
 
-  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.wallet(),
     queryFn: async () => {
       const [walletResponse, transactionsResponse] = await Promise.all([
@@ -36,288 +40,158 @@ export default function FinanceContent() {
         wallet: walletResponse.data as Wallet,
         transactions: (Array.isArray(transactionsResponse.data)
           ? transactionsResponse.data
-          : transactionsResponse.data.data ?? []) as Transaction[],
+          : transactionsResponse.data?.data ?? []) as Transaction[],
       };
     },
   });
+
   const wallet = data?.wallet ?? null;
   const transactions = data?.transactions ?? [];
-  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch finance data") : null;
-  const queryClient = useQueryClient();
-  const fetchFinanceData = async () => {
+  const refresh = async () => {
     await refetch();
     queryClient.invalidateQueries({ queryKey: qk.dashboard.freelancer() });
   };
 
-  // Derived transaction groups
-  const escrowEarnings = transactions.filter(t => t.type === "earning" && t.status === "pending");
-  const completedPayments = transactions.filter(t => t.status === "completed" && t.type === "earning");
-  const pendingWithdrawals = transactions.filter(t => t.type === "withdrawal" && t.status === "pending");
-  const pendingWithdrawalsTotal = pendingWithdrawals.reduce((sum, t) => sum + parseFloat(t.amount_raw), 0);
-
   const availableBalance = wallet ? parseFloat(wallet.available_balance_raw) : 0;
-  const pendingTotal = wallet ? parseFloat(wallet.pending_balance_raw) : 0;
+  const inEscrow = wallet ? parseFloat(wallet.pending_balance_raw) : 0;
+  const totalBalance = wallet ? Number(wallet.total_balance_raw) : 0;
+  const pendingWithdrawals = transactions.filter(t => t.type === "withdrawal" && t.status === "pending");
+  const pendingWithdrawalsTotal = pendingWithdrawals.reduce((s, t) => s + parseFloat(t.amount_raw), 0);
 
-  const formatDate = (dateStr: string) =>
-    new Date(dateStr).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const filtered = transactions.filter(t => (filter === "all" ? true : t.status === filter));
+  const formatDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+  const isCredit = (t: Transaction) => t.type === "earning" || t.type === "deposit" || t.type === "refund";
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed": return { bgcolor: "rgba(34, 197, 94, 0.1)", color: "rgb(21, 128, 61)" };
-      case "pending":   return { bgcolor: "rgba(37, 99, 235, 0.1)", color: "rgb(29, 78, 216)" };
-      case "cancelled": return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "rgb(185, 28, 28)" };
-      default:          return { bgcolor: "rgba(0, 0, 0, 0.1)", color: "black" };
-    }
+  const txnTitle = (t: Transaction) =>
+    t.metadata?.service_title || t.order?.service?.title || t.description || "Transaction";
+  const txnParty = (t: Transaction) => {
+    const m: Record<Transaction["type"], string> = {
+      earning: t.status === "completed" ? "Earning released" : "Earning in escrow",
+      withdrawal: "Withdrawal request",
+      payment: "Payment",
+      escrow: "In escrow",
+      deposit: "Deposit",
+      refund: "Refund",
+    };
+    return m[t.type] ?? "Transaction";
   };
 
-  const getAmountColor = (transaction: Transaction) => {
-    if (transaction.type === "withdrawal") return "#ef4444";
-    if (transaction.type === "earning" && transaction.status === "pending") return "#3b82f6";
-    return "#16a34a";
-  };
-
-  const getTransactionActivity = (transaction: Transaction) => {
-    switch (transaction.type) {
-      case "earning":    return transaction.status === "completed" ? "Earning Released" : "Earning in Escrow";
-      case "payment":    return transaction.status === "completed" ? "Payment Received" : "Payment Pending";
-      case "deposit":    return "Deposit";
-      case "withdrawal": return "Withdrawal Request";
-      case "refund":     return "Refund";
-      default:           return "Transaction";
-    }
-  };
-
-  const getTransactionDescription = (transaction: Transaction) => {
-    if (transaction.metadata?.service_title) {
-      const pricingOption = transaction.metadata.pricing_option_title;
-      return pricingOption
-        ? `${transaction.metadata.service_title} - ${pricingOption}`
-        : transaction.metadata.service_title;
-    }
-    if (transaction.order?.service?.title) {
-      const pricingOption = transaction.order.pricing_option?.title;
-      return pricingOption
-        ? `${transaction.order.service.title} - ${pricingOption}`
-        : transaction.order.service.title;
-    }
-    return transaction.description;
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-        <CircularProgress size={32} sx={{ color: "rgba(0, 0, 0, 0.4)" }} />
+        <CircularProgress size={32} sx={{ color: tokens.text3 }} />
       </Box>
     );
   }
-
   if (error) {
     return (
       <Box sx={{ textAlign: "center", py: 6 }}>
-        <Typography sx={{ fontSize: 13, color: "rgba(239, 68, 68, 0.8)", mb: 2 }}>{error}</Typography>
-        <Button onClick={fetchFinanceData} sx={{ fontSize: 12, textTransform: "none" }}>Try again</Button>
+        <Typography sx={{ fontSize: 13, color: tokens.errorText, mb: 2 }}>
+          {error instanceof Error ? error.message : "Failed to fetch finance data"}
+        </Typography>
+        <Button onClick={() => refetch()} sx={{ fontSize: 12, textTransform: "none" }}>Try again</Button>
       </Box>
     );
   }
 
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+  const stats: { label: string; value: number; dot: string; Icon: typeof WalletIcon; sub: string }[] = [
+    { label: "In escrow", value: inEscrow, dot: tokens.pending, Icon: ShieldIcon, sub: "Released when an order completes" },
+    { label: "Pending withdrawal", value: pendingWithdrawalsTotal, dot: "#f59e0b", Icon: ClockIcon, sub: pendingWithdrawals.length > 0 ? `${pendingWithdrawals.length} awaiting approval` : "No pending requests" },
+    { label: "Total balance", value: totalBalance, dot: tokens.success, Icon: WalletIcon, sub: "Available + escrow" },
+  ];
 
-      {/* Balance Cards */}
-      <Grid container spacing={2}>
-        {/* Available Balance */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ background: "linear-gradient(135deg, #000 0%, rgba(0,0,0,0.8) 100%)", borderRadius: 4, p: 3, color: "white" }}>
-            <Typography sx={{ fontSize: 11, color: "rgba(255,255,255,0.6)", mb: 1 }}>Available Balance</Typography>
-            <Typography sx={{ fontSize: 32, fontWeight: 600, mb: 2 }}>${availableBalance.toLocaleString()}</Typography>
+  return (
+    <Box>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5, mb: 3 }}>
+        <Typography sx={{ fontSize: { xs: 22, md: 24 }, fontWeight: 600, letterSpacing: "-0.02em" }}>Wallet</Typography>
+        <Typography sx={{ fontSize: 13, color: tokens.text2 }}>Your earnings, escrow, and withdrawals</Typography>
+      </Box>
+
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Hero */}
+        <Box sx={{ position: "relative", overflow: "hidden", borderRadius: `${tokens.radius.card}px`, p: { xs: 3, md: 3.75 }, color: "#fff", background: "linear-gradient(135deg, #000, rgba(0,0,0,0.82))" }}>
+          <Box sx={{ position: "absolute", top: -40, right: -30, width: 180, height: 180, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.05)" }} />
+          <Box sx={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+            <Typography sx={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>Available balance</Typography>
+            <WalletIcon sx={{ fontSize: 20, color: "rgba(255,255,255,0.6)" }} />
+          </Box>
+          <Box sx={{ position: "relative", display: "flex", alignItems: "baseline", gap: 0.5 }}>
+            <Typography sx={{ fontSize: 26, fontWeight: 500, color: "rgba(255,255,255,0.6)" }}>$</Typography>
+            <Typography sx={{ fontFamily: tokens.mono, fontSize: { xs: 46, md: 54 }, fontWeight: 600, letterSpacing: "-0.03em" }}>{availableBalance.toFixed(2)}</Typography>
+            <Typography sx={{ fontSize: 15, color: "rgba(255,255,255,0.5)", ml: 0.75 }}>USD</Typography>
+          </Box>
+          <Box sx={{ position: "relative", mt: 3 }}>
             <Button
-              onClick={() => setShowWithdrawModal(true)}
-              sx={{ width: "100%", height: 36, bgcolor: "white", color: "black", fontSize: 12, borderRadius: 2, textTransform: "none", fontWeight: 500, "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
+              onClick={() => setShowWithdraw(true)}
+              startIcon={<ArrowUpIcon sx={{ fontSize: 16 }} />}
+              sx={{ height: 44, px: 2.75, borderRadius: "999px", bgcolor: "#fff", color: "#000", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
               Withdraw
             </Button>
-          </Paper>
-        </Grid>
-
-        {/* In Escrow */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>In Escrow</Typography>
-              <Box sx={{ width: 8, height: 8, bgcolor: "#3b82f6", borderRadius: "50%" }} />
-            </Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>${pendingTotal.toLocaleString()}</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Released when order completes</Typography>
-          </Paper>
-        </Grid>
-
-        {/* Pending Withdrawals */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>Pending Withdrawal</Typography>
-              <Box sx={{ width: 8, height: 8, bgcolor: "#f59e0b", borderRadius: "50%" }} />
-            </Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>${pendingWithdrawalsTotal.toLocaleString()}</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>
-              {pendingWithdrawals.length > 0 ? `${pendingWithdrawals.length} request${pendingWithdrawals.length > 1 ? "s" : ""} awaiting approval` : "No pending requests"}
-            </Typography>
-          </Paper>
-        </Grid>
-
-        {/* Total Balance */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>Total Balance</Typography>
-              <Box sx={{ width: 8, height: 8, bgcolor: "#16a34a", borderRadius: "50%" }} />
-            </Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
-              ${wallet ? wallet.total_balance_raw.toLocaleString() : "0"}
-            </Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Available + Escrow</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* In Escrow + Pending Withdrawals sections */}
-      <Grid container spacing={3}>
-        {/* In Escrow Details */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>In Escrow</Typography>
-              <Chip label={`${escrowEarnings.length} order${escrowEarnings.length !== 1 ? "s" : ""}`} sx={{ height: 24, bgcolor: "rgba(37,99,235,0.1)", color: "rgb(29,78,216)", fontSize: 11 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
-              Earnings held in escrow while orders are active. Released to your available balance when the order is completed.
-            </Typography>
-            {escrowEarnings.length > 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {escrowEarnings.map(t => (
-                  <Box key={t.id} sx={{ p: 2, bgcolor: "rgba(37,99,235,0.05)", borderRadius: 3, border: "1px solid rgba(37,99,235,0.2)" }}>
-                    <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 1 }}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{getTransactionDescription(t)}</Typography>
-                      <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#3b82f6" }}>${parseFloat(t.amount_raw).toLocaleString()}</Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: 10, color: "rgba(0,0,0,0.4)" }}>Order placed on {formatDate(t.created_at)}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Box sx={{ textAlign: "center", py: 4 }}>
-                <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }}>No earnings in escrow</Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Pending Withdrawals Details */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Pending Withdrawals</Typography>
-              <Chip label={`${pendingWithdrawals.length} pending`} sx={{ height: 24, bgcolor: "rgba(245,158,11,0.1)", color: "rgb(180,83,9)", fontSize: 11 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
-              Withdrawal requests awaiting admin approval. Funds are reserved from your available balance until processed.
-            </Typography>
-            {pendingWithdrawals.length > 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {pendingWithdrawals.map(t => (
-                  <Box key={t.id} sx={{ p: 2, bgcolor: "rgba(245,158,11,0.05)", borderRadius: 3, border: "1px solid rgba(245,158,11,0.2)" }}>
-                    <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 1 }}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>Withdrawal Request</Typography>
-                      <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#f59e0b" }}>-${parseFloat(t.amount_raw).toLocaleString()}</Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: 10, color: "rgba(0,0,0,0.4)" }}>Requested on {formatDate(t.created_at)}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Box sx={{ textAlign: "center", py: 4 }}>
-                <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }}>No pending withdrawals</Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-
-        {/* Recent Completed Earnings */}
-        <Grid size={{ xs: 12, lg: 6 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-              <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Recent Completed</Typography>
-              <Chip label={`${completedPayments.length} order${completedPayments.length !== 1 ? "s" : ""}`} sx={{ height: 24, bgcolor: "rgba(34,197,94,0.1)", color: "rgb(21,128,61)", fontSize: 11 }} />
-            </Box>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
-              Payments cleared and added to your available balance.
-            </Typography>
-            {completedPayments.length > 0 ? (
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                {completedPayments.slice(0, 5).map(t => (
-                  <Box key={t.id} sx={{ p: 2, bgcolor: "rgba(34,197,94,0.05)", borderRadius: 3, border: "1px solid rgba(34,197,94,0.2)" }}>
-                    <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 1 }}>
-                      <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>{getTransactionDescription(t)}</Typography>
-                      <Typography sx={{ fontSize: 15, fontWeight: 600, color: "#16a34a" }}>+${parseFloat(t.amount_raw).toLocaleString()}</Typography>
-                    </Box>
-                    <Typography sx={{ fontSize: 10, color: "rgba(0,0,0,0.4)" }}>Completed on {formatDate(t.created_at)}</Typography>
-                  </Box>
-                ))}
-              </Box>
-            ) : (
-              <Box sx={{ textAlign: "center", py: 4 }}>
-                <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }}>No completed earnings yet</Typography>
-              </Box>
-            )}
-          </Paper>
-        </Grid>
-      </Grid>
-
-      {/* Transaction History */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Transaction History</Typography>
-        </Box>
-        {transactions.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }}>No transactions yet</Typography>
           </Box>
-        ) : (
-          <TableContainer>
-            <Table sx={{ minWidth: 650 }}>
-              <TableHead>
-                <TableRow sx={{ borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-                  {["Date", "Activity", "Description", "Amount", "Status"].map(h => (
-                    <TableCell key={h} align={h === "Amount" || h === "Status" ? "right" : "left"} sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", fontWeight: 500, border: "none", pb: 2 }}>{h}</TableCell>
-                  ))}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {transactions.map(t => (
-                  <TableRow key={t.id} sx={{ borderBottom: "1px solid rgba(0,0,0,0.05)", "&:hover": { bgcolor: "rgba(0,0,0,0.02)" }, transition: "background-color 0.2s" }}>
-                    <TableCell sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", border: "none", py: 2 }}>{formatDate(t.created_at)}</TableCell>
-                    <TableCell sx={{ fontSize: 13, fontWeight: 500, color: "black", border: "none", py: 2 }}>{getTransactionActivity(t)}</TableCell>
-                    <TableCell sx={{ fontSize: 12, color: "rgba(0,0,0,0.8)", border: "none", py: 2 }}>{getTransactionDescription(t)}</TableCell>
-                    <TableCell align="right" sx={{ fontSize: 14, fontWeight: 600, color: getAmountColor(t), border: "none", py: 2 }}>
-                      {t.type === "withdrawal" ? "-" : "+"}${parseFloat(t.amount_raw).toLocaleString()}
-                    </TableCell>
-                    <TableCell align="right" sx={{ border: "none", py: 2 }}>
-                      <Chip label={t.status.charAt(0).toUpperCase() + t.status.slice(1)} sx={{ height: 22, fontSize: 10, ...getStatusColor(t.status) }} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
-        )}
-      </Paper>
+        </Box>
 
-      {/* Withdraw request (manual payout) */}
-      <WithdrawDialog
-        open={showWithdrawModal}
-        onClose={() => setShowWithdrawModal(false)}
-        available={availableBalance}
-        onSuccess={fetchFinanceData}
-      />
+        {/* Stat cards */}
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3,1fr)" }, gap: 1.5 }}>
+          {stats.map(s => (
+            <Box key={s.label} sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.25 }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.75 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
+                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: s.dot }} />
+                  <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{s.label}</Typography>
+                </Box>
+                <s.Icon sx={{ fontSize: 15, color: tokens.text3 }} />
+              </Box>
+              <Typography sx={{ fontFamily: tokens.mono, fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em" }}>{fmtUsd(s.value)}</Typography>
+              <Typography sx={{ fontSize: 11, color: tokens.text3, mt: 0.5 }}>{s.sub}</Typography>
+            </Box>
+          ))}
+        </Box>
+
+        {/* Transaction history */}
+        <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 3 } }}>
+          <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em", mb: 2 }}>Transaction history</Typography>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
+            {FILTERS.map(([k, label]) => {
+              const active = filter === k;
+              return (
+                <Box key={k} component="button" type="button" onClick={() => setFilter(k)}
+                  sx={{ height: 34, px: 2, borderRadius: "999px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 500, border: "none", bgcolor: active ? "#000" : "rgba(0,0,0,0.05)", color: active ? "#fff" : tokens.text2, "&:hover": { bgcolor: active ? "#000" : "rgba(0,0,0,0.09)" } }}>
+                  {label}
+                </Box>
+              );
+            })}
+          </Box>
+
+          {filtered.length === 0 ? (
+            <Typography sx={{ textAlign: "center", py: 4, fontSize: 14, color: tokens.text2 }}>No {filter === "all" ? "" : filter} transactions.</Typography>
+          ) : (
+            <Box>
+              {filtered.map(t => {
+                const credit = isCredit(t);
+                return (
+                  <Box key={t.id} sx={{ display: "flex", alignItems: "center", gap: 1.75, py: 1.75, borderBottom: `1px solid ${tokens.border}`, "&:last-of-type": { borderBottom: "none" } }}>
+                    <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: tokens.canvas, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                      {credit ? <ArrowDownIcon sx={{ fontSize: 18, color: tokens.success }} /> : <ArrowUpIcon sx={{ fontSize: 18, color: tokens.text2 }} />}
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ fontSize: 14.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{txnTitle(t)}</Typography>
+                      <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{txnParty(t)} · {formatDate(t.created_at)}</Typography>
+                    </Box>
+                    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.625 }}>
+                      <Typography sx={{ fontFamily: tokens.mono, fontSize: 15, fontWeight: 600, color: credit ? tokens.successText : tokens.text }}>
+                        {credit ? "+" : "–"}{fmtUsd(Math.abs(parseFloat(t.amount_raw)))}
+                      </Typography>
+                      <StatusChip status={t.status}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</StatusChip>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          )}
+        </Box>
+      </Box>
+
+      <WithdrawDialog open={showWithdraw} onClose={() => setShowWithdraw(false)} available={availableBalance} onSuccess={refresh} />
     </Box>
   );
 }

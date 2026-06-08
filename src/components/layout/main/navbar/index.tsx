@@ -241,7 +241,7 @@ export default function MainNavbar() {
                     <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
                       Learn why KickAir is the best platform for freelancing
                     </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                       <DropdownItem
                         href='/why-kick-air#how-it-works'
                         title='How It Works'
@@ -289,11 +289,11 @@ export default function MainNavbar() {
                 <Box
                   onMouseLeave={() => setActiveDropdown(null)}
                   sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
-                  <Box sx={{ p: 5 }}>
-                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 3 }}>
+                  <Box sx={{ p: 3 }}>
+                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
                       Learn, earn, and grow your freelance career
                     </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                       <DropdownItem
                         icon={<BoltIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
                         title='Post Your Service'
@@ -344,11 +344,11 @@ export default function MainNavbar() {
                 <Box
                   onMouseLeave={() => setActiveDropdown(null)}
                   sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
-                  <Box sx={{ p: 5 }}>
-                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 3 }}>
+                  <Box sx={{ p: 3 }}>
+                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
                       Get work done with trusted freelancers
                     </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                       <DropdownItem
                         icon={<BookOpenIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
                         title='KickAir University'
@@ -411,8 +411,11 @@ export default function MainNavbar() {
 
               {activeDropdown === "pro" && (
                 <Box onMouseLeave={() => setActiveDropdown(null)} sx={{ ...dropdownPanelSx, right: 0 }}>
-                  <Box sx={{ p: 5 }}>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+                  <Box sx={{ p: 3 }}>
+                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
+                      Upgrade for visibility, lower fees, and premium tools
+                    </Typography>
+                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
                       <DropdownItem
                         icon={<EmojiEventsIcon sx={{ fontSize: 24, color: "black" }} />}
                         title='Better Visibility with Ads'
