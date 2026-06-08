@@ -473,11 +473,29 @@ class ApiClient {
   // Reference Data — Service Categories
   // ============================================
 
-  async getServiceCategories(): Promise<ServiceCategory[]> {
+  // The category tree: aisles (top-level) each with a `children` array of shelves.
+  async getCategoryTree(): Promise<ServiceCategory[]> {
     const response = await this.get("/api/service-categories");
-    // API returns `category_name`; normalize to `name` used throughout the frontend
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return response.data.map((c: any) => ({ ...c, name: c.name ?? c.category_name }));
+    const norm = (c: any): ServiceCategory => ({
+      ...c,
+      name: c.name ?? c.category_name,
+      children: Array.isArray(c.children) ? c.children.map(norm) : [],
+    });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (response.data as any[]).map(norm);
+  }
+
+  // Flattened list of every category (aisles + shelves). Kept for the legacy flat
+  // dropdowns/filters; the create forms use getCategoryTree() for the grouped picker.
+  async getServiceCategories(): Promise<ServiceCategory[]> {
+    const tree = await this.getCategoryTree();
+    const flat: ServiceCategory[] = [];
+    tree.forEach(aisle => {
+      flat.push(aisle);
+      (aisle.children ?? []).forEach(shelf => flat.push(shelf));
+    });
+    return flat;
   }
 
   // ============================================
@@ -832,9 +850,22 @@ class ApiClient {
     return res.data;
   }
 
-  async createAdminCategory(name: string): Promise<AdminCategory> {
-    const res = await this.post("/api/admin/categories", { category_name: name });
+  async createAdminCategory(name: string, parentId?: number | null): Promise<AdminCategory> {
+    const res = await this.post("/api/admin/categories", {
+      category_name: name,
+      ...(parentId ? { parent_id: parentId } : {}),
+    });
     return res.data;
+  }
+
+  // Assign/replace a service's category (admin) — used for reviewing requested categories
+  // and re-filing live listings. Clears any pending request and notifies the owner.
+  async setServiceCategory(serviceId: number, categoryId: number, reason?: string): Promise<void> {
+    await this.post(`/api/admin/services/${serviceId}/category`, { category_id: categoryId, ...(reason ? { reason } : {}) });
+  }
+
+  async setJobPostCategory(jobPostId: number, categoryId: number, reason?: string): Promise<void> {
+    await this.post(`/api/admin/job-posts/${jobPostId}/category`, { category_id: categoryId, ...(reason ? { reason } : {}) });
   }
 
   async updateAdminCategory(id: number, data: Partial<{ category_name: string; is_active: boolean }>): Promise<AdminCategory> {

@@ -10,29 +10,20 @@ import {
   Button,
   Grid,
   Chip,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  InputAdornment,
   CircularProgress,
-  Alert,
 } from "@mui/material";
 import { api } from "@/lib/api";
 import { Wallet, Transaction } from "@/types/wallet";
+import { WithdrawDialog } from "@/components/payment";
 
 export default function FinanceContent() {
   const [showWithdrawModal, setShowWithdrawModal] = useState(false);
-  const [withdrawAmount, setWithdrawAmount] = useState("");
-  const [withdrawLoading, setWithdrawLoading] = useState(false);
-  const [withdrawError, setWithdrawError] = useState<string | null>(null);
 
   const { data, isLoading: loading, error: queryError, refetch } = useQuery({
     queryKey: qk.wallet(),
@@ -56,33 +47,6 @@ export default function FinanceContent() {
   const fetchFinanceData = async () => {
     await refetch();
     queryClient.invalidateQueries({ queryKey: qk.dashboard.freelancer() });
-  };
-
-  const handleWithdraw = async () => {
-    const amount = parseFloat(withdrawAmount);
-    const available = wallet ? parseFloat(wallet.available_balance_raw) : 0;
-
-    if (!withdrawAmount || isNaN(amount) || amount <= 0) {
-      setWithdrawError("Please enter a valid amount.");
-      return;
-    }
-    if (amount > available) {
-      setWithdrawError("Amount exceeds your available balance.");
-      return;
-    }
-
-    try {
-      setWithdrawLoading(true);
-      setWithdrawError(null);
-      await api.post("/api/wallet/withdraw", { amount });
-      setShowWithdrawModal(false);
-      setWithdrawAmount("");
-      await fetchFinanceData();
-    } catch (err) {
-      setWithdrawError(err instanceof Error ? err.message : "Withdrawal failed. Please try again.");
-    } finally {
-      setWithdrawLoading(false);
-    }
   };
 
   // Derived transaction groups
@@ -167,7 +131,7 @@ export default function FinanceContent() {
             <Typography sx={{ fontSize: 11, color: "rgba(255,255,255,0.6)", mb: 1 }}>Available Balance</Typography>
             <Typography sx={{ fontSize: 32, fontWeight: 600, mb: 2 }}>${availableBalance.toLocaleString()}</Typography>
             <Button
-              onClick={() => { setShowWithdrawModal(true); setWithdrawError(null); setWithdrawAmount(""); }}
+              onClick={() => setShowWithdrawModal(true)}
               sx={{ width: "100%", height: 36, bgcolor: "white", color: "black", fontSize: 12, borderRadius: 2, textTransform: "none", fontWeight: 500, "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
               Withdraw
             </Button>
@@ -347,51 +311,13 @@ export default function FinanceContent() {
         )}
       </Paper>
 
-      {/* Withdraw Modal */}
-      <Dialog open={showWithdrawModal} onClose={() => !withdrawLoading && setShowWithdrawModal(false)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 4 } }}>
-        <DialogTitle sx={{ fontSize: 20, fontWeight: 600, color: "black" }}>Withdraw Funds</DialogTitle>
-        <DialogContent>
-          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", mb: 3 }}>
-            Available balance: <strong>${availableBalance.toLocaleString()}</strong>
-          </Typography>
-          {withdrawError && <Alert severity="error" sx={{ mb: 2 }}>{withdrawError}</Alert>}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box>
-              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", mb: 1 }}>Amount (USD)</Typography>
-              <TextField
-                fullWidth
-                type="number"
-                value={withdrawAmount}
-                onChange={e => { setWithdrawAmount(e.target.value); setWithdrawError(null); }}
-                placeholder="0.00"
-                disabled={withdrawLoading}
-                slotProps={{ htmlInput: { min: 1, max: availableBalance, step: "0.01" } }}
-                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                sx={{ "& .MuiOutlinedInput-root": { height: 44, borderRadius: 3, fontSize: 14, "& fieldset": { borderColor: "rgba(0,0,0,0.1)" } } }}
-              />
-            </Box>
-            <Box sx={{ p: 2, bgcolor: "rgba(37,99,235,0.05)", borderRadius: 3 }}>
-              <Typography sx={{ fontSize: 11, color: "rgb(29,78,216)" }}>
-                <strong>Note:</strong> Withdrawal requests are reviewed by our team and typically processed within 1-3 business days.
-              </Typography>
-            </Box>
-          </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button
-            onClick={() => { setShowWithdrawModal(false); setWithdrawError(null); }}
-            disabled={withdrawLoading}
-            sx={{ flex: 1, height: 44, fontSize: 13, color: "black", bgcolor: "rgba(0,0,0,0.05)", borderRadius: 10, textTransform: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleWithdraw}
-            disabled={withdrawLoading}
-            sx={{ flex: 1, height: 44, fontSize: 13, color: "white", bgcolor: "black", borderRadius: 10, textTransform: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>
-            {withdrawLoading ? <CircularProgress size={18} sx={{ color: "white" }} /> : "Confirm Withdrawal"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+      {/* Withdraw request (manual payout) */}
+      <WithdrawDialog
+        open={showWithdrawModal}
+        onClose={() => setShowWithdrawModal(false)}
+        available={availableBalance}
+        onSuccess={fetchFinanceData}
+      />
     </Box>
   );
 }

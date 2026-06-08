@@ -1,6 +1,7 @@
 "use client";
 
 import { Box, Typography, Grid, Button, IconButton } from "@mui/material";
+import { PaymentFooterLogos } from "@/components/payment";
 
 export default function Footer() {
   return (
@@ -261,6 +262,11 @@ export default function Footer() {
             </Box>
           </Grid>
         </Grid>
+
+        {/* Accepted payments (ABA PayWay guideline) */}
+        <Box sx={{ borderTop: "1px solid rgba(255,255,255,0.1)", pt: 4 }}>
+          <PaymentFooterLogos variant='dark' />
+        </Box>
       </Box>
     </Box>
   );

@@ -8,7 +8,7 @@ import {
   EditOutlined,
   PeopleOutlineOutlined,
   AccessTimeOutlined,
-  OpenInNewOutlined,
+  ChevronRightOutlined,
   ReplayOutlined,
   InfoOutlined,
 } from "@mui/icons-material";
@@ -81,6 +81,7 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
 
   return (
     <Box
+      onClick={() => router.push(`/dashboard/jobs/${job.id}/proposals`)}
       sx={{
         display: "flex",
         flexDirection: "column",
@@ -89,8 +90,9 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
         borderRadius: 3,
         border: "1px solid rgba(0,0,0,0.07)",
         bgcolor: "white",
+        cursor: "pointer",
         transition: "all 0.15s",
-        "&:hover": { borderColor: "rgba(0,0,0,0.15)" },
+        "&:hover": { borderColor: "rgba(0,0,0,0.15)", boxShadow: "0 2px 12px rgba(0,0,0,0.06)" },
       }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
       {/* Icon */}
@@ -123,24 +125,8 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
       {/* Status */}
       <Chip label={statusLabel(job.status)} size='small' sx={{ fontSize: 11, height: 24, ...statusColor(job.status) }} />
 
-      {/* Actions */}
-      <Stack direction='row' spacing={0.5}>
-        <Button
-          size='small'
-          variant='outlined'
-          onClick={() => router.push(`/dashboard/jobs/${job.id}/proposals`)}
-          endIcon={<OpenInNewOutlined sx={{ fontSize: 13 }} />}
-          sx={{
-            fontSize: 12,
-            textTransform: "none",
-            borderRadius: 8,
-            borderColor: "rgba(0,0,0,0.15)",
-            color: "black",
-            "&:hover": { borderColor: "rgba(0,0,0,0.3)" },
-          }}>
-          Proposals
-        </Button>
-
+      {/* Actions (clicks here must not trigger the card's navigation) */}
+      <Stack direction='row' spacing={0.5} alignItems='center' onClick={e => e.stopPropagation()}>
         {isRejected ? (
           <Button
             size='small'
@@ -181,6 +167,7 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
           </Button>
         )}
       </Stack>
+      <ChevronRightOutlined sx={{ fontSize: 20, color: "rgba(0,0,0,0.25)", flexShrink: 0 }} />
       </Box>
 
       {/* Rejection reason (C9) */}
@@ -227,6 +214,22 @@ export default function PostServiceContent() {
   useEffect(() => {
     fetchJobs();
   }, []);
+
+  // Deep-link: arriving with ?edit={id} (e.g. "Edit job" from the Job Overview page)
+  // opens that job's editor, then strips the param so a refresh doesn't re-open it.
+  useEffect(() => {
+    if (view !== "list" || jobs.length === 0) return;
+    const editId = new URLSearchParams(window.location.search).get("edit");
+    if (!editId) return;
+    const job = jobs.find(j => String(j.id) === editId);
+    if (job) {
+      setEditingJob(job);
+      setView("edit");
+      const url = new URL(window.location.href);
+      url.searchParams.delete("edit");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [jobs, view]);
 
   const handleEdit = (job: JobPost) => {
     setEditingJob(job);

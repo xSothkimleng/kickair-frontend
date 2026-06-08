@@ -44,6 +44,9 @@ export interface FAQ {
 export interface ServiceFormData {
   title: string;
   categoryId: number | null;
+  // Set instead of categoryId when the user requests a brand-new category.
+  requestedCategory: string | null;
+  requestedParentId: number | null;
   searchTags: string[];
   description: string;
   location: string;

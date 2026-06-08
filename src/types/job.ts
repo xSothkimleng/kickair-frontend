@@ -71,7 +71,10 @@ export interface JobPost {
   proposal_count: number;
   created_at: string;
   updated_at: string;
-  category: JobCategory;
+  category_id?: number | null;
+  requested_category?: string | null;
+  requested_parent_id?: number | null;
+  category?: JobCategory | null;
   skills: JobSkill[];
   media: JobMedia[];
   client_profile: JobClientProfile;
@@ -113,6 +116,9 @@ export interface PaginatedResponse<T> {
 export interface CreateJobPostRequest {
   // Nullable fields may be empty while saving a draft; they're required to publish.
   category_id: number | null;
+  // Set instead of category_id when the user requests a brand-new category (admin-reviewed).
+  requested_category?: string | null;
+  requested_parent_id?: number | null;
   title: string;
   description: string | null;
   budget_min: number | null;

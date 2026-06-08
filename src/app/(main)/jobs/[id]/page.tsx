@@ -2,105 +2,86 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import { Box, Container, Typography, Button, CircularProgress, Alert, Avatar, Skeleton } from "@mui/material";
 import {
-  Box,
-  Container,
-  Typography,
-  Chip,
-  Stack,
-  Avatar,
-  Button,
-  CircularProgress,
-  Alert,
-  Divider,
-  Paper,
-  Grid,
-  IconButton,
-} from "@mui/material";
-import {
-  ArrowBackOutlined,
-  AccessTimeOutlined,
-  AttachMoneyOutlined,
-  PeopleOutlineOutlined,
-  CalendarTodayOutlined,
-  InsertDriveFileOutlined,
-  EditOutlined,
-  ExitToAppOutlined,
+  ChevronLeftOutlined,
   BookmarkBorderOutlined,
+  Bookmark as BookmarkFilled,
+  IosShareOutlined,
+  InsertDriveFileOutlined,
   LocationOnOutlined,
+  BusinessOutlined,
   VerifiedOutlined,
+  RadioButtonUncheckedOutlined,
+  LockOutlined,
+  EditOutlined,
+  BoltOutlined,
+  MoveToInboxOutlined,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
-import { JobPost, Proposal } from "@/types/job";
+import { JobPost, Proposal, ProposalStatus } from "@/types/job";
+import { tokens } from "@/theme";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
-import ProposalForm from "@/components/jobs/ProposalForm";
+import ProposalModal from "@/components/jobs/ProposalModal";
 
-function formatCurrency(value: string) {
-  const num = parseFloat(value);
-  if (isNaN(num)) return value;
-  return num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+const money = (v: string | number) => "$" + Number(v).toLocaleString("en-US");
+const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+const daysLeft = (s: string) => Math.ceil((new Date(s).getTime() - Date.now()) / 86_400_000);
+const timeAgo = (s: string) => {
+  const h = Math.floor((Date.now() - new Date(s).getTime()) / 3_600_000);
+  if (h < 1) return "just now";
+  if (h < 24) return `${h} hour${h !== 1 ? "s" : ""} ago`;
+  const d = Math.floor(h / 24);
+  return `${d} day${d !== 1 ? "s" : ""} ago`;
+};
+
+type Tone = "success" | "pending" | "error" | "info" | "neutral";
+const TONE: Record<Tone, { bg: string; color: string }> = {
+  success: { bg: tokens.successTint, color: tokens.successText },
+  pending: { bg: tokens.pendingTint, color: tokens.pendingText },
+  error: { bg: tokens.errorTint, color: tokens.errorText },
+  info: { bg: "rgba(37,99,235,0.10)", color: "#1d4ed8" },
+  neutral: { bg: "rgba(0,0,0,0.05)", color: tokens.text2 },
+};
+const JOB_TONE: Record<string, { tone: Tone; label: string }> = {
+  open: { tone: "success", label: "Open" },
+  in_progress: { tone: "info", label: "In progress" },
+  completed: { tone: "neutral", label: "Completed" },
+  cancelled: { tone: "neutral", label: "Cancelled" },
+};
+const PROP_TONE: Record<ProposalStatus, { tone: Tone; label: string }> = {
+  pending: { tone: "pending", label: "Pending" },
+  accepted: { tone: "success", label: "Accepted" },
+  rejected: { tone: "error", label: "Not selected" },
+  withdrawn: { tone: "neutral", label: "Withdrawn" },
+};
+function Chip({ tone, label, size }: { tone: Tone; label: string; size?: "lg" }) {
+  const c = TONE[tone];
+  return (
+    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, height: size === "lg" ? 34 : 26, px: size === "lg" ? 1.75 : 1.25, borderRadius: "999px", fontSize: size === "lg" ? 13 : 12, fontWeight: 600, bgcolor: c.bg, color: c.color }}>
+      <Box component="span" sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "currentColor" }} />{label}
+    </Box>
+  );
+}
+function Label({ children, sx }: { children: React.ReactNode; sx?: object }) {
+  return <Typography sx={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, ...sx }}>{children}</Typography>;
+}
+function Card({ children, sx }: { children: React.ReactNode; sx?: object }) {
+  return <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.75, ...sx }}>{children}</Box>;
 }
 
-function formatDate(dateStr: string) {
-  return new Date(dateStr).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+function BudgetFigure({ job }: { job: JobPost }) {
+  return (
+    <Box>
+      <Label sx={{ mb: 0.5 }}>Project budget · USD</Label>
+      <Typography sx={{ fontFamily: tokens.mono, fontSize: 30, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1, color: tokens.successText, whiteSpace: "nowrap" }}>
+        {money(job.budget_min)}<Box component="span" sx={{ color: tokens.text3, fontWeight: 500 }}> – </Box>{money(job.budget_max)}
+      </Typography>
+      <Typography sx={{ fontSize: 11.5, fontWeight: 500, color: tokens.text2, mt: 0.5 }}>Fixed-price · paid via escrow</Typography>
+    </Box>
+  );
 }
-
-function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 60) return `${mins} minute${mins !== 1 ? "s" : ""} ago`;
-  const hrs = Math.floor(mins / 60);
-  if (hrs < 24) return `${hrs} hour${hrs !== 1 ? "s" : ""} ago`;
-  const days = Math.floor(hrs / 24);
-  if (days < 30) return `${days} day${days !== 1 ? "s" : ""} ago`;
-  return `${Math.floor(days / 30)} month${Math.floor(days / 30) !== 1 ? "s" : ""} ago`;
-}
-
-function daysUntil(dateStr: string) {
-  const diff = new Date(dateStr).getTime() - Date.now();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days < 0) return { label: "Expired", urgent: true };
-  if (days === 0) return { label: "Due today", urgent: true };
-  if (days <= 3) return { label: `${days}d left`, urgent: true };
-  return { label: formatDate(dateStr), urgent: false };
-}
-
-function proposalRange(count: number) {
-  if (count === 0) return "Be the first to apply";
-  if (count < 5) return "Less than 5";
-  if (count < 10) return "5 to 10";
-  if (count < 20) return "10 to 20";
-  return "20+";
-}
-
-function statusColor(status: string) {
-  switch (status) {
-    case "open":
-      return { bgcolor: "rgba(22,163,74,0.1)", color: "#15803d" };
-    case "in_progress":
-      return { bgcolor: "rgba(37,99,235,0.1)", color: "#1e40af" };
-    case "completed":
-      return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
-    case "cancelled":
-      return { bgcolor: "rgba(239,68,68,0.1)", color: "#b91c1c" };
-    default:
-      return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
-  }
-}
-
-const SidebarCard = ({ children, sx = {} }: { children: React.ReactNode; sx?: object }) => (
-  <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", p: 3, ...sx }}>
-    {children}
-  </Paper>
-);
-
-const SidebarLabel = ({ children }: { children: React.ReactNode }) => (
-  <Typography
-    sx={{ fontSize: 11, fontWeight: 600, color: "text.disabled", textTransform: "uppercase", letterSpacing: 0.8, mb: 1.5 }}>
-    {children}
-  </Typography>
-);
 
 export default function JobDetailPage() {
   const params = useParams();
@@ -111,42 +92,61 @@ export default function JobDetailPage() {
   const [job, setJob] = useState<JobPost | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [applyOpen, setApplyOpen] = useState(false);
-  const [editOpen, setEditOpen] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
-
-  const isFreelancer = !!user?.is_freelancer;
-  const hasApplied = !!job?.my_proposal;
-  const myProposal = job?.my_proposal ?? null;
-  const proposalsClosed = job ? job.proposal_count >= job.max_proposals : false;
+  const [modal, setModal] = useState<{ open: boolean; edit: boolean }>({ open: false, edit: false });
 
   useEffect(() => {
     if (!jobId) return;
-    const load = async () => {
+    (async () => {
       try {
         setLoading(true);
-        const data = await api.getJobPost(jobId);
-        setJob(data);
+        setJob(await api.getJobPost(jobId));
       } catch (err) {
         setError(err instanceof Error ? err.message : "Failed to load job.");
       } finally {
         setLoading(false);
       }
-    };
-    load();
+    })();
   }, [jobId]);
 
-  const handleProposalSaved = (proposal: Proposal) => {
-    setJob(prev =>
-      prev ? { ...prev, my_proposal: proposal, proposal_count: prev.proposal_count + (hasApplied ? 0 : 1) } : prev,
+  if (loading) {
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
+        <Container sx={{ py: 4, maxWidth: "1180px !important" }}>
+          <Skeleton variant="text" width={140} height={24} sx={{ mb: 2 }} />
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0,1fr) 340px" }, gap: 3 }}>
+            <Skeleton variant="rounded" height={520} sx={{ borderRadius: `${tokens.radius.card}px` }} />
+            <Skeleton variant="rounded" height={320} sx={{ borderRadius: `${tokens.radius.card}px` }} />
+          </Box>
+        </Container>
+      </Box>
     );
-    setApplyOpen(false);
-    setEditOpen(false);
-  };
+  }
+  if (error || !job) {
+    return (
+      <Container sx={{ py: 6 }}>
+        <Alert severity="error">{error ?? "Job not found."}</Alert>
+        <Button onClick={() => router.push("/jobs")} sx={{ mt: 2, textTransform: "none" }}>Back to Job Board</Button>
+      </Container>
+    );
+  }
 
+  const isFreelancer = !!user?.is_freelancer;
+  const myProposal = job.my_proposal ?? null;
+  const hasApplied = !!myProposal;
+  const proposalsClosed = job.proposal_count >= job.max_proposals;
+  const jobOpen = job.status === "open";
+
+  const applyState: "new" | "applied" | "closed" | "logged_out" =
+    !user || !isFreelancer ? "logged_out" : hasApplied ? "applied" : !jobOpen || proposalsClosed ? "closed" : "new";
+
+  const onSaved = (proposal: Proposal) => {
+    setJob(prev => (prev ? { ...prev, my_proposal: proposal, proposal_count: prev.proposal_count + (hasApplied ? 0 : 1) } : prev));
+    setModal({ open: false, edit: false });
+  };
   const handleWithdraw = async () => {
-    if (!myProposal) return;
-    if (!confirm("Withdraw your proposal? This cannot be undone.")) return;
+    if (!myProposal || !confirm("Withdraw your proposal? This cannot be undone.")) return;
     setWithdrawing(true);
     try {
       const updated = await api.withdrawProposal(myProposal.id);
@@ -158,405 +158,249 @@ export default function JobDetailPage() {
     }
   };
 
-  if (loading) {
-    return (
-      <Box display='flex' justifyContent='center' alignItems='center' minHeight='60vh'>
-        <CircularProgress />
+  const jobCfg = JOB_TONE[job.status] ?? JOB_TONE.open;
+  const dl = job.deadline ? daysLeft(job.deadline) : null;
+  const images = (job.media ?? []).filter(m => m.file_type === "image");
+  const pdfs = (job.media ?? []).filter(m => m.file_type !== "image");
+
+  /* ── main column ── */
+  const main = (
+    <Card sx={{ p: { xs: 2.75, md: 4 } }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+          <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
+            <Chip tone={jobCfg.tone} label={jobCfg.label} size="lg" />
+            <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 34, px: 1.75, borderRadius: "999px", fontSize: 13, fontWeight: 600, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2 }}>{job.category?.category_name ?? "Uncategorized"}</Box>
+          </Box>
+          <Typography sx={{ fontSize: { xs: 22, md: 28 }, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15 }}>{job.title}</Typography>
+          <Typography sx={{ fontSize: 13, fontWeight: 500, color: tokens.text2 }}>Posted {fmtDate(job.created_at)} · {timeAgo(job.created_at)}</Typography>
+        </Box>
+        <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1, flex: "none" }}>
+          <Button onClick={() => setSaved(s => !s)} startIcon={saved ? <BookmarkFilled sx={{ fontSize: 17 }} /> : <BookmarkBorderOutlined sx={{ fontSize: 17 }} />}
+            sx={{ height: 40, px: 2, borderRadius: "999px", border: `1px solid ${tokens.borderStrong}`, bgcolor: tokens.surface, color: saved ? tokens.accent : tokens.text2, textTransform: "none", fontSize: 13.5, fontWeight: 500, "&:hover": { borderColor: tokens.text3, bgcolor: tokens.surface2 } }}>{saved ? "Saved" : "Save"}</Button>
+          <Button aria-label="Share" sx={{ minWidth: 40, width: 40, height: 40, borderRadius: "999px", border: `1px solid ${tokens.borderStrong}`, bgcolor: tokens.surface, color: tokens.text2, "&:hover": { borderColor: tokens.text3, bgcolor: tokens.surface2 } }}><IosShareOutlined sx={{ fontSize: 17 }} /></Button>
+        </Box>
       </Box>
-    );
-  }
 
-  if (error || !job) {
-    return (
-      <Container sx={{ py: 6 }}>
-        <Alert severity='error'>{error ?? "Job not found."}</Alert>
-        <Button onClick={() => router.push("/jobs")} sx={{ mt: 2, textTransform: "none" }}>
-          Back to Job Board
-        </Button>
-      </Container>
-    );
-  }
+      {/* mobile budget band */}
+      <Box sx={{ display: { xs: "block", md: "none" }, mt: 2.5, py: 2, borderTop: `1px solid ${tokens.border}`, borderBottom: `1px solid ${tokens.border}` }}>
+        <BudgetFigure job={job} />
+      </Box>
 
-  const deadline = daysUntil(job.deadline);
+      <Box sx={{ height: "1px", bgcolor: tokens.border, my: { xs: 2.5, md: 3 } }} />
+
+      <Label sx={{ mb: 1.25 }}>Description</Label>
+      <RichTextDisplay value={job.description} />
+
+      {job.skills?.length > 0 && (
+        <Box sx={{ mt: 3.25 }}>
+          <Label sx={{ mb: 1.5 }}>Skills &amp; expertise</Label>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {job.skills.map(s => <Box key={s.id} component="span" sx={{ display: "inline-flex", alignItems: "center", height: 30, px: 1.625, borderRadius: "999px", fontSize: 12.5, fontWeight: 500, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2 }}>{s.expertise_name}</Box>)}
+          </Box>
+        </Box>
+      )}
+
+      {(job.media?.length ?? 0) > 0 && (
+        <Box sx={{ mt: 3.25 }}>
+          <Label sx={{ mb: 1.5 }}>Attachments · {job.media.length}</Label>
+          {images.length > 0 && (
+            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: 1.25, mb: pdfs.length ? 1.5 : 0 }}>
+              {images.map(m => (
+                <Box key={m.id} component="a" href={m.file_url} target="_blank" rel="noopener noreferrer" sx={{ aspectRatio: "4/3", borderRadius: `${tokens.radius.tile}px`, border: `1px solid ${tokens.border}`, overflow: "hidden", display: "block", "&:hover": { borderColor: tokens.borderStrong } }}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={m.file_url} alt={m.file_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                </Box>
+              ))}
+            </Box>
+          )}
+          {pdfs.length > 0 && (
+            <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
+              {pdfs.map(m => (
+                <Box key={m.id} component="a" href={m.file_url} target="_blank" rel="noopener noreferrer" sx={{ display: "flex", alignItems: "center", gap: 1.375, p: "10px 14px 10px 11px", borderRadius: `${tokens.radius.tile}px`, border: `1px solid ${tokens.border}`, textDecoration: "none", maxWidth: 260, "&:hover": { bgcolor: tokens.surface2, borderColor: tokens.borderStrong } }}>
+                  <Box sx={{ width: 38, height: 38, borderRadius: "9px", bgcolor: tokens.errorTint, color: tokens.errorText, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}><InsertDriveFileOutlined sx={{ fontSize: 19 }} /></Box>
+                  <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: tokens.text, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{m.file_name}</Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </Box>
+      )}
+    </Card>
+  );
+
+  /* ── apply card ── */
+  const applyCard = (
+    <Card>
+      <BudgetFigure job={job} />
+      <Box sx={{ height: "1px", bgcolor: tokens.border, my: 2.25 }} />
+      {applyState === "applied" && myProposal ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
+          <Box sx={{ p: 2, bgcolor: tokens.surface2, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.cardSm}px` }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+              <Label>Your proposal</Label>
+              <Chip tone={PROP_TONE[myProposal.status].tone} label={PROP_TONE[myProposal.status].label} />
+            </Box>
+            <Box sx={{ display: "flex" }}>
+              <Box sx={{ flex: 1 }}><Label sx={{ fontSize: 10 }}>Your price</Label><Typography sx={{ fontFamily: tokens.mono, fontSize: 22, fontWeight: 600, letterSpacing: "-0.02em" }}>{money(myProposal.price)}</Typography></Box>
+              <Box sx={{ width: "1px", bgcolor: tokens.border, mx: 2 }} />
+              <Box sx={{ flex: 1 }}><Label sx={{ fontSize: 10 }}>Delivery</Label><Typography sx={{ fontSize: 16, fontWeight: 600 }}>{myProposal.timeline_days} days</Typography></Box>
+            </Box>
+          </Box>
+          {myProposal.status === "pending" && (
+            <>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button fullWidth onClick={() => setModal({ open: true, edit: true })} startIcon={<EditOutlined sx={{ fontSize: 16 }} />} sx={{ height: 44, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 14, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>Edit</Button>
+                <Button fullWidth onClick={handleWithdraw} disabled={withdrawing} sx={{ height: 44, borderRadius: "999px", color: tokens.errorText, textTransform: "none", fontSize: 14, "&:hover": { bgcolor: tokens.errorTint } }}>{withdrawing ? <CircularProgress size={16} /> : "Withdraw"}</Button>
+              </Box>
+              <Typography sx={{ fontSize: 12, lineHeight: 1.45, textAlign: "center", color: tokens.text2 }}>The client is reviewing proposals. You can edit or withdraw while it&rsquo;s still pending.</Typography>
+            </>
+          )}
+        </Box>
+      ) : applyState === "closed" ? (
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 1.5 }}>
+          <Box sx={{ width: 46, height: 46, borderRadius: "50%", bgcolor: "rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "center" }}><LockOutlined sx={{ fontSize: 22, color: tokens.text3 }} /></Box>
+          <Box>
+            <Typography sx={{ fontSize: 15, fontWeight: 600 }}>No longer accepting proposals</Typography>
+            <Typography sx={{ fontSize: 12.5, lineHeight: 1.5, color: tokens.text2, mt: 0.5 }}>This job has reached its proposal limit or is no longer open. Browse similar open jobs.</Typography>
+          </Box>
+          <Button fullWidth onClick={() => router.push("/jobs")} startIcon={<ChevronLeftOutlined sx={{ fontSize: 16 }} />} sx={{ mt: 0.5, height: 44, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 14, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>Back to Job Board</Button>
+        </Box>
+      ) : applyState === "logged_out" ? (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          {!user ? (
+            <>
+              <Button fullWidth onClick={() => router.push("/auth/sign-in")} sx={{ height: 52, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 16, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>Log in to apply</Button>
+              <Button fullWidth onClick={() => router.push("/auth/sign-up")} sx={{ height: 44, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 14, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>Create an account</Button>
+            </>
+          ) : (
+            <Button fullWidth onClick={() => router.push("/dashboard")} sx={{ height: 52, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 16, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>Become a freelancer to apply</Button>
+          )}
+          <Typography sx={{ fontSize: 12, lineHeight: 1.45, textAlign: "center", color: tokens.text2 }}>Joining KickAir is free. Set up a freelancer profile to submit proposals.</Typography>
+        </Box>
+      ) : (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <Button fullWidth onClick={() => setModal({ open: true, edit: false })} sx={{ height: 52, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 16, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>Submit a proposal</Button>
+          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1, color: tokens.text3 }}>
+            <BoltOutlined sx={{ fontSize: 14 }} /><Typography sx={{ fontSize: 12, color: tokens.text2 }}>Free to apply · you set your own price</Typography>
+          </Box>
+        </Box>
+      )}
+    </Card>
+  );
+
+  /* ── activity card ── */
+  const used = job.proposal_count, totalSlots = job.max_proposals;
+  const pct = Math.min(100, Math.round((used / Math.max(1, totalSlots)) * 100));
+  const proposalRange = used === 0 ? "No proposals yet" : used < 5 ? "Less than 5" : used < 10 ? "5 to 10" : used < 20 ? "10 to 20" : "20+";
+  const activityCard = (
+    <Card>
+      <Typography sx={{ fontSize: 15, fontWeight: 600, mb: 2 }}>Activity on this job</Typography>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.625 }}>
+        <Row label="Proposals">{proposalRange}</Row>
+        <Box sx={{ height: "1px", bgcolor: tokens.border }} />
+        <Row label="Date posted">{fmtDate(job.created_at)}</Row>
+        {job.deadline && <><Box sx={{ height: "1px", bgcolor: tokens.border }} /><Row label="Deadline" urgent={dl !== null && dl <= 3}>{fmtDate(job.deadline)}{dl !== null ? ` · ${dl}d` : ""}</Row></>}
+      </Box>
+      <Box sx={{ mt: 2.25 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
+          <Label sx={{ fontSize: 10 }}>Proposal slots</Label>
+          <Typography sx={{ fontFamily: tokens.mono, fontSize: 12, fontWeight: 600, color: tokens.text2 }}>{used} / {totalSlots} used</Typography>
+        </Box>
+        <Box sx={{ height: 6, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.07)", overflow: "hidden" }}><Box sx={{ width: `${pct}%`, height: "100%", bgcolor: tokens.text }} /></Box>
+      </Box>
+    </Card>
+  );
+
+  /* ── client card ── */
+  const c = job.client_profile;
+  const clientCard = c ? (
+    <Card>
+      <Typography sx={{ fontSize: 15, fontWeight: 600, mb: 2 }}>About the client</Typography>
+      <Box sx={{ display: "flex", gap: 1.625, mb: 2 }}>
+        <Avatar src={c.user?.avatar_url ?? undefined} alt={c.user?.name} sx={{ width: 52, height: 52 }} />
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontSize: 15.5, fontWeight: 600, letterSpacing: "-0.01em" }}>{c.user?.name ?? "Client"}</Typography>
+          {c.company_name && <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 13, color: tokens.text2 }}><BusinessOutlined sx={{ fontSize: 14, color: tokens.text3 }} />{c.company_name}</Box>}
+        </Box>
+      </Box>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.375, mb: 2 }}>
+        {c.location && <Box sx={{ display: "flex", alignItems: "center", gap: 1.125, fontSize: 13.5, color: tokens.text2 }}><LocationOnOutlined sx={{ fontSize: 16, color: tokens.text3 }} />{c.location}</Box>}
+        {c.user?.created_at && <Box sx={{ display: "flex", alignItems: "center", gap: 1.125, fontSize: 13.5, color: tokens.text2 }}><MoveToInboxOutlined sx={{ fontSize: 16, color: tokens.text3 }} />Member since {new Date(c.user.created_at).getFullYear()}</Box>}
+      </Box>
+      <Box sx={{ height: "1px", bgcolor: tokens.border, mb: 1.75 }} />
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.375 }}>
+        <TrustRow ok={!!c.user?.is_verified_phone}>Phone verified</TrustRow>
+        <TrustRow ok={!!c.user?.is_verified_id}>ID verified</TrustRow>
+      </Box>
+    </Card>
+  ) : null;
+
+  const sidebar = (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 2, md: 2.5 } }}>
+      <Box sx={{ display: { xs: "none", md: "block" } }}>{applyCard}</Box>
+      {activityCard}
+      {clientCard}
+      {/* mobile: show the applied summary inline (the new/closed CTA lives in the sticky bar) */}
+      {applyState === "applied" && <Box sx={{ display: { xs: "block", md: "none" } }}>{applyCard}</Box>}
+    </Box>
+  );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#f7f7f7" }}>
-      {/* Breadcrumb bar */}
-      <Box sx={{ bgcolor: "white", borderBottom: "1px solid", borderColor: "divider" }}>
-        <Container sx={{ py: 1.25 }}>
-          <Button
-            startIcon={<ArrowBackOutlined sx={{ fontSize: 16 }} />}
-            onClick={() => router.push("/jobs")}
-            sx={{
-              fontSize: 13,
-              textTransform: "none",
-              color: "text.secondary",
-              minWidth: 0,
-              px: 0,
-              "&:hover": { bgcolor: "transparent", color: "text.primary" },
-            }}>
-            Job Board
-          </Button>
-        </Container>
-      </Box>
-
-      <Container sx={{ py: 4 }}>
-        <Grid container spacing={3} alignItems='flex-start'>
-          {/* ── Main column ── */}
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Paper elevation={0} sx={{ borderRadius: 2, border: "1px solid", borderColor: "divider", overflow: "hidden" }}>
-              {/* Header */}
-              <Box sx={{ p: 4, pb: 3 }}>
-                <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={1.5}>
-                  <Box flex={1} pr={2}>
-                    <Typography sx={{ fontSize: 22, fontWeight: 700, lineHeight: 1.3, mb: 1.25 }}>{job.title}</Typography>
-                    <Stack direction='row' alignItems='center' flexWrap='wrap' gap={1}>
-                      <Chip
-                        label={job.status.replace("_", " ").replace(/\b\w/g, l => l.toUpperCase())}
-                        size='small'
-                        sx={{ fontSize: 11, height: 22, fontWeight: 600, ...statusColor(job.status) }}
-                      />
-                      <Typography sx={{ fontSize: 13, color: "text.disabled" }}>·</Typography>
-                      <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{job.category?.category_name}</Typography>
-                      <Typography sx={{ fontSize: 13, color: "text.disabled" }}>·</Typography>
-                      <Typography sx={{ fontSize: 13, color: "text.secondary" }}>Posted {timeAgo(job.created_at)}</Typography>
-                    </Stack>
-                  </Box>
-                  <IconButton sx={{ color: "text.disabled", mt: -0.5 }}>
-                    <BookmarkBorderOutlined sx={{ fontSize: 20 }} />
-                  </IconButton>
-                </Stack>
-              </Box>
-
-              <Divider />
-
-              {/* Description */}
-              <Box sx={{ p: 4 }}>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 600,
-                    color: "text.disabled",
-                    textTransform: "uppercase",
-                    letterSpacing: 0.8,
-                    mb: 2,
-                  }}>
-                  Job Description
-                </Typography>
-                <RichTextDisplay value={job.description} />
-              </Box>
-
-              {/* Skills */}
-              {job.skills.length > 0 && (
-                <>
-                  <Divider />
-                  <Box sx={{ p: 4 }}>
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "text.disabled",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                        mb: 2,
-                      }}>
-                      Skills and Expertise
-                    </Typography>
-                    <Stack direction='row' flexWrap='wrap' gap={1}>
-                      {job.skills.map(s => (
-                        <Chip
-                          key={s.id}
-                          label={s.expertise_name}
-                          size='small'
-                          variant='outlined'
-                          sx={{
-                            fontSize: 13,
-                            height: 28,
-                            borderRadius: "14px",
-                            borderColor: "rgba(0,0,0,0.18)",
-                            color: "text.secondary",
-                          }}
-                        />
-                      ))}
-                    </Stack>
-                  </Box>
-                </>
-              )}
-
-              {/* Attachments */}
-              {job.media.length > 0 && (
-                <>
-                  <Divider />
-                  <Box sx={{ p: 4 }}>
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        fontWeight: 600,
-                        color: "text.disabled",
-                        textTransform: "uppercase",
-                        letterSpacing: 0.8,
-                        mb: 2,
-                      }}>
-                      Attachments
-                    </Typography>
-                    <Stack direction='row' flexWrap='wrap' gap={1.5}>
-                      {job.media.map(m =>
-                        m.file_type === "image" ? (
-                          <Box
-                            key={m.id}
-                            component='a'
-                            href={m.file_url}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            sx={{
-                              display: "block",
-                              borderRadius: 1.5,
-                              overflow: "hidden",
-                              border: "1px solid",
-                              borderColor: "divider",
-                              "&:hover": { opacity: 0.85 },
-                            }}>
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img
-                              src={m.file_url}
-                              alt={m.file_name}
-                              style={{ width: 120, height: 80, objectFit: "cover", display: "block" }}
-                            />
-                          </Box>
-                        ) : (
-                          <Box
-                            key={m.id}
-                            component='a'
-                            href={m.file_url}
-                            target='_blank'
-                            rel='noopener noreferrer'
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                              px: 2,
-                              py: 1.5,
-                              borderRadius: 1.5,
-                              border: "1px solid",
-                              borderColor: "divider",
-                              textDecoration: "none",
-                              color: "inherit",
-                              "&:hover": { bgcolor: "rgba(0,0,0,0.03)" },
-                            }}>
-                            <InsertDriveFileOutlined sx={{ fontSize: 20, color: "#e3710a" }} />
-                            <Typography sx={{ fontSize: 13 }}>{m.file_name}</Typography>
-                          </Box>
-                        ),
-                      )}
-                    </Stack>
-                  </Box>
-                </>
-              )}
-            </Paper>
-          </Grid>
-
-          {/* ── Sidebar ── */}
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Stack spacing={2} sx={{ position: { lg: "sticky" }, top: { lg: 24 } }}>
-              {/* Apply / Proposal card */}
-              {isFreelancer && job.status === "open" && (
-                <SidebarCard>
-                  {!hasApplied ? (
-                    <>
-                      {/* Budget */}
-                      <Box mb={2.5}>
-                        <SidebarLabel>Budget</SidebarLabel>
-                        <Stack direction='row' alignItems='center' spacing={0.75}>
-                          <AttachMoneyOutlined sx={{ fontSize: 20, color: "#15803d" }} />
-                          <Typography sx={{ fontSize: 20, fontWeight: 700, color: "#15803d" }}>
-                            {formatCurrency(job.budget_min)} – {formatCurrency(job.budget_max)}
-                          </Typography>
-                        </Stack>
-                        <Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}>Fixed-price budget</Typography>
-                      </Box>
-
-                      {proposalsClosed ? (
-                        <Alert severity='info' sx={{ borderRadius: 1.5, fontSize: 13 }}>
-                          This job is no longer accepting proposals.
-                        </Alert>
-                      ) : applyOpen ? (
-                        <ProposalForm jobPostId={job.id} onSaved={handleProposalSaved} onCancel={() => setApplyOpen(false)} />
-                      ) : (
-                        <Button
-                          variant='contained'
-                          fullWidth
-                          onClick={() => setApplyOpen(true)}
-                          sx={{
-                            textTransform: "none",
-                            color: "#fff",
-                            fontWeight: 600,
-                            fontSize: 14,
-                            py: 1.25,
-                            borderRadius: 1.5,
-                          }}>
-                          Submit a Proposal
-                        </Button>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                        <SidebarLabel>Your Proposal</SidebarLabel>
-                        <Chip
-                          label={myProposal!.status.charAt(0).toUpperCase() + myProposal!.status.slice(1)}
-                          size='small'
-                          sx={{ fontSize: 11, height: 22 }}
-                        />
-                      </Stack>
-                      <Stack direction='row' spacing={3} mb={2.5}>
-                        <Box>
-                          <Typography sx={{ fontSize: 11, color: "text.secondary", mb: 0.5 }}>Your Price</Typography>
-                          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{formatCurrency(myProposal!.price)}</Typography>
-                        </Box>
-                        <Box>
-                          <Typography sx={{ fontSize: 11, color: "text.secondary", mb: 0.5 }}>Timeline</Typography>
-                          <Typography sx={{ fontSize: 18, fontWeight: 700 }}>{myProposal!.timeline_days} days</Typography>
-                        </Box>
-                      </Stack>
-
-                      {myProposal!.status === "pending" &&
-                        (editOpen ? (
-                          <ProposalForm
-                            jobPostId={job.id}
-                            existing={myProposal!}
-                            onSaved={handleProposalSaved}
-                            onCancel={() => setEditOpen(false)}
-                          />
-                        ) : (
-                          <Stack spacing={1}>
-                            <Button
-                              variant='outlined'
-                              fullWidth
-                              startIcon={<EditOutlined sx={{ fontSize: 15 }} />}
-                              onClick={() => setEditOpen(true)}
-                              sx={{
-                                textTransform: "none",
-                                fontSize: 13,
-                                borderRadius: 1.5,
-                                borderColor: "divider",
-                                color: "text.primary",
-                              }}>
-                              Edit Proposal
-                            </Button>
-                            <Button
-                              variant='text'
-                              fullWidth
-                              startIcon={<ExitToAppOutlined sx={{ fontSize: 15 }} />}
-                              disabled={withdrawing}
-                              onClick={handleWithdraw}
-                              sx={{
-                                textTransform: "none",
-                                fontSize: 13,
-                                borderRadius: 1.5,
-                                color: "#b91c1c",
-                                "&:hover": { bgcolor: "rgba(239,68,68,0.05)" },
-                              }}>
-                              {withdrawing ? <CircularProgress size={14} /> : "Withdraw Proposal"}
-                            </Button>
-                          </Stack>
-                        ))}
-                    </>
-                  )}
-                </SidebarCard>
-              )}
-
-              {/* Budget card — shown for non-freelancers or closed jobs */}
-              {(!isFreelancer || job.status !== "open") && (
-                <SidebarCard>
-                  <SidebarLabel>Budget</SidebarLabel>
-                  <Stack direction='row' alignItems='center' spacing={0.75}>
-                    <AttachMoneyOutlined sx={{ fontSize: 20, color: "#15803d" }} />
-                    <Typography sx={{ fontSize: 20, fontWeight: 700, color: "#15803d" }}>
-                      {formatCurrency(job.budget_min)} – {formatCurrency(job.budget_max)}
-                    </Typography>
-                  </Stack>
-                  <Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}>Fixed-price budget</Typography>
-                </SidebarCard>
-              )}
-
-              {/* Activity card */}
-              <SidebarCard>
-                <SidebarLabel>Activity on this job</SidebarLabel>
-                <Stack spacing={2}>
-                  <Stack direction='row' alignItems='center' spacing={1.25}>
-                    <PeopleOutlineOutlined sx={{ fontSize: 18, color: "text.disabled" }} />
-                    <Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{proposalRange(job.proposal_count)}</Typography>
-                      <Typography sx={{ fontSize: 11, color: "text.secondary" }}>proposals submitted</Typography>
-                    </Box>
-                  </Stack>
-                  <Stack direction='row' alignItems='center' spacing={1.25}>
-                    <CalendarTodayOutlined sx={{ fontSize: 18, color: "text.disabled" }} />
-                    <Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{formatDate(job.created_at)}</Typography>
-                      <Typography sx={{ fontSize: 11, color: "text.secondary" }}>date posted</Typography>
-                    </Box>
-                  </Stack>
-                  <Stack direction='row' alignItems='center' spacing={1.25}>
-                    <AccessTimeOutlined sx={{ fontSize: 18, color: deadline.urgent ? "#dc2626" : "text.disabled" }} />
-                    <Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 500, color: deadline.urgent ? "#dc2626" : "text.primary" }}>
-                        {deadline.label}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11, color: "text.secondary" }}>deadline</Typography>
-                    </Box>
-                  </Stack>
-                  <Stack direction='row' alignItems='center' spacing={1.25}>
-                    <PeopleOutlineOutlined sx={{ fontSize: 18, color: "text.disabled" }} />
-                    <Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 500 }}>
-                        {job.proposal_count} / {job.max_proposals}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11, color: "text.secondary" }}>proposal slots used</Typography>
-                    </Box>
-                  </Stack>
-                </Stack>
-              </SidebarCard>
-
-              {/* Client card */}
-              {job.client_profile && (
-                <SidebarCard>
-                  <SidebarLabel>About the Client</SidebarLabel>
-                  <Stack direction='row' spacing={1.5} alignItems='center' mb={1.5}>
-                    <Avatar
-                      src={job.client_profile.user?.avatar_url ?? undefined}
-                      alt={job.client_profile.user?.name}
-                      sx={{ width: 44, height: 44 }}
-                    />
-                    <Box>
-                      <Typography sx={{ fontSize: 14, fontWeight: 600, lineHeight: 1.3 }}>
-                        {job.client_profile.user?.name ?? "Client"}
-                      </Typography>
-                      {job.client_profile.company_name && (
-                        <Typography sx={{ fontSize: 12, color: "text.secondary" }}>{job.client_profile.company_name}</Typography>
-                      )}
-                    </Box>
-                  </Stack>
-                  <Stack spacing={1}>
-                    {job.client_profile.location && (
-                      <Stack direction='row' spacing={0.75} alignItems='center'>
-                        <LocationOnOutlined sx={{ fontSize: 15, color: "text.disabled" }} />
-                        <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{job.client_profile.location}</Typography>
-                      </Stack>
-                    )}
-                    {job.client_profile.user?.is_verified_phone && (
-                      <Stack direction='row' spacing={0.75} alignItems='center'>
-                        <VerifiedOutlined sx={{ fontSize: 15, color: "#0071e3" }} />
-                        <Typography sx={{ fontSize: 13, color: "text.secondary" }}>Phone verified</Typography>
-                      </Stack>
-                    )}
-                  </Stack>
-                </SidebarCard>
-              )}
-            </Stack>
-          </Grid>
-        </Grid>
+    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
+      <Container sx={{ py: { xs: 2.5, md: 4 }, pb: { xs: 12, md: 4 }, maxWidth: "1180px !important" }}>
+        <Button onClick={() => router.push("/jobs")} startIcon={<ChevronLeftOutlined sx={{ fontSize: 17 }} />}
+          sx={{ p: "2px 4px", mb: 2.25, color: tokens.text2, textTransform: "none", fontSize: 14, fontWeight: 500, "&:hover": { color: "#000", bgcolor: "transparent" } }}>Back to Job Board</Button>
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0,1fr) 340px" }, gap: 3, alignItems: "start" }}>
+          {main}
+          <Box sx={{ position: { md: "sticky" }, top: { md: 24 } }}>{sidebar}</Box>
+        </Box>
       </Container>
+
+      {/* mobile sticky apply bar (hidden when already applied — summary shows inline) */}
+      {applyState !== "applied" && (
+        <Box sx={{ display: { xs: "flex", md: "none" }, position: "fixed", left: 0, right: 0, bottom: 0, zIndex: 1100, justifyContent: "space-between", alignItems: "center", gap: 1.75, p: "12px 16px", bgcolor: "rgba(255,255,255,0.95)", backdropFilter: "blur(10px)", borderTop: `1px solid ${tokens.border}` }}>
+          <Box>
+            <Typography sx={{ fontFamily: tokens.mono, fontSize: 17, fontWeight: 600, letterSpacing: "-0.02em", color: tokens.successText, whiteSpace: "nowrap" }}>{money(job.budget_min)} – {money(job.budget_max)}</Typography>
+            <Label sx={{ fontSize: 9.5 }}>Budget · USD</Label>
+          </Box>
+          {applyState === "new" ? (
+            <Button onClick={() => setModal({ open: true, edit: false })} sx={{ height: 46, px: 2.75, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>Submit a proposal</Button>
+          ) : applyState === "logged_out" ? (
+            <Button onClick={() => router.push(user ? "/dashboard" : "/auth/sign-in")} sx={{ height: 46, px: 2.75, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>{user ? "Become a freelancer" : "Log in to apply"}</Button>
+          ) : (
+            <Button disabled sx={{ height: 46, px: 2.75, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2, textTransform: "none", fontSize: 15 }}>Closed</Button>
+          )}
+        </Box>
+      )}
+
+      <ProposalModal
+        open={modal.open}
+        jobPostId={job.id}
+        jobTitle={job.title}
+        budgetMin={job.budget_min}
+        budgetMax={job.budget_max}
+        existing={modal.edit ? myProposal : null}
+        onSaved={onSaved}
+        onClose={() => setModal({ open: false, edit: false })}
+      />
+    </Box>
+  );
+}
+
+function Row({ label, children, urgent }: { label: string; children: React.ReactNode; urgent?: boolean }) {
+  return (
+    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5 }}>
+      <Typography sx={{ fontSize: 13, fontWeight: 500, color: tokens.text2, whiteSpace: "nowrap" }}>{label}</Typography>
+      <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: urgent ? tokens.errorText : tokens.text, whiteSpace: "nowrap" }}>{children}</Typography>
+    </Box>
+  );
+}
+function TrustRow({ ok, children }: { ok: boolean; children: React.ReactNode }) {
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.125 }}>
+      {ok ? <VerifiedOutlined sx={{ fontSize: 18, color: tokens.success }} /> : <RadioButtonUncheckedOutlined sx={{ fontSize: 18, color: tokens.borderStrong }} />}
+      <Typography sx={{ fontSize: 13.5, fontWeight: 500, color: ok ? tokens.text : tokens.text3 }}>{children}</Typography>
     </Box>
   );
 }

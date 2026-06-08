@@ -1,229 +1,166 @@
 "use client";
 
-import { Box, Card, CardContent, Chip, Divider, IconButton, Stack, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, Typography } from "@mui/material";
 import {
-  AccessTimeOutlined,
   BookmarkBorderOutlined,
-  LocationOnOutlined,
+  Bookmark as BookmarkFilled,
+  BoltOutlined,
   PeopleOutlineOutlined,
+  CalendarTodayOutlined,
+  LocationOnOutlined,
 } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { JobPost } from "@/types/job";
+import { tokens } from "@/theme";
 
-interface JobCardProps {
-  job: JobPost;
+function money(value: string | number) {
+  const n = typeof value === "string" ? parseFloat(value) : value;
+  return "$" + (Number.isFinite(n) ? n : 0).toLocaleString("en-US");
 }
-
-function formatCurrency(value: string) {
-  const num = parseFloat(value);
-  if (isNaN(num)) return value;
-  return num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-}
-
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
-
 function timeAgo(dateStr: string) {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
+  const mins = Math.floor((Date.now() - new Date(dateStr).getTime()) / 60000);
   if (mins < 60) return `${mins} minute${mins !== 1 ? "s" : ""} ago`;
   const hrs = Math.floor(mins / 60);
   if (hrs < 24) return `${hrs} hour${hrs !== 1 ? "s" : ""} ago`;
   const days = Math.floor(hrs / 24);
   if (days < 30) return `${days} day${days !== 1 ? "s" : ""} ago`;
-  const months = Math.floor(days / 30);
-  return `${months} month${months !== 1 ? "s" : ""} ago`;
+  return `${Math.floor(days / 30)} month${Math.floor(days / 30) !== 1 ? "s" : ""} ago`;
+}
+function daysLeft(dateStr: string) {
+  return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000);
+}
+function urgencyColor(d: number) {
+  return d <= 3 ? tokens.errorText : d <= 6 ? tokens.pendingText : tokens.text2;
 }
 
-function daysUntil(dateStr: string) {
-  const diff = new Date(dateStr).getTime() - Date.now();
-  const days = Math.ceil(diff / (1000 * 60 * 60 * 24));
-  if (days < 0) return { label: "Expired", urgent: true };
-  if (days === 0) return { label: "Due today", urgent: true };
-  if (days <= 3) return { label: `${days}d left`, urgent: true };
-  return { label: `${days}d left`, urgent: false };
+function SkillRow({ skills, cap }: { skills: string[]; cap: number }) {
+  const shown = skills.slice(0, cap);
+  const extra = skills.length - shown.length;
+  return (
+    <Box sx={{ display: "flex", gap: 0.875, flexWrap: "wrap" }}>
+      {shown.map(s => (
+        <Box key={s} component="span" sx={{ display: "inline-flex", alignItems: "center", height: 28, px: 1.5, borderRadius: "999px", fontSize: 12.5, fontWeight: 500, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2 }}>{s}</Box>
+      ))}
+      {extra > 0 && <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 28, px: 1.375, borderRadius: "999px", fontSize: 12.5, fontWeight: 600, color: tokens.text3 }}>+{extra}</Box>}
+    </Box>
+  );
 }
 
-const Dot = () => (
-  <Box
-    component="span"
-    sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "text.disabled", display: "inline-block", flexShrink: 0 }}
-  />
-);
+function FooterSignal({ icon, color, children }: { icon: React.ReactNode; color?: string; children: React.ReactNode }) {
+  return (
+    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, color: color || tokens.text2, fontSize: 12.5, fontWeight: 500, whiteSpace: "nowrap" }}>
+      {icon}{children}
+    </Box>
+  );
+}
 
-export default function JobCard({ job }: JobCardProps) {
+function BudgetBlock({ job, mobile }: { job: JobPost; mobile?: boolean }) {
+  return (
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, alignItems: mobile ? "flex-start" : "flex-end", flex: "none" }}>
+      <Typography sx={{ fontFamily: tokens.mono, fontSize: mobile ? 19 : 20, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.05, color: tokens.successText, whiteSpace: "nowrap" }}>
+        {money(job.budget_min)}<Box component="span" sx={{ color: tokens.text3, fontWeight: 500 }}> – </Box>{money(job.budget_max)}
+      </Typography>
+      <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, whiteSpace: "nowrap" }}>Budget · USD</Typography>
+    </Box>
+  );
+}
+
+export default function JobCard({ job }: { job: JobPost }) {
   const router = useRouter();
-  const visibleSkills = job.skills.slice(0, 5);
-  const extraSkills = job.skills.length - 5;
-  const deadline = daysUntil(job.deadline);
-  const clientName = job.client_profile?.user?.name;
-  const clientLocation = job.client_profile?.location;
-  const description = job.description ? stripHtml(job.description) : "";
+  const [saved, setSaved] = useState(false);
 
-  const handleNavigate = () => router.push(`/jobs/${job.id}`);
+  const dl = job.deadline ? daysLeft(job.deadline) : null;
+  const urgent = dl !== null && dl <= 3;
+  const skills = (job.skills ?? []).map(s => s.expertise_name);
+  const location = job.client_profile?.location;
+  const isFirst = job.proposal_count === 0;
+  const proposalText = isFirst ? "Be the first to apply" : job.proposal_count >= 20 ? "20+ proposals" : `${job.proposal_count} proposal${job.proposal_count !== 1 ? "s" : ""}`;
+
+  const bookmark = (
+    <Box
+      component="button"
+      aria-label={saved ? "Saved" : "Save job"}
+      onClick={e => { e.stopPropagation(); setSaved(s => !s); }}
+      sx={{ width: 38, height: 38, borderRadius: "10px", border: "1px solid transparent", bgcolor: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flex: "none", color: saved ? tokens.accent : tokens.text3, "&:hover": { bgcolor: "rgba(0,0,0,0.05)" } }}>
+      {saved ? <BookmarkFilled sx={{ fontSize: 19 }} /> : <BookmarkBorderOutlined sx={{ fontSize: 19 }} />}
+    </Box>
+  );
+
+  const metaLine = (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 24, px: 1.25, borderRadius: "999px", fontSize: 11.5, fontWeight: 600, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2, whiteSpace: "nowrap" }}>{job.category?.category_name ?? "Uncategorized"}</Box>
+      <Typography sx={{ fontSize: 12, fontWeight: 500, color: tokens.text2, whiteSpace: "nowrap" }}>{timeAgo(job.created_at)}</Typography>
+    </Box>
+  );
+
+  const preview = job.description ? (
+    <Typography sx={{ fontSize: 13.5, lineHeight: 1.55, color: tokens.text2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{stripHtml(job.description)}</Typography>
+  ) : null;
+
+  const divider = <Box sx={{ height: "1px", bgcolor: tokens.border, my: "3px" }} />;
+
+  const footer = (
+    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: 1 }}>
+      <FooterSignal color={isFirst ? tokens.accent : undefined} icon={isFirst ? <BoltOutlined sx={{ fontSize: 15 }} /> : <PeopleOutlineOutlined sx={{ fontSize: 15 }} />}>{proposalText}</FooterSignal>
+      {dl !== null && (
+        <>
+          <Box sx={{ width: "1px", height: 12, bgcolor: tokens.borderStrong, mx: 1.75 }} />
+          <FooterSignal color={urgent ? tokens.errorText : undefined} icon={<CalendarTodayOutlined sx={{ fontSize: 14 }} />}>
+            {dl <= 0 ? "Overdue" : `${dl} day${dl !== 1 ? "s" : ""} left`}
+          </FooterSignal>
+        </>
+      )}
+      {location && (
+        <>
+          <Box sx={{ width: "1px", height: 12, bgcolor: tokens.borderStrong, mx: 1.75 }} />
+          <FooterSignal icon={<LocationOnOutlined sx={{ fontSize: 15 }} />}>{location}</FooterSignal>
+        </>
+      )}
+    </Box>
+  );
+
+  const cardSx = {
+    bgcolor: tokens.surface,
+    border: `1px solid ${tokens.border}`,
+    borderRadius: `${tokens.radius.card}px`,
+    cursor: "pointer",
+    transition: "border-color .15s, box-shadow .15s, transform .08s",
+    "&:hover": { borderColor: tokens.borderStrong, boxShadow: "0 6px 24px rgba(0,0,0,0.06)", transform: "translateY(-1px)" },
+  } as const;
 
   return (
-    <Card
-      elevation={0}
-      onClick={handleNavigate}
-      sx={{
-        cursor: "pointer",
-        borderRadius: 2,
-        border: "1px solid",
-        borderColor: "divider",
-        transition: "border-color 0.15s, box-shadow 0.15s",
-        "&:hover": {
-          borderColor: "rgba(0,0,0,0.25)",
-          boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
-          "& .job-title": { color: "#0071e3" },
-        },
-      }}
-    >
-      <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
-
-        {/* Top bar: posted time + bookmark */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1.25}>
-          <Typography sx={{ fontSize: 12, color: "text.disabled" }}>
-            Posted {timeAgo(job.created_at)}
-          </Typography>
-          <IconButton
-            size="small"
-            onClick={(e) => e.stopPropagation()}
-            sx={{ color: "text.disabled", "&:hover": { color: "text.secondary" }, mr: -0.75 }}
-          >
-            <BookmarkBorderOutlined sx={{ fontSize: 18 }} />
-          </IconButton>
-        </Stack>
-
-        {/* Title */}
-        <Typography
-          className="job-title"
-          sx={{
-            fontSize: 16,
-            fontWeight: 600,
-            lineHeight: 1.4,
-            mb: 1,
-            color: "text.primary",
-            transition: "color 0.15s",
-          }}
-        >
-          {job.title}
-        </Typography>
-
-        {/* Metadata: budget · category · client */}
-        <Stack direction="row" alignItems="center" flexWrap="wrap" gap={1} mb={1.5}>
-          <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-            {formatCurrency(job.budget_min)} – {formatCurrency(job.budget_max)}
-          </Typography>
-          <Dot />
-          <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-            {job.category?.category_name ?? "Uncategorized"}
-          </Typography>
-          {clientName && (
-            <>
-              <Dot />
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-                {clientName}
-              </Typography>
-            </>
-          )}
-        </Stack>
-
-        {/* Description */}
-        {description && (
-          <Typography
-            sx={{
-              fontSize: 14,
-              color: "text.secondary",
-              lineHeight: 1.7,
-              mb: 2,
-              display: "-webkit-box",
-              WebkitLineClamp: 3,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-            }}
-          >
-            {description}
-          </Typography>
-        )}
-
-        {/* Skills */}
-        {job.skills.length > 0 && (
-          <Stack direction="row" flexWrap="wrap" gap={0.75} mb={2}>
-            {visibleSkills.map(s => (
-              <Chip
-                key={s.id}
-                label={s.expertise_name}
-                size="small"
-                variant="outlined"
-                sx={{
-                  fontSize: 12,
-                  height: 24,
-                  borderRadius: "12px",
-                  borderColor: "rgba(0,0,0,0.15)",
-                  color: "text.secondary",
-                  bgcolor: "transparent",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                }}
-              />
-            ))}
-            {extraSkills > 0 && (
-              <Chip
-                label={`+${extraSkills} more`}
-                size="small"
-                variant="outlined"
-                sx={{
-                  fontSize: 12,
-                  height: 24,
-                  borderRadius: "12px",
-                  borderColor: "rgba(0,0,0,0.1)",
-                  color: "text.disabled",
-                }}
-              />
-            )}
-          </Stack>
-        )}
-
-        <Divider sx={{ mb: 1.5 }} />
-
-        {/* Footer */}
-        <Stack direction="row" flexWrap="wrap" gap={2} alignItems="center">
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <PeopleOutlineOutlined sx={{ fontSize: 14, color: "text.disabled" }} />
-            <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-              {job.proposal_count === 0
-                ? "Be the first to propose"
-                : `${job.proposal_count} proposal${job.proposal_count !== 1 ? "s" : ""}`}
-            </Typography>
-          </Stack>
-
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <AccessTimeOutlined
-              sx={{ fontSize: 14, color: deadline.urgent ? "#dc2626" : "text.disabled" }}
-            />
-            <Typography
-              sx={{
-                fontSize: 12,
-                color: deadline.urgent ? "#dc2626" : "text.secondary",
-                fontWeight: deadline.urgent ? 600 : 400,
-              }}
-            >
-              {deadline.label}
-            </Typography>
-          </Stack>
-
-          {clientLocation && (
-            <Stack direction="row" spacing={0.5} alignItems="center">
-              <LocationOnOutlined sx={{ fontSize: 14, color: "text.disabled" }} />
-              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                {clientLocation}
-              </Typography>
-            </Stack>
-          )}
-        </Stack>
-
-      </CardContent>
-    </Card>
+    <Box component="article" role="button" tabIndex={0} onClick={() => router.push(`/jobs/${job.id}`)} sx={cardSx}>
+      {/* mobile */}
+      <Box sx={{ display: { xs: "flex", md: "none" }, flexDirection: "column", gap: 1.625, p: 2.25 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.25 }}>{metaLine}{bookmark}</Box>
+        <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 }}>{job.title}</Typography>
+        <BudgetBlock job={job} mobile />
+        {preview}
+        {skills.length > 0 && <SkillRow skills={skills} cap={3} />}
+        {divider}
+        {footer}
+      </Box>
+      {/* desktop */}
+      <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 1.75, p: 3 }}>
+        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0, flex: 1 }}>
+            {metaLine}
+            <Typography sx={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.018em", lineHeight: 1.2 }}>{job.title}</Typography>
+          </Box>
+          <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", flex: "none" }}>
+            <BudgetBlock job={job} />
+            {bookmark}
+          </Box>
+        </Box>
+        {preview}
+        {skills.length > 0 && <SkillRow skills={skills} cap={4} />}
+        {divider}
+        {footer}
+      </Box>
+    </Box>
   );
 }

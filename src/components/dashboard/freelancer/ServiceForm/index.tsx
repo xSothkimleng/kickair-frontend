@@ -55,6 +55,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     return {
       title: service?.title || "",
       categoryId: service?.category_id || null,
+      requestedCategory: service?.requested_category ?? null,
+      requestedParentId: service?.requested_parent_id ?? null,
       searchTags: service?.search_tags?.filter((t: string) => t.trim()) || [],
       description: service?.description || "",
       location: service?.location || "Phnom Penh, Cambodia",
@@ -112,7 +114,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const fetchCategories = async () => {
       try {
         setCategoriesLoading(true);
-        const cats = await api.getServiceCategories();
+        const cats = await api.getCategoryTree();
         setCategories(cats);
       } catch (err) {
         console.error("Failed to fetch categories:", err);
@@ -160,7 +162,10 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const validFaqs = formData.faqs.filter(faq => faq.question.trim() && faq.answer.trim());
 
     return {
-      category_id: formData.categoryId!,
+      // Either an existing category, or a brand-new one to be reviewed by an admin.
+      ...(formData.categoryId
+        ? { category_id: formData.categoryId }
+        : { requested_category: formData.requestedCategory, requested_parent_id: formData.requestedParentId ?? undefined }),
       title: formData.title,
       description: formData.description,
       search_tags: formData.searchTags.filter(tag => tag.trim() !== ""),
@@ -181,7 +186,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const errs: Record<string, string> = {};
 
     if (!formData.title.trim()) errs.title = "Service title is required";
-    if (!formData.categoryId) errs.category = "Please select a category";
+    if (!formData.categoryId && !formData.requestedCategory?.trim()) errs.category = "Please select or suggest a category";
     if (imageCount === 0) errs.image = "Add at least one image";
 
     const enabledTiers = (["basic", "standard", "premium"] as const).filter(t => formData.pricing[t].enabled);

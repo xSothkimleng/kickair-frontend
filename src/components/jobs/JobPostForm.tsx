@@ -10,7 +10,8 @@ import { ServiceCategory } from "@/types/service";
 import { TemporaryUpload } from "@/types/service";
 import { Expertise } from "@/types/user";
 import RichTextEditor from "@/components/ui/RichTextEditor";
-import { TextInput, SelectInput, MultiSelectInput, DatePicker } from "@/components/ui/inputs";
+import { TextInput, MultiSelectInput, DatePicker } from "@/components/ui/inputs";
+import CategoryPicker, { CategoryValue } from "@/components/category/CategoryPicker";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
 
 const FILE_LIMITS = {
@@ -54,7 +55,11 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   const [deletingId, setDeletingId] = useState<number | null>(null);
 
   const [title, setTitle] = useState(job?.title ?? "");
-  const [categoryId, setCategoryId] = useState<number | "">(job?.category?.id ?? "");
+  const [category, setCategory] = useState<CategoryValue>({
+    categoryId: job?.category?.id ?? null,
+    requestedCategory: job?.requested_category ?? null,
+    requestedParentId: job?.requested_parent_id ?? null,
+  });
   const [description, setDescription] = useState(job?.description ?? "");
   const [budgetMin, setBudgetMin] = useState(job?.budget_min ?? "");
   const [budgetMax, setBudgetMax] = useState(job?.budget_max ?? "");
@@ -74,14 +79,14 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
 
   // Local-storage recovery safety net (survives accidental tab close / crash). Mirrors
   // ServiceForm — snapshots the text fields; uploads are handled server-side separately.
-  const formSnapshot = { title, categoryId, description, budgetMin, budgetMax, deadline, maxProposals, selectedSkills };
+  const formSnapshot = { title, category, description, budgetMin, budgetMax, deadline, maxProposals, selectedSkills };
   const recoveryKey = isEditing ? `kickair:job-recovery:edit:${job!.id}` : "kickair:job-recovery:new";
   const { recovered, clear: clearRecovery, discard: discardRecovery, dismiss: dismissRecovery } =
     useFormRecovery<typeof formSnapshot>(recoveryKey, formSnapshot);
 
   const restoreDraft = (data: typeof formSnapshot) => {
     setTitle(data.title);
-    setCategoryId(data.categoryId);
+    setCategory(data.category);
     setDescription(data.description);
     setBudgetMin(data.budgetMin);
     setBudgetMax(data.budgetMax);
@@ -107,7 +112,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     const load = async () => {
       try {
         setRefLoading(true);
-        const [cats, exps] = await Promise.all([api.getServiceCategories(), api.getExpertises()]);
+        const [cats, exps] = await Promise.all([api.getCategoryTree(), api.getExpertises()]);
         setCategories(cats);
         setExpertises(exps);
       } catch {
@@ -198,7 +203,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     if (!asDraft) {
       const errs: Record<string, string> = {};
       if (!title.trim()) errs.title = "Job title is required";
-      if (!categoryId) errs.category = "Please select a category";
+      if (!category.categoryId && !category.requestedCategory?.trim()) errs.category = "Please select or suggest a category";
       if (!description.trim() || description === "<p></p>") errs.description = "Description is required";
       if (!budgetMin) errs.budgetMin = "Required";
       if (!budgetMax) errs.budgetMax = "Required";
@@ -220,7 +225,10 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     try {
       const hasDescription = !!description.trim() && description !== "<p></p>";
       const payload: CreateJobPostRequest = {
-        category_id: categoryId === "" ? null : (categoryId as number),
+        category_id: category.categoryId,
+        ...(category.categoryId
+          ? {}
+          : { requested_category: category.requestedCategory, requested_parent_id: category.requestedParentId ?? undefined }),
         title: title.trim(),
         description: hasDescription ? description : null,
         budget_min: budgetMin === "" ? null : Number(budgetMin),
@@ -339,13 +347,11 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
           />
 
           {/* Category */}
-          <SelectInput
-            label="Category"
-            value={categoryId}
-            onChange={v => { setCategoryId(Number(v)); clearFieldError("category"); }}
-            options={categories.map(c => ({ value: c.id, label: c.name ?? c.category_name }))}
-            placeholder="Select a category"
-            disabled={refLoading}
+          <CategoryPicker
+            tree={categories}
+            loading={refLoading}
+            value={category}
+            onChange={v => { setCategory(v); clearFieldError("category"); }}
             error={fieldErrors.category}
           />
 

@@ -14,11 +14,15 @@ export type { FreelancerProfile, ClientProfile };
 
 export interface ServiceCategory {
   id: number;
+  parent_id?: number | null;
   category_name: string;
   name?: string;
+  slug?: string | null;
+  sort_order?: number;
   is_active: boolean;
-  created_at: string;
-  updated_at: string;
+  children?: ServiceCategory[];
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface PricingOption {
@@ -93,7 +97,10 @@ export interface Service {
   status: "draft" | "active" | "pending_review" | "rejected" | "disabled";
   rejection_reason?: string | null;
   freelancer_profile_id: number;
-  category_id: number;
+  category_id: number | null;
+  requested_category?: string | null;
+  requested_parent_id?: number | null;
+  requested_parent?: ServiceCategory | null;
   title: string;
   description: string | null;
   search_tags: string[] | null;
@@ -155,7 +162,10 @@ export interface CreatePricingOptionRequest {
 }
 
 export interface CreateServiceRequest {
-  category_id: number;
+  category_id?: number | null;
+  // Set instead of category_id when the user requests a brand-new category (admin-reviewed).
+  requested_category?: string | null;
+  requested_parent_id?: number | null;
   title: string;
   description: string;
   search_tags: string[];
@@ -163,6 +173,7 @@ export interface CreateServiceRequest {
   pricing_options: CreatePricingOptionRequest[];
   faqs?: ServiceFAQ[];
   upload_token?: string; // Links temporary uploads to the new service
+  save_as_draft?: boolean;
 }
 
 // Helper type for ServiceCard display

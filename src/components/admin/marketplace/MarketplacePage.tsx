@@ -17,11 +17,24 @@ import ThumbUpIcon from "@mui/icons-material/ThumbUp";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import BlockIcon from "@mui/icons-material/Block";
+import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
 import { api } from "@/lib/api";
 import { Service } from "@/types/service";
 import { JobPost } from "@/types/job";
 import DisputeReviewSection from "../trust/DisputeReviewSection";
+import CategoryAssignDialog, { CategoryAssignTarget } from "./CategoryAssignDialog";
 import { registerAdminRefresh } from "@/components/layout/GlobalNotificationToast";
+
+/** Category cell: existing chip, or an amber "requested" chip when the user asked for a new one. */
+function CategoryCell({ category, requested }: { category?: { category_name: string } | null; requested?: string | null }) {
+  if (category) {
+    return <Chip label={category.category_name} size="small" color="secondary" variant="outlined" />;
+  }
+  if (requested) {
+    return <Chip label={`Requested: ${requested}`} size="small" color="warning" variant="outlined" />;
+  }
+  return <Typography variant="caption" color="text.disabled">—</Typography>;
+}
 
 function EmptyState({ label }: { label: string }) {
   return (
@@ -79,6 +92,7 @@ export default function MarketplacePage() {
   const [actioningId, setActioningId] = useState<number | null>(null);
   const [rejectTarget, setRejectTarget] = useState<RejectTarget>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [categoryTarget, setCategoryTarget] = useState<CategoryAssignTarget | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
   const loadServices = useCallback(() => {
@@ -270,9 +284,7 @@ export default function MarketplacePage() {
                             </Typography>
                           </TableCell>
                           <TableCell>
-                            {s.category ? (
-                              <Chip label={s.category.category_name} size="small" color="secondary" variant="outlined" />
-                            ) : <Typography variant="caption" color="text.disabled">—</Typography>}
+                            <CategoryCell category={s.category} requested={s.requested_category} />
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" fontWeight={500}>
@@ -285,6 +297,14 @@ export default function MarketplacePage() {
                               <Tooltip title="Preview in new tab">
                                 <IconButton size="small" onClick={() => window.open(`/explore-services/${s.id}`, "_blank", "noopener,noreferrer")}>
                                   <VisibilityIcon fontSize="small" color="primary" />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title={s.requested_category ? "Review requested category" : "Set / change category"}>
+                                <IconButton
+                                  size="small"
+                                  color={s.requested_category ? "warning" : "default"}
+                                  onClick={() => setCategoryTarget({ kind: "service", id: s.id, title: s.title, requestedCategory: s.requested_category, requestedParentId: s.requested_parent_id })}>
+                                  <SellOutlinedIcon fontSize="small" />
                                 </IconButton>
                               </Tooltip>
                               {isPending && (
@@ -368,9 +388,7 @@ export default function MarketplacePage() {
                           <TableCell><Typography variant="body2" fontWeight={500}>{j.title}</Typography></TableCell>
                           <TableCell><Typography variant="body2" color="text.secondary">{clientName}</Typography></TableCell>
                           <TableCell>
-                            {j.category ? (
-                              <Chip label={j.category.category_name} size="small" color="secondary" variant="outlined" />
-                            ) : <Typography variant="caption" color="text.disabled">—</Typography>}
+                            <CategoryCell category={j.category} requested={j.requested_category} />
                           </TableCell>
                           <TableCell>
                             <Typography variant="body2" fontWeight={500}>${j.budget_min} – ${j.budget_max}</Typography>
@@ -378,6 +396,14 @@ export default function MarketplacePage() {
                           <TableCell><StatusChip status={j.status} /></TableCell>
                           <TableCell>
                             <Stack direction="row" spacing={0.5} alignItems="center">
+                              <Tooltip title={j.requested_category ? "Review requested category" : "Set / change category"}>
+                                <IconButton
+                                  size="small"
+                                  color={j.requested_category ? "warning" : "default"}
+                                  onClick={() => setCategoryTarget({ kind: "job", id: j.id, title: j.title, requestedCategory: j.requested_category, requestedParentId: j.requested_parent_id })}>
+                                  <SellOutlinedIcon fontSize="small" />
+                                </IconButton>
+                              </Tooltip>
                               {isPending && (
                                 <>
                                   <Button
@@ -394,7 +420,6 @@ export default function MarketplacePage() {
                                   >Reject</Button>
                                 </>
                               )}
-                              {!isPending && <Typography variant="caption" color="text.disabled">—</Typography>}
                             </Stack>
                           </TableCell>
                         </TableRow>
@@ -469,6 +494,18 @@ export default function MarketplacePage() {
           >{rejectTarget?.action === "disable" ? "Disable" : "Reject"}</Button>
         </DialogActions>
       </Dialog>
+
+      {/* ── Assign / review category ── */}
+      <CategoryAssignDialog
+        open={!!categoryTarget}
+        target={categoryTarget}
+        onClose={() => setCategoryTarget(null)}
+        onDone={(msg) => {
+          setToast(msg);
+          if (categoryTarget?.kind === "service") loadServices();
+          else loadJobs();
+        }}
+      />
 
       <Snackbar
         open={!!toast}

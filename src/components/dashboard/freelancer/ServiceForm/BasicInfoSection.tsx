@@ -1,6 +1,7 @@
 import { Box, Paper, Typography } from "@mui/material";
 import RichTextEditor from "@/components/ui/RichTextEditor";
-import { TextInput, SelectInput, TagInput } from "@/components/ui/inputs";
+import { TextInput, TagInput } from "@/components/ui/inputs";
+import CategoryPicker from "@/components/category/CategoryPicker";
 import { ServiceFormData } from "../types";
 import { ServiceCategory } from "@/types/service";
 
@@ -27,14 +28,23 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
           error={fieldErrors?.title}
         />
 
-        <SelectInput
-          label="Category"
+        <CategoryPicker
+          tree={categories}
+          loading={categoriesLoading}
           required
-          value={formData.categoryId ?? ""}
-          onChange={(v) => onFormDataChange({ ...formData, categoryId: Number(v) })}
-          options={categories.map((cat) => ({ value: cat.id, label: cat.category_name }))}
-          placeholder={categoriesLoading ? "Loading categories…" : "Select a category"}
-          disabled={categoriesLoading}
+          value={{
+            categoryId: formData.categoryId,
+            requestedCategory: formData.requestedCategory,
+            requestedParentId: formData.requestedParentId,
+          }}
+          onChange={(v) =>
+            onFormDataChange({
+              ...formData,
+              categoryId: v.categoryId,
+              requestedCategory: v.requestedCategory,
+              requestedParentId: v.requestedParentId,
+            })
+          }
           error={fieldErrors?.category}
         />
 

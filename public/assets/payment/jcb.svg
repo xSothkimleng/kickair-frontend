@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 44 44" width="44" height="44" role="img" aria-label="JCB">
+  <rect width="44" height="44" rx="10" fill="#FFFFFF"/>
+  <rect x="9" y="14" width="8" height="16" rx="2.5" fill="#0B4EA2"/>
+  <rect x="18" y="14" width="8" height="16" rx="2.5" fill="#BE1A2C"/>
+  <rect x="27" y="14" width="8" height="16" rx="2.5" fill="#1F8A3B"/>
+  <text x="22" y="22.5" font-family="Roboto, Arial, sans-serif" font-size="6.5" font-weight="700" fill="#FFFFFF" text-anchor="middle" dominant-baseline="central">JCB</text>
+</svg>

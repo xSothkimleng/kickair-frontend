@@ -1,63 +1,34 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { qk } from "@/lib/queryKeys";
+import { useQuery } from "@tanstack/react-query";
+import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import {
-  Box,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  Stack,
-  Chip,
-  Grid,
-  Paper,
-  Divider,
-  CircularProgress,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
-  Alert,
-  InputAdornment,
-} from "@mui/material";
-import {
-  Download as DownloadIcon,
-  CreditCard as CreditCardIcon,
-  Receipt as FileTextIcon,
-  CheckCircle as CheckCircle2Icon,
-  Cancel as XCircleIcon,
-  AccessTime as ClockIcon,
+  AccountBalanceWallet as WalletIcon,
   Add as AddIcon,
+  ArrowUpward as ArrowUpIcon,
+  ArrowDownward as ArrowDownIcon,
+  VerifiedUser as ShieldIcon,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
+import { qk } from "@/lib/queryKeys";
+import { tokens } from "@/theme";
 import { Wallet, Transaction } from "@/types/wallet";
+import { Annot, PayLogo, PaymentFooterLogos, StatusChip, TopUpDialog, fmtUsd, type PayLogoId } from "@/components/payment";
+
+type Filter = "all" | "completed" | "pending" | "failed";
+const FILTERS: [Filter, string][] = [
+  ["all", "All"],
+  ["completed", "Completed"],
+  ["pending", "Pending"],
+  ["failed", "Failed"],
+];
 
 export default function FinanceContent() {
-  const [activeFilter, setActiveFilter] = useState<"all" | "completed" | "pending" | "failed">("all");
+  const [filter, setFilter] = useState<Filter>("all");
   const [topUpOpen, setTopUpOpen] = useState(false);
-  const [topUpAmount, setTopUpAmount] = useState("");
-  const [topUpLoading, setTopUpLoading] = useState(false);
-  const [topUpError, setTopUpError] = useState<string | null>(null);
 
-  const paymentMethods = [
-    {
-      id: 1,
-      type: "card",
-      name: "Visa ending in 4242",
-      isDefault: true,
-    },
-    {
-      id: 2,
-      type: "card",
-      name: "Mastercard ending in 8888",
-      isDefault: false,
-    },
-  ];
-
-  const { data, isLoading: loading, error: queryError, refetch } = useQuery({
+  const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.wallet(),
     queryFn: async () => {
       const [walletResponse, transactionsResponse] = await Promise.all([
@@ -66,109 +37,40 @@ export default function FinanceContent() {
       ]);
       return {
         wallet: walletResponse.data as Wallet,
-        transactions: (transactionsResponse.data ?? []) as Transaction[],
+        transactions: (Array.isArray(transactionsResponse.data)
+          ? transactionsResponse.data
+          : transactionsResponse.data?.data ?? []) as Transaction[],
       };
     },
   });
+
   const wallet = data?.wallet ?? null;
   const transactions = data?.transactions ?? [];
-  const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to fetch finance data") : null;
-  const queryClient = useQueryClient();
-  const fetchFinanceData = async () => {
-    await refetch();
-    queryClient.invalidateQueries({ queryKey: qk.dashboard.client() });
+  const balance = wallet ? parseFloat(wallet.available_balance_raw) : 0;
+
+  const filtered = transactions.filter(t => (filter === "all" ? true : t.status === filter));
+
+  const formatDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+
+  const txnTitle = (t: Transaction) =>
+    t.metadata?.service_title || t.order?.service?.title || t.description || "Transaction";
+  const txnParty = (t: Transaction) => {
+    const m: Record<Transaction["type"], string> = {
+      deposit: "Wallet top-up",
+      withdrawal: "Withdrawal",
+      payment: "Order payment",
+      escrow: "In escrow",
+      earning: "Earning",
+      refund: "Refund",
+    };
+    return m[t.type] ?? "Transaction";
   };
+  const isCredit = (t: Transaction) => t.type === "deposit" || t.type === "refund" || t.type === "earning";
 
-  const handleTopUp = async () => {
-    const amount = parseFloat(topUpAmount);
-    if (!topUpAmount || isNaN(amount) || amount <= 0) {
-      setTopUpError("Please enter a valid amount.");
-      return;
-    }
-    try {
-      setTopUpLoading(true);
-      setTopUpError(null);
-      await api.post("/api/wallet/deposit", { amount });
-      setTopUpOpen(false);
-      setTopUpAmount("");
-      await fetchFinanceData();
-    } catch (err) {
-      setTopUpError(err instanceof Error ? err.message : "Deposit failed. Please try again.");
-    } finally {
-      setTopUpLoading(false);
-    }
-  };
-
-  const filteredTransactions = transactions.filter(transaction => {
-    if (activeFilter === "all") return true;
-    return transaction.status === activeFilter;
-  });
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "completed":
-        return <CheckCircle2Icon sx={{ fontSize: 16, color: "#16a34a" }} />;
-      case "pending":
-        return <ClockIcon sx={{ fontSize: 16, color: "#ea580c" }} />;
-      case "failed":
-        return <XCircleIcon sx={{ fontSize: 16, color: "#dc2626" }} />;
-      default:
-        return null;
-    }
-  };
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "completed":
-        return { bgcolor: "rgba(22, 163, 74, 0.1)", color: "#15803d" };
-      case "pending":
-        return { bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
-      case "failed":
-        return { bgcolor: "rgba(220, 38, 38, 0.1)", color: "#b91c1c" };
-      default:
-        return { bgcolor: "rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.6)" };
-    }
-  };
-
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString("en-US", {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    });
-  };
-
-  const getTransactionAmount = (transaction: Transaction) => {
-    const amount = parseFloat(transaction.amount_raw);
-    // Deposits and refunds are positive (money in), payments and withdrawals are negative (money out)
-    const isPositive = transaction.type === "deposit" || transaction.type === "refund";
-    return { amount, isPositive };
-  };
-
-  const getTransactionDescription = (transaction: Transaction) => {
-    if (transaction.metadata?.service_title) {
-      return transaction.metadata.service_title;
-    }
-    if (transaction.order?.service?.title) {
-      return transaction.order.service.title;
-    }
-    return transaction.description;
-  };
-
-  const getTransactionProject = (transaction: Transaction) => {
-    if (transaction.metadata?.pricing_option_title) {
-      return transaction.metadata.pricing_option_title;
-    }
-    if (transaction.order?.pricing_option?.title) {
-      return transaction.order.pricing_option.title;
-    }
-    return transaction.type.charAt(0).toUpperCase() + transaction.type.slice(1);
-  };
-
-  if (loading) {
+  if (isLoading) {
     return (
       <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-        <CircularProgress size={32} sx={{ color: "rgba(0, 0, 0, 0.4)" }} />
+        <CircularProgress size={32} sx={{ color: tokens.text3 }} />
       </Box>
     );
   }
@@ -176,375 +78,163 @@ export default function FinanceContent() {
   if (error) {
     return (
       <Box sx={{ textAlign: "center", py: 6 }}>
-        <Typography sx={{ fontSize: 13, color: "rgba(239, 68, 68, 0.8)", mb: 2 }}>{error}</Typography>
-        <Button onClick={fetchFinanceData} sx={{ fontSize: 12, textTransform: "none" }}>
+        <Typography sx={{ fontSize: 13, color: tokens.errorText, mb: 2 }}>
+          {error instanceof Error ? error.message : "Failed to fetch finance data"}
+        </Typography>
+        <Button onClick={() => refetch()} sx={{ fontSize: 12, textTransform: "none" }}>
           Try again
         </Button>
       </Box>
     );
   }
 
+  const stats: { label: string; value: number; dot: string; Icon: typeof WalletIcon }[] = [
+    { label: "Total spent", value: wallet ? parseFloat(wallet.total_spent_raw) : 0, dot: tokens.text3, Icon: ArrowUpIcon },
+    { label: "In escrow", value: wallet ? parseFloat(wallet.pending_balance_raw) : 0, dot: tokens.pending, Icon: ShieldIcon },
+    { label: "Total balance", value: wallet ? Number(wallet.total_balance_raw) : 0, dot: tokens.success, Icon: WalletIcon },
+  ];
+
   return (
     <Box>
-      <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={3}>
-        <Box>
-          <Typography variant='h5' fontWeight={600} mb={0.5}>
-            Finance
-          </Typography>
-          <Typography variant='body2' color='text.secondary'>
-            Manage your finances and transactions
-          </Typography>
-        </Box>
-        <Stack direction='row' spacing={1}>
-          <Button
-            variant='contained'
-            startIcon={<AddIcon sx={{ fontSize: 14 }} />}
-            onClick={() => {
-              setTopUpOpen(true);
-              setTopUpError(null);
-              setTopUpAmount("");
-            }}
-            sx={{
-              fontSize: 12,
-              textTransform: "none",
-              borderRadius: 10,
-              bgcolor: "black",
-              color: "white",
-              boxShadow: "none",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.8)", boxShadow: "none" },
-            }}>
-            Top Up
-          </Button>
-          <Button
-            variant='contained'
-            startIcon={<DownloadIcon sx={{ fontSize: 14 }} />}
-            sx={{
-              fontSize: 12,
-              textTransform: "none",
-              borderRadius: 10,
-              bgcolor: "rgba(0,0,0,0.05)",
-              color: "black",
-              boxShadow: "none",
-              "&:hover": { bgcolor: "rgba(0,0,0,0.1)", boxShadow: "none" },
-            }}>
-            Export Report
-          </Button>
-        </Stack>
-      </Stack>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}>
+        <Annot>Finance overview · entry to STEP 1</Annot>
+        <Typography sx={{ fontSize: { xs: 28, md: 34 }, fontWeight: 600, letterSpacing: "-0.03em" }}>Wallet</Typography>
+      </Box>
 
-      {/* Financial Overview Cards */}
-      <Grid container spacing={2} mb={4}>
-        {/* Available Balance */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ background: "linear-gradient(135deg, #000 0%, rgba(0,0,0,0.8) 100%)", borderRadius: 4, p: 3, color: "white" }}>
-            <Typography sx={{ fontSize: 11, color: "rgba(255,255,255,0.6)", mb: 1 }}>Available Balance</Typography>
-            <Typography sx={{ fontSize: 32, fontWeight: 600, mb: 2 }}>
-              ${wallet ? parseFloat(wallet.available_balance_raw).toLocaleString() : "0"}
-            </Typography>
-            <Button
-              onClick={() => { setTopUpOpen(true); setTopUpError(null); setTopUpAmount(""); }}
-              sx={{ width: "100%", height: 36, bgcolor: "white", color: "black", fontSize: 12, borderRadius: 2, textTransform: "none", fontWeight: 500, "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
-              Top Up
-            </Button>
-          </Paper>
-        </Grid>
-
-        {/* Total Spent */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>Total Spent</Typography>
-              <Box sx={{ width: 8, height: 8, bgcolor: "#2563eb", borderRadius: "50%" }} />
+      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 320px" }, gap: 3, alignItems: "start" }}>
+        {/* Left column */}
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          {/* Hero */}
+          <Box sx={{ position: "relative", overflow: "hidden", borderRadius: `${tokens.radius.card}px`, p: { xs: 3, md: 3.75 }, color: "#fff", background: "linear-gradient(135deg, #000, rgba(0,0,0,0.82))" }}>
+            <Box sx={{ position: "absolute", top: -40, right: -30, width: 180, height: 180, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.05)" }} />
+            <Box sx={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
+              <Typography sx={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>Available balance</Typography>
+              <WalletIcon sx={{ fontSize: 20, color: "rgba(255,255,255,0.6)" }} />
             </Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
-              ${wallet ? parseFloat(wallet.total_spent_raw).toLocaleString() : "0"}
-            </Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Lifetime spending</Typography>
-          </Paper>
-        </Grid>
-
-        {/* In Escrow */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>In Escrow</Typography>
-              <Box sx={{ width: 8, height: 8, bgcolor: "#ea580c", borderRadius: "50%" }} />
+            <Box sx={{ position: "relative", display: "flex", alignItems: "baseline", gap: 0.5 }}>
+              <Typography sx={{ fontSize: 26, fontWeight: 500, color: "rgba(255,255,255,0.6)" }}>$</Typography>
+              <Typography sx={{ fontFamily: tokens.mono, fontSize: { xs: 46, md: 54 }, fontWeight: 600, letterSpacing: "-0.03em" }}>{balance.toFixed(2)}</Typography>
+              <Typography sx={{ fontSize: 15, color: "rgba(255,255,255,0.5)", ml: 0.75 }}>USD</Typography>
             </Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
-              ${wallet ? parseFloat(wallet.pending_balance_raw).toLocaleString() : "0"}
-            </Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Held until orders complete</Typography>
-          </Paper>
-        </Grid>
-
-        {/* Total Balance */}
-        <Grid size={{ xs: 12, sm: 6, md: 3 }}>
-          <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>Total Balance</Typography>
-              <Box sx={{ width: 8, height: 8, bgcolor: "#16a34a", borderRadius: "50%" }} />
-            </Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
-              ${wallet ? wallet.total_balance_raw.toLocaleString() : "0"}
-            </Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>Available + Escrow</Typography>
-          </Paper>
-        </Grid>
-      </Grid>
-
-      <Grid container spacing={3}>
-        {/* Transaction History */}
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-            }}>
-            <CardContent sx={{ p: 3 }}>
-              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={3}>
-                <Typography variant='h6' fontWeight={600}>
-                  Transaction History
-                </Typography>
-                <Stack direction='row' spacing={1}>
-                  {(["all", "completed", "pending", "failed"] as const).map(filter => (
-                    <Button
-                      key={filter}
-                      onClick={() => setActiveFilter(filter)}
-                      sx={{
-                        fontSize: 11,
-                        textTransform: "capitalize",
-                        borderRadius: 10,
-                        px: 2,
-                        minWidth: "auto",
-                        ...(activeFilter === filter
-                          ? {
-                              bgcolor: "black",
-                              color: "white",
-                              "&:hover": { bgcolor: "black" },
-                            }
-                          : {
-                              bgcolor: "rgba(0,0,0,0.05)",
-                              color: "rgba(0,0,0,0.6)",
-                              "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
-                            }),
-                      }}>
-                      {filter}
-                    </Button>
-                  ))}
-                </Stack>
-              </Stack>
-
-              {filteredTransactions.length === 0 ? (
-                <Box sx={{ textAlign: "center", py: 6 }}>
-                  <FileTextIcon sx={{ fontSize: 48, color: "rgba(0, 0, 0, 0.2)", mb: 2 }} />
-                  <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>No transactions found</Typography>
-                </Box>
-              ) : (
-                <Stack spacing={1.5}>
-                  {filteredTransactions.map((transaction, index) => {
-                    const { amount, isPositive } = getTransactionAmount(transaction);
-                    return (
-                      <Box key={transaction.id}>
-                        <Stack
-                          direction='row'
-                          justifyContent='space-between'
-                          alignItems='center'
-                          sx={{
-                            p: 2,
-                            borderRadius: 2,
-                            transition: "all 0.2s",
-                            "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                          }}>
-                          <Stack direction='row' spacing={2} flex={1}>
-                            <Box
-                              sx={{
-                                width: 40,
-                                height: 40,
-                                borderRadius: 2,
-                                bgcolor: "rgba(0,0,0,0.05)",
-                                display: "flex",
-                                alignItems: "center",
-                                justifyContent: "center",
-                              }}>
-                              <FileTextIcon sx={{ fontSize: 20, color: "text.secondary" }} />
-                            </Box>
-                            <Box flex={1}>
-                              <Typography variant='body2' fontWeight={500} mb={0.25}>
-                                {getTransactionDescription(transaction)}
-                              </Typography>
-                              <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                                {getTransactionProject(transaction)}
-                              </Typography>
-                              <Stack direction='row' spacing={1} alignItems='center'>
-                                {getStatusIcon(transaction.status)}
-                                <Chip
-                                  label={transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}
-                                  size='small'
-                                  sx={{
-                                    height: 20,
-                                    fontSize: 10,
-                                    ...getStatusColor(transaction.status),
-                                  }}
-                                />
-                                <Typography variant='caption' color='text.disabled'>
-                                  {formatDate(transaction.created_at)}
-                                </Typography>
-                              </Stack>
-                            </Box>
-                          </Stack>
-                          <Typography
-                            variant='body1'
-                            fontWeight={600}
-                            sx={{
-                              color: isPositive ? "#16a34a" : "black",
-                            }}>
-                            {isPositive ? "+" : "-"}${amount.toLocaleString()}
-                          </Typography>
-                        </Stack>
-                        {index < filteredTransactions.length - 1 && <Divider />}
-                      </Box>
-                    );
-                  })}
-                </Stack>
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
-
-        {/* Payment Methods */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-              mb: 3,
-            }}>
-            <CardContent sx={{ p: 3 }}>
-              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={3}>
-                <Typography variant='h6' fontWeight={600}>
-                  Payment Methods
-                </Typography>
-                <Button
-                  sx={{
-                    fontSize: 11,
-                    color: "#0071e3",
-                    textTransform: "none",
-                    minWidth: "auto",
-                    p: 0,
-                    "&:hover": {
-                      textDecoration: "underline",
-                      bgcolor: "transparent",
-                    },
-                  }}>
-                  Add New
-                </Button>
-              </Stack>
-
-              <Stack spacing={2}>
-                {paymentMethods.map(method => (
-                  <Paper
-                    elevation={0}
-                    key={method.id}
-                    sx={{
-                      p: 2,
-                      borderRadius: 2,
-                      border: "1px solid",
-                      borderColor: method.isDefault ? "#0071e3" : "rgba(0,0,0,0.08)",
-                      bgcolor: method.isDefault ? "rgba(0, 113, 227, 0.05)" : "white",
-                    }}>
-                    <Stack direction='row' spacing={2} alignItems='center'>
-                      <Box
-                        sx={{
-                          width: 40,
-                          height: 40,
-                          borderRadius: 2,
-                          bgcolor: "rgba(0,0,0,0.05)",
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                        }}>
-                        <CreditCardIcon sx={{ fontSize: 20, color: "text.secondary" }} />
-                      </Box>
-                      <Box flex={1}>
-                        <Typography variant='body2' fontWeight={500} mb={0.25}>
-                          {method.name}
-                        </Typography>
-                        {method.isDefault && (
-                          <Chip
-                            label='Default'
-                            size='small'
-                            sx={{
-                              height: 18,
-                              fontSize: 10,
-                              bgcolor: "rgba(0, 113, 227, 0.1)",
-                              color: "#0071e3",
-                            }}
-                          />
-                        )}
-                      </Box>
-                    </Stack>
-                  </Paper>
-                ))}
-              </Stack>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      <Dialog
-        open={topUpOpen}
-        onClose={() => !topUpLoading && setTopUpOpen(false)}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 4 } }}
-      >
-        <DialogTitle sx={{ fontSize: 20, fontWeight: 600, color: "black" }}>Top Up Balance</DialogTitle>
-        <DialogContent>
-          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", mb: 3 }}>
-            Current balance: <strong>${wallet ? parseFloat(wallet.available_balance_raw).toLocaleString() : "0"}</strong>
-          </Typography>
-          {topUpError && <Alert severity="error" sx={{ mb: 2 }}>{topUpError}</Alert>}
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <Box>
-              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", mb: 1 }}>Amount (USD)</Typography>
-              <TextField
-                fullWidth
-                type="number"
-                value={topUpAmount}
-                onChange={e => { setTopUpAmount(e.target.value); setTopUpError(null); }}
-                placeholder="0.00"
-                disabled={topUpLoading}
-                slotProps={{ htmlInput: { min: 1, step: "0.01" } }}
-                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-                sx={{ "& .MuiOutlinedInput-root": { height: 44, borderRadius: 3, fontSize: 14, "& fieldset": { borderColor: "rgba(0,0,0,0.1)" } } }}
-              />
-            </Box>
-            <Box sx={{ p: 2, bgcolor: "rgba(37,99,235,0.05)", borderRadius: 3 }}>
-              <Typography sx={{ fontSize: 11, color: "rgb(29,78,216)" }}>
-                <strong>Note:</strong> Top-up funds are added to your wallet balance and can be used for orders.
-              </Typography>
+            <Box sx={{ position: "relative", mt: 3 }}>
+              <Button
+                onClick={() => setTopUpOpen(true)}
+                startIcon={<AddIcon sx={{ fontSize: 16 }} />}
+                sx={{ height: 44, px: 2.75, borderRadius: "999px", bgcolor: "#fff", color: "#000", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
+                Top up
+              </Button>
             </Box>
           </Box>
-        </DialogContent>
-        <DialogActions sx={{ p: 3, pt: 0 }}>
-          <Button
-            onClick={() => { setTopUpOpen(false); setTopUpError(null); }}
-            disabled={topUpLoading}
-            sx={{ flex: 1, height: 44, fontSize: 13, color: "black", bgcolor: "rgba(0,0,0,0.05)", borderRadius: 10, textTransform: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleTopUp}
-            disabled={topUpLoading}
-            sx={{ flex: 1, height: 44, fontSize: 13, color: "white", bgcolor: "black", borderRadius: 10, textTransform: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>
-            {topUpLoading ? <CircularProgress size={18} sx={{ color: "white" }} /> : "Confirm Top Up"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+
+          {/* Stat cards */}
+          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3,1fr)" }, gap: 1.5 }}>
+            {stats.map(s => (
+              <Box key={s.label} sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.25 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.75 }}>
+                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
+                    <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: s.dot }} />
+                    <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{s.label}</Typography>
+                  </Box>
+                  <s.Icon sx={{ fontSize: 15, color: tokens.text3 }} />
+                </Box>
+                <Typography sx={{ fontFamily: tokens.mono, fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em" }}>{fmtUsd(s.value)}</Typography>
+              </Box>
+            ))}
+          </Box>
+
+          {/* Transaction history */}
+          <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 3 } }}>
+            <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em", mb: 2 }}>Transaction history</Typography>
+            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
+              {FILTERS.map(([k, label]) => {
+                const active = filter === k;
+                return (
+                  <Box
+                    key={k}
+                    component='button'
+                    type='button'
+                    onClick={() => setFilter(k)}
+                    sx={{
+                      height: 34,
+                      px: 2,
+                      borderRadius: "999px",
+                      cursor: "pointer",
+                      font: "inherit",
+                      fontSize: 13,
+                      fontWeight: 500,
+                      border: "none",
+                      bgcolor: active ? "#000" : "rgba(0,0,0,0.05)",
+                      color: active ? "#fff" : tokens.text2,
+                      "&:hover": { bgcolor: active ? "#000" : "rgba(0,0,0,0.09)" },
+                    }}>
+                    {label}
+                  </Box>
+                );
+              })}
+            </Box>
+
+            {filtered.length === 0 ? (
+              <Typography sx={{ textAlign: "center", py: 4, fontSize: 14, color: tokens.text2 }}>No {filter === "all" ? "" : filter} transactions.</Typography>
+            ) : (
+              <Box>
+                {filtered.map(t => {
+                  const credit = isCredit(t);
+                  return (
+                    <Box key={t.id} sx={{ display: "flex", alignItems: "center", gap: 1.75, py: 1.75, borderBottom: `1px solid ${tokens.border}`, "&:last-of-type": { borderBottom: "none" } }}>
+                      <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: tokens.canvas, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                        {credit ? <ArrowDownIcon sx={{ fontSize: 18, color: tokens.success }} /> : <ArrowUpIcon sx={{ fontSize: 18, color: tokens.text2 }} />}
+                      </Box>
+                      <Box sx={{ flex: 1, minWidth: 0 }}>
+                        <Typography sx={{ fontSize: 14.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{txnTitle(t)}</Typography>
+                        <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{txnParty(t)} · {formatDate(t.created_at)}</Typography>
+                      </Box>
+                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.625 }}>
+                        <Typography sx={{ fontFamily: tokens.mono, fontSize: 15, fontWeight: 600, color: credit ? tokens.successText : tokens.text }}>
+                          {credit ? "+" : "–"}{fmtUsd(Math.abs(parseFloat(t.amount_raw)))}
+                        </Typography>
+                        <StatusChip status={t.status}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</StatusChip>
+                      </Box>
+                    </Box>
+                  );
+                })}
+              </Box>
+            )}
+          </Box>
+        </Box>
+
+        {/* Right column — payment methods */}
+        <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 3 } }}>
+          <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", mb: 2 }}>Payment methods</Typography>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+            {[
+              { id: "khqr" as PayLogoId, name: "ABA KHQR", sub: "Default · scan to pay", primary: true },
+              { id: "visa" as PayLogoId, name: "Visa ···· 4242", sub: "Expires 09/27", primary: false },
+            ].map(m => (
+              <Box key={m.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.cardSm}px` }}>
+                <PayLogo id={m.id} />
+                <Box sx={{ flex: 1, minWidth: 0 }}>
+                  <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{m.name}</Typography>
+                  <Typography sx={{ fontSize: 11.5, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{m.sub}</Typography>
+                </Box>
+                {m.primary && <StatusChip status='neutral' dot={false}>Default</StatusChip>}
+              </Box>
+            ))}
+          </Box>
+          <Box sx={{ height: 1, bgcolor: tokens.border, my: 2.25 }} />
+          <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, mb: 1.5 }}>Accepted via ABA PayWay</Typography>
+          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            {(["khqr", "visa", "mc", "unionpay", "jcb", "alipay", "wechat"] as PayLogoId[]).map(id => (
+              <PayLogo key={id} id={id} size='sm' />
+            ))}
+          </Box>
+        </Box>
+      </Box>
+
+      <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: 3, pt: 3 }}>
+        <PaymentFooterLogos variant='light' />
+      </Box>
+
+      <TopUpDialog open={topUpOpen} onClose={() => setTopUpOpen(false)} currentBalance={balance} suggestedAmount={25} />
     </Box>
   );
 }
