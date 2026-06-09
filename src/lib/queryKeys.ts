@@ -45,4 +45,10 @@ export const qk = {
   disputes: {
     all: () => ["disputes"] as const,
   },
+  customOrders: {
+    all: () => ["custom-orders"] as const,
+    mine: () => ["custom-orders", "mine"] as const,
+    incoming: () => ["custom-orders", "incoming"] as const,
+    detail: (id: number | string) => ["custom-orders", "detail", String(id)] as const,
+  },
 } as const;

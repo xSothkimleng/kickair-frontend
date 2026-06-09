@@ -16,6 +16,10 @@ import {
   MoveToInboxOutlined,
   HowToRegOutlined,
   NotificationsNoneOutlined,
+  HandshakeOutlined,
+  RequestQuoteOutlined,
+  FlagOutlined,
+  LockOutlined,
 } from "@mui/icons-material";
 import { Box, Typography } from "@mui/material";
 import { tokens } from "@/theme";
@@ -72,6 +76,16 @@ export const TYPE_META: Record<NotificationType, TypeMeta> = {
   admin_job_pending: { Icon: MoveToInboxOutlined, tone: "pending", cta: "Open queue" },
   admin_dispute_opened: { Icon: BalanceOutlined, tone: "pending", cta: "Open dispute" },
   admin_kyc_pending: { Icon: HowToRegOutlined, tone: "pending", cta: "Open queue" },
+  // Custom orders & milestones
+  custom_order_requested: { Icon: RequestQuoteOutlined, tone: "blue", cta: "View request" },
+  custom_order_offered: { Icon: HandshakeOutlined, tone: "pending", cta: "Review offer" },
+  custom_order_accepted: { Icon: HandshakeOutlined, tone: "success", cta: "Open workspace" },
+  custom_order_declined: { Icon: CancelOutlined, tone: "error", cta: "View request" },
+  custom_order_ended: { Icon: FlagOutlined, tone: "neutral", cta: "View order" },
+  milestone_funded: { Icon: LockOutlined, tone: "pending", cta: "Open workspace" },
+  milestone_submitted: { Icon: LocalShippingOutlined, tone: "blue", cta: "Review milestone" },
+  milestone_payment_released: { Icon: PaidOutlined, tone: "success", cta: "Open workspace" },
+  milestone_revision_requested: { Icon: ReplayOutlined, tone: "pending", cta: "Open workspace" },
 };
 
 export function typeMeta(type: NotificationType): TypeMeta {
@@ -100,6 +114,17 @@ export function getNotificationRoute(n: Notification): string | null {
   // Admin queue
   if (type === "admin_service_pending" || type === "admin_job_pending" || type === "admin_dispute_opened") return `/admin/marketplace`;
   if (type === "admin_kyc_pending") return `/admin/trust`;
+  // Custom orders & milestones
+  const customOrderId = data?.custom_order_id;
+  if (type === "custom_order_requested") return `/dashboard/freelancer/custom-requests`;
+  if (type === "custom_order_declined") return `/dashboard/client/custom-orders`;
+  if (customOrderId && (
+    type === "custom_order_offered" || type === "custom_order_accepted" || type === "custom_order_ended" ||
+    type === "milestone_funded" || type === "milestone_submitted" ||
+    type === "milestone_payment_released" || type === "milestone_revision_requested"
+  )) {
+    return `/dashboard/custom-orders/${customOrderId}`;
+  }
   return null;
 }
 

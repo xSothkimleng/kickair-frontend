@@ -21,7 +21,16 @@ export type NotificationType =
   | "admin_service_pending"
   | "admin_job_pending"
   | "admin_dispute_opened"
-  | "admin_kyc_pending";
+  | "admin_kyc_pending"
+  | "custom_order_requested"
+  | "custom_order_offered"
+  | "custom_order_accepted"
+  | "custom_order_declined"
+  | "custom_order_ended"
+  | "milestone_funded"
+  | "milestone_submitted"
+  | "milestone_payment_released"
+  | "milestone_revision_requested";
 
 export interface Notification {
   id: string;

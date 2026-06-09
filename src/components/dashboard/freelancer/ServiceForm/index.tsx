@@ -11,9 +11,8 @@ import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
 import MediaGallerySection from "./MediaGallerySection";
 import FAQsSection from "./FAQsSection";
+import CustomOrdersSection from "./CustomOrdersSection";
 
-// TODO: Enable when API supports these features
-// import CustomOrdersSection from "./CustomOrdersSection";
 // TODO: After implementing Message feature
 // import RequirementsSection from "./RequirementsSection";
 
@@ -90,11 +89,11 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         },
       },
       customOrders: {
-        enabled: false,
-        acceptHourlyRate: false,
-        hourlyRate: "",
-        minimumBudget: "",
-        customInstructions: "",
+        enabled: service?.custom_orders_enabled ?? false,
+        acceptHourlyRate: service?.custom_hourly_rate != null,
+        hourlyRate: service?.custom_hourly_rate != null ? String(service.custom_hourly_rate) : "",
+        minimumBudget: service?.custom_min_budget != null ? String(service.custom_min_budget) : "",
+        customInstructions: service?.custom_instructions ?? "",
       },
       requirements: [],
       faqs: service?.faqs || [],
@@ -172,6 +171,14 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       location: formData.location,
       pricing_options: pricingOptions,
       faqs: validFaqs.length > 0 ? validFaqs : undefined,
+      // Custom-order settings (the gig escape hatch)
+      custom_orders_enabled: formData.customOrders.enabled,
+      custom_min_budget: formData.customOrders.minimumBudget ? parseFloat(formData.customOrders.minimumBudget) : null,
+      custom_hourly_rate:
+        formData.customOrders.enabled && formData.customOrders.acceptHourlyRate && formData.customOrders.hourlyRate
+          ? parseFloat(formData.customOrders.hourlyRate)
+          : null,
+      custom_instructions: formData.customOrders.customInstructions || null,
       // Include upload token for new services (links temp uploads to the service)
       ...(uploadToken && !isEditing && { upload_token: uploadToken }),
     };
@@ -373,8 +380,9 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       )}
       <FAQsSection formData={formData} onFormDataChange={setFormData} />
 
-      {/* TODO: Enable when API supports these features */}
-      {/* <CustomOrdersSection formData={formData} onFormDataChange={setFormData} /> */}
+      <CustomOrdersSection formData={formData} onFormDataChange={setFormData} />
+
+      {/* TODO: After implementing Message feature */}
       {/* <RequirementsSection formData={formData} onFormDataChange={setFormData} /> */}
 
       {/* Terms & Actions */}

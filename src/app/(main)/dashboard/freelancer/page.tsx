@@ -13,19 +13,21 @@ import LevelContent from "./LevelContent";
 import ProposalsContent from "./ProposalsContent";
 import KycBanner from "@/components/dashboard/KycBanner";
 
-export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "level" | "proposals";
+export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "level" | "proposals" | "custom-requests";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard",  label: "Dashboard" },
   { value: "profile",    label: "Profile" },
   { value: "services",   label: "My Services" },
   { value: "orders",     label: "Orders" },
+  { value: "custom-requests", label: "Custom Requests" },
   { value: "finance",    label: "Finance" },
   { value: "level",      label: "Level" },
   { value: "proposals",  label: "Proposals" },
 ];
 
-const VALID_TABS = tabs.map(t => t.value);
+// Tabs rendered inline on this page (custom-requests is its own route).
+const VALID_TABS = tabs.map(t => t.value).filter(v => v !== "custom-requests");
 
 export default function FreelancerSpacePage() {
   const router = useRouter();
@@ -37,6 +39,10 @@ export default function FreelancerSpacePage() {
   }, []);
 
   const handleTabChange = (tab: Tab) => {
+    if (tab === "custom-requests") {
+      router.push("/dashboard/freelancer/custom-requests");
+      return;
+    }
     setActiveTab(tab);
     router.replace(`?tab=${tab}`, { scroll: false });
   };

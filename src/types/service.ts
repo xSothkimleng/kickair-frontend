@@ -109,6 +109,10 @@ export interface Service {
   rating_average: string | null;
   rating_count: number;
   faqs: ServiceFAQ[] | null;
+  custom_orders_enabled?: boolean;
+  custom_min_budget?: number | null;
+  custom_hourly_rate?: number | null;
+  custom_instructions?: string | null;
   created_at: string;
   updated_at: string;
   feature_image_id: number | null;
@@ -172,6 +176,10 @@ export interface CreateServiceRequest {
   location: string;
   pricing_options: CreatePricingOptionRequest[];
   faqs?: ServiceFAQ[];
+  custom_orders_enabled?: boolean;
+  custom_min_budget?: number | null;
+  custom_hourly_rate?: number | null;
+  custom_instructions?: string | null;
   upload_token?: string; // Links temporary uploads to the new service
   save_as_draft?: boolean;
 }

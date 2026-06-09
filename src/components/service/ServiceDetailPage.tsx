@@ -43,6 +43,8 @@ import {
 import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse } from "@/types/service";
 import { useAuth } from "@/components/context/AuthContext";
+import RequestCustomOrderDialog from "@/components/customOrders/RequestCustomOrderDialog";
+import { RequestQuoteOutlined } from "@mui/icons-material";
 
 interface ServiceDetailPageProps {
   serviceId: number;
@@ -63,6 +65,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showInstallmentModal, setShowInstallmentModal] = useState(false);
+  const [showCustomOrderDialog, setShowCustomOrderDialog] = useState(false);
   const [installmentTerms, setInstallmentTerms] = useState({
     numberOfPayments: 3,
     daysBetweenPayments: 14,
@@ -644,6 +647,26 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                             Continue (${Number(selectedPricing.price_raw).toFixed(2)})
                           </Button>
                         )}
+                        {!isOwnService && service.custom_orders_enabled && (
+                          <Button
+                            fullWidth
+                            variant='contained'
+                            startIcon={<RequestQuoteOutlined />}
+                            onClick={() => setShowCustomOrderDialog(true)}
+                            sx={{
+                              height: 44,
+                              bgcolor: "black",
+                              color: "white",
+                              fontSize: "13px",
+                              fontWeight: 500,
+                              borderRadius: 28,
+                              textTransform: "none",
+                              boxShadow: "none",
+                              "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" },
+                            }}>
+                            Request a Custom Order
+                          </Button>
+                        )}
                         <Button
                           fullWidth
                           variant='outlined'
@@ -737,6 +760,16 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
           </Grid>
         </Grid>
       </Container>
+
+      {/* Request a Custom Order */}
+      <RequestCustomOrderDialog
+        open={showCustomOrderDialog}
+        onClose={() => setShowCustomOrderDialog(false)}
+        serviceId={serviceId}
+        freelancerName={freelancerName}
+        minBudget={service.custom_min_budget ?? null}
+        instructions={service.custom_instructions ?? null}
+      />
 
       {/* Installment Proposal Modal */}
       {selectedPricing && (

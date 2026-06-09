@@ -11,17 +11,19 @@ import FinanceContent from "./FinanceContent";
 import OrdersContent from "./OrdersContent";
 import KycBanner from "@/components/dashboard/KycBanner";
 
-export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance";
+export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance" | "custom-orders";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard", label: "Dashboard" },
   { value: "profile",   label: "Profile" },
   { value: "orders",    label: "Orders" },
+  { value: "custom-orders", label: "Custom Orders" },
   { value: "service",   label: "Jobs" },
   { value: "finance",   label: "Finance" },
 ];
 
-const VALID_TABS = tabs.map(t => t.value);
+// Tabs rendered inline on this page (custom-orders is its own route).
+const VALID_TABS = tabs.map(t => t.value).filter(v => v !== "custom-orders");
 
 export default function ClientSpacePage() {
   const router = useRouter();
@@ -33,6 +35,10 @@ export default function ClientSpacePage() {
   }, []);
 
   const handleTabChange = (tab: Tab) => {
+    if (tab === "custom-orders") {
+      router.push("/dashboard/client/custom-orders");
+      return;
+    }
     setActiveTab(tab);
     router.replace(`?tab=${tab}`, { scroll: false });
   };

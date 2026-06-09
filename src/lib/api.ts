@@ -28,6 +28,11 @@ import {
 } from "@/types/job";
 import { ServiceCategory, Service } from "@/types/service";
 import { AdminDispute, Order, OrderTimelineEvent } from "@/types/order";
+import {
+  CustomOrder,
+  CreateCustomOrderRequest,
+  SendCustomOfferRequest,
+} from "@/types/customOrder";
 
 export class EmailUnverifiedError extends Error {
   constructor() {
@@ -945,6 +950,72 @@ class ApiClient {
 
   async deleteAdminSkill(id: number): Promise<void> {
     await this.delete(`/api/admin/skills/${id}`);
+  }
+
+  // ── Custom orders (negotiated, milestone-paid work) ────────────────────────
+  async getMyCustomOrders(): Promise<CustomOrder[]> {
+    const res = await this.get("/api/custom-orders/mine");
+    return res.data;
+  }
+
+  async getIncomingCustomOrders(): Promise<CustomOrder[]> {
+    const res = await this.get("/api/custom-orders/incoming");
+    return res.data;
+  }
+
+  async getCustomOrder(id: number | string): Promise<CustomOrder> {
+    const res = await this.get(`/api/custom-orders/${id}`);
+    return res.data;
+  }
+
+  async requestCustomOrder(serviceId: number, payload: CreateCustomOrderRequest): Promise<CustomOrder> {
+    const res = await this.post(`/api/services/${serviceId}/custom-orders`, payload);
+    return res.data;
+  }
+
+  async sendCustomOffer(id: number, payload: SendCustomOfferRequest): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-orders/${id}/offer`, payload);
+    return res.data;
+  }
+
+  async acceptCustomOrder(id: number): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-orders/${id}/accept`, {});
+    return res.data;
+  }
+
+  async declineCustomOrder(id: number): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-orders/${id}/decline`, {});
+    return res.data;
+  }
+
+  async withdrawCustomOrder(id: number): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-orders/${id}/withdraw`, {});
+    return res.data;
+  }
+
+  async endCustomOrder(id: number): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-orders/${id}/end`, {});
+    return res.data;
+  }
+
+  async fundMilestone(milestoneId: number): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-order-milestones/${milestoneId}/fund`, {});
+    return res.data;
+  }
+
+  async submitMilestone(milestoneId: number, payload: { submission_note?: string; deliverables?: string[] } = {}): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-order-milestones/${milestoneId}/submit`, payload);
+    return res.data;
+  }
+
+  async approveMilestone(milestoneId: number): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-order-milestones/${milestoneId}/approve`, {});
+    return res.data;
+  }
+
+  async requestMilestoneRevision(milestoneId: number, revisionNote: string): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-order-milestones/${milestoneId}/request-revision`, { revision_note: revisionNote });
+    return res.data;
   }
 }
 
