@@ -43,8 +43,8 @@ export interface ConversationLatestMessage {
 
 export interface Conversation {
   id: number;
-  order_id: number;
-  order: ConversationOrder;
+  order_id: number | null;
+  order: ConversationOrder | null;
   other_participant: ConversationParticipant;
   latest_message: ConversationLatestMessage | null;
   unread_count: number;

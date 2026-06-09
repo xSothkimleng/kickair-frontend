@@ -168,7 +168,7 @@ export default function MessagesContent() {
                       whiteSpace: "nowrap",
                     }}
                   >
-                    {conversation.order.title}
+                    {conversation.order?.title ?? "Direct message"}
                   </Typography>
 
                   {conversation.latest_message && (

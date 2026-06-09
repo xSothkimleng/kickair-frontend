@@ -134,50 +134,52 @@ export default function ChatView({
               <Typography sx={{ fontSize: 15, fontWeight: 600, color: "black" }}>
                 {conversation.other_participant.name}
               </Typography>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{conversation.order.title}</Typography>
+              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{conversation.order ? conversation.order.title : "Direct message"}</Typography>
             </Box>
           </Box>
         </Box>
 
-        {/* Order Context Banner */}
-        <Box
-          sx={{
-            mt: 1.5,
-            p: 1.5,
-            bgcolor: "rgba(37, 99, 235, 0.05)",
-            borderRadius: 3,
-            border: "1px solid rgba(37, 99, 235, 0.1)",
-          }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <WorkOutlineOutlined sx={{ fontSize: 14, color: "#3b82f6" }} />
-              <Typography sx={{ fontSize: 12, color: "rgb(29, 78, 216)", fontWeight: 500 }}>
-                Order: {conversation.order.title}
-              </Typography>
-              <Chip
-                label={conversation.order.status}
-                size='small'
+        {/* Order Context Banner — only for order-anchored conversations */}
+        {conversation.order && (
+          <Box
+            sx={{
+              mt: 1.5,
+              p: 1.5,
+              bgcolor: "rgba(37, 99, 235, 0.05)",
+              borderRadius: 3,
+              border: "1px solid rgba(37, 99, 235, 0.1)",
+            }}>
+            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <WorkOutlineOutlined sx={{ fontSize: 14, color: "#3b82f6" }} />
+                <Typography sx={{ fontSize: 12, color: "rgb(29, 78, 216)", fontWeight: 500 }}>
+                  Order: {conversation.order.title}
+                </Typography>
+                <Chip
+                  label={conversation.order.status}
+                  size='small'
+                  sx={{
+                    height: 20,
+                    fontSize: 10,
+                    bgcolor: "rgba(37, 99, 235, 0.1)",
+                    color: "#3b82f6",
+                  }}
+                />
+              </Box>
+              <Button
                 sx={{
-                  height: 20,
-                  fontSize: 10,
-                  bgcolor: "rgba(37, 99, 235, 0.1)",
+                  fontSize: 11,
                   color: "#3b82f6",
-                }}
-              />
+                  textTransform: "none",
+                  p: 0,
+                  minWidth: "auto",
+                  "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+                }}>
+                View Order
+              </Button>
             </Box>
-            <Button
-              sx={{
-                fontSize: 11,
-                color: "#3b82f6",
-                textTransform: "none",
-                p: 0,
-                minWidth: "auto",
-                "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
-              }}>
-              View Order
-            </Button>
           </Box>
-        </Box>
+        )}
       </Box>
 
       {/* Messages */}

@@ -48,6 +48,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
   const { user: authUser } = useAuth();
   const [activeTab, setActiveTab] = useState<Tab>("about");
   const [isFavorite, setIsFavorite] = useState(false);
+  const [messaging, setMessaging] = useState(false);
   const [lightbox, setLightbox] = useState<{ item: PortfolioItem; index: number } | null>(null);
 
   const [reviews, setReviews] = useState<FreelancerReview[]>([]);
@@ -97,6 +98,17 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
   const certificates = profile.certificates ?? [];
   const isOwner = !!authUser && authUser.id === profile.user_id;
   const counts: Record<Tab, number> = { about: 0, portfolio: portfolio.length, services: services.length, reviews: ratingCount };
+
+  const handleMessage = async () => {
+    if (!authUser) { router.push("/auth/sign-in"); return; }
+    setMessaging(true);
+    try {
+      const conv = await api.startConversation(profile.user_id);
+      router.push(`/dashboard/client/messages?id=${conv.id}`);
+    } catch {
+      setMessaging(false);
+    }
+  };
 
   /* ── Tab bodies ── */
   const aboutBody = (
@@ -244,7 +256,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                   <>
                     <IconButton onClick={() => setIsFavorite(!isFavorite)} sx={{ width: 40, height: 40, border: `1px solid ${isFavorite ? "rgba(220,38,38,0.3)" : tokens.borderStrong}`, color: isFavorite ? tokens.error : tokens.text2, bgcolor: isFavorite ? tokens.errorTint : tokens.surface }}>{isFavorite ? <Favorite sx={{ fontSize: 17 }} /> : <FavoriteBorder sx={{ fontSize: 17 }} />}</IconButton>
                     <IconButton sx={{ width: 40, height: 40, border: `1px solid ${tokens.borderStrong}`, color: tokens.text2, bgcolor: tokens.surface }}><ShareOutlined sx={{ fontSize: 17 }} /></IconButton>
-                    <Button startIcon={<ChatBubbleOutline sx={{ fontSize: 15 }} />} sx={{ ...heroPrimaryBtn, px: 2.75 }}>Message</Button>
+                    <Button onClick={handleMessage} disabled={messaging} startIcon={messaging ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : <ChatBubbleOutline sx={{ fontSize: 15 }} />} sx={{ ...heroPrimaryBtn, px: 2.75 }}>Message</Button>
                   </>
                 )}
               </Box>
@@ -293,7 +305,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                   <Button onClick={() => router.push("/dashboard/freelancer")} startIcon={<EditOutlined sx={{ fontSize: 16 }} />} sx={{ ...heroSecBtn, width: "100%", height: 44 }}>Edit profile</Button>
                 ) : (
                   <>
-                    <Button startIcon={<ChatBubbleOutline sx={{ fontSize: 16 }} />} sx={{ ...heroPrimaryBtn, width: "100%", height: 44 }}>Message {name.split(" ")[0]}</Button>
+                    <Button onClick={handleMessage} disabled={messaging} startIcon={messaging ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <ChatBubbleOutline sx={{ fontSize: 16 }} />} sx={{ ...heroPrimaryBtn, width: "100%", height: 44 }}>Message {name.split(" ")[0]}</Button>
                     <Box sx={{ display: "flex", gap: 1.125 }}>
                       <Button onClick={() => setIsFavorite(!isFavorite)} startIcon={isFavorite ? <Favorite sx={{ fontSize: 16 }} /> : <FavoriteBorder sx={{ fontSize: 16 }} />} sx={{ ...heroSecBtn, flex: 1 }}>Save</Button>
                       <Button startIcon={<ShareOutlined sx={{ fontSize: 16 }} />} sx={{ ...heroSecBtn, flex: 1 }}>Share</Button>
@@ -318,7 +330,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
       {!isOwner && (
         <Box sx={{ display: { xs: "flex", md: "none" }, position: "sticky", bottom: 0, gap: 1.125, p: "12px 14px", bgcolor: "rgba(255,255,255,0.9)", backdropFilter: "saturate(1.4) blur(16px)", borderTop: `1px solid ${tokens.border}` }}>
           <IconButton onClick={() => setIsFavorite(!isFavorite)} sx={{ width: 46, height: 46, flex: "none", border: `1px solid ${tokens.borderStrong}`, color: isFavorite ? tokens.error : tokens.text2 }}>{isFavorite ? <Favorite sx={{ fontSize: 18 }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}</IconButton>
-          <Button startIcon={<ChatBubbleOutline sx={{ fontSize: 16 }} />} sx={{ ...heroPrimaryBtn, flex: 1, height: 46 }}>Message</Button>
+          <Button onClick={handleMessage} disabled={messaging} startIcon={messaging ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <ChatBubbleOutline sx={{ fontSize: 16 }} />} sx={{ ...heroPrimaryBtn, flex: 1, height: 46 }}>Message</Button>
         </Box>
       )}
 

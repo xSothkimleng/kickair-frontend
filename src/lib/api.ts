@@ -806,6 +806,13 @@ class ApiClient {
     return response.data;
   }
 
+  // Start (or reuse) a direct, order-less conversation with a freelancer — used by
+  // the "Message" button on a public freelancer profile. Returns the conversation.
+  async startConversation(freelancerUserId: number): Promise<import("@/types/message").Conversation> {
+    const res = await this.post("/api/conversations", { freelancer_user_id: freelancerUserId });
+    return res.data;
+  }
+
   // ── Conversation messages (used by dashboards + admin dispute chat) ─────────
   async getConversationMessages(conversationId: number): Promise<{ data: import("@/types/message").Message[] }> {
     return this.get(`/api/conversations/${conversationId}/messages`);

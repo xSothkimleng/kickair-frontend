@@ -169,7 +169,7 @@ export default function MessagesContent() {
                     noWrap
                     mb={0.5}
                   >
-                    {conversation.order.title}
+                    {conversation.order?.title ?? "Direct message"}
                   </Typography>
 
                   {conversation.latest_message && (
