@@ -3,47 +3,44 @@
 import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import RichTextEditor from "@/components/ui/RichTextEditor";
+import { Box, Typography, Button, CircularProgress, Alert, Snackbar, Skeleton, Stack } from "@mui/material";
 import {
-  Box,
-  Typography,
-  Button,
-  Chip,
-  Card,
-  CardContent,
-  Avatar,
-  Stack,
-  Paper,
-  CircularProgress,
-  Alert,
-  Snackbar,
-  Skeleton,
-} from "@mui/material";
-import {
-  Upload as UploadIcon,
-  LocationOn as MapPinIcon,
-  Language as GlobeIcon,
-  Shield as ShieldIcon,
-  Delete as DeleteIcon,
+  RoomOutlined, LanguageOutlined, ShieldOutlined, BadgeOutlined, PhoneOutlined,
+  PhotoCameraOutlined, BusinessOutlined, EditOutlined,
 } from "@mui/icons-material";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { Industry, ClientProfileRequest } from "@/types/user";
 import { TextInput, SelectInput } from "@/components/ui/inputs";
+import { tokens } from "@/theme";
+import { ProfileAvatar, SectionCard, Field, VerifyRow } from "@/components/profile/profileKit";
 
-const COMPANY_SIZES = [
-  { value: "1-10", label: "1-10 employees" },
-  { value: "11-50", label: "11-50 employees" },
-  { value: "51-200", label: "51-200 employees" },
-  { value: "201-500", label: "201-500 employees" },
-  { value: "500+", label: "500+ employees" },
-] as const;
+const CLIENT_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"] as const;
+
+const primaryBtnSx = { height: 38, px: 2.5, borderRadius: "999px", textTransform: "none", fontSize: 13.5, fontWeight: 600, bgcolor: "#000", color: "#fff", boxShadow: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.8)", boxShadow: "none" } } as const;
+const secBtnSx = { height: 34, px: 1.75, borderRadius: "999px", textTransform: "none", fontSize: 13, fontWeight: 600, border: `1px solid ${tokens.borderStrong}`, color: tokens.text, "&:hover": { bgcolor: tokens.surface2 } } as const;
+
+function SizePills({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+      {CLIENT_SIZES.map(o => {
+        const on = value === o;
+        return (
+          <Box key={o} component="button" onClick={() => onChange(o)}
+            sx={{ height: 38, px: 1.875, borderRadius: "999px", cursor: "pointer", fontFamily: "inherit", fontSize: 13.5, fontWeight: 600, border: `1px solid ${on ? "transparent" : tokens.borderStrong}`, bgcolor: on ? "#000" : tokens.surface, color: on ? "#fff" : tokens.text2, transition: "background .12s, border-color .12s, color .12s", "&:hover": on ? {} : { borderColor: tokens.accent, color: tokens.text } }}>
+            {o}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
 
 export default function ProfileContent() {
   const { user, refreshUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Form state
   const [formData, setFormData] = useState({
     company_name: "",
     industry_id: "" as number | "",
@@ -53,19 +50,13 @@ export default function ProfileContent() {
     about: "",
   });
 
-  // UI state
   const [industries, setIndustries] = useState<Industry[]>([]);
   const [loadingIndustries, setLoadingIndustries] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
-  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({
-    open: false,
-    message: "",
-    severity: "success",
-  });
+  const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: "success" | "error" }>({ open: false, message: "", severity: "success" });
 
-  // Load industries on mount
   useEffect(() => {
     const loadIndustries = async () => {
       try {
@@ -80,7 +71,6 @@ export default function ProfileContent() {
     loadIndustries();
   }, []);
 
-  // Populate form with existing profile data
   useEffect(() => {
     if (user?.client_profile) {
       const profile = user.client_profile;
@@ -96,16 +86,12 @@ export default function ProfileContent() {
   }, [user?.client_profile]);
 
   const handleInputChange = (field: string, value: string | number) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData(prev => ({ ...prev, [field]: value }));
     setHasUnsavedChanges(true);
   };
 
   const handleSaveChanges = async () => {
     if (!user?.client_profile) return;
-
     setSaving(true);
     try {
       const requestData: ClientProfileRequest = {
@@ -116,7 +102,6 @@ export default function ProfileContent() {
         website: formData.website || undefined,
         about: formData.about || undefined,
       };
-
       await api.updateClientProfile(user.client_profile.id, requestData);
       await refreshUser();
       setHasUnsavedChanges(false);
@@ -132,20 +117,15 @@ export default function ProfileContent() {
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
     const allowedTypes = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
     if (!allowedTypes.includes(file.type)) {
       setSnackbar({ open: true, message: "Invalid file type. Please upload JPG, PNG, GIF, or WebP.", severity: "error" });
       return;
     }
-
-    // Validate file size (5MB max)
     if (file.size > 5 * 1024 * 1024) {
       setSnackbar({ open: true, message: "File size must be less than 5MB.", severity: "error" });
       return;
     }
-
     setUploadingImage(true);
     try {
       await api.uploadProfileImage(file);
@@ -156,16 +136,12 @@ export default function ProfileContent() {
       setSnackbar({ open: true, message, severity: "error" });
     } finally {
       setUploadingImage(false);
-      // Reset file input
-      if (fileInputRef.current) {
-        fileInputRef.current.value = "";
-      }
+      if (fileInputRef.current) fileInputRef.current.value = "";
     }
   };
 
   const handleDeleteImage = async () => {
     if (!user?.avatar_url) return;
-
     setUploadingImage(true);
     try {
       await api.deleteProfileImage();
@@ -181,333 +157,96 @@ export default function ProfileContent() {
 
   if (authLoading) {
     return (
-      <Box>
-        <Card elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", mb: 3 }}>
-          <CardContent sx={{ p: 4 }}>
-            <Skeleton variant='text' width={200} height={40} sx={{ mb: 2 }} />
-            <Stack direction='row' spacing={3} alignItems='center' mb={4}>
-              <Skeleton variant='circular' width={100} height={100} />
-              <Skeleton variant='rectangular' width={120} height={36} sx={{ borderRadius: 2 }} />
-            </Stack>
-            <Stack spacing={3}>
-              {[1, 2, 3, 4, 5].map(i => (
-                <Skeleton key={i} variant='rectangular' height={56} sx={{ borderRadius: 2 }} />
-              ))}
-            </Stack>
-          </CardContent>
-        </Card>
+      <Box sx={{ maxWidth: 680, mx: "auto", display: "flex", flexDirection: "column", gap: 2.25 }}>
+        {[0, 1, 2].map(i => (
+          <Box key={i} sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 3 }}>
+            <Skeleton variant="text" width={160} height={22} sx={{ mb: 2 }} />
+            <Skeleton variant="rounded" height={44} sx={{ borderRadius: "10px" }} />
+          </Box>
+        ))}
       </Box>
     );
   }
 
   if (!user) {
-    return (
-      <Box maxWidth={800} mx='auto'>
-        <Alert severity='warning'>Please log in to view your profile.</Alert>
-      </Box>
-    );
+    return <Box sx={{ maxWidth: 680, mx: "auto" }}><Alert severity="warning">Please log in to view your profile.</Alert></Box>;
   }
 
+  const industryName = industries.find(i => i.id === formData.industry_id)?.name;
+
   return (
-    <Box>
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "rgba(0,0,0,0.08)",
-          mb: 3,
-        }}>
-        <CardContent sx={{ p: 4 }}>
-          <Stack direction='row' justifyContent='space-between' alignItems='flex-start' mb={4}>
-            <Box>
-              <Typography variant='h5' fontWeight={600} mb={0.5}>
-                Client Profile
-              </Typography>
-              <Typography variant='body2' color='text.secondary'>
-                Build trust with freelancers by completing your profile
-              </Typography>
+    <Box sx={{ maxWidth: 680, mx: "auto", display: "flex", flexDirection: "column", gap: 2.25 }}>
+      {/* Heading + inline save */}
+      <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5 }}>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontSize: { xs: 24, md: 28 }, fontWeight: 600, letterSpacing: "-0.025em" }}>Company profile</Typography>
+          <Typography sx={{ fontSize: 13.5, color: tokens.text2, mt: 0.5 }}>How freelancers see your business when you hire.</Typography>
+        </Box>
+        {hasUnsavedChanges && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flex: "none" }}>
+            <Box sx={{ display: { xs: "none", sm: "inline-flex" }, alignItems: "center", gap: 0.875, fontSize: 12.5, color: tokens.pendingText }}>
+              <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: tokens.pending }} />Unsaved
             </Box>
-            {hasUnsavedChanges && (
-              <Button
-                variant='contained'
-                onClick={handleSaveChanges}
-                disabled={saving}
-                sx={{
-                  bgcolor: "#0071e3",
-                  color: "white",
-                  fontSize: 13,
-                  textTransform: "none",
-                  borderRadius: 10,
-                  px: 3,
-                  "&:hover": {
-                    bgcolor: "#0077ED",
-                  },
-                }}>
-                {saving ? <CircularProgress size={20} color='inherit' /> : "Save Changes"}
-              </Button>
-            )}
-          </Stack>
-
-          {/* Profile Picture */}
-          <Box mb={4}>
-            <Typography variant='body2' fontWeight={500} mb={1.5}>
-              Profile Picture
-            </Typography>
-            <Stack direction='row' spacing={3} alignItems='center'>
-              <Box position='relative'>
-                <Avatar src={user.avatar_url || undefined} alt={user.name} sx={{ width: 100, height: 100 }}>
-                  {user.name?.charAt(0).toUpperCase()}
-                </Avatar>
-                {uploadingImage && (
-                  <Box
-                    position='absolute'
-                    top={0}
-                    left={0}
-                    right={0}
-                    bottom={0}
-                    display='flex'
-                    alignItems='center'
-                    justifyContent='center'
-                    bgcolor='rgba(0,0,0,0.5)'
-                    borderRadius='50%'>
-                    <CircularProgress size={24} sx={{ color: "white" }} />
-                  </Box>
-                )}
-              </Box>
-              <Stack direction='row' spacing={1}>
-                <input
-                  type='file'
-                  ref={fileInputRef}
-                  accept='image/jpeg,image/jpg,image/png,image/gif,image/webp'
-                  style={{ display: "none" }}
-                  onChange={handleImageUpload}
-                />
-                <Button
-                  variant='contained'
-                  startIcon={<UploadIcon sx={{ fontSize: 14 }} />}
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingImage}
-                  sx={{
-                    bgcolor: "rgba(0,0,0,0.05)",
-                    color: "black",
-                    fontSize: 12,
-                    textTransform: "none",
-                    borderRadius: 10,
-                    boxShadow: "none",
-                    "&:hover": {
-                      bgcolor: "rgba(0,0,0,0.1)",
-                      boxShadow: "none",
-                    },
-                  }}>
-                  Change Photo
-                </Button>
-                {user.avatar_url && (
-                  <Button
-                    variant='contained'
-                    startIcon={<DeleteIcon sx={{ fontSize: 14 }} />}
-                    onClick={handleDeleteImage}
-                    disabled={uploadingImage}
-                    sx={{
-                      bgcolor: "rgba(239,68,68,0.1)",
-                      color: "#ef4444",
-                      fontSize: 12,
-                      textTransform: "none",
-                      borderRadius: 10,
-                      boxShadow: "none",
-                      "&:hover": {
-                        bgcolor: "rgba(239,68,68,0.2)",
-                        boxShadow: "none",
-                      },
-                    }}>
-                    Remove
-                  </Button>
-                )}
-              </Stack>
-            </Stack>
-            <Typography variant='caption' color='text.secondary' display='block' mt={1}>
-              A professional photo helps build trust with freelancers. Max 5MB (JPG, PNG, GIF, WebP)
-            </Typography>
+            <Button onClick={handleSaveChanges} disabled={saving} sx={primaryBtnSx}>{saving ? <CircularProgress size={18} sx={{ color: "white" }} /> : "Save changes"}</Button>
           </Box>
+        )}
+      </Box>
 
-          {/* Basic Information */}
-          <Stack spacing={3}>
-            <TextInput
-              label='Full Name'
-              value={user.name}
-              disabled
-              helper='Name is managed in account settings'
-            />
-
-            <TextInput
-              label='Company Name'
-              value={formData.company_name}
-              onChange={v => handleInputChange("company_name", v)}
-              placeholder='Your company name'
-            />
-
-            <SelectInput
-              label='Industry'
-              value={formData.industry_id}
-              onChange={v => handleInputChange("industry_id", v)}
-              options={industries.map(industry => ({ value: industry.id, label: industry.name ?? "" }))}
-              placeholder='Select an industry'
-              disabled={loadingIndustries}
-            />
-
-            <SelectInput
-              label='Company Size'
-              value={formData.company_size}
-              onChange={v => handleInputChange("company_size", v)}
-              options={COMPANY_SIZES.map(size => ({ value: size.value, label: size.label }))}
-              placeholder='Select company size'
-            />
-
-            <TextInput
-              label='Location'
-              value={formData.location}
-              onChange={v => handleInputChange("location", v)}
-              placeholder='City, Country'
-              startIcon={<MapPinIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
-            />
-
-            <TextInput
-              label='Website'
-              value={formData.website}
-              onChange={v => handleInputChange("website", v)}
-              placeholder='https://yourwebsite.com'
-              startIcon={<GlobeIcon sx={{ fontSize: 16, color: "text.secondary" }} />}
-            />
-
-            <Box>
-              <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>About</Typography>
-              <RichTextEditor
-                value={formData.about}
-                onChange={html => handleInputChange("about", html)}
-                placeholder='Tell freelancers about your company and what kind of projects you work on...'
-                minHeight={120}
-              />
-            </Box>
-          </Stack>
-        </CardContent>
-      </Card>
-
-      {/* Verification Section */}
-      <Paper
-        elevation={0}
-        sx={{ borderRadius: 3, border: "1px solid", borderColor: "divider", p: 3 }}>
-        <Typography variant='body1' fontWeight={600} mb={0.5}>
-          Verification
-        </Typography>
-        <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
-          Verification is required to accept service requests from freelancers
-        </Typography>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "start",
-              justifyContent: "space-between",
-              p: 2,
-              bgcolor: user.is_verified_id ? "rgba(34, 197, 94, 0.05)" : "rgba(0, 0, 0, 0.02)",
-              borderRadius: 3,
-            }}>
-            <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
-              <ShieldIcon sx={{ fontSize: 20, color: user.is_verified_id ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }} />
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: user.is_verified_id ? "rgb(21, 128, 61)" : "rgba(0,0,0,0.6)",
-                    mb: 0.5,
-                  }}>
-                  Identity Verification
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: user.is_verified_id ? "#16a34a" : "rgba(0,0,0,0.4)" }}>
-                  {user.is_verified_id ? "Your ID has been verified" : "Verify your identity to post jobs"}
-                </Typography>
+      {/* Identity */}
+      <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 2.75 } }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2.25 }}>
+          <Box sx={{ position: "relative" }}>
+            <ProfileAvatar name={formData.company_name || user.name} src={user.avatar_url} size={76} />
+            {uploadingImage && (
+              <Box sx={{ position: "absolute", inset: 0, borderRadius: "50%", bgcolor: "rgba(0,0,0,0.5)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <CircularProgress size={20} sx={{ color: "white" }} />
               </Box>
-            </Box>
-            {user.is_verified_id ? (
-              <Chip label='VERIFIED' sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }} />
-            ) : (
-              <Button
-                size='small'
-                onClick={() => router.push("/dashboard/kyc")}
-                sx={{
-                  fontSize: 11,
-                  textTransform: "none",
-                  bgcolor: "#0071e3",
-                  color: "white",
-                  borderRadius: 2,
-                  "&:hover": { bgcolor: "#0077ED" },
-                }}>
-                Verify Now
-              </Button>
             )}
+            <input type="file" ref={fileInputRef} accept="image/jpeg,image/jpg,image/png,image/gif,image/webp" style={{ display: "none" }} onChange={handleImageUpload} />
           </Box>
-
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "start",
-              justifyContent: "space-between",
-              p: 2,
-              bgcolor: user.is_verified_phone ? "rgba(34, 197, 94, 0.05)" : "rgba(0, 0, 0, 0.02)",
-              borderRadius: 3,
-            }}>
-            <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
-              <ShieldIcon sx={{ fontSize: 20, color: user.is_verified_phone ? "#16a34a" : "rgba(0,0,0,0.3)", mt: 0.25 }} />
-              <Box>
-                <Typography
-                  sx={{
-                    fontSize: 13,
-                    fontWeight: 500,
-                    color: user.is_verified_phone ? "rgb(21, 128, 61)" : "rgba(0,0,0,0.6)",
-                    mb: 0.5,
-                  }}>
-                  Phone Verification
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: user.is_verified_phone ? "#16a34a" : "rgba(0,0,0,0.4)" }}>
-                  {user.is_verified_phone ? user.telephone || "Phone verified" : "Verify your phone number"}
-                </Typography>
-              </Box>
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography sx={{ fontSize: { xs: 17, md: 19 }, fontWeight: 600, letterSpacing: "-0.02em" }}>{formData.company_name || "Your company"}</Typography>
+            <Typography sx={{ fontSize: 13, color: tokens.text2, mt: 0.375 }}>
+              {industryName || formData.location ? [industryName, formData.location].filter(Boolean).join(" · ") : "Add a logo and details below"}
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1.125, mt: 1.5 }}>
+              <Button onClick={() => fileInputRef.current?.click()} disabled={uploadingImage} startIcon={<PhotoCameraOutlined sx={{ fontSize: 15 }} />} sx={secBtnSx}>Change</Button>
+              {user.avatar_url && <Button onClick={handleDeleteImage} disabled={uploadingImage} sx={{ height: 34, px: 1.5, borderRadius: "999px", textTransform: "none", fontSize: 13, fontWeight: 600, color: tokens.text2, "&:hover": { bgcolor: tokens.surface2 } }}>Remove</Button>}
             </Box>
-            {user.is_verified_phone ? (
-              <Chip label='VERIFIED' sx={{ height: 24, bgcolor: "#16a34a", color: "white", fontSize: 10, fontWeight: 500 }} />
-            ) : (
-              <Button
-                size='small'
-                onClick={() => router.push("/settings")}
-                sx={{
-                  fontSize: 11,
-                  textTransform: "none",
-                  bgcolor: "#0071e3",
-                  color: "white",
-                  borderRadius: 2,
-                  "&:hover": { bgcolor: "#0077ED" },
-                }}>
-                Verify Now
-              </Button>
-            )}
           </Box>
         </Box>
-      </Paper>
+      </Box>
 
-      {/* Snackbar for notifications */}
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-        <Alert
-          onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-          severity={snackbar.severity}
-          sx={{ width: "100%" }}>
-          {snackbar.message}
-        </Alert>
+      {/* Company details */}
+      <SectionCard icon={<BusinessOutlined sx={{ fontSize: 19 }} />} title="Company details">
+        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+          <Field label="Company name"><TextInput value={formData.company_name} onChange={v => handleInputChange("company_name", v)} placeholder="e.g. Brown Coffee Roastery" /></Field>
+          <Field label="Industry"><SelectInput value={formData.industry_id} onChange={v => handleInputChange("industry_id", v)} options={industries.map(i => ({ value: i.id, label: i.name ?? "" }))} placeholder="Select an industry" disabled={loadingIndustries} /></Field>
+          <Field label="Location"><TextInput value={formData.location} onChange={v => handleInputChange("location", v)} placeholder="City, Country" startIcon={<RoomOutlined sx={{ fontSize: 16, color: tokens.text3 }} />} /></Field>
+          <Field label="Website" optional><TextInput value={formData.website} onChange={v => handleInputChange("website", v)} placeholder="yourcompany.com" startIcon={<LanguageOutlined sx={{ fontSize: 16, color: tokens.text3 }} />} /></Field>
+        </Box>
+        <Box sx={{ mt: 2 }}>
+          <Field label="Company size"><SizePills value={formData.company_size || ""} onChange={v => handleInputChange("company_size", v)} /></Field>
+        </Box>
+      </SectionCard>
+
+      {/* About */}
+      <SectionCard icon={<EditOutlined sx={{ fontSize: 19 }} />} title="About the company">
+        <Field label="About" hint="A short intro helps freelancers understand who they'd be working with.">
+          <RichTextEditor value={formData.about} onChange={html => handleInputChange("about", html)} placeholder="Describe your company, what you do, and what you hire for…" minHeight={110} />
+        </Field>
+      </SectionCard>
+
+      {/* Verification */}
+      <SectionCard icon={<ShieldOutlined sx={{ fontSize: 19 }} />} title="Verification" hint="Verified clients get faster responses from top freelancers.">
+        <VerifyRow icon={<BadgeOutlined sx={{ fontSize: 20 }} />} title="Identity (ID)" sub={user.is_verified_id ? "Government ID confirmed" : "Upload a government ID to get verified"} verified={!!user.is_verified_id} onVerify={() => router.push("/dashboard/kyc")} />
+        <VerifyRow icon={<PhoneOutlined sx={{ fontSize: 20 }} />} title="Phone number" sub={user.is_verified_phone ? user.telephone || "Phone verified" : "Confirm your phone number"} verified={!!user.is_verified_phone} onVerify={() => router.push("/settings")} />
+      </SectionCard>
+
+      <Box sx={{ height: 4 }} />
+
+      <Snackbar open={snackbar.open} autoHideDuration={4000} onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
+        <Alert onClose={() => setSnackbar(prev => ({ ...prev, open: false }))} severity={snackbar.severity} sx={{ width: "100%" }}>{snackbar.message}</Alert>
       </Snackbar>
     </Box>
   );

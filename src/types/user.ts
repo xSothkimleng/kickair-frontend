@@ -10,6 +10,23 @@ export interface Certificate {
   source: string;  // Issuing organization
 }
 
+export interface PortfolioImage {
+  id: number;
+  file_url: string;
+  sort_order: number;
+}
+
+export interface PortfolioItem {
+  id: number;
+  title: string;
+  description: string | null;
+  project_url: string | null;
+  completed_on: string | null;
+  sort_order: number;
+  images: PortfolioImage[];
+  created_at: string;
+}
+
 export interface LanguageWithProficiency {
   id: number;
   name: string;
@@ -80,10 +97,12 @@ export interface FreelancerProfile {
   rating_average: string | null;
   rating_count: number;
   completed_orders_count: number;
+  level?: string;
   user?: User;
   expertises?: Expertise[];
   languages?: LanguageWithProficiency[];
   services?: FreelancerProfileService[];
+  portfolio_items?: PortfolioItem[];
 }
 
 export interface ClientProfile {

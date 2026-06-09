@@ -7,6 +7,7 @@ import {
   Expertise,
   Industry,
   FreelancerProfile,
+  PortfolioItem,
   ClientProfile,
   FreelancerProfileRequest,
   ClientProfileRequest,
@@ -355,6 +356,29 @@ class ApiClient {
     return response.json();
   }
 
+  // Post a caller-built FormData body (multipart) — used for endpoints that mix
+  // text fields with one or more file uploads (e.g. portfolio items).
+  private async postMultipart(endpoint: string, formData: FormData) {
+    const url = `${API_URL}${endpoint}`;
+    const token = this.getToken();
+
+    const response = await fetch(url, {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: "Request failed" }));
+      throw toUserFacingError(response.status, error);
+    }
+
+    return response.json();
+  }
+
   // ============================================
   // Profile Image Methods
   // ============================================
@@ -413,6 +437,30 @@ class ApiClient {
 
   async deleteFreelancerProfile(id: number): Promise<void> {
     await this.delete(`/api/freelancer-profiles/${id}`);
+  }
+
+  // ── Portfolio items ──────────────────────────────────────────────────────
+  // Caller builds the FormData (title/description/project_url/completed_on +
+  // images[] files; update also takes removed_image_ids[]).
+  async createPortfolioItem(formData: FormData): Promise<PortfolioItem> {
+    const response = await this.postMultipart("/api/portfolio-items", formData);
+    return response.data;
+  }
+
+  async updatePortfolioItem(id: number, formData: FormData): Promise<PortfolioItem> {
+    const response = await this.postMultipart(`/api/portfolio-items/${id}`, formData);
+    return response.data;
+  }
+
+  async deletePortfolioItem(id: number): Promise<void> {
+    await this.delete(`/api/portfolio-items/${id}`);
+  }
+
+  // Distinct education/certification values other freelancers have entered, for
+  // the profile editor typeahead (merged with a curated seed list on the client).
+  async getProfileSuggestions(): Promise<{ schools: string[]; degrees: string[]; cert_names: string[]; cert_issuers: string[] }> {
+    const response = await this.get("/api/profile-suggestions");
+    return response.data;
   }
 
   // ============================================
