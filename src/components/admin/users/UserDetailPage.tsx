@@ -8,6 +8,7 @@ import {
   Button,
   CircularProgress,
   Dialog,
+  DialogContent,
   Stack,
   Typography,
 } from "@mui/material";
@@ -19,7 +20,6 @@ import {
   PlaceOutlined,
   LanguageOutlined,
   BusinessCenterOutlined,
-  EditOutlined,
   PauseCircleOutline,
   BlockOutlined,
   PersonOutline,
@@ -32,9 +32,11 @@ import {
   StarRounded,
   Close,
   DescriptionOutlined,
+  LockOpenOutlined,
+  WarningAmberRounded,
 } from "@mui/icons-material";
-import { api, AdminUserDetail, AdminUserKyc, AdminUserKycDocument } from "@/lib/api";
-import { TextArea } from "@/components/ui/inputs";
+import { api, AdminAccountStatus, AdminUserDetail, AdminUserKyc, AdminUserKycDocument } from "@/lib/api";
+import { TextArea, TextInput } from "@/components/ui/inputs";
 
 // ─── Design tokens (match KickAir auth / input system) ──────────────────────────
 const C = {
@@ -240,23 +242,6 @@ function StatTile({ label, value, sub }: { label: string; value: React.ReactNode
       {sub && <Typography sx={{ fontSize: 12, color: C.ph, mt: 0.75 }}>{sub}</Typography>}
     </Box>
   );
-}
-
-function disabledBtnSx() {
-  return {
-    justifyContent: "flex-start",
-    gap: 1,
-    height: 40,
-    px: 2,
-    borderRadius: 2,
-    fontSize: 14,
-    fontWeight: 600,
-    textTransform: "none",
-    bgcolor: "#fff",
-    color: C.body,
-    border: `1px solid ${C.borderH}`,
-    "&.Mui-disabled": { color: C.ph, borderColor: C.border },
-  } as const;
 }
 
 // ─── KYC document tile + lightbox ───────────────────────────────────────────────
@@ -493,6 +478,296 @@ function MetaItem({ label, value, icon }: { label: string; value: React.ReactNod
   );
 }
 
+// ─── Account moderation (suspend / ban / email) ─────────────────────────────────
+
+function actionBtnSx(variant: "neutral" | "amber" | "red") {
+  const map = {
+    neutral: { color: C.body, border: C.borderH, hover: C.fill },
+    amber: { color: C.amber, border: "#FDE0B5", hover: C.amberBg },
+    red: { color: C.red, border: "#FBCFCF", hover: C.redBg },
+  } as const;
+  const v = map[variant];
+  return {
+    justifyContent: "flex-start",
+    gap: 1,
+    height: 40,
+    px: 2,
+    borderRadius: 2,
+    fontSize: 14,
+    fontWeight: 600,
+    textTransform: "none",
+    bgcolor: "#fff",
+    color: v.color,
+    border: `1px solid ${v.border}`,
+    "&:hover": { bgcolor: v.hover, borderColor: v.border },
+    "&.Mui-disabled": { color: C.ph, borderColor: C.border },
+  } as const;
+}
+
+function AccountStatusBanner({ status }: { status: AdminAccountStatus }) {
+  const banned = !!status.banned_at;
+  const suspended = !!status.suspended_at;
+  if (!banned && !suspended) return null;
+
+  const v = banned
+    ? { accent: C.red, bg: C.redBg, border: "#FBD2D2", label: "Account banned", reason: status.ban_reason, at: status.banned_at }
+    : { accent: C.amber, bg: C.amberBg, border: "#FDE9C8", label: "Account suspended", reason: status.suspension_reason, at: status.suspended_at };
+
+  return (
+    <Box sx={{ mt: 2.5, p: "14px 18px", borderRadius: 3, bgcolor: v.bg, border: `1px solid ${v.border}`, display: "flex", gap: 1.5, alignItems: "flex-start" }}>
+      <WarningAmberRounded sx={{ fontSize: 20, color: v.accent, mt: "1px", flexShrink: 0 }} />
+      <Box>
+        <Typography sx={{ fontSize: 14, fontWeight: 700, color: v.accent }}>{v.label} · {formatDate(v.at)}</Typography>
+        {v.reason && <Typography sx={{ fontSize: 13.5, color: C.body, mt: 0.4, lineHeight: 1.5 }}>{v.reason}</Typography>}
+        <Typography sx={{ fontSize: 12.5, color: C.muted, mt: 0.4 }}>This user cannot sign in. Lift this from Account actions.</Typography>
+      </Box>
+    </Box>
+  );
+}
+
+function ModerationDialog({
+  mode,
+  userName,
+  onClose,
+  onConfirm,
+}: {
+  mode: "suspend" | "ban";
+  userName: string;
+  onClose: () => void;
+  onConfirm: (reason: string) => Promise<void>;
+}) {
+  const [reason, setReason] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+  const isBan = mode === "ban";
+  const accent = isBan ? C.red : C.amber;
+  const accentBg = isBan ? C.redBg : C.amberBg;
+
+  const submit = async () => {
+    if (!reason.trim()) {
+      setErr("Please provide a reason.");
+      return;
+    }
+    setBusy(true);
+    setErr("");
+    try {
+      await onConfirm(reason.trim());
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Action failed.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open onClose={busy ? undefined : onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogContent sx={{ p: 3 }}>
+        <Stack direction="row" alignItems="center" gap={1.25} sx={{ mb: 1.5 }}>
+          <Box sx={{ width: 38, height: 38, borderRadius: 2.5, bgcolor: accentBg, color: accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            {isBan ? <BlockOutlined sx={{ fontSize: 20 }} /> : <PauseCircleOutline sx={{ fontSize: 20 }} />}
+          </Box>
+          <Typography sx={{ fontSize: 16.5, fontWeight: 700, color: C.heading }}>{isBan ? "Ban" : "Suspend"} {userName}?</Typography>
+        </Stack>
+        <Typography sx={{ fontSize: 13.5, color: C.muted, mb: 2, lineHeight: 1.55 }}>
+          {isBan
+            ? "Banning revokes all their sessions and blocks sign-in. They'll be emailed the reason. You can lift the ban later."
+            : "Suspending revokes all their sessions and blocks sign-in until you lift it. They'll be emailed the reason."}
+        </Typography>
+        <Typography sx={{ fontSize: 13, fontWeight: 600, color: C.heading, mb: 1 }}>Reason (sent to the user)</Typography>
+        <TextArea
+          value={reason}
+          onChange={(v) => { setReason(v); setErr(""); }}
+          minRows={3}
+          placeholder={isBan ? "e.g. Repeated fraud after warnings" : "e.g. Suspicious activity pending review"}
+          error={err || undefined}
+        />
+        <Stack direction="row" justifyContent="flex-end" gap={1.25} sx={{ mt: 2.5 }}>
+          <Button onClick={onClose} disabled={busy} sx={{ height: 38, px: 2, borderRadius: 2, fontSize: 14, fontWeight: 600, textTransform: "none", color: C.body }}>Cancel</Button>
+          <Button
+            onClick={submit}
+            disabled={busy || !reason.trim()}
+            sx={{ height: 38, px: 2.25, borderRadius: 2, fontSize: 14, fontWeight: 600, textTransform: "none", bgcolor: accent, color: "#fff", "&:hover": { bgcolor: isBan ? "#BE1D1D" : "#92400E" }, "&.Mui-disabled": { bgcolor: isBan ? "#fca5a5" : "#fcd9a5", color: "#fff" } }}
+          >
+            {busy ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : isBan ? "Ban user" : "Suspend user"}
+          </Button>
+        </Stack>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function EmailDialog({
+  userName,
+  userEmail,
+  onClose,
+  onConfirm,
+}: {
+  userName: string;
+  userEmail: string;
+  onClose: () => void;
+  onConfirm: (subject: string, message: string) => Promise<void>;
+}) {
+  const [subject, setSubject] = useState("");
+  const [message, setMessage] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const submit = async () => {
+    if (!subject.trim() || !message.trim()) {
+      setErr("Subject and message are both required.");
+      return;
+    }
+    setBusy(true);
+    setErr("");
+    try {
+      await onConfirm(subject.trim(), message.trim());
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "The email could not be sent.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Dialog open onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+      <DialogContent sx={{ p: 3 }}>
+        <Stack direction="row" alignItems="center" gap={1.25} sx={{ mb: 0.5 }}>
+          <Box sx={{ width: 38, height: 38, borderRadius: 2.5, bgcolor: C.fill, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+            <MailOutline sx={{ fontSize: 20 }} />
+          </Box>
+          <Box>
+            <Typography sx={{ fontSize: 16.5, fontWeight: 700, color: C.heading }}>Email {userName}</Typography>
+            <Typography sx={{ fontSize: 12.5, color: C.muted }}>{userEmail}</Typography>
+          </Box>
+        </Stack>
+        <Stack gap={1.75} sx={{ mt: 2 }}>
+          <TextInput label="Subject" value={subject} onChange={(v) => { setSubject(v); setErr(""); }} placeholder="What's this about?" disabled={busy} />
+          <TextArea label="Message" value={message} onChange={(v) => { setMessage(v); setErr(""); }} minRows={5} placeholder="Write your message…" error={err || undefined} />
+        </Stack>
+        <Stack direction="row" justifyContent="flex-end" gap={1.25} sx={{ mt: 2.5 }}>
+          <Button onClick={onClose} disabled={busy} sx={{ height: 38, px: 2, borderRadius: 2, fontSize: 14, fontWeight: 600, textTransform: "none", color: C.body }}>Cancel</Button>
+          <Button
+            onClick={submit}
+            disabled={busy || !subject.trim() || !message.trim()}
+            sx={{ height: 38, px: 2.25, borderRadius: 2, fontSize: 14, fontWeight: 600, textTransform: "none", bgcolor: C.accent, color: "#fff", "&:hover": { bgcolor: "#005bbf" }, "&.Mui-disabled": { bgcolor: "#9DC8F5", color: "#fff" } }}
+          >
+            {busy ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Send email"}
+          </Button>
+        </Stack>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+function AccountActionsCard({ user, onChanged }: { user: AdminUserDetail; onChanged: () => void }) {
+  const s = user.account_status;
+  const isBanned = !!s?.banned_at;
+  const isSuspended = !!s?.suspended_at;
+  const [dialog, setDialog] = useState<null | "suspend" | "ban" | "email">(null);
+  const [toast, setToast] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
+
+  const lift = async (kind: "unsuspend" | "unban") => {
+    setBusy(true);
+    setErr("");
+    try {
+      if (kind === "unsuspend") {
+        await api.unsuspendAdminUser(user.id);
+      } else {
+        await api.unbanAdminUser(user.id);
+      }
+      onChanged();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Action failed.");
+      setBusy(false);
+    }
+  };
+
+  return (
+    <Card title="Account actions" icon={<ShieldOutlined sx={{ fontSize: 18 }} />}>
+      <Stack gap={1.5}>
+        {toast && (
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: "10px 12px", borderRadius: 2, bgcolor: C.greenBg, border: "1px solid #BBF7D0" }}>
+            <CheckCircle sx={{ fontSize: 17, color: C.green }} />
+            <Typography sx={{ fontSize: 13, color: "#065F46", fontWeight: 500 }}>{toast}</Typography>
+          </Box>
+        )}
+
+        <Button onClick={() => setDialog("email")} disabled={!user.email} fullWidth startIcon={<MailOutline sx={{ fontSize: 16 }} />} sx={actionBtnSx("neutral")}>
+          Send email
+        </Button>
+        {!user.email && <Typography sx={{ fontSize: 12, color: C.ph, mt: -0.5 }}>No email address on file.</Typography>}
+
+        <Box sx={{ height: "1px", bgcolor: C.border, my: 0.25 }} />
+
+        {isBanned ? (
+          <Button onClick={() => lift("unban")} disabled={busy} fullWidth startIcon={<LockOpenOutlined sx={{ fontSize: 16 }} />} sx={actionBtnSx("neutral")}>
+            Lift ban
+          </Button>
+        ) : (
+          <>
+            {isSuspended ? (
+              <Button onClick={() => lift("unsuspend")} disabled={busy} fullWidth startIcon={<LockOpenOutlined sx={{ fontSize: 16 }} />} sx={actionBtnSx("neutral")}>
+                Lift suspension
+              </Button>
+            ) : (
+              <Button onClick={() => setDialog("suspend")} fullWidth startIcon={<PauseCircleOutline sx={{ fontSize: 16 }} />} sx={actionBtnSx("amber")}>
+                Suspend user
+              </Button>
+            )}
+            <Button onClick={() => setDialog("ban")} fullWidth startIcon={<BlockOutlined sx={{ fontSize: 16 }} />} sx={actionBtnSx("red")}>
+              Ban user
+            </Button>
+          </>
+        )}
+
+        {err && <Typography sx={{ fontSize: 12.5, color: C.red }}>{err}</Typography>}
+
+        <Stack direction="row" gap={0.9} sx={{ fontSize: 12, color: C.ph, lineHeight: 1.5, mt: 0.5 }}>
+          <AccessTimeOutlined sx={{ fontSize: 14, mt: "1px", flexShrink: 0 }} />
+          <span>Suspend is a reversible hold; ban is a severe block. Both revoke active sessions and can be lifted.</span>
+        </Stack>
+      </Stack>
+
+      {dialog === "suspend" && (
+        <ModerationDialog
+          mode="suspend"
+          userName={user.name}
+          onClose={() => setDialog(null)}
+          onConfirm={async (reason) => {
+            await api.suspendAdminUser(user.id, reason);
+            setDialog(null);
+            onChanged();
+          }}
+        />
+      )}
+      {dialog === "ban" && (
+        <ModerationDialog
+          mode="ban"
+          userName={user.name}
+          onClose={() => setDialog(null)}
+          onConfirm={async (reason) => {
+            await api.banAdminUser(user.id, reason);
+            setDialog(null);
+            onChanged();
+          }}
+        />
+      )}
+      {dialog === "email" && user.email && (
+        <EmailDialog
+          userName={user.name}
+          userEmail={user.email}
+          onClose={() => setDialog(null)}
+          onConfirm={async (subject, message) => {
+            await api.sendAdminUserEmail(user.id, subject, message);
+            setDialog(null);
+            setToast(`Email sent to ${user.email}.`);
+          }}
+        />
+      )}
+    </Card>
+  );
+}
+
 // ─── Page ───────────────────────────────────────────────────────────────────────
 
 export default function UserDetailPage({ userId }: { userId: number }) {
@@ -608,19 +883,10 @@ export default function UserDetailPage({ userId }: { userId: number }) {
                 </Stack>
               </Box>
             </Stack>
-            {/* header actions */}
-            <Stack alignItems="flex-end" gap={1.25}>
-              <Button disabled startIcon={<EditOutlined sx={{ fontSize: 16 }} />} sx={{ height: 40, px: 2.25, borderRadius: 2, fontSize: 14, fontWeight: 600, textTransform: "none", bgcolor: C.accent, color: "#fff", "&.Mui-disabled": { bgcolor: C.fill, color: C.ph } }}>
-                Edit user
-              </Button>
-              <Stack direction="row" gap={1}>
-                <Button disabled startIcon={<PauseCircleOutline sx={{ fontSize: 16 }} />} sx={{ height: 34, px: 1.75, borderRadius: 2, fontSize: 13, fontWeight: 600, textTransform: "none", "&.Mui-disabled": { color: C.ph, border: `1px solid ${C.border}` } }}>Suspend</Button>
-                <Button disabled startIcon={<BlockOutlined sx={{ fontSize: 16 }} />} sx={{ height: 34, px: 1.75, borderRadius: 2, fontSize: 13, fontWeight: 600, textTransform: "none", "&.Mui-disabled": { color: C.ph, border: `1px solid ${C.border}` } }}>Ban</Button>
-              </Stack>
-              <Typography sx={{ fontSize: 11.5, color: C.ph }}>Suspend &amp; ban — coming soon</Typography>
-            </Stack>
           </Box>
         </Card>
+
+        <AccountStatusBanner status={user.account_status} />
 
         {/* two-column body */}
         <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 320px" }, gap: 2.5, mt: 2.5, alignItems: "start" }}>
@@ -688,18 +954,7 @@ export default function UserDetailPage({ userId }: { userId: number }) {
 
           {/* side column */}
           <Stack gap={2.5} sx={{ minWidth: 0 }}>
-            <Card title="Account actions" icon={<ShieldOutlined sx={{ fontSize: 18 }} />}>
-              <Stack gap={1.5}>
-                <Button disabled fullWidth startIcon={<MailOutline sx={{ fontSize: 16 }} />} sx={disabledBtnSx()}>Send email</Button>
-                <Box sx={{ height: "1px", bgcolor: C.border, my: 0.25 }} />
-                <Button disabled fullWidth startIcon={<PauseCircleOutline sx={{ fontSize: 16 }} />} sx={disabledBtnSx()}>Suspend user</Button>
-                <Button disabled fullWidth startIcon={<BlockOutlined sx={{ fontSize: 16 }} />} sx={disabledBtnSx()}>Ban user</Button>
-                <Stack direction="row" gap={0.9} sx={{ fontSize: 12, color: C.ph, lineHeight: 1.5, mt: 0.5 }}>
-                  <AccessTimeOutlined sx={{ fontSize: 14, mt: "1px", flexShrink: 0 }} />
-                  <span>Suspend and ban are coming soon. Until then, escalate to a senior admin to action a user.</span>
-                </Stack>
-              </Stack>
-            </Card>
+            <AccountActionsCard user={user} onChanged={fetchUser} />
 
             <Card title="Account" icon={<PersonOutline sx={{ fontSize: 18 }} />}>
               <Box>

@@ -14,6 +14,7 @@ interface AuthContextType {
   pendingEmail: string | null;
   loginEmail: (email: string, password: string) => Promise<User>;
   loginPhone: (telephone: string, password: string) => Promise<User>;
+  googleAuth: (accessToken: string, roles?: { is_client?: boolean; is_freelancer?: boolean }) => Promise<User>;
   registerEmail: (data: EmailRegisterData) => Promise<void>;
   registerPhone: (data: PhoneRegisterData) => Promise<void>;
   logout: () => Promise<void>;
@@ -97,6 +98,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return loggedInUser;
   };
 
+  const googleAuth = async (accessToken: string, roles?: { is_client?: boolean; is_freelancer?: boolean }): Promise<User> => {
+    const authedUser = await api.googleAuth(accessToken, roles);
+    setUser(authedUser);
+    // Google emails arrive pre-verified — clear any lingering verification state.
+    setEmailVerificationPending(false);
+    setPendingEmail(null);
+    localStorage.removeItem(PENDING_EMAIL_KEY);
+    return authedUser;
+  };
+
   const registerEmail = async (data: EmailRegisterData) => {
     const registeredUser = await api.registerEmail(data);
     setUser(registeredUser);
@@ -141,6 +152,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         pendingEmail,
         loginEmail,
         loginPhone,
+        googleAuth,
         registerEmail,
         registerPhone,
         logout,

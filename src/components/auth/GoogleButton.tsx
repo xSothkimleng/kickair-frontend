@@ -1,19 +1,73 @@
 "use client";
 
-import { Box, Button } from "@mui/material";
+import { useState } from "react";
+import { Box, Button, CircularProgress } from "@mui/material";
+import { useGoogleLogin } from "@react-oauth/google";
+import { useAuth } from "@/components/context/AuthContext";
+import { User } from "@/types/user";
+
+const GOOGLE_CONFIGURED = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
 /**
- * "Continue with Google" button — UI only for now (no OAuth wired up yet).
- * Styled to match the KickAir Auth design.
+ * "Continue with Google" button. Opens the Google account picker, exchanges the
+ * resulting access token with our API, and hands the signed-in user back to the page.
+ *
+ * `roles` carries the role pre-selected on the sign-up page; it's ignored when the
+ * Google account already exists.
  */
-export default function GoogleButton({ label, onClick }: { label: string; onClick?: () => void }) {
+export default function GoogleButton({
+  label,
+  roles,
+  onAuthenticated,
+  onError,
+  disabled,
+}: {
+  label: string;
+  roles?: { is_client?: boolean; is_freelancer?: boolean };
+  onAuthenticated: (user: User) => void;
+  onError?: (message: string) => void;
+  disabled?: boolean;
+}) {
+  const { googleAuth } = useAuth();
+  const [loading, setLoading] = useState(false);
+
+  const login = useGoogleLogin({
+    flow: "implicit",
+    scope: "email profile",
+    onSuccess: async (tokenResponse) => {
+      try {
+        const user = await googleAuth(tokenResponse.access_token, roles);
+        onAuthenticated(user);
+      } catch (err) {
+        onError?.(err instanceof Error ? err.message : "Google sign-in failed. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    },
+    onError: () => {
+      setLoading(false);
+      onError?.("Google sign-in was cancelled or could not complete.");
+    },
+    onNonOAuthError: () => setLoading(false),
+  });
+
+  const handleClick = () => {
+    if (!GOOGLE_CONFIGURED) {
+      onError?.("Google sign-in isn't configured on this site yet.");
+      return;
+    }
+    setLoading(true);
+    login();
+  };
+
   return (
     <Button
       type="button"
       fullWidth
       variant="outlined"
-      onClick={onClick}
-      startIcon={<GoogleIcon />}
+      onClick={handleClick}
+      disabled={disabled || loading}
+      startIcon={loading ? <CircularProgress size={18} sx={{ color: "#94A3B8" }} /> : <GoogleIcon />}
       sx={{
         height: 46,
         borderRadius: 2.5,
@@ -25,7 +79,7 @@ export default function GoogleButton({ label, onClick }: { label: string; onClic
         backgroundColor: "#fff",
         "&:hover": { borderColor: "#CBD5E1", backgroundColor: "#F8FAFC" },
       }}>
-      {label}
+      {loading ? "Connecting…" : label}
     </Button>
   );
 }

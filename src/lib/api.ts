@@ -205,6 +205,18 @@ class ApiClient {
     return response.data.user;
   }
 
+  // Sign in / up with Google. `accessToken` is the Google OAuth access token from
+  // Google Identity Services; `roles` carries the role pre-selected on the sign-up
+  // page and only applies when this Google identity is brand new.
+  async googleAuth(accessToken: string, roles?: { is_client?: boolean; is_freelancer?: boolean }): Promise<User> {
+    const response = await this.request("/api/auth/google", {
+      method: "POST",
+      body: JSON.stringify({ access_token: accessToken, ...roles }),
+    });
+    this.setToken(response.data.token);
+    return response.data.user;
+  }
+
   async sendPhoneOtp(phone: string, channel: OtpChannel = "telegram"): Promise<void> {
     await this.request("/api/auth/phone/send-otp", {
       method: "POST",
@@ -904,6 +916,27 @@ class ApiClient {
     return res.data;
   }
 
+  // ── Admin user moderation ──────────────────────────────────────────────────
+  async suspendAdminUser(id: number, reason: string): Promise<AdminAccountStatus> {
+    const res = await this.post(`/api/admin/users/${id}/suspend`, { reason });
+    return res.data;
+  }
+  async unsuspendAdminUser(id: number): Promise<AdminAccountStatus> {
+    const res = await this.post(`/api/admin/users/${id}/unsuspend`, {});
+    return res.data;
+  }
+  async banAdminUser(id: number, reason: string): Promise<AdminAccountStatus> {
+    const res = await this.post(`/api/admin/users/${id}/ban`, { reason });
+    return res.data;
+  }
+  async unbanAdminUser(id: number): Promise<AdminAccountStatus> {
+    const res = await this.post(`/api/admin/users/${id}/unban`, {});
+    return res.data;
+  }
+  async sendAdminUserEmail(id: number, subject: string, message: string): Promise<void> {
+    await this.post(`/api/admin/users/${id}/send-email`, { subject, message });
+  }
+
   // ── Admin Categories ──────────────────────────────────────────────────────
   async getAdminCategories(): Promise<AdminCategory[]> {
     const res = await this.get("/api/admin/categories");
@@ -1078,6 +1111,13 @@ export interface AdminUserKyc {
   documents: AdminUserKycDocument[];
 }
 
+export interface AdminAccountStatus {
+  suspended_at: string | null;
+  suspension_reason: string | null;
+  banned_at: string | null;
+  ban_reason: string | null;
+}
+
 export interface AdminUserDetail {
   id: number;
   name: string;
@@ -1092,6 +1132,7 @@ export interface AdminUserDetail {
   created_at: string;
   last_active_at: string | null;
   location: string | null;
+  account_status: AdminAccountStatus;
   freelancer_profile: {
     tagline: string | null;
     about: string | null;
