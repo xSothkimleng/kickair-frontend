@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button, CircularProgress, Typography } from "@mui/material";
 import {
   AccountBalanceWallet as WalletIcon,
@@ -14,7 +14,7 @@ import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { tokens } from "@/theme";
 import { Wallet, Transaction } from "@/types/wallet";
-import { Annot, PayLogo, PaymentFooterLogos, StatusChip, TopUpDialog, fmtUsd, type PayLogoId } from "@/components/payment";
+import { Annot, PayLogo, PaymentFooterLogos, StatusChip, TopUpDialog, WithdrawDialog, fmtUsd, type PayLogoId } from "@/components/payment";
 
 type Filter = "all" | "completed" | "pending" | "failed";
 const FILTERS: [Filter, string][] = [
@@ -27,6 +27,8 @@ const FILTERS: [Filter, string][] = [
 export default function FinanceContent() {
   const [filter, setFilter] = useState<Filter>("all");
   const [topUpOpen, setTopUpOpen] = useState(false);
+  const [showWithdraw, setShowWithdraw] = useState(false);
+  const queryClient = useQueryClient();
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.wallet(),
@@ -47,6 +49,10 @@ export default function FinanceContent() {
   const wallet = data?.wallet ?? null;
   const transactions = data?.transactions ?? [];
   const balance = wallet ? parseFloat(wallet.available_balance_raw) : 0;
+  const refresh = async () => {
+    await refetch();
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.client() });
+  };
 
   const filtered = transactions.filter(t => (filter === "all" ? true : t.status === filter));
 
@@ -88,10 +94,9 @@ export default function FinanceContent() {
     );
   }
 
-  const stats: { label: string; value: number; dot: string; Icon: typeof WalletIcon }[] = [
-    { label: "Total spent", value: wallet ? parseFloat(wallet.total_spent_raw) : 0, dot: tokens.text3, Icon: ArrowUpIcon },
-    { label: "In escrow", value: wallet ? parseFloat(wallet.pending_balance_raw) : 0, dot: tokens.pending, Icon: ShieldIcon },
-    { label: "Total balance", value: wallet ? Number(wallet.total_balance_raw) : 0, dot: tokens.success, Icon: WalletIcon },
+  const stats: { label: string; value: number; dot: string; Icon: typeof WalletIcon; sub: string }[] = [
+    { label: "In escrow", value: wallet ? parseFloat(wallet.pending_balance_raw) : 0, dot: tokens.pending, Icon: ShieldIcon, sub: "Committed to active orders" },
+    { label: "Total spent", value: wallet ? parseFloat(wallet.total_spent_raw) : 0, dot: tokens.text3, Icon: ArrowUpIcon, sub: "Lifetime on KickAir" },
   ];
 
   return (
@@ -104,33 +109,42 @@ export default function FinanceContent() {
       <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 320px" }, gap: 3, alignItems: "start" }}>
         {/* Left column */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Hero */}
-          <Box sx={{ position: "relative", overflow: "hidden", borderRadius: `${tokens.radius.card}px`, p: { xs: 3, md: 3.75 }, color: "#fff", background: "linear-gradient(135deg, #000, rgba(0,0,0,0.82))" }}>
-            <Box sx={{ position: "absolute", top: -40, right: -30, width: 180, height: 180, borderRadius: "50%", bgcolor: "rgba(255,255,255,0.05)" }} />
-            <Box sx={{ position: "relative", display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-              <Typography sx={{ fontSize: 12, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "rgba(255,255,255,0.55)" }}>Available balance</Typography>
-              <WalletIcon sx={{ fontSize: 20, color: "rgba(255,255,255,0.6)" }} />
-            </Box>
-            <Box sx={{ position: "relative", display: "flex", alignItems: "baseline", gap: 0.5 }}>
-              <Typography sx={{ fontSize: 26, fontWeight: 500, color: "rgba(255,255,255,0.6)" }}>$</Typography>
-              <Typography sx={{ fontFamily: tokens.mono, fontSize: { xs: 46, md: 54 }, fontWeight: 600, letterSpacing: "-0.03em" }}>{balance.toFixed(2)}</Typography>
-              <Typography sx={{ fontSize: 15, color: "rgba(255,255,255,0.5)", ml: 0.75 }}>USD</Typography>
-            </Box>
-            <Box sx={{ position: "relative", mt: 3 }}>
-              <Button
-                onClick={() => setTopUpOpen(true)}
-                startIcon={<AddIcon sx={{ fontSize: 16 }} />}
-                sx={{ height: 44, px: 2.75, borderRadius: "999px", bgcolor: "#fff", color: "#000", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: "rgba(255,255,255,0.9)" } }}>
-                Top up
-              </Button>
-            </Box>
-          </Box>
-
-          {/* Stat cards */}
+          {/* Balance + stats */}
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3,1fr)" }, gap: 1.5 }}>
+            {/* Available balance — primary */}
+            <Box sx={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: `${tokens.radius.card}px`, p: 2.25, color: "#fff", background: "linear-gradient(135deg, #000, rgba(0,0,0,0.82))" }}>
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
+                <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
+                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: tokens.success }} />
+                  <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: "rgba(255,255,255,0.72)" }}>Available balance</Typography>
+                </Box>
+                <WalletIcon sx={{ fontSize: 15, color: "rgba(255,255,255,0.5)" }} />
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.4 }}>
+                <Typography sx={{ fontSize: 16, fontWeight: 500, color: "rgba(255,255,255,0.6)" }}>$</Typography>
+                <Typography sx={{ fontFamily: tokens.mono, fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>{balance.toFixed(2)}</Typography>
+              </Box>
+              <Typography sx={{ fontSize: 11, color: "rgba(255,255,255,0.5)", mt: 0.5 }}>Free to spend or withdraw</Typography>
+              <Box sx={{ display: "flex", gap: 1, mt: "auto", pt: 1.75 }}>
+                <Button
+                  onClick={() => setTopUpOpen(true)}
+                  startIcon={<AddIcon sx={{ fontSize: 15 }} />}
+                  sx={{ flex: 1, minWidth: 0, height: 36, borderRadius: "999px", bgcolor: "#fff", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 600, "&:hover": { bgcolor: "rgba(255,255,255,0.88)" } }}>
+                  Top up
+                </Button>
+                <Button
+                  onClick={() => setShowWithdraw(true)}
+                  startIcon={<ArrowUpIcon sx={{ fontSize: 15 }} />}
+                  sx={{ flex: 1, minWidth: 0, height: 36, borderRadius: "999px", border: "1px solid rgba(255,255,255,0.28)", color: "#fff", textTransform: "none", fontSize: 13, fontWeight: 600, "&:hover": { bgcolor: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.4)" } }}>
+                  Withdraw
+                </Button>
+              </Box>
+            </Box>
+
+            {/* Secondary stats */}
             {stats.map(s => (
-              <Box key={s.label} sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.25 }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.75 }}>
+              <Box key={s.label} sx={{ display: "flex", flexDirection: "column", bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.25 }}>
+                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
                   <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
                     <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: s.dot }} />
                     <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{s.label}</Typography>
@@ -138,6 +152,7 @@ export default function FinanceContent() {
                   <s.Icon sx={{ fontSize: 15, color: tokens.text3 }} />
                 </Box>
                 <Typography sx={{ fontFamily: tokens.mono, fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em" }}>{fmtUsd(s.value)}</Typography>
+                <Typography sx={{ fontSize: 11, color: tokens.text3, mt: "auto", pt: 0.5 }}>{s.sub}</Typography>
               </Box>
             ))}
           </Box>
@@ -235,6 +250,7 @@ export default function FinanceContent() {
       </Box>
 
       <TopUpDialog open={topUpOpen} onClose={() => setTopUpOpen(false)} currentBalance={balance} suggestedAmount={25} />
+      <WithdrawDialog open={showWithdraw} onClose={() => setShowWithdraw(false)} available={balance} onSuccess={refresh} />
     </Box>
   );
 }

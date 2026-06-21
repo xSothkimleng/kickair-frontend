@@ -157,7 +157,7 @@ export default function ProfileContent() {
 
   if (authLoading) {
     return (
-      <Box sx={{ maxWidth: 680, mx: "auto", display: "flex", flexDirection: "column", gap: 2.25 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.25 }}>
         {[0, 1, 2].map(i => (
           <Box key={i} sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 3 }}>
             <Skeleton variant="text" width={160} height={22} sx={{ mb: 2 }} />
@@ -169,13 +169,13 @@ export default function ProfileContent() {
   }
 
   if (!user) {
-    return <Box sx={{ maxWidth: 680, mx: "auto" }}><Alert severity="warning">Please log in to view your profile.</Alert></Box>;
+    return <Box><Alert severity="warning">Please log in to view your profile.</Alert></Box>;
   }
 
   const industryName = industries.find(i => i.id === formData.industry_id)?.name;
 
   return (
-    <Box sx={{ maxWidth: 680, mx: "auto", display: "flex", flexDirection: "column", gap: 2.25 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.25 }}>
       {/* Heading + inline save */}
       <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5 }}>
         <Box sx={{ minWidth: 0 }}>

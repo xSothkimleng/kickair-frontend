@@ -9,6 +9,7 @@ import ProfileContent from "./ProfileContent";
 import PostProjectContent from "./PostServiceContent";
 import FinanceContent from "./FinanceContent";
 import OrdersContent from "./OrdersContent";
+import CustomOrdersContent from "./CustomOrdersContent";
 import KycBanner from "@/components/dashboard/KycBanner";
 
 export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance" | "custom-orders";
@@ -22,8 +23,7 @@ const tabs: { value: string; label: string }[] = [
   { value: "finance",   label: "Finance" },
 ];
 
-// Tabs rendered inline on this page (custom-orders is its own route).
-const VALID_TABS = tabs.map(t => t.value).filter(v => v !== "custom-orders");
+const VALID_TABS = tabs.map(t => t.value);
 
 export default function ClientSpacePage() {
   const router = useRouter();
@@ -35,10 +35,6 @@ export default function ClientSpacePage() {
   }, []);
 
   const handleTabChange = (tab: Tab) => {
-    if (tab === "custom-orders") {
-      router.push("/dashboard/client/custom-orders");
-      return;
-    }
     setActiveTab(tab);
     router.replace(`?tab=${tab}`, { scroll: false });
   };
@@ -53,6 +49,7 @@ export default function ClientSpacePage() {
         {activeTab === "dashboard" && <DashboardContent onTabChange={handleTabChange} />}
         {activeTab === "profile"   && <ProfileContent />}
         {activeTab === "orders"    && <OrdersContent />}
+        {activeTab === "custom-orders" && <CustomOrdersContent />}
         {activeTab === "service"   && <PostProjectContent />}
         {activeTab === "finance"   && <FinanceContent />}
       </Container>

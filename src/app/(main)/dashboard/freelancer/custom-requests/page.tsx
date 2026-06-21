@@ -1,7 +1,7 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import CustomRequestsInbox from "@/components/customOrders/CustomRequestsInbox";
-
+// Custom requests now render inline as a tab in the Freelancer Space so the
+// dashboard chrome (header + tabs) stays visible. This route only exists for old links.
 export default function FreelancerCustomRequestsPage() {
-  return <CustomRequestsInbox />;
+  redirect("/dashboard/freelancer?tab=custom-requests");
 }

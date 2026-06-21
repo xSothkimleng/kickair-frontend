@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
-  Container,
   Typography,
   Avatar,
   Button,
@@ -193,28 +192,25 @@ export default function CustomRequestsInbox() {
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
-      <Container disableGutters sx={{ maxWidth: "1120px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 5 } }}>
-        <Box sx={{ mb: { xs: 2.5, sm: 3.5 } }}>
-          <Typography sx={{ ...coLabel, fontFamily: tokens.mono, color: tokens.accent }}>Freelancer inbox</Typography>
-          <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1.5, flexWrap: "wrap", mt: 0.5 }}>
-            <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom requests</Typography>
-            <Typography sx={{ fontSize: 14, color: tokens.text2, mb: 0.5 }}>
-              {isLoading ? "Loading…" : `${newCount} new · ${requests.length} total`}
-            </Typography>
-          </Box>
+    <Box>
+      <Box sx={{ mb: { xs: 2.5, sm: 3.5 } }}>
+        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
+          <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom requests</Typography>
+          <Typography sx={{ fontSize: 14, color: tokens.text2, mb: 0.5 }}>
+            {isLoading ? "Loading…" : `${newCount} new · ${requests.length} total`}
+          </Typography>
         </Box>
+      </Box>
 
-        {!isLoading && requests.length === 0 ? (
-          <EmptyState onSettings={() => router.push("/dashboard/freelancer?tab=services")} />
-        ) : (
-          <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start", flexDirection: { xs: "column", md: "row" } }}>
-            {/* mobile: show detail when selected, else list */}
-            <Box sx={{ display: { xs: selId ? "none" : "block", md: "block" }, width: { xs: "100%", md: "auto" } }}>{list}</Box>
-            {selected && <Box sx={{ display: { xs: "block", md: "block" }, flex: 1, minWidth: 0, width: "100%" }}>{detail}</Box>}
-          </Box>
-        )}
-      </Container>
+      {!isLoading && requests.length === 0 ? (
+        <EmptyState onSettings={() => router.push("/dashboard/freelancer?tab=services")} />
+      ) : (
+        <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start", flexDirection: { xs: "column", md: "row" } }}>
+          {/* mobile: show detail when selected, else list */}
+          <Box sx={{ display: { xs: selId ? "none" : "block", md: "block" }, width: { xs: "100%", md: "auto" } }}>{list}</Box>
+          {selected && <Box sx={{ display: { xs: "block", md: "block" }, flex: 1, minWidth: 0, width: "100%" }}>{detail}</Box>}
+        </Box>
+      )}
     </Box>
   );
 }

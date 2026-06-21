@@ -116,8 +116,8 @@ export function getNotificationRoute(n: Notification): string | null {
   if (type === "admin_kyc_pending") return `/admin/trust`;
   // Custom orders & milestones
   const customOrderId = data?.custom_order_id;
-  if (type === "custom_order_requested") return `/dashboard/freelancer/custom-requests`;
-  if (type === "custom_order_declined") return `/dashboard/client/custom-orders`;
+  if (type === "custom_order_requested") return `/dashboard/freelancer?tab=custom-requests`;
+  if (type === "custom_order_declined") return `/dashboard/client?tab=custom-orders`;
   if (customOrderId && (
     type === "custom_order_offered" || type === "custom_order_accepted" || type === "custom_order_ended" ||
     type === "milestone_funded" || type === "milestone_submitted" ||

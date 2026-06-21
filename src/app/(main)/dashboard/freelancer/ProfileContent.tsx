@@ -338,7 +338,7 @@ export default function ProfileContent() {
 
   if (authLoading || loadingReferenceData) {
     return (
-      <Box sx={{ maxWidth: 760, mx: "auto", display: "flex", flexDirection: "column", gap: 2.25 }}>
+      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.25 }}>
         {[0, 1, 2, 3].map(i => (
           <Box key={i} sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 3 }}>
             <Skeleton variant="text" width={160} height={22} sx={{ mb: 2 }} />
@@ -350,7 +350,7 @@ export default function ProfileContent() {
   }
 
   if (!user) {
-    return <Box sx={{ maxWidth: 760, mx: "auto" }}><Alert severity="warning">Please log in to view your profile.</Alert></Box>;
+    return <Box><Alert severity="warning">Please log in to view your profile.</Alert></Box>;
   }
 
   const profile = user.freelancer_profile;
@@ -375,7 +375,7 @@ export default function ProfileContent() {
   const remainingTasks = strengthTasks.filter(t => !t.done);
 
   return (
-    <Box sx={{ maxWidth: 760, mx: "auto", display: "flex", flexDirection: "column", gap: 2.25 }}>
+    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.25 }}>
       {/* Page heading */}
       <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 1.5 }}>
         <Box>

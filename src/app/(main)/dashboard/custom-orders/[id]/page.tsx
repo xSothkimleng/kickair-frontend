@@ -51,7 +51,7 @@ export default function CustomOrderDetailPage() {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
         <Container disableGutters sx={{ maxWidth: "1080px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 5 } }}>
-          <BackBtn onClick={() => router.push("/dashboard/client/custom-orders")} label="Back to custom orders" />
+          <BackBtn onClick={() => router.push("/dashboard/client?tab=custom-orders")} label="Back to custom orders" />
           <Header order={order} />
           <ReviewOffer order={order} onChanged={() => refetch()} />
         </Container>
@@ -63,7 +63,7 @@ export default function CustomOrderDetailPage() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
       <Container disableGutters sx={{ maxWidth: "720px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 5 } }}>
-        <BackBtn onClick={() => router.push(role === "freelancer" ? "/dashboard/freelancer/custom-requests" : "/dashboard/client/custom-orders")}
+        <BackBtn onClick={() => router.push(role === "freelancer" ? "/dashboard/freelancer?tab=custom-requests" : "/dashboard/client?tab=custom-orders")}
           label={role === "freelancer" ? "Back to requests" : "Back to custom orders"} />
         <Header order={order} />
 

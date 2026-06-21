@@ -111,10 +111,12 @@ export default function SignUpPage() {
 
           {step === "form" ? (
             <>
-              <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-                Create your account
-              </Typography>
-              <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 2.5 }}>Join KickAir</Typography>
+              <Box sx={{ textAlign: "center", mb: 2.5 }}>
+                <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
+                  Create your account
+                </Typography>
+                <Typography sx={{ fontSize: 14.5, color: tokens.muted }}>Join KickAir</Typography>
+              </Box>
 
               {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
 
@@ -130,7 +132,15 @@ export default function SignUpPage() {
                   ]}
                 />
 
-                <GoogleButton label="Continue with Google" />
+                <GoogleButton
+                  label="Continue with Google"
+                  roles={roleFlags()}
+                  onAuthenticated={(u) => {
+                    router.push(u.is_freelancer && !u.is_client ? "/dashboard/freelancer" : "/explore-services");
+                    router.refresh();
+                  }}
+                  onError={setError}
+                />
 
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
                   <Divider sx={{ flex: 1, borderColor: tokens.border }} />
@@ -172,15 +182,17 @@ export default function SignUpPage() {
                 </Button>
               </Box>
 
-              <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body, mt: 2.5 }}>
-                Already have an account?{" "}
-                <Box component="a" onClick={() => router.push("/auth/sign-in")} sx={{ color: tokens.accent, fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
-                  Sign in
-                </Box>
-              </Typography>
-              <Typography sx={{ textAlign: "center", fontSize: 12, color: tokens.muted, lineHeight: 1.5, mt: 2 }}>
-                By continuing, you agree to KickAir&rsquo;s Terms of Service and Privacy Policy.
-              </Typography>
+              <Box sx={{ mt: 4, display: "flex", flexDirection: "column", gap: 1.5 }}>
+                <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body }}>
+                  Already have an account?{" "}
+                  <Box component="a" onClick={() => router.push("/auth/sign-in")} sx={{ color: tokens.accent, fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
+                    Sign in
+                  </Box>
+                </Typography>
+                <Typography sx={{ textAlign: "center", fontSize: 12, color: tokens.muted, lineHeight: 1.5 }}>
+                  By continuing, you agree to KickAir&rsquo;s Terms of Service and Privacy Policy.
+                </Typography>
+              </Box>
             </>
           ) : (
             <>

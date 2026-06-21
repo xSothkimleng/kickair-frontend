@@ -6,6 +6,7 @@ import { Box, Paper, Typography, Button, Divider, Alert } from "@mui/material";
 import { useAuth } from "@/components/context/AuthContext";
 import GoogleButton from "@/components/auth/GoogleButton";
 import { TextInput, PasswordInput, tokens } from "@/components/ui/inputs";
+import { User } from "@/types/user";
 
 export default function SignInPage() {
   const [identifier, setIdentifier] = useState("");
@@ -15,6 +16,17 @@ export default function SignInPage() {
 
   const { loginEmail, loginPhone } = useAuth();
   const router = useRouter();
+
+  const goAfterAuth = (loggedInUser: User) => {
+    let destination = "/explore-services";
+    if (loggedInUser.is_admin) {
+      destination = "/admin";
+    } else if (loggedInUser.is_freelancer && !loggedInUser.is_client) {
+      destination = "/dashboard/freelancer";
+    }
+    router.push(destination);
+    router.refresh();
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,15 +40,7 @@ export default function SignInPage() {
         ? await loginEmail(identifier.trim(), password)
         : await loginPhone(identifier.trim(), password);
 
-      let destination = "/explore-services";
-      if (loggedInUser.is_admin) {
-        destination = "/admin";
-      } else if (loggedInUser.is_freelancer && !loggedInUser.is_client) {
-        destination = "/dashboard/freelancer";
-      }
-
-      router.push(destination);
-      router.refresh();
+      goAfterAuth(loggedInUser);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Invalid credentials. Please try again.");
     } finally {
@@ -52,14 +56,16 @@ export default function SignInPage() {
             <Box component="img" src="/assets/images/kickair-logo.png" alt="KickAir" sx={{ height: 36 }} />
           </Box>
 
-          <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-            Welcome back
-          </Typography>
-          <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 3 }}>
-            Sign in to continue to KickAir
-          </Typography>
+          <Box sx={{ textAlign: "center", mb: 4 }}>
+            <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
+              Welcome back
+            </Typography>
+            <Typography sx={{ fontSize: 14.5, color: tokens.muted }}>
+              Sign in to continue to KickAir
+            </Typography>
+          </Box>
 
-          <GoogleButton label="Continue with Google" />
+          <GoogleButton label="Continue with Google" onAuthenticated={goAfterAuth} onError={setError} />
 
           <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, my: 2.5 }}>
             <Divider sx={{ flex: 1, borderColor: tokens.border }} />
@@ -109,12 +115,14 @@ export default function SignInPage() {
             </Button>
           </Box>
 
-          <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body, mt: 2.5 }}>
-            New to KickAir?{" "}
-            <Box component="a" onClick={() => router.push("/auth/sign-up")} sx={{ color: tokens.accent, fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
-              Create one
-            </Box>
-          </Typography>
+          <Box sx={{ mt: 4 }}>
+            <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body }}>
+              New to KickAir?{" "}
+              <Box component="a" onClick={() => router.push("/auth/sign-up")} sx={{ color: tokens.accent, fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
+                Create one
+              </Box>
+            </Typography>
+          </Box>
         </Paper>
       </Box>
     </Box>
