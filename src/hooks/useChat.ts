@@ -87,6 +87,27 @@ export function useChat(conversationId: number | null): UseChatReturn {
     }
   }, [conversationId, fetchMessages]);
 
+  // Poll quietly as a fallback for realtime — new messages appear within a few
+  // seconds even when the websocket isn't connected. Doesn't toggle loading.
+  useEffect(() => {
+    if (!conversationId) return;
+    const interval = setInterval(async () => {
+      try {
+        const response = await api.get(`/api/conversations/${conversationId}/messages`);
+        const incoming = (response.data ?? []) as Message[];
+        setMessages((prev) => {
+          if (incoming.length === prev.length && incoming[incoming.length - 1]?.id === prev[prev.length - 1]?.id) {
+            return prev;
+          }
+          return incoming;
+        });
+      } catch {
+        /* ignore transient poll errors */
+      }
+    }, 10000);
+    return () => clearInterval(interval);
+  }, [conversationId]);
+
   // Subscribe to real-time messages
   useEffect(() => {
     if (!conversationId) return;

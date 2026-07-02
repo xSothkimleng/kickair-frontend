@@ -23,6 +23,10 @@ export function useConversations(): UseConversationsReturn {
       const response = await api.get("/api/conversations");
       return (response.data ?? []) as Conversation[];
     },
+    // Poll so a newly-started conversation (or fresh incoming message) appears
+    // without a manual refresh, even if the realtime socket isn't connected.
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
   });
 
   const updateConversation = useCallback(

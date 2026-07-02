@@ -1,5 +1,6 @@
 import { Box, Paper, Typography, Grid } from "@mui/material";
-import { TextInput, TextArea, Checkbox, Switch } from "@/components/ui/inputs";
+import { TextInput, Checkbox, Switch } from "@/components/ui/inputs";
+import RichTextEditor from "@/components/ui/RichTextEditor";
 import { ServiceFormData } from "../types";
 
 interface CustomOrdersSectionProps {
@@ -77,26 +78,41 @@ export default function CustomOrdersSection({ formData, onFormDataChange }: Cust
             </Grid>
           </Grid>
 
-          <TextArea
-            label="Instructions for Clients"
-            helper="Tell clients what information they should provide in their custom order request"
-            value={customOrders.customInstructions}
-            onChange={(v) => handleChange("customInstructions", v)}
-            placeholder={"Please provide:\n• Project description\n• Timeline expectations\n• Budget range\n• Any reference materials"}
-            minRows={4}
-          />
+          <Box>
+            <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black", mb: 0.5 }}>
+              Instructions for Clients
+            </Typography>
+            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 1 }}>
+              Tell clients what information they should provide in their custom order request
+            </Typography>
+            <RichTextEditor
+              value={customOrders.customInstructions}
+              onChange={(html) => handleChange("customInstructions", html)}
+              placeholder="Please provide: project description, timeline expectations, budget range, any reference materials…"
+              minHeight={120}
+            />
+          </Box>
 
-          <Box sx={{ display: "flex", alignItems: "start", gap: 1.5, p: 2, bgcolor: "rgba(37, 99, 235, 0.05)", borderRadius: 3 }}>
-            <Box sx={{ flex: 1 }}>
-              <Typography sx={{ fontSize: 12, color: "rgb(29, 78, 216)", mb: 1 }}>
-                <strong>Benefits of Custom Orders:</strong>
-              </Typography>
-              <Box component="ul" sx={{ m: 0, pl: 2, fontSize: 11, color: "rgb(37, 99, 235)" }}>
-                <li>Accept projects that don&apos;t fit your standard packages</li>
-                <li>Build relationships with clients who have unique needs</li>
-                <li>Negotiate pricing based on project scope</li>
-                <li>Flexibility in hourly vs. fixed pricing</li>
-              </Box>
+          <Box sx={{ p: 2, bgcolor: "rgba(37, 99, 235, 0.05)", borderRadius: 3, minWidth: 0 }}>
+            <Typography sx={{ fontSize: 12, color: "rgb(29, 78, 216)", mb: 1 }}>
+              <strong>Benefits of Custom Orders:</strong>
+            </Typography>
+            <Box
+              component="ul"
+              sx={{
+                m: 0,
+                pl: 2.5,
+                display: "flex",
+                flexDirection: "column",
+                gap: 0.5,
+                fontSize: 11,
+                color: "rgb(37, 99, 235)",
+                "& li": { lineHeight: 1.5, overflowWrap: "anywhere" },
+              }}>
+              <li>Accept projects that don&apos;t fit your standard packages</li>
+              <li>Build relationships with clients who have unique needs</li>
+              <li>Negotiate pricing based on project scope</li>
+              <li>Flexibility in hourly vs. fixed pricing</li>
             </Box>
           </Box>
         </Box>

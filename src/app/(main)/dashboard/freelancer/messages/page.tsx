@@ -6,6 +6,7 @@ import { Box, Paper, Typography, IconButton, CircularProgress } from "@mui/mater
 import { ArrowBack } from "@mui/icons-material";
 import Link from "next/link";
 import { ConversationList, ChatView } from "@/components/messages";
+import { api } from "@/lib/api";
 import { useConversations } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { Conversation } from "@/types/message";
@@ -25,17 +26,23 @@ function FreelancerMessagesContent() {
     markAsRead,
   } = useChat(selectedConversation?.id ?? null);
 
-  // Set selected conversation from URL param or first conversation
+  // Select the conversation from the URL param — fetching it directly if it isn't
+  // in the paginated list, so deep links from orders/notifications always open the
+  // right thread (with its name + history) — otherwise fall back to the first one.
   useEffect(() => {
-    if (conversations.length > 0) {
-      if (conversationIdParam) {
-        const found = conversations.find((c) => c.id === Number(conversationIdParam));
-        if (found) {
-          setSelectedConversation(found);
-        }
-      } else if (!selectedConversation) {
-        setSelectedConversation(conversations[0]);
+    if (conversationIdParam) {
+      const idNum = Number(conversationIdParam);
+      if (selectedConversation?.id === idNum) return;
+      const found = conversations.find((c) => c.id === idNum);
+      if (found) {
+        setSelectedConversation(found);
+      } else {
+        api.get(`/api/conversations/${idNum}`)
+          .then((res) => { if (res?.data) setSelectedConversation(res.data as Conversation); })
+          .catch(() => {});
       }
+    } else if (conversations.length > 0 && !selectedConversation) {
+      setSelectedConversation(conversations[0]);
     }
   }, [conversations, conversationIdParam, selectedConversation]);
 
@@ -70,11 +77,9 @@ function FreelancerMessagesContent() {
         }}
       >
         <Box sx={{ maxWidth: 1440, mx: "auto", display: "flex", alignItems: "center", gap: 2 }}>
-          <Link href="/dashboard/freelancer" style={{ textDecoration: "none" }}>
-            <IconButton size="small" sx={{ "&:hover": { bgcolor: "rgba(0, 0, 0, 0.05)" } }}>
-              <ArrowBack sx={{ fontSize: 20, color: "black" }} />
-            </IconButton>
-          </Link>
+          <IconButton component={Link} href="/dashboard/freelancer" size="small" sx={{ "&:hover": { bgcolor: "rgba(0, 0, 0, 0.05)" } }}>
+            <ArrowBack sx={{ fontSize: 20, color: "black" }} />
+          </IconButton>
           <Typography variant="h6" fontWeight={600}>
             Messages
           </Typography>

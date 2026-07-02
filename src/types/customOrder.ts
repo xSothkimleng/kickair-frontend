@@ -17,6 +17,12 @@ export type MilestoneStatus =
   | "released"
   | "cancelled";
 
+export interface MilestoneDeliverable {
+  url: string;
+  file_name: string;
+  file_type?: string | null;
+}
+
 export interface CustomOrderMilestone {
   id: number;
   seq: number;
@@ -25,7 +31,7 @@ export interface CustomOrderMilestone {
   amount: number;
   due_days: number | null;
   status: MilestoneStatus;
-  deliverables: string[];
+  deliverables: MilestoneDeliverable[];
   submission_note: string | null;
   revision_note: string | null;
   funded_at: string | null;
@@ -70,7 +76,7 @@ export interface CustomOrder {
   offer: CustomOrderOffer | null;
   milestones: CustomOrderMilestone[];
   escrow: CustomOrderEscrow;
-  order: { id: number; status: string } | null;
+  order: { id: number; status: string; conversation_id: number | null } | null;
 }
 
 export interface CreateCustomOrderRequest {

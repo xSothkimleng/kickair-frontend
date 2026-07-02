@@ -118,7 +118,10 @@ export default function SignInPage() {
           <Box sx={{ mt: 4 }}>
             <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body }}>
               New to KickAir?{" "}
-              <Box component="a" onClick={() => router.push("/auth/sign-up")} sx={{ color: tokens.accent, fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
+              <Box
+                component="a"
+                onClick={() => router.push("/auth/sign-up")}
+                sx={{ color: tokens.accent, fontWeight: 700, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3, "&:hover": { opacity: 0.85 } }}>
                 Create one
               </Box>
             </Typography>

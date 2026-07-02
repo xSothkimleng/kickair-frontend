@@ -22,7 +22,7 @@ export interface MobileDrawerProps {
 
 type NavSection =
   | { label: string; href: string; items?: never }
-  | { label: string; href?: never; items: { title: string; href: string; description: string }[] };
+  | { label: string; href?: never; items: { title: string; href: string; description: string; authGated?: boolean }[] };
 
 const NAV_SECTIONS: NavSection[] = [
   { label: "Explore Services", href: "/explore-services" },
@@ -37,7 +37,7 @@ const NAV_SECTIONS: NavSection[] = [
   {
     label: "For Freelancers",
     items: [
-      { title: "Post Your Service", href: "/dashboard/freelancer", description: "Create your service listing with three-tier pricing" },
+      { title: "Post Your Service", href: "/dashboard/freelancer", description: "Create your service listing with three-tier pricing", authGated: true },
       { title: "Opportunities", href: "/jobs", description: "Find gigs, part-time & full-time work" },
       { title: "KickAir University", href: "/kick-air-university", description: "Master freelancing skills, pricing strategies, and client management" },
     ],
@@ -48,17 +48,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "KickAir University", href: "/kick-air-university", description: "Learn project management and hiring best practices" },
       { title: "Explore Services", href: "/explore-services", description: "Browse freelancer offerings" },
       { title: "Find Freelancers", href: "/find-freelancer", description: "One-off jobs & projects" },
-      { title: "Post Your Gig", href: "/post-gig", description: "Part-time & full-time roles" },
-      { title: "Boost Gig with Ads", href: "/pro", description: "Promote with premium placement" },
-    ],
-  },
-  {
-    label: "KickAir Pro",
-    items: [
-      { title: "Better Visibility with Ads", href: "/pro", description: "Priority placement and highlighted listings" },
-      { title: "Lower Transaction Fees", href: "/pro", description: "Save more on every transaction" },
-      { title: "Exclusive Support & Tools", href: "/pro", description: "Priority support and premium features" },
-      { title: "Client Team Workspace", href: "/pro", description: "Organize projects with multiple freelancers" },
+      { title: "Post Your Gig", href: "/dashboard/freelancer", description: "Create a service listing to sell", authGated: true },
     ],
   },
 ];
@@ -159,7 +149,7 @@ export function MobileDrawer({
                       <Button
                         key={item.href + item.title}
                         component={Link as React.ElementType}
-                        href={item.href}
+                        href={item.authGated && !user ? "/auth/sign-in" : item.href}
                         onClick={onClose}
                         sx={{
                           width: "100%",

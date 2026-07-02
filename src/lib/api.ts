@@ -1036,7 +1036,7 @@ class ApiClient {
     return res.data;
   }
 
-  async submitMilestone(milestoneId: number, payload: { submission_note?: string; deliverables?: string[] } = {}): Promise<CustomOrder> {
+  async submitMilestone(milestoneId: number, payload: { submission_note?: string; deliverables?: { url: string; file_name: string; file_type?: string | null }[] } = {}): Promise<CustomOrder> {
     const res = await this.post(`/api/custom-order-milestones/${milestoneId}/submit`, payload);
     return res.data;
   }

@@ -17,6 +17,10 @@ export function useCustomOrder(id: number | string) {
     queryKey: qk.customOrders.detail(id),
     queryFn: () => api.getCustomOrder(id),
     enabled: id !== undefined && id !== null && id !== "",
+    // The milestone workspace is a two-party live surface — poll so the other
+    // side's funding/submission/approval appears without a manual refresh.
+    refetchInterval: 15000,
+    refetchOnWindowFocus: true,
   });
 }
 

@@ -15,8 +15,6 @@ import {
   IconButton,
   Collapse,
   Avatar,
-  TextField,
-  Modal,
   Divider,
   CircularProgress,
   Alert,
@@ -34,8 +32,6 @@ import {
   Refresh,
   ExpandMore,
   ExpandLess,
-  CalendarMonth,
-  Send,
   LocationOn,
   ShoppingBag,
   StarRounded,
@@ -44,6 +40,7 @@ import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse } from "@/types/service";
 import { useAuth } from "@/components/context/AuthContext";
 import RequestCustomOrderDialog from "@/components/customOrders/RequestCustomOrderDialog";
+import { usePurchaseGate } from "@/components/purchase/PurchaseGate";
 import { RequestQuoteOutlined } from "@mui/icons-material";
 
 interface ServiceDetailPageProps {
@@ -53,6 +50,7 @@ interface ServiceDetailPageProps {
 export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const router = useRouter();
   const { user: currentUser } = useAuth();
+  const { ensureCanPurchase, gateDialog } = usePurchaseGate();
 
   // API state
   const [service, setService] = useState<Service | null>(null);
@@ -64,12 +62,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const [selectedPackage, setSelectedPackage] = useState(0);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
-  const [showInstallmentModal, setShowInstallmentModal] = useState(false);
   const [showCustomOrderDialog, setShowCustomOrderDialog] = useState(false);
-  const [installmentTerms, setInstallmentTerms] = useState({
-    numberOfPayments: 3,
-    daysBetweenPayments: 14,
-  });
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
 
   // Fetch service data
@@ -98,24 +91,6 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
 
     fetchService();
   }, [serviceId]);
-
-  const handleSendProposal = () => {
-    if (!service || !pricingOptions[selectedPackage]) return;
-
-    const selectedPkg = pricingOptions[selectedPackage];
-    const priceRaw = Number(selectedPkg.price_raw);
-    const platformFee = priceRaw * 0.05;
-    const total = priceRaw + platformFee;
-    const installmentFee = total * 0.03;
-    const totalWithFee = total + installmentFee;
-    const perPayment = totalWithFee / installmentTerms.numberOfPayments;
-
-    alert(
-      `Installment proposal sent to ${freelancerName}!\n\nPackage: ${selectedPkg.title}\nTotal: $${totalWithFee.toFixed(2)}\nPayments: ${installmentTerms.numberOfPayments}\nEvery: ${installmentTerms.daysBetweenPayments} days\nPer Payment: $${perPayment.toFixed(2)}\n\nThe freelancer will review your proposal and can accept or counter with different terms.`,
-    );
-    setShowInstallmentModal(false);
-    setInstallmentTerms({ numberOfPayments: 3, daysBetweenPayments: 14 });
-  };
 
   const handleImageError = (imageKey: string) => {
     setImageError(prev => ({ ...prev, [imageKey]: true }));
@@ -286,13 +261,23 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
               {/* Title & Actions */}
               <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
                 <Box>
-                  {/* {service.category && (
-                    <Chip
-                      label={service.category.name}
-                      size='small'
-                      sx={{ mb: 1, bgcolor: "rgba(0, 113, 227, 0.1)", color: "#0071e3" }}
-                    />
-                  )} */}
+                  {service.category && (
+                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1, flexWrap: "wrap" }}>
+                      {service.category.parent && (
+                        <>
+                          <Typography component='span' sx={{ fontSize: 13, fontWeight: 500, color: "#0071e3" }}>
+                            {service.category.parent.category_name}
+                          </Typography>
+                          <Typography component='span' sx={{ fontSize: 13, color: "rgba(0,0,0,0.35)" }}>
+                            ›
+                          </Typography>
+                        </>
+                      )}
+                      <Typography component='span' sx={{ fontSize: 13, fontWeight: 500, color: "#0071e3" }}>
+                        {service.category.category_name}
+                      </Typography>
+                    </Box>
+                  )}
                   <Typography variant='h3' sx={{ fontSize: "32px", fontWeight: 600, mb: 1 }}>
                     {service.title}
                   </Typography>
@@ -630,9 +615,11 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                           <Button
                             fullWidth
                             variant='contained'
-                            onClick={() =>
-                              router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`)
-                            }
+                            onClick={() => {
+                              if (ensureCanPurchase()) {
+                                router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`);
+                              }
+                            }}
                             sx={{
                               height: 44,
                               bgcolor: "#0071e3",
@@ -648,43 +635,46 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                           </Button>
                         )}
                         {!isOwnService && service.custom_orders_enabled && (
-                          <Button
-                            fullWidth
-                            variant='contained'
-                            startIcon={<RequestQuoteOutlined />}
-                            onClick={() => setShowCustomOrderDialog(true)}
-                            sx={{
-                              height: 44,
-                              bgcolor: "black",
-                              color: "white",
-                              fontSize: "13px",
-                              fontWeight: 500,
-                              borderRadius: 28,
-                              textTransform: "none",
-                              boxShadow: "none",
-                              "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" },
-                            }}>
-                            Request a Custom Order
-                          </Button>
+                          service.my_active_custom_order ? (
+                            <Button
+                              fullWidth
+                              variant='outlined'
+                              startIcon={<RequestQuoteOutlined />}
+                              onClick={() => router.push(`/dashboard/custom-orders/${service.my_active_custom_order!.id}`)}
+                              sx={{
+                                height: 44,
+                                bgcolor: "rgba(0,0,0,0.04)",
+                                color: "black",
+                                borderColor: "rgba(0,0,0,0.15)",
+                                fontSize: "13px",
+                                fontWeight: 500,
+                                borderRadius: 28,
+                                textTransform: "none",
+                                "&:hover": { bgcolor: "rgba(0,0,0,0.07)", borderColor: "rgba(0,0,0,0.25)" },
+                              }}>
+                              View your custom order
+                            </Button>
+                          ) : (
+                            <Button
+                              fullWidth
+                              variant='contained'
+                              startIcon={<RequestQuoteOutlined />}
+                              onClick={() => setShowCustomOrderDialog(true)}
+                              sx={{
+                                height: 44,
+                                bgcolor: "black",
+                                color: "white",
+                                fontSize: "13px",
+                                fontWeight: 500,
+                                borderRadius: 28,
+                                textTransform: "none",
+                                boxShadow: "none",
+                                "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" },
+                              }}>
+                              Request a Custom Order
+                            </Button>
+                          )
                         )}
-                        <Button
-                          fullWidth
-                          variant='outlined'
-                          startIcon={<CalendarMonth />}
-                          onClick={() => setShowInstallmentModal(true)}
-                          sx={{
-                            height: 44,
-                            bgcolor: "#f3e5f5",
-                            color: "#7b1fa2",
-                            borderColor: "#ce93d8",
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            borderRadius: 28,
-                            textTransform: "none",
-                            "&:hover": { bgcolor: "#e1bee7", borderColor: "#ce93d8" },
-                          }}>
-                          Propose Installment Plan
-                        </Button>
                         <Button
                           fullWidth
                           variant='outlined'
@@ -771,189 +761,8 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
         instructions={service.custom_instructions ?? null}
       />
 
-      {/* Installment Proposal Modal */}
-      {selectedPricing && (
-        <Modal
-          open={showInstallmentModal}
-          onClose={() => {
-            setShowInstallmentModal(false);
-            setInstallmentTerms({ numberOfPayments: 3, daysBetweenPayments: 14 });
-          }}>
-          <Box
-            sx={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              width: "90%",
-              maxWidth: 560,
-              bgcolor: "white",
-              borderRadius: 4,
-              border: "1px solid rgba(0,0,0,0.08)",
-              boxShadow: 24,
-              p: 4,
-            }}>
-            <Typography variant='h5' sx={{ fontSize: "24px", fontWeight: 600, mb: 1 }}>
-              Propose Installment Plan
-            </Typography>
-            <Typography variant='body2' sx={{ fontSize: "13px", color: "rgba(0,0,0,0.6)", mb: 3 }}>
-              Set your preferred payment terms for the {selectedPricing.title} package. {freelancerName} will review and can
-              accept or counter-propose.
-            </Typography>
-
-            <Card sx={{ bgcolor: "#F5F5F7", p: 2, mb: 3 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant='caption' color='text.secondary'>
-                  Package
-                </Typography>
-                <Typography variant='body2' fontWeight={500}>
-                  {selectedPricing.title}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant='caption' color='text.secondary'>
-                  Base Price
-                </Typography>
-                <Typography variant='body2' fontWeight={500}>
-                  ${Number(selectedPricing.price_raw).toFixed(2)}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant='caption' color='text.secondary'>
-                  Platform Fee (5%)
-                </Typography>
-                <Typography variant='body2' fontWeight={500}>
-                  ${(Number(selectedPricing.price_raw) * 0.05).toFixed(2)}
-                </Typography>
-              </Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5 }}>
-                <Typography variant='caption' color='text.secondary'>
-                  Installment Fee (3%)
-                </Typography>
-                <Typography variant='body2' fontWeight={500}>
-                  ${(Number(selectedPricing.price_raw) * 1.05 * 0.03).toFixed(2)}
-                </Typography>
-              </Box>
-              <Divider sx={{ my: 1 }} />
-              <Box sx={{ display: "flex", justifyContent: "space-between" }}>
-                <Typography variant='body1' fontWeight={600}>
-                  Total Amount
-                </Typography>
-                <Typography variant='h6' sx={{ fontSize: "17px", fontWeight: 600, color: "#0071e3" }}>
-                  ${(Number(selectedPricing.price_raw) * 1.05 * 1.03).toFixed(2)}
-                </Typography>
-              </Box>
-            </Card>
-
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, mb: 3 }}>
-              <Box>
-                <Typography variant='body2' sx={{ fontSize: "13px", fontWeight: 500, mb: 1 }}>
-                  Number of Payments
-                </Typography>
-                <TextField
-                  fullWidth
-                  type='number'
-                  value={installmentTerms.numberOfPayments}
-                  onChange={e =>
-                    setInstallmentTerms({
-                      ...installmentTerms,
-                      numberOfPayments: Math.max(2, Math.min(12, parseInt(e.target.value) || 2)),
-                    })
-                  }
-                  inputProps={{ min: 2, max: 12 }}
-                  placeholder='2-12 payments'
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
-                />
-                <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: "block" }}>
-                  Min: 2, Max: 12 payments
-                </Typography>
-              </Box>
-
-              <Box>
-                <Typography variant='body2' sx={{ fontSize: "13px", fontWeight: 500, mb: 1 }}>
-                  Days Between Payments
-                </Typography>
-                <TextField
-                  fullWidth
-                  type='number'
-                  value={installmentTerms.daysBetweenPayments}
-                  onChange={e =>
-                    setInstallmentTerms({
-                      ...installmentTerms,
-                      daysBetweenPayments: Math.max(3, Math.min(90, parseInt(e.target.value) || 14)),
-                    })
-                  }
-                  inputProps={{ min: 3, max: 90 }}
-                  placeholder='3-90 days'
-                  sx={{ "& .MuiOutlinedInput-root": { borderRadius: 3 } }}
-                />
-                <Typography variant='caption' color='text.secondary' sx={{ mt: 0.5, display: "block" }}>
-                  Min: 3 days, Max: 90 days
-                </Typography>
-              </Box>
-            </Box>
-
-            <Card sx={{ bgcolor: "#f3e5f5", border: "1px solid #ce93d8", p: 2, mb: 3 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Box>
-                  <Typography variant='caption' sx={{ color: "#7b1fa2", fontWeight: 500, mb: 0.25, display: "block" }}>
-                    Payment Schedule
-                  </Typography>
-                  <Typography variant='body2' color='text.secondary' sx={{ fontSize: "13px" }}>
-                    {installmentTerms.numberOfPayments} payments • Every {installmentTerms.daysBetweenPayments} days
-                  </Typography>
-                </Box>
-                <Box sx={{ textAlign: "right" }}>
-                  <Typography variant='caption' color='text.secondary' sx={{ mb: 0.25, display: "block" }}>
-                    Per Payment
-                  </Typography>
-                  <Typography variant='h6' sx={{ fontSize: "20px", fontWeight: 600, color: "#7b1fa2" }}>
-                    ${((Number(selectedPricing.price_raw) * 1.05 * 1.03) / installmentTerms.numberOfPayments).toFixed(2)}
-                  </Typography>
-                </Box>
-              </Box>
-            </Card>
-
-            <Box sx={{ display: "flex", gap: 1.5 }}>
-              <Button
-                fullWidth
-                onClick={() => {
-                  setShowInstallmentModal(false);
-                  setInstallmentTerms({ numberOfPayments: 3, daysBetweenPayments: 14 });
-                }}
-                sx={{
-                  height: 44,
-                  bgcolor: "rgba(0,0,0,0.05)",
-                  color: "black",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  borderRadius: 28,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
-                }}>
-                Cancel
-              </Button>
-              <Button
-                fullWidth
-                variant='contained'
-                startIcon={<Send />}
-                onClick={handleSendProposal}
-                sx={{
-                  height: 44,
-                  bgcolor: "#7b1fa2",
-                  fontSize: "13px",
-                  fontWeight: 500,
-                  borderRadius: 28,
-                  textTransform: "none",
-                  boxShadow: 1,
-                  "&:hover": { bgcolor: "#6a1b9a" },
-                }}>
-                Send Proposal
-              </Button>
-            </Box>
-          </Box>
-        </Modal>
-      )}
+      {/* Purchase precondition gate (login / client role / KYC) */}
+      {gateDialog}
     </Box>
   );
 }

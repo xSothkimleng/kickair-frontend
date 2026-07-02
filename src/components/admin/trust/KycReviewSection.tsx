@@ -177,8 +177,8 @@ export default function KycReviewSection() {
       </Box>
 
       {/* Document review dialog */}
-      <Dialog open={!!previewKyc} onClose={() => setPreviewKyc(null)} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600 }}>
+      <Dialog open={!!previewKyc} onClose={() => setPreviewKyc(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 18 }}>
           Identity verification — {previewKyc?.user.name}
           {previewKyc?.document_type && (
             <Typography component="span" sx={{ ml: 1.5, fontSize: 13, color: tokens.text2 }}>{DOC_TYPE_LABEL[previewKyc.document_type] ?? previewKyc.document_type}</Typography>
@@ -205,27 +205,39 @@ export default function KycReviewSection() {
             <Typography sx={{ fontSize: 12.5, color: tokens.errorText, mt: 2 }}>Previous note: {previewKyc.admin_note}</Typography>
           )}
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setPreviewKyc(null)} sx={{ textTransform: "none", color: tokens.text2, borderRadius: "999px", mr: "auto" }}>Close</Button>
           {previewKyc?.status === "pending" && (
             <>
-              <Button color="error" onClick={() => { setRejectTarget(previewKyc); setPreviewKyc(null); setRejectNote(""); setRejectError(""); }} sx={{ textTransform: "none", fontWeight: 600 }}>Reject</Button>
-              <Button variant="contained" color="success" disableElevation onClick={() => { handleApprove(previewKyc!); setPreviewKyc(null); }} sx={{ textTransform: "none", fontWeight: 600 }}>Approve verification</Button>
+              <Button
+                onClick={() => { setRejectTarget(previewKyc); setPreviewKyc(null); setRejectNote(""); setRejectError(""); }}
+                sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.25, color: tokens.errorText, bgcolor: tokens.errorTint, "&:hover": { bgcolor: "rgba(220,38,38,0.16)" } }}>
+                Reject
+              </Button>
+              <Button
+                variant="contained"
+                disableElevation
+                disabled={actionLoading === previewKyc?.id}
+                onClick={async () => { const k = previewKyc!; await handleApprove(k); setPreviewKyc(null); }}
+                sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.5, bgcolor: tokens.success, "&:hover": { bgcolor: "#15803d" } }}>
+                {actionLoading === previewKyc?.id ? <CircularProgress size={18} color="inherit" /> : "Approve verification"}
+              </Button>
             </>
           )}
-          <Button onClick={() => setPreviewKyc(null)} sx={{ textTransform: "none", color: tokens.text2 }}>Close</Button>
         </DialogActions>
       </Dialog>
 
       {/* Reject dialog */}
-      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 600 }}>Reject verification — {rejectTarget?.user.name}</DialogTitle>
+      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontWeight: 600, fontSize: 18 }}>Reject verification — {rejectTarget?.user.name}</DialogTitle>
         <DialogContent>
           <Typography sx={{ fontSize: 13.5, color: tokens.text2, mb: 2 }}>Tell the user what to fix. They&rsquo;ll see this message and can resubmit.</Typography>
           <TextArea label="Rejection reason" minRows={3} value={rejectNote} onChange={v => { setRejectNote(v); setRejectError(""); }} error={rejectError || undefined} placeholder="e.g. Document is blurry or expired." />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setRejectTarget(null)} sx={{ textTransform: "none", color: tokens.text2 }}>Cancel</Button>
-          <Button variant="contained" color="error" disableElevation disabled={actionLoading === rejectTarget?.id} onClick={handleRejectConfirm} sx={{ textTransform: "none", fontWeight: 600 }}>
+        <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
+          <Button onClick={() => setRejectTarget(null)} sx={{ textTransform: "none", color: tokens.text2, borderRadius: "999px", mr: "auto" }}>Cancel</Button>
+          <Button variant="contained" disableElevation disabled={actionLoading === rejectTarget?.id} onClick={handleRejectConfirm}
+            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.5, bgcolor: tokens.error, "&:hover": { bgcolor: "#b91c1c" } }}>
             {actionLoading === rejectTarget?.id ? <CircularProgress size={18} color="inherit" /> : "Reject verification"}
           </Button>
         </DialogActions>

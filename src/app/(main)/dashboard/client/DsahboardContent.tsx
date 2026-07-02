@@ -15,6 +15,9 @@ import {
 } from "@mui/icons-material";
 import { useClientDashboard } from "@/hooks/useClientDashboard";
 import { DashboardNotification, DashboardConversation } from "@/types/dashboard";
+import { Notification } from "@/types/notification";
+import { getNotificationRoute } from "@/components/notifications/shared";
+import { api } from "@/lib/api";
 import type { Tab } from "./page";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -85,6 +88,12 @@ interface Props {
 export default function DashboardContent({ onTabChange }: Props) {
   const router = useRouter();
   const { data, loading, error } = useClientDashboard();
+
+  const openNotification = (n: DashboardNotification) => {
+    if (n.readAt === null) api.markNotificationRead(n.id).catch(() => {});
+    const route = getNotificationRoute({ ...n, role: "client" } as unknown as Notification);
+    if (route) router.push(route);
+  };
 
   if (loading) {
     return (
@@ -681,7 +690,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                     )}
                   </Stack>
                   <Button
-                    onClick={() => {}}
+                    onClick={() => router.push("/notifications")}
                     sx={{
                       fontSize: 11,
                       color: "#0071e3",
@@ -704,12 +713,18 @@ export default function DashboardContent({ onTabChange }: Props) {
                       <Paper
                         elevation={0}
                         key={notification.id}
+                        role="button"
+                        tabIndex={0}
+                        onClick={() => openNotification(notification)}
                         sx={{
                           p: 1.5,
                           borderRadius: 2,
+                          cursor: "pointer",
+                          transition: "background 0.15s",
                           bgcolor: notification.readAt === null ? "rgba(234, 88, 12, 0.05)" : "rgba(0,0,0,0.02)",
                           border: "1px solid",
                           borderColor: notification.readAt === null ? "rgba(234, 88, 12, 0.2)" : "transparent",
+                          "&:hover": { bgcolor: "rgba(0,0,0,0.05)" },
                         }}>
                         <Stack direction='row' spacing={1}>
                           <Box
@@ -741,7 +756,7 @@ export default function DashboardContent({ onTabChange }: Props) {
 
                 <Button
                   fullWidth
-                  onClick={() => {}}
+                  onClick={() => router.push("/notifications")}
                   sx={{
                     mt: 1.5,
                     fontSize: 11,

@@ -81,11 +81,17 @@ export const TYPE_META: Record<NotificationType, TypeMeta> = {
   custom_order_offered: { Icon: HandshakeOutlined, tone: "pending", cta: "Review offer" },
   custom_order_accepted: { Icon: HandshakeOutlined, tone: "success", cta: "Open workspace" },
   custom_order_declined: { Icon: CancelOutlined, tone: "error", cta: "View request" },
+  custom_order_withdrawn: { Icon: CancelOutlined, tone: "neutral", cta: "View request" },
   custom_order_ended: { Icon: FlagOutlined, tone: "neutral", cta: "View order" },
   milestone_funded: { Icon: LockOutlined, tone: "pending", cta: "Open workspace" },
   milestone_submitted: { Icon: LocalShippingOutlined, tone: "blue", cta: "Review milestone" },
   milestone_payment_released: { Icon: PaidOutlined, tone: "success", cta: "Open workspace" },
   milestone_revision_requested: { Icon: ReplayOutlined, tone: "pending", cta: "Open workspace" },
+  // Identity verification & payouts
+  kyc_approved: { Icon: HowToRegOutlined, tone: "success", cta: "View" },
+  kyc_rejected: { Icon: HowToRegOutlined, tone: "error", cta: "Resubmit" },
+  withdrawal_approved: { Icon: PaidOutlined, tone: "success", cta: "View finance" },
+  withdrawal_rejected: { Icon: PaidOutlined, tone: "error", cta: "View finance" },
 };
 
 export function typeMeta(type: NotificationType): TypeMeta {
@@ -117,6 +123,7 @@ export function getNotificationRoute(n: Notification): string | null {
   // Custom orders & milestones
   const customOrderId = data?.custom_order_id;
   if (type === "custom_order_requested") return `/dashboard/freelancer?tab=custom-requests`;
+  if (type === "custom_order_withdrawn") return `/dashboard/freelancer?tab=custom-requests`;
   if (type === "custom_order_declined") return `/dashboard/client?tab=custom-orders`;
   if (customOrderId && (
     type === "custom_order_offered" || type === "custom_order_accepted" || type === "custom_order_ended" ||
@@ -125,6 +132,9 @@ export function getNotificationRoute(n: Notification): string | null {
   )) {
     return `/dashboard/custom-orders/${customOrderId}`;
   }
+  // Identity verification & payouts
+  if (type === "kyc_approved" || type === "kyc_rejected") return `/dashboard/kyc`;
+  if (type === "withdrawal_approved" || type === "withdrawal_rejected") return `/dashboard/freelancer?tab=finance`;
   return null;
 }
 

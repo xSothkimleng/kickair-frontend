@@ -26,11 +26,16 @@ export type NotificationType =
   | "custom_order_offered"
   | "custom_order_accepted"
   | "custom_order_declined"
+  | "custom_order_withdrawn"
   | "custom_order_ended"
   | "milestone_funded"
   | "milestone_submitted"
   | "milestone_payment_released"
-  | "milestone_revision_requested";
+  | "milestone_revision_requested"
+  | "kyc_approved"
+  | "kyc_rejected"
+  | "withdrawal_approved"
+  | "withdrawal_rejected";
 
 export interface Notification {
   id: string;

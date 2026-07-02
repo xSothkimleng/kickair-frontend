@@ -5,10 +5,8 @@ import LanguageIcon from "@mui/icons-material/Language";
 import BookOpenIcon from "@mui/icons-material/MenuBook";
 import BoltIcon from "@mui/icons-material/Bolt";
 import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
 import SearchIcon from "@mui/icons-material/Search";
 import PeopleIcon from "@mui/icons-material/People";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import ShieldIcon from "@mui/icons-material/Shield";
 import MenuIcon from "@mui/icons-material/Menu";
 import { Settings as SettingsIcon, HelpOutline, Logout, Work as BriefcaseIcon } from "@mui/icons-material";
@@ -56,13 +54,17 @@ export default function MainNavbar() {
   const isFreelancer = user?.is_freelancer ?? false;
   const isClient = user?.is_client ?? false;
 
-  const currentMode: UserMode = pathname?.includes("/dashboard/client")
-    ? "client"
-    : pathname?.includes("/dashboard/freelancer")
-      ? "freelancer"
-      : isFreelancer
+  // Job posts (proposal review) and standalone order detail live outside the
+  // /dashboard/client path but are client-owned surfaces — treat them as client
+  // mode so viewing them doesn't flip a dual-role user into freelancer mode.
+  const currentMode: UserMode =
+    pathname?.includes("/dashboard/client") || pathname?.includes("/dashboard/jobs") || pathname?.includes("/dashboard/orders")
+      ? "client"
+      : pathname?.includes("/dashboard/freelancer")
         ? "freelancer"
-        : "client";
+        : isFreelancer
+          ? "freelancer"
+          : "client";
 
   // Single derived value — avoids duplicating the URL construction in JSX
   const profileImageSrc = user?.avatar_url ?? undefined;
@@ -120,6 +122,12 @@ export default function MainNavbar() {
   const navigateTo = (href: string) => {
     setActiveDropdown(null);
     router.push(href);
+  };
+
+  // Posting a service lives in the freelancer space; send guests to sign in first.
+  const goToCreateService = () => {
+    setActiveDropdown(null);
+    router.push(user ? "/dashboard/freelancer" : "/auth/sign-in");
   };
 
   const handleDropdownToggle = (dropdown: DropdownType) => {
@@ -298,8 +306,7 @@ export default function MainNavbar() {
                         icon={<BoltIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
                         title='Post Your Service'
                         description='Create your service listing with three-tier pricing'
-                        href='/dashboard/freelancer'
-                        onClick={() => setActiveDropdown(null)}
+                        onClick={goToCreateService}
                       />
                       <DropdownItem
                         icon={<BusinessCenterIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
@@ -373,16 +380,8 @@ export default function MainNavbar() {
                       <DropdownItem
                         icon={<BusinessCenterIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
                         title='Post Your Gig'
-                        description='Part-time & full-time roles'
-                        href='/post-gig'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                      <DropdownItem
-                        icon={<EmojiEventsIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
-                        title='Boost Gig with Ads'
-                        description='Promote with premium placement'
-                        href='/pro'
-                        onClick={() => setActiveDropdown(null)}
+                        description='Create a service listing to sell'
+                        onClick={goToCreateService}
                       />
                     </Box>
                   </Box>
@@ -390,71 +389,6 @@ export default function MainNavbar() {
               )}
             </Box>
 
-            {/* KickAir Pro ▾ */}
-            <Box sx={{ position: "relative" }}>
-              <Button
-                endIcon={
-                  <KeyboardArrowDownIcon
-                    sx={{
-                      fontSize: 16,
-                      transition: "transform 0.2s",
-                      transform: activeDropdown === "pro" ? "rotate(180deg)" : "none",
-                    }}
-                  />
-                }
-                onMouseEnter={() => setActiveDropdown("pro")}
-                aria-haspopup='true'
-                aria-expanded={activeDropdown === "pro"}
-                sx={navBtnSx}>
-                KickAir Pro
-              </Button>
-
-              {activeDropdown === "pro" && (
-                <Box onMouseLeave={() => setActiveDropdown(null)} sx={{ ...dropdownPanelSx, right: 0 }}>
-                  <Box sx={{ p: 3 }}>
-                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
-                      Upgrade for visibility, lower fees, and premium tools
-                    </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-                      <DropdownItem
-                        icon={<EmojiEventsIcon sx={{ fontSize: 24, color: "black" }} />}
-                        title='Better Visibility with Ads'
-                        description='Priority placement and highlighted listings'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-
-                      <DropdownItem
-                        icon={<TrendingUpIcon sx={{ fontSize: 24, color: "rgba(0,0,0,0.6)" }} />}
-                        title='Lower Transaction Fees'
-                        description='Save more on every transaction'
-                        extra={
-                          <Box sx={{ display: "flex", gap: 2, fontSize: 11 }}>
-                            <Box sx={{ color: "rgba(0,0,0,0.4)" }}>Standard: 10%</Box>
-                            <Box sx={{ fontWeight: 600, color: "black" }}>Pro: 5%</Box>
-                          </Box>
-                        }
-                        onClick={() => setActiveDropdown(null)}
-                      />
-
-                      <DropdownItem
-                        icon={<ShieldIcon sx={{ fontSize: 24, color: "rgba(0,0,0,0.6)" }} />}
-                        title='Exclusive Support & Tools'
-                        description='Priority support and premium features'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-
-                      <DropdownItem
-                        icon={<PeopleIcon sx={{ fontSize: 24, color: "rgba(0,0,0,0.6)" }} />}
-                        title='Client Team Workspace'
-                        description='Organize projects with multiple freelancers'
-                        href='/pro'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                    </Box>
-                  </Box>
-                </Box>
-              )}
-            </Box>
           </Box>
 
           {/* ── Right Side: Language + Auth ──────────────────────────────────────── */}

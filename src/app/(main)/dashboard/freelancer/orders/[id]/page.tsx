@@ -237,7 +237,7 @@ function DialogDropzone({ onFiles, files, onRemove, uploading }: { onFiles: (fl:
   const ref = useRef<HTMLInputElement>(null);
   return (
     <Box sx={{ mt: 1.5 }}>
-      <input ref={ref} type="file" accept="image/jpeg,image/png,image/gif,image/webp,.pdf" multiple hidden onChange={(e) => e.target.files && onFiles(e.target.files)} />
+      <input ref={ref} type="file" accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" multiple hidden onChange={(e) => e.target.files && onFiles(e.target.files)} />
       <Box onClick={() => ref.current?.click()} sx={{ border: "1.5px dashed #CBD5E1", borderRadius: "8px", p: 2.25, textAlign: "center", cursor: "pointer", "&:hover": { borderColor: "#94A3B8" } }}>
         <AttachFileIcon sx={{ fontSize: 20, color: "#94A3B8", display: "block", mx: "auto", mb: 0.5 }} />
         <Typography sx={{ fontSize: 12, color: "#64748B", fontWeight: 500 }}>

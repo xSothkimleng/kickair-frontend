@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   Box,
@@ -26,10 +26,13 @@ import {
   Close,
   ShieldOutlined,
   FlagOutlined,
+  ChevronLeft,
+  AttachFile,
+  InsertDriveFileOutlined,
 } from "@mui/icons-material";
 import { tokens } from "@/theme";
 import { api } from "@/lib/api";
-import { CustomOrder, CustomOrderMilestone } from "@/types/customOrder";
+import { CustomOrder, CustomOrderMilestone, MilestoneDeliverable } from "@/types/customOrder";
 import { Money, coCard, coLabel, MsChip, MS_STATUS, AttachChip, initials, EscrowSummary } from "./kit";
 import { useCoInvalidate } from "./hooks";
 import FundMilestoneDialog from "./FundMilestoneDialog";
@@ -66,6 +69,14 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
     finally { setBusy(false); }
   };
 
+  // Open the order's conversation in the messages inbox (deep-linked by id). The
+  // order-detail page has no chat and 404s for custom orders, so route here instead.
+  const openChat = () => {
+    const base = isClient ? "/dashboard/client/messages" : "/dashboard/freelancer/messages";
+    const convId = order.order?.conversation_id;
+    router.push(convId ? `${base}?id=${convId}` : base);
+  };
+
   // ── turn hint ──
   const turn = (() => {
     if (complete) return { who: "done" as const, text: "Project complete — all milestones released." };
@@ -90,6 +101,14 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
       <Container disableGutters sx={{ maxWidth: "980px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 4.5 } }}>
+        {/* back to dashboard */}
+        <Button
+          onClick={() => router.push(isClient ? "/dashboard/client?tab=custom-orders" : "/dashboard/freelancer?tab=custom-requests")}
+          startIcon={<ChevronLeft sx={{ fontSize: 16 }} />}
+          sx={{ mb: 2, textTransform: "none", fontSize: 13, fontWeight: 500, color: tokens.text2, p: 0, minWidth: 0, "&:hover": { color: tokens.text, bgcolor: "transparent" } }}>
+          {isClient ? "Back to custom orders" : "Back to requests"}
+        </Button>
+
         {/* header */}
         <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
           <Box>
@@ -99,10 +118,10 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
           </Box>
           <Box sx={{ display: "flex", gap: 1.25, alignItems: "flex-start" }}>
             {order.order && (
-              <Button onClick={() => router.push(isClient ? `/dashboard/orders/${order.order!.id}` : `/dashboard/freelancer/orders/${order.order!.id}`)}
+              <Button onClick={openChat}
                 startIcon={<ChatBubbleOutline sx={{ fontSize: 16 }} />}
                 sx={{ textTransform: "none", fontWeight: 600, fontSize: 13.5, borderRadius: "999px", color: tokens.text, bgcolor: "rgba(0,0,0,0.05)", px: 1.75, "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
-                Order chat
+                Message {(isClient ? order.freelancer.name : order.client.name)?.split(" ")[0] ?? "chat"}
               </Button>
             )}
             {order.order?.status === "active" && (
@@ -168,7 +187,7 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
                   onSubmit={() => setSubmitTarget(m)}
                   onApprove={() => run(() => api.approveMilestone(m.id))}
                   onRevision={() => setRevisionTarget(m)}
-                  onChat={() => order.order && router.push(isClient ? `/dashboard/orders/${order.order.id}` : `/dashboard/freelancer/orders/${order.order.id}`)}
+                  onChat={openChat}
                 />
               </Box>
             );
@@ -187,13 +206,18 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
         />
       )}
 
-      {/* submit dialog */}
-      <NoteDialog
-        open={!!submitTarget} title="Submit milestone" annotation="Deliver this phase"
-        label="Note to client · optional" placeholder="Summarise what you delivered…"
-        cta="Submit for review" busy={busy} required={false}
+      {/* submit dialog (note + deliverable files) */}
+      <SubmitMilestoneDialog
+        open={!!submitTarget} busy={busy}
         onClose={() => setSubmitTarget(null)}
-        onConfirm={async (note) => { if (!submitTarget) return; const ok = await run(() => api.submitMilestone(submitTarget.id, note ? { submission_note: note } : {})); if (ok) setSubmitTarget(null); }}
+        onConfirm={async (note, deliverables) => {
+          if (!submitTarget) return;
+          const ok = await run(() => api.submitMilestone(submitTarget.id, {
+            submission_note: note || undefined,
+            deliverables: deliverables.length ? deliverables : undefined,
+          }));
+          if (ok) setSubmitTarget(null);
+        }}
       />
 
       {/* revision dialog */}
@@ -262,9 +286,19 @@ function MilestoneCard({
         </Box>
       </Box>
 
-      {m.status === "submitted" && m.deliverables.length > 0 && (
+      {(m.status === "submitted" || done) && m.submission_note && (
+        <Box sx={{ mt: 1.5, p: 1.25, bgcolor: tokens.surface2, border: `1px solid ${tokens.border}`, borderRadius: "8px" }}>
+          <Typography sx={{ fontSize: 11, fontWeight: 600, color: tokens.text3, mb: 0.25 }}>Freelancer&apos;s note</Typography>
+          <Typography sx={{ fontSize: 13, color: tokens.text2, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{m.submission_note}</Typography>
+        </Box>
+      )}
+      {(m.status === "submitted" || done) && m.deliverables.length > 0 && (
         <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
-          {m.deliverables.map((d) => <AttachChip key={d} name={d} icon={<Check sx={{ fontSize: 12, color: tokens.success }} />} />)}
+          {m.deliverables.map((d, i) => (
+            <Box key={i} component="a" href={d.url} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: "none" }}>
+              <AttachChip name={d.file_name} icon={<Check sx={{ fontSize: 12, color: tokens.success }} />} />
+            </Box>
+          ))}
         </Box>
       )}
       {m.status === "in_progress" && m.revision_note && (
@@ -339,6 +373,80 @@ function NoteDialog({ open, title, annotation, label, placeholder, cta, busy, re
         <Button onClick={() => onConfirm(note.trim())} disabled={busy || (required && !note.trim())}
           sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", px: 2.5, height: 42, "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }}>
           {busy ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : cta}
+        </Button>
+      </Box>
+    </Dialog>
+  );
+}
+
+/* ── submit milestone (note + deliverable files) ── */
+function SubmitMilestoneDialog({ open, busy, onClose, onConfirm }: {
+  open: boolean; busy: boolean; onClose: () => void; onConfirm: (note: string, deliverables: MilestoneDeliverable[]) => void;
+}) {
+  const [note, setNote] = useState("");
+  const [files, setFiles] = useState<MilestoneDeliverable[]>([]);
+  const [uploading, setUploading] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const close = () => {
+    if (busy || uploading) return;
+    setNote(""); setFiles([]); setToken(null);
+    onClose();
+  };
+
+  const upload = async (list: FileList) => {
+    setUploading(true);
+    try {
+      let t = token;
+      if (!t) { t = await api.getUploadToken(); setToken(t); }
+      for (const file of Array.from(list)) {
+        if (files.length >= 10) break;
+        const res = await api.uploadFormData("/api/temporary-uploads", file, { upload_token: t });
+        setFiles((prev) => [...prev, { url: res.data.file_url, file_name: res.data.file_name, file_type: res.data.file_type }]);
+      }
+    } catch { /* upload failure leaves the list unchanged */ }
+    finally { setUploading(false); }
+  };
+
+  return (
+    <Dialog open={open} onClose={close} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "16px", border: `1px solid ${tokens.border}` } }}>
+      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" }}>
+        <Box>
+          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>Deliver this phase</Typography>
+          <Typography sx={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>Submit milestone</Typography>
+        </Box>
+        <IconButton onClick={close} size="small" disabled={busy || uploading}><Close sx={{ fontSize: 20 }} /></IconButton>
+      </Box>
+      <DialogContent sx={{ p: "16px 24px 8px" }}>
+        <Typography sx={{ fontSize: 12, fontWeight: 600, mb: 0.75 }}>Note to client · optional</Typography>
+        <TextField fullWidth multiline minRows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Summarise what you delivered…"
+          sx={{ "& .MuiOutlinedInput-root": { fontSize: 13.5, borderRadius: "10px", "& fieldset": { borderColor: tokens.borderStrong }, "&.Mui-focused fieldset": { borderColor: tokens.accent } } }} />
+
+        <Typography sx={{ fontSize: 12, fontWeight: 600, mt: 2, mb: 0.75 }}>Deliverable files · optional</Typography>
+        <input ref={inputRef} type="file" multiple hidden onChange={(e) => e.target.files && upload(e.target.files)} />
+        <Box onClick={() => !uploading && inputRef.current?.click()}
+          sx={{ border: `1.5px dashed ${tokens.borderStrong}`, borderRadius: "10px", p: 2, textAlign: "center", cursor: "pointer", "&:hover": { borderColor: tokens.text3 } }}>
+          <AttachFile sx={{ fontSize: 20, color: tokens.text3, display: "block", mx: "auto", mb: 0.5 }} />
+          <Typography sx={{ fontSize: 12.5, color: tokens.text2 }}>{uploading ? "Uploading…" : "Click to upload files"}</Typography>
+        </Box>
+        {files.length > 0 && (
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, mt: 1.25 }}>
+            {files.map((f, i) => (
+              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.25, py: 0.75, bgcolor: tokens.surface2, borderRadius: "8px" }}>
+                <InsertDriveFileOutlined sx={{ fontSize: 15, color: tokens.text3 }} />
+                <Typography sx={{ flex: 1, fontSize: 12.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.file_name}</Typography>
+                <IconButton size="small" onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))} sx={{ p: 0.25 }}><Close sx={{ fontSize: 14, color: tokens.text3 }} /></IconButton>
+              </Box>
+            ))}
+          </Box>
+        )}
+      </DialogContent>
+      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25, p: "8px 24px 22px" }}>
+        <Button onClick={close} disabled={busy || uploading} sx={{ textTransform: "none", fontWeight: 600, color: tokens.text2, borderRadius: "999px" }}>Cancel</Button>
+        <Button onClick={() => onConfirm(note.trim(), files)} disabled={busy || uploading}
+          sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", px: 2.5, height: 42, "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }}>
+          {busy ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Submit for review"}
         </Button>
       </Box>
     </Dialog>

@@ -94,7 +94,11 @@ export default function CustomRequestsInbox() {
                   <Box component="span" sx={{ fontFamily: tokens.mono, fontSize: 13, fontWeight: 600 }}>${r.budget.toLocaleString()}</Box>
                   {r.desired_timeline_days && <Typography sx={{ fontSize: 11.5, color: tokens.text3 }}>· {r.desired_timeline_days} days</Typography>}
                   {r.status === "offered" && <Chip tone="pending">Offered</Chip>}
-                  {r.status === "accepted" && <Chip tone="success">Active</Chip>}
+                  {r.status === "accepted" && (
+                    r.order?.status === "completed" ? <Chip tone="success">Completed</Chip>
+                      : r.order?.status === "cancelled" ? <Chip tone="neutral">Ended</Chip>
+                        : <Chip tone="success">Active</Chip>
+                  )}
                   {r.status === "declined" && <Chip tone="neutral">Declined</Chip>}
                 </Box>
               </Box>

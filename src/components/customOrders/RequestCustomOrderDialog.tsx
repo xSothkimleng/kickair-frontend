@@ -23,6 +23,7 @@ import {
 } from "@mui/icons-material";
 import { tokens } from "@/theme";
 import { api } from "@/lib/api";
+import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import { Money, coLabel, initials } from "./kit";
 import { useCoInvalidate } from "./hooks";
 
@@ -164,8 +165,10 @@ export default function RequestCustomOrderDialog({ open, onClose, serviceId, fre
               </Box>
               {instructions && (
                 <Box sx={{ display: "flex", gap: 1, mt: 1.5, p: 1.25, bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: "9px" }}>
-                  <InfoOutlined sx={{ fontSize: 15, color: tokens.text3, flex: "none" }} />
-                  <Typography sx={{ fontSize: 12.5, color: tokens.text2, lineHeight: 1.45 }}>{instructions}</Typography>
+                  <InfoOutlined sx={{ fontSize: 15, color: tokens.text3, flex: "none", mt: 0.25 }} />
+                  <Box sx={{ fontSize: 12.5, color: tokens.text2, lineHeight: 1.45, "& p": { m: 0 }, "& ul, & ol": { m: 0, pl: 2.5 } }}>
+                    <RichTextDisplay value={instructions} />
+                  </Box>
                 </Box>
               )}
             </Box>

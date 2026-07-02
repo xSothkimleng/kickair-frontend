@@ -17,6 +17,17 @@ const STATUS_CHIP: Record<string, { label: string; tone: "neutral" | "pending" |
   expired: { label: "Expired", tone: "neutral" },
 };
 
+// Once accepted, the real state lives on the linked order — a completed/cancelled
+// order must not keep showing as "Active".
+function chipFor(o: CustomOrder): { label: string; tone: "neutral" | "pending" | "success" } {
+  if (o.status === "accepted") {
+    if (o.order?.status === "completed") return { label: "Completed", tone: "success" };
+    if (o.order?.status === "cancelled") return { label: "Ended", tone: "neutral" };
+    return { label: "Active", tone: "success" };
+  }
+  return STATUS_CHIP[o.status] ?? STATUS_CHIP.pending;
+}
+
 export default function CustomOrdersContent() {
   const router = useRouter();
   const { data: orders = [], isLoading } = useMyCustomOrders();
@@ -50,7 +61,7 @@ export default function CustomOrdersContent() {
       ) : (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           {orders.map((o: CustomOrder) => {
-            const chip = STATUS_CHIP[o.status] ?? STATUS_CHIP.pending;
+            const chip = chipFor(o);
             return (
               <Box key={o.id} onClick={() => router.push(`/dashboard/custom-orders/${o.id}`)}
                 sx={{ ...coCard, p: 2.5, display: "flex", alignItems: "center", gap: 2, cursor: "pointer", transition: "border-color .12s, box-shadow .12s", "&:hover": { borderColor: tokens.borderStrong, boxShadow: "0 6px 22px rgba(0,0,0,0.06)" } }}>

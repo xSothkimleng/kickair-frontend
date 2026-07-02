@@ -20,6 +20,7 @@ export interface ServiceCategory {
   slug?: string | null;
   sort_order?: number;
   is_active: boolean;
+  parent?: ServiceCategory | null;
   children?: ServiceCategory[];
   created_at?: string;
   updated_at?: string;
@@ -113,6 +114,8 @@ export interface Service {
   custom_min_budget?: number | null;
   custom_hourly_rate?: number | null;
   custom_instructions?: string | null;
+  // The viewing client's own open custom order for this service, if any (else null).
+  my_active_custom_order?: { id: number; status: string } | null;
   created_at: string;
   updated_at: string;
   feature_image_id: number | null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useRef, useState } from "react";
+import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Box, Button, CircularProgress, Container, Typography, Alert } from "@mui/material";
@@ -20,6 +20,7 @@ import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { tokens } from "@/theme";
 import { useAuth } from "@/components/context/AuthContext";
+import { usePurchaseGate } from "@/components/purchase/PurchaseGate";
 import type { Service, ServiceDetailResponse } from "@/types/service";
 import type { CreateOrderResponse } from "@/types/order";
 import type { Wallet } from "@/types/wallet";
@@ -55,7 +56,8 @@ function CheckoutContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const { ensureCanPurchase, gateDialog } = usePurchaseGate();
   const qc = useQueryClient();
 
   const serviceId = params.id as string;
@@ -104,8 +106,15 @@ function CheckoutContent() {
 
   const canPay = paySource === "wallet" ? !insufficient : paySource === "aba" && !!abaMethod;
 
+  // Surface the login / client-role / KYC gate as soon as auth is resolved so an
+  // unauthenticated (or ineligible) visitor never sees the payment wall unguarded.
+  useEffect(() => {
+    if (!authLoading) ensureCanPurchase();
+  }, [authLoading, ensureCanPurchase]);
+
   const handleConfirm = () => {
     if (!selectedPricing) return;
+    if (!ensureCanPurchase()) return;
     if (paySource === "wallet" && !insufficient) flow.startWallet(total);
     else if (paySource === "aba" && abaMethod) flow.startAba(abaMethod, total);
   };
@@ -148,7 +157,7 @@ function CheckoutContent() {
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas, pb: 2 }}>
-      <HeaderBar onBack={() => router.push(`/explore-services/${serviceId}`)} label='Back to Service' />
+      <HeaderBar onBack={() => router.back()} label='Back to Service' />
 
       <Container maxWidth='lg' sx={{ px: { xs: 2, md: 4 }, py: { xs: 3, md: 5 } }}>
         {/* Title */}
@@ -327,6 +336,7 @@ function CheckoutContent() {
         onSuccess={() => qc.invalidateQueries({ queryKey: qk.wallet() })}
       />
       {flow.overlay}
+      {gateDialog}
     </Box>
   );
 }

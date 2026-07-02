@@ -5,6 +5,9 @@ import { Box, Typography, Paper, Grid, Avatar, Button, Chip, CircularProgress, S
 import { AttachMoney, ChatBubbleOutline, Star, VisibilityOutlined, ArrowRight, Shield } from "@mui/icons-material";
 import { useFreelancerDashboard } from "@/hooks/useFreelancerDashboard";
 import { DashboardNotification, DashboardConversation } from "@/types/dashboard";
+import { Notification } from "@/types/notification";
+import { getNotificationRoute } from "@/components/notifications/shared";
+import { api } from "@/lib/api";
 import type { Tab } from "./page";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
@@ -94,6 +97,12 @@ export default function DashboardContent({ onTabChange }: Props) {
   }
 
   const { profile, stats, recentOrders, activeServices, recentConversations, recentNotifications } = data;
+
+  const openNotification = (n: DashboardNotification) => {
+    if (n.readAt === null) api.markNotificationRead(n.id).catch(() => {});
+    const route = getNotificationRoute({ ...n, role: "freelancer" } as unknown as Notification);
+    if (route) router.push(route);
+  };
 
   return (
     <Box>
@@ -565,7 +574,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                   )}
                 </Box>
                 <Button
-                  onClick={() => {}}
+                  onClick={() => router.push("/notifications")}
                   sx={{
                     fontSize: 11,
                     color: "#2563eb",
@@ -587,11 +596,17 @@ export default function DashboardContent({ onTabChange }: Props) {
                   recentNotifications.map((notification: DashboardNotification) => (
                     <Box
                       key={notification.id}
+                      role="button"
+                      tabIndex={0}
+                      onClick={() => openNotification(notification)}
                       sx={{
                         p: 1.5,
                         borderRadius: 3,
+                        cursor: "pointer",
+                        transition: "background 0.15s",
                         bgcolor: notification.readAt === null ? "rgba(37, 99, 235, 0.05)" : "rgba(0, 0, 0, 0.02)",
                         border: notification.readAt === null ? "1px solid rgba(37, 99, 235, 0.2)" : "none",
+                        "&:hover": { bgcolor: "rgba(0,0,0,0.05)" },
                       }}>
                       <Box sx={{ display: "flex", alignItems: "start", gap: 1 }}>
                         <Box
@@ -622,7 +637,7 @@ export default function DashboardContent({ onTabChange }: Props) {
               </Box>
 
               <Button
-                onClick={() => {}}
+                onClick={() => router.push("/notifications")}
                 sx={{
                   width: "100%",
                   mt: 1.5,
