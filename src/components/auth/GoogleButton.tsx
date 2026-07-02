@@ -8,26 +8,42 @@ import { User } from "@/types/user";
 
 const GOOGLE_CONFIGURED = !!process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID;
 
-/**
- * "Continue with Google" button. Opens the Google account picker, exchanges the
- * resulting access token with our API, and hands the signed-in user back to the page.
- *
- * `roles` carries the role pre-selected on the sign-up page; it's ignored when the
- * Google account already exists.
- */
-export default function GoogleButton({
-  label,
-  roles,
-  onAuthenticated,
-  onError,
-  disabled,
-}: {
+type GoogleButtonProps = {
   label: string;
   roles?: { is_client?: boolean; is_freelancer?: boolean };
   onAuthenticated: (user: User) => void;
   onError?: (message: string) => void;
   disabled?: boolean;
-}) {
+};
+
+/**
+ * "Continue with Google" button. When Google isn't configured for this deployment
+ * (no NEXT_PUBLIC_GOOGLE_CLIENT_ID), we render a static fallback instead of mounting
+ * the OAuth hook — useGoogleLogin initializes a Google token client with the client id,
+ * and an empty id crashes the whole page via React's error boundary.
+ */
+export default function GoogleButton(props: GoogleButtonProps) {
+  if (!GOOGLE_CONFIGURED) {
+    return (
+      <GoogleButtonView
+        label={props.label}
+        loading={false}
+        disabled={props.disabled}
+        onClick={() => props.onError?.("Google sign-in isn't configured on this site yet.")}
+      />
+    );
+  }
+
+  return <ConfiguredGoogleButton {...props} />;
+}
+
+/**
+ * The real button, only mounted when Google is configured.
+ *
+ * `roles` carries the role pre-selected on the sign-up page; it's ignored when the
+ * Google account already exists.
+ */
+function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabled }: GoogleButtonProps) {
   const { googleAuth } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -51,21 +67,36 @@ export default function GoogleButton({
     onNonOAuthError: () => setLoading(false),
   });
 
-  const handleClick = () => {
-    if (!GOOGLE_CONFIGURED) {
-      onError?.("Google sign-in isn't configured on this site yet.");
-      return;
-    }
-    setLoading(true);
-    login();
-  };
+  return (
+    <GoogleButtonView
+      label={label}
+      loading={loading}
+      disabled={disabled}
+      onClick={() => {
+        setLoading(true);
+        login();
+      }}
+    />
+  );
+}
 
+function GoogleButtonView({
+  label,
+  loading,
+  disabled,
+  onClick,
+}: {
+  label: string;
+  loading: boolean;
+  disabled?: boolean;
+  onClick: () => void;
+}) {
   return (
     <Button
       type="button"
       fullWidth
       variant="outlined"
-      onClick={handleClick}
+      onClick={onClick}
       disabled={disabled || loading}
       startIcon={loading ? <CircularProgress size={18} sx={{ color: "#94A3B8" }} /> : <GoogleIcon />}
       sx={{
