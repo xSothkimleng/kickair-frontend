@@ -227,13 +227,10 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
       <Box sx={{ maxWidth: 1000, mx: "auto", px: { xs: 1.75, md: 3 }, py: { xs: 2, md: 3.5 } }}>
         {/* Hero */}
         <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, overflow: "hidden" }}>
-          <Box sx={{ height: { xs: 96, md: 132 }, background: "repeating-linear-gradient(135deg, rgba(0,113,227,0.05) 0 12px, rgba(0,113,227,0.02) 12px 24px), linear-gradient(120deg, oklch(0.95 0.03 250), oklch(0.96 0.025 200))" }} />
-          <Box sx={{ px: { xs: 2.25, md: 3.25 }, pb: { xs: 2.5, md: 3 } }}>
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "flex-start", md: "flex-end" }, gap: { xs: 1.75, md: 2.5 } }}>
-              <Box sx={{ mt: { xs: "-42px", md: "-52px" } }}>
-                <Box sx={{ borderRadius: "50%", border: `4px solid ${tokens.surface}`, bgcolor: tokens.surface }}>
-                  <ProfileAvatar name={name} src={avatar} size={104} verified={isVerified} />
-                </Box>
+          <Box sx={{ px: { xs: 2.25, md: 3.25 }, pt: { xs: 2.5, md: 3 }, pb: { xs: 2.5, md: 3 } }}>
+            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "flex-start", md: "center" }, gap: { xs: 1.75, md: 2.5 } }}>
+              <Box sx={{ borderRadius: "50%", border: `4px solid ${tokens.surface}`, bgcolor: tokens.surface }}>
+                <ProfileAvatar name={name} src={avatar} size={104} verified={isVerified} />
               </Box>
               <Box sx={{ flex: 1, minWidth: 0, pb: { md: 0.5 } }}>
                 <Box sx={{ display: "flex", alignItems: "center", gap: 1.125, flexWrap: "wrap" }}>
