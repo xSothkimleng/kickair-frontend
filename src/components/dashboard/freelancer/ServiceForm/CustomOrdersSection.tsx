@@ -92,29 +92,6 @@ export default function CustomOrdersSection({ formData, onFormDataChange }: Cust
               minHeight={120}
             />
           </Box>
-
-          <Box sx={{ p: 2, bgcolor: "rgba(37, 99, 235, 0.05)", borderRadius: 3, minWidth: 0 }}>
-            <Typography sx={{ fontSize: 12, color: "rgb(29, 78, 216)", mb: 1 }}>
-              <strong>Benefits of Custom Orders:</strong>
-            </Typography>
-            <Box
-              component="ul"
-              sx={{
-                m: 0,
-                pl: 2.5,
-                display: "flex",
-                flexDirection: "column",
-                gap: 0.5,
-                fontSize: 11,
-                color: "rgb(37, 99, 235)",
-                "& li": { lineHeight: 1.5, overflowWrap: "anywhere" },
-              }}>
-              <li>Accept projects that don&apos;t fit your standard packages</li>
-              <li>Build relationships with clients who have unique needs</li>
-              <li>Negotiate pricing based on project scope</li>
-              <li>Flexibility in hourly vs. fixed pricing</li>
-            </Box>
-          </Box>
         </Box>
       )}
     </Paper>
