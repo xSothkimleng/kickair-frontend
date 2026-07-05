@@ -1,11 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Paper, Typography, Button, Checkbox, FormControlLabel, CircularProgress } from "@mui/material";
-import { ChevronLeftOutlined, RestoreOutlined } from "@mui/icons-material";
+import { useRouter } from "next/navigation";
+import { Box, Paper, Typography, Button, Checkbox, FormControlLabel, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import { ChevronLeftOutlined, RestoreOutlined, VerifiedUserOutlined } from "@mui/icons-material";
 import { Service, ServiceCategory, ServiceMedia, CreateServiceRequest, TemporaryUpload, UploadToken } from "@/types/service";
 import { ServiceFormData } from "../types";
 import { api } from "@/lib/api";
+import { useAuth } from "@/components/context/AuthContext";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
 import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
@@ -23,6 +25,8 @@ interface ServiceFormProps {
 
 export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   const isEditing = !!service;
+  const router = useRouter();
+  const { user } = useAuth();
 
   // Categories state
   const [categories, setCategories] = useState<ServiceCategory[]>([]);
@@ -33,6 +37,9 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   const [savingDraft, setSavingDraft] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  // Set when a publish attempt was silently saved as a draft because the account isn't
+  // eligible to publish yet (identity/KYC — or, with the flag on, unverified contacts).
+  const [kycNotice, setKycNotice] = useState<string | null>(null);
 
   // Media state for editing existing services
   const [media, setMedia] = useState<ServiceMedia[]>(service?.media || []);
@@ -230,10 +237,11 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
 
       const requestData = transformFormData();
 
+      let response;
       if (isEditing && service) {
-        await api.put(`/api/services/${service.id}`, requestData);
+        response = await api.put(`/api/services/${service.id}`, requestData);
       } else {
-        const response = await api.post("/api/services", requestData);
+        response = await api.post("/api/services", requestData);
         // Apply the desired cover image if the user selected one during creation
         if (desiredCoverTempId !== null && response?.data?.media?.length) {
           const desiredTempUpload = tempUploads.find(t => t.id === desiredCoverTempId);
@@ -249,6 +257,15 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       }
 
       clearRecovery();
+
+      // The backend silently downgrades a publish to a draft when the account can't publish yet
+      // (identity/KYC — or, with the flag on, unverified contacts). Don't navigate away as if it
+      // went live: surface why, with a path to verify. The draft is already saved.
+      if (response?.data?.status === "draft") {
+        setKycNotice(response?.message || "Your service was saved as a draft. Verify your identity (KYC) to publish it.");
+        return;
+      }
+
       onBack();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to save service");
@@ -336,6 +353,33 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
             onClick={discardRecovery}
             sx={{ px: 2, height: 32, fontSize: 12, color: "#92400e", bgcolor: "transparent", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "rgba(245,158,11,0.12)" } }}>
             Discard
+          </Button>
+        </Paper>
+      )}
+
+      {/* Publish-eligibility heads-up: unverified freelancers can only save drafts. */}
+      {user && !user.is_verified_id && (
+        <Paper
+          elevation={0}
+          sx={{
+            borderRadius: 3,
+            border: "1px solid rgba(245, 158, 11, 0.35)",
+            bgcolor: "rgba(245, 158, 11, 0.06)",
+            p: 2,
+            display: "flex",
+            alignItems: "center",
+            gap: 1.5,
+            flexWrap: "wrap",
+          }}>
+          <VerifiedUserOutlined sx={{ fontSize: 20, color: "#b45309" }} />
+          <Typography sx={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+            <strong>Verify your identity to publish.</strong> You can build and save this service as a draft now — once your
+            identity (KYC) is verified, you can publish it for review.
+          </Typography>
+          <Button
+            onClick={() => router.push("/dashboard/kyc")}
+            sx={{ px: 2, height: 32, fontSize: 12, color: "white", bgcolor: "#b45309", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "#92400e" } }}>
+            Verify identity
           </Button>
         </Paper>
       )}
@@ -476,6 +520,39 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           </Button>
         </Box>
       </Paper>
+
+      {/* Publish was blocked → the service was saved as a draft. Explain why and offer to verify. */}
+      <Dialog
+        open={!!kycNotice}
+        onClose={() => { setKycNotice(null); onBack(); }}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}>
+        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: 18, fontWeight: 600 }}>
+          <VerifiedUserOutlined sx={{ color: "#f59e0b" }} /> Saved as a draft
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ fontSize: 14, color: "rgba(0,0,0,0.75)" }}>
+            {kycNotice}
+          </DialogContentText>
+          <DialogContentText sx={{ fontSize: 13, color: "rgba(0,0,0,0.55)", mt: 1.5 }}>
+            Your work is safe under <strong>Drafts</strong> — publish it for review once you&apos;re verified.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
+          <Button
+            onClick={() => { setKycNotice(null); onBack(); }}
+            sx={{ textTransform: "none", color: "rgba(0,0,0,0.6)" }}>
+            Back to My Services
+          </Button>
+          <Button
+            onClick={() => router.push("/dashboard/kyc")}
+            variant="contained"
+            sx={{ textTransform: "none", bgcolor: "black", borderRadius: 8, px: 2.5, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>
+            Verify Identity
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
