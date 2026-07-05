@@ -54,17 +54,27 @@ export default function MainNavbar() {
   const isFreelancer = user?.is_freelancer ?? false;
   const isClient = user?.is_client ?? false;
 
-  // Job posts (proposal review) and standalone order detail live outside the
-  // /dashboard/client path but are client-owned surfaces — treat them as client
-  // mode so viewing them doesn't flip a dual-role user into freelancer mode.
-  const currentMode: UserMode =
+  // The active mode a dual-role user is viewing in. It's not stored on the server, so we
+  // derive it: an explicit dashboard URL wins; otherwise fall back to the last mode the user
+  // was in (persisted below), so navigating to a neutral page (Explore, Find Freelancers, …)
+  // doesn't silently flip them from client → freelancer.
+  //
+  // Job posts (proposal review) and standalone order detail live outside the /dashboard/client
+  // path but are client-owned surfaces — treat them as client mode too.
+  const [modePref, setModePref] = useState<UserMode | null>(null);
+
+  const urlMode: UserMode | null =
     pathname?.includes("/dashboard/client") || pathname?.includes("/dashboard/jobs") || pathname?.includes("/dashboard/orders")
       ? "client"
       : pathname?.includes("/dashboard/freelancer")
         ? "freelancer"
-        : isFreelancer
-          ? "freelancer"
-          : "client";
+        : null;
+
+  // Only honor a persisted preference the user still has the role for (guards against a
+  // stale value from a previous session/user).
+  const usablePref = modePref && (modePref === "freelancer" ? isFreelancer : isClient) ? modePref : null;
+
+  const currentMode: UserMode = urlMode ?? usablePref ?? (isFreelancer ? "freelancer" : "client");
 
   // Single derived value — avoids duplicating the URL construction in JSX
   const profileImageSrc = user?.avatar_url ?? undefined;
@@ -91,6 +101,27 @@ export default function MainNavbar() {
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, []);
+
+  // Restore the last-used mode on mount so neutral pages don't reset a dual-role user's view.
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem("kickair_mode");
+      if (saved === "client" || saved === "freelancer") setModePref(saved);
+    } catch {
+      // localStorage unavailable in private browsing / SSR
+    }
+  }, []);
+
+  // Remember the mode whenever the user lands on a mode-specific dashboard.
+  useEffect(() => {
+    if (!urlMode) return;
+    setModePref(urlMode);
+    try {
+      localStorage.setItem("kickair_mode", urlMode);
+    } catch {
+      // ignore
+    }
+  }, [urlMode]);
 
   // Restore language preference from localStorage on mount
   useEffect(() => {
@@ -176,6 +207,8 @@ export default function MainNavbar() {
   const handleLogout = async () => {
     try {
       await logout();
+      setModePref(null);
+      try { localStorage.removeItem("kickair_mode"); } catch { /* ignore */ }
       setActiveDropdown(null);
       router.push("/");
     } catch (error) {
