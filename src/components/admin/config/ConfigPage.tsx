@@ -41,6 +41,7 @@ export default function ConfigPage() {
   const [categories, setCategories] = useState<AdminCategory[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
   const [newCategoryName, setNewCategoryName] = useState("");
+  const [newCategoryParent, setNewCategoryParent] = useState("top"); // "top" = new main category
   const [addingCategory, setAddingCategory] = useState(false);
 
   // Skills
@@ -112,9 +113,11 @@ export default function ConfigPage() {
     if (!trimmed || addingCategory) return;
     setAddingCategory(true);
     try {
-      const created = await api.createAdminCategory(trimmed);
+      const parentId = newCategoryParent === "top" ? null : Number(newCategoryParent);
+      const created = await api.createAdminCategory(trimmed, parentId);
       setCategories((prev) => [...prev, created]);
       setNewCategoryName("");
+      // Keep the chosen parent so adding several subcategories in a row is quick.
     } finally {
       setAddingCategory(false);
     }
@@ -142,6 +145,41 @@ export default function ConfigPage() {
       setAddingSkill(false);
     }
   };
+
+  // Group the flat list into aisles → their subcategories for a readable tree view.
+  const aisleList = categories.filter((c) => c.parent_id == null);
+  const aisleIds = new Set(aisleList.map((a) => a.id));
+  const shelvesByParent: Record<number, AdminCategory[]> = {};
+  categories.forEach((c) => {
+    if (c.parent_id == null) return;
+    if (!shelvesByParent[c.parent_id]) shelvesByParent[c.parent_id] = [];
+    shelvesByParent[c.parent_id].push(c);
+  });
+  // Defensive: subcategories whose parent is missing (e.g. after a deleted aisle) mustn't vanish.
+  const orphanShelves = categories.filter((c) => c.parent_id != null && !aisleIds.has(c.parent_id));
+
+  const renderCategoryRow = (cat: AdminCategory, isChild: boolean) => (
+    <Stack
+      key={cat.id}
+      direction="row"
+      justifyContent="space-between"
+      alignItems="center"
+      sx={{ px: 2, py: 1.25, ml: isChild ? 3.5 : 0, bgcolor: isChild ? "grey.50" : "grey.100", borderRadius: 2, borderLeft: isChild ? "2px solid" : undefined, borderColor: "grey.300" }}
+    >
+      <Stack direction="row" alignItems="center" gap={1.5}>
+        <Switch checked={cat.is_active} onChange={() => toggleCategory(cat.id, cat.is_active)} size="small" />
+        <Typography
+          fontWeight={isChild ? 500 : 700}
+          fontSize={isChild ? 14 : 15}
+          color={cat.is_active ? "grey.900" : "grey.400"}
+          sx={{ textDecoration: cat.is_active ? "none" : "line-through" }}
+        >
+          {cat.category_name}
+        </Typography>
+      </Stack>
+      <Button size="small" sx={{ color: "error.main" }} onClick={() => deleteCategory(cat.id)}>Delete</Button>
+    </Stack>
+  );
 
   return (
     <Box sx={{ p: 4 }}>
@@ -241,11 +279,21 @@ export default function ConfigPage() {
                 <Typography fontWeight={700} fontSize={20}>Service Categories</Typography>
               </Stack>
 
-              {/* Add new category inline */}
-              <Stack direction="row" gap={1} mb={3} alignItems="flex-start">
-                <Box sx={{ flex: 1 }}>
+              {/* Add a new main category or a subcategory under a chosen parent */}
+              <Stack direction={{ xs: "column", sm: "row" }} gap={1} mb={1} alignItems={{ sm: "center" }}>
+                <Box sx={{ width: { xs: "100%", sm: 260 }, flexShrink: 0 }}>
+                  <SelectInput
+                    value={newCategoryParent}
+                    onChange={(v) => setNewCategoryParent(String(v))}
+                    options={[
+                      { value: "top", label: "Top-level (main category)" },
+                      ...aisleList.map((a) => ({ value: String(a.id), label: `↳ under ${a.category_name}` })),
+                    ]}
+                  />
+                </Box>
+                <Box sx={{ flex: 1, width: { xs: "100%", sm: "auto" } }}>
                   <TextInput
-                    placeholder="New category name..."
+                    placeholder={newCategoryParent === "top" ? "New main category name..." : "New subcategory name..."}
                     value={newCategoryName}
                     onChange={setNewCategoryName}
                     onKeyDown={(e) => e.key === "Enter" && addCategory()}
@@ -256,53 +304,48 @@ export default function ConfigPage() {
                   startIcon={addingCategory ? <CircularProgress size={14} color="inherit" /> : <AddIcon />}
                   onClick={addCategory}
                   disabled={addingCategory || !newCategoryName.trim()}
-                  sx={{ px: 3 }}
+                  sx={{ px: 3, height: 44, flexShrink: 0 }}
                 >
                   Add
                 </Button>
               </Stack>
+              <Typography variant="body2" color="grey.500" sx={{ mb: 3, fontSize: 12.5 }}>
+                Listings are filed under subcategories — add a main category first, then subcategories under it.
+              </Typography>
 
               {categoriesLoading ? (
                 <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
                   <CircularProgress size={28} />
                 </Box>
+              ) : categories.length === 0 ? (
+                <Typography variant="body2" color="grey.500" sx={{ py: 2, textAlign: "center" }}>
+                  No categories yet. Add one above.
+                </Typography>
               ) : (
-                <Stack gap={1.5}>
-                  {categories.map((cat) => (
-                    <Stack
-                      key={cat.id}
-                      direction="row"
-                      justifyContent="space-between"
-                      alignItems="center"
-                      sx={{ px: 2, py: 1.5, bgcolor: "grey.50", borderRadius: 2 }}
-                    >
-                      <Stack direction="row" alignItems="center" gap={1.5}>
-                        <Switch
-                          checked={cat.is_active}
-                          onChange={() => toggleCategory(cat.id, cat.is_active)}
-                          size="small"
-                        />
-                        <Typography
-                          fontWeight={600}
-                          color={cat.is_active ? "grey.900" : "grey.400"}
-                          sx={{ textDecoration: cat.is_active ? "none" : "line-through" }}
-                        >
-                          {cat.category_name}
-                        </Typography>
-                      </Stack>
-                      <Button
-                        size="small"
-                        sx={{ color: "error.main" }}
-                        onClick={() => deleteCategory(cat.id)}
-                      >
-                        Delete
-                      </Button>
-                    </Stack>
-                  ))}
-                  {categories.length === 0 && (
-                    <Typography variant="body2" color="grey.500" sx={{ py: 2, textAlign: "center" }}>
-                      No categories yet. Add one above.
-                    </Typography>
+                <Stack gap={2}>
+                  {aisleList.map((aisle) => {
+                    const shelves = shelvesByParent[aisle.id] ?? [];
+                    return (
+                      <Box key={aisle.id}>
+                        {renderCategoryRow(aisle, false)}
+                        <Stack gap={1} mt={1}>
+                          {shelves.map((shelf) => renderCategoryRow(shelf, true))}
+                          {shelves.length === 0 && (
+                            <Typography variant="body2" color="grey.400" sx={{ ml: 3.5, py: 0.5, fontStyle: "italic" }}>
+                              No subcategories yet — listings can&apos;t be filed here until you add one.
+                            </Typography>
+                          )}
+                        </Stack>
+                      </Box>
+                    );
+                  })}
+                  {orphanShelves.length > 0 && (
+                    <Box>
+                      <Typography variant="body2" color="grey.500" fontWeight={600} sx={{ mb: 1 }}>
+                        Ungrouped (parent removed)
+                      </Typography>
+                      <Stack gap={1}>{orphanShelves.map((s) => renderCategoryRow(s, true))}</Stack>
+                    </Box>
                   )}
                 </Stack>
               )}

@@ -1210,6 +1210,7 @@ export interface AdminTransactionsResponse {
 
 export interface AdminCategory {
   id: number;
+  parent_id: number | null;
   category_name: string;
   is_active: boolean;
   created_at: string;
