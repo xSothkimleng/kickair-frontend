@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState, type ReactNode } from "react";
 import {
   Box, Typography, Avatar, Tooltip, CircularProgress, Skeleton, Alert, Snackbar,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions, Button,
+  Dialog, DialogContent, DialogContentText, DialogActions, Button,
 } from "@mui/material";
 import { SearchInput, TextArea } from "@/components/ui/inputs";
 import VisibilityOutlinedIcon from "@mui/icons-material/VisibilityOutlined";
@@ -14,6 +14,7 @@ import PowerSettingsNewOutlinedIcon from "@mui/icons-material/PowerSettingsNewOu
 import CheckOutlinedIcon from "@mui/icons-material/CheckOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import StorefrontOutlinedIcon from "@mui/icons-material/StorefrontOutlined";
+import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { api } from "@/lib/api";
 import { Service } from "@/types/service";
 import { JobPost } from "@/types/job";
@@ -86,7 +87,8 @@ function CategoryCell({ category, requested }: { category?: { category_name: str
   if (category) return <CategoryPill>{category.category_name}</CategoryPill>;
   if (requested) {
     return (
-      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 24, px: 1.375, borderRadius: "999px", fontSize: 11.5, fontWeight: 600, bgcolor: tokens.pendingTint, color: tokens.pendingText, whiteSpace: "nowrap" }}>
+      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, height: 24, px: 1.375, borderRadius: "999px", fontSize: 11.5, fontWeight: 600, bgcolor: tokens.pendingTint, color: tokens.pendingText, border: `1px solid ${tokens.pendingText}33`, whiteSpace: "nowrap" }}>
+        <WarningAmberOutlinedIcon sx={{ fontSize: 13 }} />
         Requested: {requested}
       </Box>
     );
@@ -132,7 +134,30 @@ function TableSkeleton() {
   );
 }
 
+/* Consistent dialog header: tinted icon tile + title + listing subtitle. */
+function DialogHead({ icon, tone, title, subtitle }: { icon: ReactNode; tone: "neutral" | "success" | "error" | "pending"; title: string; subtitle?: string | null }) {
+  const t = {
+    neutral: { bg: tokens.surface2, bd: tokens.border, fg: tokens.text2 },
+    success: { bg: tokens.successTint, bd: `${tokens.successText}22`, fg: tokens.successText },
+    error: { bg: tokens.errorTint, bd: `${tokens.errorText}22`, fg: tokens.errorText },
+    pending: { bg: tokens.pendingTint, bd: `${tokens.pendingText}22`, fg: tokens.pendingText },
+  }[tone];
+  return (
+    <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 3, pt: 2.75, pb: 2, borderBottom: `1px solid ${tokens.border}` }}>
+      <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: t.bg, border: `1px solid ${t.bd}`, display: "flex", alignItems: "center", justifyContent: "center", color: t.fg, flexShrink: 0 }}>{icon}</Box>
+      <Box sx={{ minWidth: 0 }}>
+        <Typography sx={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.3 }}>{title}</Typography>
+        {subtitle && <Typography sx={{ fontSize: 12.5, color: tokens.text2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{subtitle}</Typography>}
+      </Box>
+    </Box>
+  );
+}
+
+/* Shared dialog paper styling (rounded, clipped). */
+const dialogPaperSx = { borderRadius: `${tokens.radius.card}px`, overflow: "hidden" } as const;
+
 type RejectTarget = { kind: "service" | "job"; id: number; title: string; action: "reject" | "disable" } | null;
+type ApproveTarget = { kind: "service" | "job"; id: number; title: string; hasCategory: boolean; requestedCategory: string | null; requestedParentId: number | null } | null;
 
 export default function MarketplacePage() {
   const [tab, setTab] = useState<TabId>("services");
@@ -151,6 +176,10 @@ export default function MarketplacePage() {
   const [actioningId, setActioningId] = useState<number | null>(null);
   const [rejectTarget, setRejectTarget] = useState<RejectTarget>(null);
   const [rejectReason, setRejectReason] = useState("");
+  const [approveTarget, setApproveTarget] = useState<ApproveTarget>(null);
+  // When set, assigning a category should immediately approve this listing afterwards
+  // (the "Set category & approve" path from the approve dialog).
+  const [approveAfterCategory, setApproveAfterCategory] = useState<{ kind: "service" | "job"; id: number } | null>(null);
   const [categoryTarget, setCategoryTarget] = useState<CategoryAssignTarget | null>(null);
   const [toast, setToast] = useState<string | null>(null);
 
@@ -194,14 +223,55 @@ export default function MarketplacePage() {
   const approveService = async (id: number) => {
     setActioningId(id);
     try { await api.approveService(id); setToast("Service approved."); loadServices(); }
-    catch { setToast("Failed to approve service."); }
+    catch (e) { setToast(e instanceof Error ? e.message : "Failed to approve service."); }
     finally { setActioningId(null); }
   };
   const approveJob = async (id: number) => {
     setActioningId(id);
     try { await api.approveJobPost(id); setToast("Job post approved."); loadJobs(); }
-    catch { setToast("Failed to approve job post."); }
+    catch (e) { setToast(e instanceof Error ? e.message : "Failed to approve job post."); }
     finally { setActioningId(null); }
+  };
+  const confirmApprove = () => {
+    if (!approveTarget) return;
+    const { kind, id } = approveTarget;
+    setApproveTarget(null);
+    if (kind === "service") approveService(id); else approveJob(id);
+  };
+  // From the approve dialog when no category is set: open the full picker (map to an existing
+  // category or rename the suggestion), then approve on success.
+  const assignCategoryThenApprove = () => {
+    if (!approveTarget) return;
+    const t = approveTarget;
+    setApproveTarget(null);
+    setApproveAfterCategory({ kind: t.kind, id: t.id });
+    setCategoryTarget({ kind: t.kind, id: t.id, title: t.title, requestedCategory: t.requestedCategory, requestedParentId: t.requestedParentId });
+  };
+  // Accept the owner's suggested category verbatim (create it as-is) and approve — one click,
+  // straight from the approve dialog, for suggestions that look fine.
+  const approveWithSuggestedCategory = async () => {
+    if (!approveTarget?.requestedCategory) return;
+    const { kind, id, requestedCategory, requestedParentId } = approveTarget;
+    setApproveTarget(null);
+    setActioningId(id);
+    try {
+      const created = await api.createAdminCategory(requestedCategory, requestedParentId ?? undefined);
+      if (kind === "service") {
+        await api.setServiceCategory(id, created.id);
+        await api.approveService(id);
+        setToast(`Created “${requestedCategory}” and approved the service.`);
+        loadServices();
+      } else {
+        await api.setJobPostCategory(id, created.id);
+        await api.approveJobPost(id);
+        setToast(`Created “${requestedCategory}” and approved the job post.`);
+        loadJobs();
+      }
+    } catch (e) {
+      setToast(e instanceof Error ? e.message : "Failed to approve.");
+    } finally {
+      setActioningId(null);
+    }
   };
   const confirmReject = async () => {
     if (!rejectTarget) return;
@@ -272,8 +342,9 @@ export default function MarketplacePage() {
                           const price = lowestPrice(s);
                           const busy = actioningId === s.id;
                           const cfg = listingPill(s.status);
+                          const needsCategory = !!s.requested_category && s.category_id == null;
                           return (
-                            <TableRow key={s.id}>
+                            <TableRow key={s.id} sx={needsCategory ? { "& td:first-of-type": { borderLeft: `3px solid ${tokens.pendingText}` } } : undefined}>
                               <TableCell sx={{ maxWidth: 320 }}><ListingCell src={s.feature_image?.file_url} title={s.title} /></TableCell>
                               <TableCell><PartyCell name={s.freelancer_profile?.user?.name ?? "—"} avatar={s.freelancer_profile?.user?.avatar_url} /></TableCell>
                               <TableCell><CategoryCell category={s.category} requested={s.requested_category} /></TableCell>
@@ -285,7 +356,7 @@ export default function MarketplacePage() {
                                   <IconActBtn title={s.requested_category ? "Review requested category" : "Set / change category"} highlight={!!s.requested_category} onClick={() => setCategoryTarget({ kind: "service", id: s.id, title: s.title, requestedCategory: s.requested_category, requestedParentId: s.requested_parent_id })}><SellOutlinedIcon sx={{ fontSize: 18 }} /></IconActBtn>
                                   {s.status === "pending_review" && (<>
                                     <Box sx={dividerSx} />
-                                    <ActBtn tone="approve" busy={busy} icon={<CheckOutlinedIcon sx={{ fontSize: 15 }} />} onClick={() => approveService(s.id)}>Approve</ActBtn>
+                                    <ActBtn tone="approve" busy={busy} icon={<CheckOutlinedIcon sx={{ fontSize: 15 }} />} onClick={() => setApproveTarget({ kind: "service", id: s.id, title: s.title, hasCategory: s.category_id != null, requestedCategory: s.requested_category ?? null, requestedParentId: s.requested_parent_id ?? null })}>Approve</ActBtn>
                                     <ActBtn tone="reject" icon={<CloseOutlinedIcon sx={{ fontSize: 15 }} />} onClick={() => { setRejectTarget({ kind: "service", id: s.id, title: s.title, action: "reject" }); setRejectReason(""); }}>Reject</ActBtn>
                                   </>)}
                                   {s.status === "active" && (<>
@@ -331,8 +402,9 @@ export default function MarketplacePage() {
                           const busy = actioningId === j.id;
                           const cfg = listingPill(j.status);
                           const clientName = j.client_profile?.company_name || j.client_profile?.user?.name || "—";
+                          const needsCategory = !!j.requested_category && j.category_id == null;
                           return (
-                            <TableRow key={j.id}>
+                            <TableRow key={j.id} sx={needsCategory ? { "& td:first-of-type": { borderLeft: `3px solid ${tokens.pendingText}` } } : undefined}>
                               <TableCell sx={{ maxWidth: 320 }}><ListingCell title={j.title} /></TableCell>
                               <TableCell><PartyCell name={clientName} avatar={j.client_profile?.user?.avatar_url} /></TableCell>
                               <TableCell><CategoryCell category={j.category} requested={j.requested_category} /></TableCell>
@@ -344,7 +416,7 @@ export default function MarketplacePage() {
                                   <IconActBtn title={j.requested_category ? "Review requested category" : "Set / change category"} highlight={!!j.requested_category} onClick={() => setCategoryTarget({ kind: "job", id: j.id, title: j.title, requestedCategory: j.requested_category, requestedParentId: j.requested_parent_id })}><SellOutlinedIcon sx={{ fontSize: 18 }} /></IconActBtn>
                                   {j.status === "pending_review" && (<>
                                     <Box sx={dividerSx} />
-                                    <ActBtn tone="approve" busy={busy} icon={<CheckOutlinedIcon sx={{ fontSize: 15 }} />} onClick={() => approveJob(j.id)}>Approve</ActBtn>
+                                    <ActBtn tone="approve" busy={busy} icon={<CheckOutlinedIcon sx={{ fontSize: 15 }} />} onClick={() => setApproveTarget({ kind: "job", id: j.id, title: j.title, hasCategory: j.category_id != null, requestedCategory: j.requested_category ?? null, requestedParentId: j.requested_parent_id ?? null })}>Approve</ActBtn>
                                     <ActBtn tone="reject" icon={<CloseOutlinedIcon sx={{ fontSize: 15 }} />} onClick={() => { setRejectTarget({ kind: "job", id: j.id, title: j.title, action: "reject" }); setRejectReason(""); }}>Reject</ActBtn>
                                   </>)}
                                 </Box>
@@ -375,39 +447,132 @@ export default function MarketplacePage() {
       </Box>
 
       {/* ── Reason dialog (reject pending / disable active) ── */}
-      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} fullWidth maxWidth="sm">
-        <DialogTitle sx={{ fontWeight: 600 }}>
-          {rejectTarget?.action === "disable" ? "Disable service" : `Reject ${rejectTarget?.kind === "job" ? "job post" : "service"}`}
-        </DialogTitle>
-        <DialogContent>
+      <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} fullWidth maxWidth="sm" PaperProps={{ sx: dialogPaperSx }}>
+        <DialogHead
+          icon={rejectTarget?.action === "disable" ? <BlockOutlinedIcon sx={{ fontSize: 18 }} /> : <CloseOutlinedIcon sx={{ fontSize: 18 }} />}
+          tone="error"
+          title={rejectTarget?.action === "disable" ? "Disable service" : `Reject ${rejectTarget?.kind === "job" ? "job post" : "service"}`}
+          subtitle={rejectTarget?.title}
+        />
+        <DialogContent sx={{ px: 3, py: 2.5 }}>
           <DialogContentText sx={{ mb: 2, fontSize: 13.5, color: tokens.text2 }}>
             {rejectTarget?.action === "disable"
-              ? <>Taking down <strong>{rejectTarget?.title}</strong>. It will be hidden from the public and the freelancer will be notified. You can re-enable it later.</>
-              : <>Rejecting <strong>{rejectTarget?.title}</strong>. The owner will be notified and can edit and resubmit.</>}
+              ? <>This hides the listing from the public and notifies the freelancer. You can re-enable it later.</>
+              : <>The owner will be notified and can edit and resubmit.</>}
           </DialogContentText>
           {rejectTarget && (
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 2 }}>
-              {REJECT_PRESETS[rejectTarget.action].map(p => (
-                <Box key={p} component="button" onClick={() => setRejectReason(p)}
-                  sx={{ height: 30, px: 1.5, borderRadius: "999px", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500, border: `1px solid ${tokens.border}`, bgcolor: tokens.surface, color: tokens.text2, "&:hover": { borderColor: tokens.borderStrong, color: tokens.text } }}>{p}</Box>
-              ))}
+            <Box sx={{ mb: 2 }}>
+              <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: tokens.text3, textTransform: "uppercase", letterSpacing: "0.05em", mb: 1 }}>Quick reasons</Typography>
+              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                {REJECT_PRESETS[rejectTarget.action].map(p => {
+                  const on = rejectReason === p;
+                  return (
+                    <Box key={p} component="button" onClick={() => setRejectReason(p)}
+                      sx={{ height: 30, px: 1.5, borderRadius: "999px", cursor: "pointer", fontFamily: "inherit", fontSize: 12.5, fontWeight: 500, border: `1px solid ${on ? "transparent" : tokens.border}`, bgcolor: on ? tokens.errorTint : tokens.surface, color: on ? tokens.errorText : tokens.text2, "&:hover": on ? {} : { borderColor: tokens.borderStrong, color: tokens.text } }}>{p}</Box>
+                  );
+                })}
+              </Box>
             </Box>
           )}
           <TextArea label="Reason (optional)" minRows={3} maxLength={500} value={rejectReason} onChange={setRejectReason} />
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${tokens.border}` }}>
           <Button onClick={() => setRejectTarget(null)} sx={{ textTransform: "none", color: tokens.text2 }}>Cancel</Button>
-          <Button variant="contained" color="error" disableElevation onClick={confirmReject} disabled={actioningId === rejectTarget?.id} sx={{ textTransform: "none", fontWeight: 600 }}>
+          <Button variant="contained" disableElevation onClick={confirmReject} disabled={actioningId === rejectTarget?.id}
+            sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.75, bgcolor: tokens.error, "&:hover": { bgcolor: tokens.errorText }, "&.Mui-disabled": { bgcolor: tokens.border, color: tokens.text3 } }}>
             {rejectTarget?.action === "disable" ? "Disable listing" : "Reject & notify"}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* ── Approve confirmation (blocks go-live until a category is assigned) ── */}
+      <Dialog open={!!approveTarget} onClose={() => setApproveTarget(null)} fullWidth maxWidth="sm" PaperProps={{ sx: dialogPaperSx }}>
+        <DialogHead
+          icon={approveTarget && !approveTarget.hasCategory ? <WarningAmberOutlinedIcon sx={{ fontSize: 18 }} /> : <CheckOutlinedIcon sx={{ fontSize: 18 }} />}
+          tone={approveTarget && !approveTarget.hasCategory ? "pending" : "success"}
+          title={`Approve ${approveTarget?.kind === "job" ? "job post" : "service"}`}
+          subtitle={approveTarget?.title}
+        />
+        <DialogContent sx={{ px: 3, py: 2.5 }}>
+          {approveTarget && !approveTarget.hasCategory ? (
+            approveTarget.requestedCategory ? (
+              <>
+                <Alert severity="warning" icon={<WarningAmberOutlinedIcon fontSize="inherit" />} sx={{ mb: 2 }}>
+                  Category needs review before this can go live.
+                </Alert>
+                <DialogContentText sx={{ fontSize: 13.5, color: tokens.text2, mb: 1.5 }}>
+                  The {approveTarget.kind === "job" ? "client" : "freelancer"} suggested a <strong>new</strong> category — it doesn&apos;t exist yet:
+                </DialogContentText>
+                {/* Surface the raw suggestion so the admin can spot anything off (junk, duplicate, mis-placed). */}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: 1.5, mb: 1.5, borderRadius: "10px", border: `1px solid ${tokens.pendingText}33`, bgcolor: tokens.pendingTint }}>
+                  <WarningAmberOutlinedIcon sx={{ fontSize: 18, color: tokens.pendingText }} />
+                  <Box sx={{ minWidth: 0 }}>
+                    <Typography sx={{ fontSize: 14, fontWeight: 600, color: tokens.pendingText, lineHeight: 1.3 }}>“{approveTarget.requestedCategory}”</Typography>
+                    <Typography sx={{ fontSize: 11.5, color: tokens.pendingText, opacity: 0.85 }}>
+                      Would be created as a new {approveTarget.requestedParentId != null ? "sub-category" : "top-level category"}
+                    </Typography>
+                  </Box>
+                </Box>
+                <DialogContentText sx={{ fontSize: 13, color: tokens.text2 }}>
+                  Accept it as-is, or choose a different / existing category. The {approveTarget.kind === "job" ? "client" : "freelancer"} is notified either way.
+                </DialogContentText>
+              </>
+            ) : (
+              <>
+                <Alert severity="warning" icon={<WarningAmberOutlinedIcon fontSize="inherit" />} sx={{ mb: 2 }}>
+                  This {approveTarget.kind === "job" ? "job post" : "service"} has no category assigned — it can&apos;t go live uncategorized.
+                </Alert>
+                <DialogContentText sx={{ fontSize: 13.5, color: tokens.text2 }}>
+                  Assign a category to publish it.
+                </DialogContentText>
+              </>
+            )
+          ) : (
+            <DialogContentText sx={{ fontSize: 13.5, color: tokens.text2 }}>
+              {approveTarget?.kind === "job" ? "This job post" : "This service"} becomes publicly visible{" "}
+              {approveTarget?.kind === "job" ? "to freelancers on Opportunities" : "on the marketplace"} and the{" "}
+              {approveTarget?.kind === "job" ? "client" : "freelancer"} will be notified.
+            </DialogContentText>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${tokens.border}`, flexWrap: "wrap" }}>
+          <Button onClick={() => setApproveTarget(null)} sx={{ textTransform: "none", color: tokens.text2 }}>Cancel</Button>
+          {approveTarget && !approveTarget.hasCategory ? (
+            approveTarget.requestedCategory ? (
+              <>
+                <Button onClick={assignCategoryThenApprove} sx={{ textTransform: "none", fontWeight: 600, color: tokens.text }}>
+                  Choose different…
+                </Button>
+                <Button variant="contained" disableElevation onClick={approveWithSuggestedCategory} disabled={actioningId === approveTarget?.id} sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.75, bgcolor: "#000", "&:hover": { bgcolor: tokens.text }, "&.Mui-disabled": { bgcolor: tokens.border, color: tokens.text3 } }}>
+                  Accept &amp; approve
+                </Button>
+              </>
+            ) : (
+              <Button variant="contained" disableElevation onClick={assignCategoryThenApprove} sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.75, bgcolor: "#000", "&:hover": { bgcolor: tokens.text } }}>
+                Set category & approve
+              </Button>
+            )
+          ) : (
+            <Button variant="contained" disableElevation onClick={confirmApprove} disabled={actioningId === approveTarget?.id} sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.75, bgcolor: tokens.success, "&:hover": { bgcolor: tokens.successText }, "&.Mui-disabled": { bgcolor: tokens.border, color: tokens.text3 } }}>
+              Approve & publish
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
 
       <CategoryAssignDialog
         open={!!categoryTarget}
         target={categoryTarget}
-        onClose={() => setCategoryTarget(null)}
-        onDone={msg => { setToast(msg); if (categoryTarget?.kind === "service") loadServices(); else loadJobs(); }}
+        onClose={() => { setCategoryTarget(null); setApproveAfterCategory(null); }}
+        onDone={msg => {
+          setToast(msg);
+          const chained = approveAfterCategory;
+          setApproveAfterCategory(null);
+          // If this assignment came from "Set category & approve", approve now — the listing
+          // has a category, so the backend gate passes. approve*() reloads the list itself.
+          if (chained) { if (chained.kind === "service") approveService(chained.id); else approveJob(chained.id); }
+          else if (categoryTarget?.kind === "service") loadServices(); else loadJobs();
+        }}
       />
 
       <Snackbar open={!!toast} autoHideDuration={3000} onClose={() => setToast(null)} message={toast} anchorOrigin={{ vertical: "bottom", horizontal: "center" }} />

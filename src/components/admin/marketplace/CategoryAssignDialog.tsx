@@ -2,12 +2,15 @@
 
 import { useEffect, useState } from "react";
 import {
-  Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Alert, Typography,
+  Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, Typography,
 } from "@mui/material";
+import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
+import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
 import { api } from "@/lib/api";
 import { ServiceCategory } from "@/types/service";
 import { TextArea } from "@/components/ui/inputs";
 import CategoryPicker, { CategoryValue } from "@/components/category/CategoryPicker";
+import { tokens } from "@/theme";
 
 export interface CategoryAssignTarget {
   kind: "service" | "job";
@@ -92,26 +95,45 @@ export default function CategoryAssignDialog({
   };
 
   return (
-    <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth="sm">
-      <DialogTitle>Set category</DialogTitle>
-      <DialogContent>
-        {target?.requestedCategory && (
-          <Alert severity="info" sx={{ mb: 2 }}>
-            The user requested a new category: <strong>{target.requestedCategory}</strong>. Approve it as a new
-            subcategory below, or map this listing to an existing one.
-          </Alert>
-        )}
-        {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+    <Dialog
+      open={open}
+      onClose={submitting ? undefined : onClose}
+      fullWidth
+      maxWidth="sm"
+      PaperProps={{ sx: { borderRadius: `${tokens.radius.card}px`, overflow: "hidden" } }}>
+      {/* Header */}
+      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, px: 3, pt: 2.75, pb: 2, borderBottom: `1px solid ${tokens.border}` }}>
+        <Box sx={{ width: 36, height: 36, borderRadius: "10px", bgcolor: tokens.surface2, border: `1px solid ${tokens.border}`, display: "flex", alignItems: "center", justifyContent: "center", color: tokens.text2, flexShrink: 0 }}>
+          <SellOutlinedIcon sx={{ fontSize: 18 }} />
+        </Box>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.3 }}>Set category</Typography>
+          {target?.title && (
+            <Typography sx={{ fontSize: 12.5, color: tokens.text2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{target.title}</Typography>
+          )}
+        </Box>
+      </Box>
 
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-          {target?.title}
-        </Typography>
+      <DialogContent sx={{ px: 3, py: 2.5 }}>
+        {target?.requestedCategory && (
+          <Box sx={{ display: "flex", gap: 1, p: 1.5, mb: 2, borderRadius: "10px", border: `1px solid ${tokens.pendingText}33`, bgcolor: tokens.pendingTint }}>
+            <WarningAmberOutlinedIcon sx={{ fontSize: 18, color: tokens.pendingText, flexShrink: 0, mt: "1px" }} />
+            <Typography sx={{ fontSize: 12.5, color: tokens.pendingText, lineHeight: 1.5 }}>
+              The owner suggested a new category, <strong>“{target.requestedCategory}”</strong>. Create it below as a new (sub)category, or map this listing to an existing one.
+            </Typography>
+          </Box>
+        )}
+        {error && (
+          <Box sx={{ p: 1.5, mb: 2, borderRadius: "10px", border: `1px solid ${tokens.errorText}33`, bgcolor: tokens.errorTint }}>
+            <Typography sx={{ fontSize: 12.5, color: tokens.errorText }}>{error}</Typography>
+          </Box>
+        )}
 
         {treeLoading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}><CircularProgress size={24} /></Box>
+          <Box sx={{ display: "flex", justifyContent: "center", py: 5 }}><CircularProgress size={24} /></Box>
         ) : (
           <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <CategoryPicker tree={tree} value={value} onChange={setValue} />
+            <CategoryPicker tree={tree} value={value} onChange={setValue} showNewCategoryHint={false} />
             <TextArea
               label="Note to the owner (optional)"
               minRows={2}
@@ -123,13 +145,15 @@ export default function CategoryAssignDialog({
           </Box>
         )}
       </DialogContent>
-      <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button onClick={onClose} disabled={submitting} sx={{ textTransform: "none" }}>Cancel</Button>
+
+      <DialogActions sx={{ px: 3, py: 2, borderTop: `1px solid ${tokens.border}` }}>
+        <Button onClick={onClose} disabled={submitting} sx={{ textTransform: "none", color: tokens.text2 }}>Cancel</Button>
         <Button
           variant="contained"
+          disableElevation
           onClick={submit}
           disabled={submitting || treeLoading || (!value.categoryId && !value.requestedCategory?.trim())}
-          sx={{ textTransform: "none" }}>
+          sx={{ textTransform: "none", fontWeight: 600, borderRadius: "999px", px: 2.75, bgcolor: "#000", "&:hover": { bgcolor: tokens.text }, "&.Mui-disabled": { bgcolor: tokens.border, color: tokens.text3 } }}>
           {submitting ? <CircularProgress size={18} color="inherit" /> : "Save category"}
         </Button>
       </DialogActions>

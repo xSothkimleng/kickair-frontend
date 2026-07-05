@@ -34,6 +34,7 @@ export default function CategoryPicker({
   loading,
   error,
   required,
+  showNewCategoryHint = true,
 }: {
   tree: ServiceCategory[];
   value: CategoryValue;
@@ -41,6 +42,9 @@ export default function CategoryPicker({
   loading?: boolean;
   error?: string;
   required?: boolean;
+  // Owner-facing hint under a new-category field ("an admin will review…"). Hidden in the
+  // admin dialog, where the admin is the reviewer and this copy would be wrong.
+  showNewCategoryHint?: boolean;
 }) {
   const isNew = value.requestedCategory != null;
   const isNewAisle = isNew && value.requestedParentId == null; // brand-new top-level (main) category
@@ -101,9 +105,11 @@ export default function CategoryPicker({
             placeholder='e.g., Renewable Energy'
             error={error}
           />
-          <Typography sx={{ fontSize: 12, color: "#b45309", mt: 0.75 }}>
-            New top-level category — an admin will review and approve it. Your listing still goes live in the meantime.
-          </Typography>
+          {showNewCategoryHint && (
+            <Typography sx={{ fontSize: 12, color: "#b45309", mt: 0.75 }}>
+              New top-level category — an admin will review and approve it. Your listing still goes live in the meantime.
+            </Typography>
+          )}
         </Box>
       )}
 
@@ -132,9 +138,11 @@ export default function CategoryPicker({
             placeholder='e.g., Drone Photography'
             error={error}
           />
-          <Typography sx={{ fontSize: 12, color: "#b45309", mt: 0.75 }}>
-            New subcategory — an admin will review and approve it. Your listing still goes live in the meantime.
-          </Typography>
+          {showNewCategoryHint && (
+            <Typography sx={{ fontSize: 12, color: "#b45309", mt: 0.75 }}>
+              New subcategory — an admin will review and approve it. Your listing still goes live in the meantime.
+            </Typography>
+          )}
         </Box>
       )}
     </Box>
