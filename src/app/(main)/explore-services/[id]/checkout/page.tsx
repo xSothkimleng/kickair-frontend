@@ -20,7 +20,8 @@ import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { tokens } from "@/theme";
 import { useAuth } from "@/components/context/AuthContext";
-import { usePurchaseGate } from "@/components/purchase/PurchaseGate";
+import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/PurchaseGate";
+import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import type { Service, ServiceDetailResponse } from "@/types/service";
 import type { CreateOrderResponse } from "@/types/order";
 import type { Wallet } from "@/types/wallet";
@@ -40,24 +41,11 @@ import {
 
 type PaySource = "wallet" | "aba";
 
-function deliveryText(d: string | number): string {
-  const s = String(d).trim();
-  if (/^\d+$/.test(s)) return `${s}-day delivery`;
-  return s || "Delivery on agreed date";
-}
-function revisionsText(r: string | number): string {
-  const s = String(r).trim();
-  if (s === "-1") return "Unlimited revisions";
-  if (/^\d+$/.test(s)) return `${s} revision${s === "1" ? "" : "s"}`;
-  return s || "Revisions on request";
-}
-
 function CheckoutContent() {
   const router = useRouter();
   const params = useParams();
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useAuth();
-  const { ensureCanPurchase, gateDialog } = usePurchaseGate();
   const qc = useQueryClient();
 
   const serviceId = params.id as string;
@@ -87,6 +75,24 @@ function CheckoutContent() {
   const balance = wallet ? parseFloat(wallet.available_balance_raw) : 0;
   const insufficient = balance < total;
   const topUpSuggested = Math.max(10, Math.ceil((total - balance) / 5) * 5);
+
+  // Purchase gate — carries the order context and returns the buyer to this exact
+  // checkout after they authenticate / add a client role.
+  const gateSummary: PurchaseSummary | null =
+    service && selectedPricing
+      ? {
+          imageUrl: service.feature_image?.file_url ?? null,
+          title: service.title,
+          tierLabel: selectedPricing.title,
+          sellerName: service.freelancer_profile?.user?.name ?? null,
+          metaLine: `${deliveryText(selectedPricing.delivery_time)} · ${revisionsText(selectedPricing.revisions)}`,
+          amount: total,
+        }
+      : null;
+  const { ensureCanPurchase, gateDialog } = usePurchaseGate({
+    summary: gateSummary,
+    redirectTo: `/explore-services/${serviceId}/checkout?pricing_option_id=${pricingOptionId ?? ""}`,
+  });
 
   const flow = usePaymentProcessing({
     context: "checkout",

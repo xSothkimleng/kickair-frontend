@@ -40,7 +40,8 @@ import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse } from "@/types/service";
 import { useAuth } from "@/components/context/AuthContext";
 import RequestCustomOrderDialog from "@/components/customOrders/RequestCustomOrderDialog";
-import { usePurchaseGate } from "@/components/purchase/PurchaseGate";
+import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/PurchaseGate";
+import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import { RequestQuoteOutlined } from "@mui/icons-material";
 
 interface ServiceDetailPageProps {
@@ -50,7 +51,6 @@ interface ServiceDetailPageProps {
 export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const router = useRouter();
   const { user: currentUser } = useAuth();
-  const { ensureCanPurchase, gateDialog } = usePurchaseGate();
 
   // API state
   const [service, setService] = useState<Service | null>(null);
@@ -64,6 +64,25 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showCustomOrderDialog, setShowCustomOrderDialog] = useState(false);
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
+
+  // Purchase gate — carries the selected package as order context and, after auth,
+  // returns the buyer straight to checkout for this tier.
+  const gatePricing = service?.pricing_options?.[selectedPackage] ?? null;
+  const gateSummary: PurchaseSummary | null =
+    service && gatePricing
+      ? {
+          imageUrl: service.feature_image?.file_url ?? null,
+          title: service.title,
+          tierLabel: gatePricing.title,
+          sellerName: service.freelancer_profile?.user?.name ?? null,
+          metaLine: `${deliveryText(gatePricing.delivery_time)} · ${revisionsText(gatePricing.revisions)}`,
+          amount: Number(gatePricing.price_raw),
+        }
+      : null;
+  const { ensureCanPurchase, gateDialog } = usePurchaseGate({
+    summary: gateSummary,
+    redirectTo: service && gatePricing ? `/explore-services/${serviceId}/checkout?pricing_option_id=${gatePricing.id}` : null,
+  });
 
   // Fetch service data
   useEffect(() => {

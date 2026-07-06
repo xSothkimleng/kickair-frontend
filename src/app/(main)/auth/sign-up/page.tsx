@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Box, Paper, Typography, Button, Divider, Alert, Select, MenuItem } from "@mui/material";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Box, Paper, Typography, Button, Divider, Alert, Select, MenuItem, CircularProgress } from "@mui/material";
 import { ArrowBack } from "@mui/icons-material";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import GoogleButton from "@/components/auth/GoogleButton";
+import { safeRedirect } from "@/lib/redirect";
 import {
   TextInput, PasswordInput, PhoneInput, OtpInput, SegmentedControl,
   FieldLabel, FieldHelper, fieldSx, tokens,
@@ -16,9 +17,10 @@ import { OtpChannel } from "@/types/user";
 type Role = "client" | "freelancer";
 type Method = "email" | "phone";
 
-export default function SignUpPage() {
+function SignUpContent() {
   const router = useRouter();
   const { registerEmail, registerPhone } = useAuth();
+  const redirectTo = safeRedirect(useSearchParams().get("redirect"));
 
   const [step, setStep] = useState<"form" | "otp">("form");
   const [role, setRole] = useState<Role>("client");
@@ -34,7 +36,8 @@ export default function SignUpPage() {
   const [error, setError] = useState("");
 
   const e164Phone = () => `+855${phone.replace(/\D/g, "").replace(/^0+/, "")}`;
-  const destination = () => (role === "freelancer" ? "/dashboard/freelancer" : "/explore-services");
+  // A return path (e.g. from the purchase gate) wins over the role-based default.
+  const destination = () => redirectTo ?? (role === "freelancer" ? "/dashboard/freelancer" : "/explore-services");
   const roleFlags = () => ({ is_client: role === "client", is_freelancer: role === "freelancer" });
 
   const validateForm = (): string | null => {
@@ -136,7 +139,7 @@ export default function SignUpPage() {
                   label="Continue with Google"
                   roles={roleFlags()}
                   onAuthenticated={(u) => {
-                    router.push(u.is_freelancer && !u.is_client ? "/dashboard/freelancer" : "/explore-services");
+                    router.push(redirectTo ?? (u.is_freelancer && !u.is_client ? "/dashboard/freelancer" : "/explore-services"));
                     router.refresh();
                   }}
                   onError={setError}
@@ -231,5 +234,18 @@ export default function SignUpPage() {
         </Paper>
       </Box>
     </Box>
+  );
+}
+
+export default function SignUpPage() {
+  return (
+    <Suspense
+      fallback={
+        <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: tokens.page }}>
+          <CircularProgress sx={{ color: tokens.accent }} />
+        </Box>
+      }>
+      <SignUpContent />
+    </Suspense>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, CircularProgress } from "@mui/material";
+import { Box, Button, CircularProgress, type SxProps, type Theme } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
 import { useAuth } from "@/components/context/AuthContext";
 import { User } from "@/types/user";
@@ -14,6 +14,8 @@ type GoogleButtonProps = {
   onAuthenticated: (user: User) => void;
   onError?: (message: string) => void;
   disabled?: boolean;
+  /** Optional style override, merged last (e.g. to match a pill-shaped surface). */
+  sx?: SxProps<Theme>;
 };
 
 /**
@@ -29,6 +31,7 @@ export default function GoogleButton(props: GoogleButtonProps) {
         label={props.label}
         loading={false}
         disabled={props.disabled}
+        sx={props.sx}
         onClick={() => props.onError?.("Google sign-in isn't configured on this site yet.")}
       />
     );
@@ -43,7 +46,7 @@ export default function GoogleButton(props: GoogleButtonProps) {
  * `roles` carries the role pre-selected on the sign-up page; it's ignored when the
  * Google account already exists.
  */
-function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabled }: GoogleButtonProps) {
+function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabled, sx }: GoogleButtonProps) {
   const { googleAuth } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -72,6 +75,7 @@ function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabl
       label={label}
       loading={loading}
       disabled={disabled}
+      sx={sx}
       onClick={() => {
         setLoading(true);
         login();
@@ -85,11 +89,13 @@ function GoogleButtonView({
   loading,
   disabled,
   onClick,
+  sx,
 }: {
   label: string;
   loading: boolean;
   disabled?: boolean;
   onClick: () => void;
+  sx?: SxProps<Theme>;
 }) {
   return (
     <Button
@@ -109,6 +115,7 @@ function GoogleButtonView({
         borderColor: "#E2E8F0",
         backgroundColor: "#fff",
         "&:hover": { borderColor: "#CBD5E1", backgroundColor: "#F8FAFC" },
+        ...sx,
       }}>
       {loading ? "Connecting…" : label}
     </Button>

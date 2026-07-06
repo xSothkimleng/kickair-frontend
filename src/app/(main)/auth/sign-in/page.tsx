@@ -1,14 +1,15 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
-import { Box, Paper, Typography, Button, Divider, Alert } from "@mui/material";
+import { Suspense, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { Box, Paper, Typography, Button, Divider, Alert, CircularProgress } from "@mui/material";
 import { useAuth } from "@/components/context/AuthContext";
 import GoogleButton from "@/components/auth/GoogleButton";
 import { TextInput, PasswordInput, tokens } from "@/components/ui/inputs";
+import { safeRedirect } from "@/lib/redirect";
 import { User } from "@/types/user";
 
-export default function SignInPage() {
+function SignInContent() {
   const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -16,8 +17,16 @@ export default function SignInPage() {
 
   const { loginEmail, loginPhone } = useAuth();
   const router = useRouter();
+  const redirectTo = safeRedirect(useSearchParams().get("redirect"));
 
   const goAfterAuth = (loggedInUser: User) => {
+    // Honor an explicit return path (e.g. bounced here from the purchase gate)
+    // before falling back to the role-based default landing.
+    if (redirectTo) {
+      router.push(redirectTo);
+      router.refresh();
+      return;
+    }
     let destination = "/explore-services";
     if (loggedInUser.is_admin) {
       destination = "/admin";
@@ -129,5 +138,18 @@ export default function SignInPage() {
         </Paper>
       </Box>
     </Box>
+  );
+}
+
+export default function SignInPage() {
+  return (
+    <Suspense
+      fallback={
+        <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: tokens.page }}>
+          <CircularProgress sx={{ color: tokens.accent }} />
+        </Box>
+      }>
+      <SignInContent />
+    </Suspense>
   );
 }
