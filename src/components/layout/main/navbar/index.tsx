@@ -208,7 +208,11 @@ export default function MainNavbar() {
     try {
       await logout();
       setModePref(null);
-      try { localStorage.removeItem("kickair_mode"); } catch { /* ignore */ }
+      try {
+        localStorage.removeItem("kickair_mode");
+      } catch {
+        /* ignore */
+      }
       setActiveDropdown(null);
       router.push("/");
     } catch (error) {
@@ -249,14 +253,23 @@ export default function MainNavbar() {
 
         {/* ── Desktop Nav ──────────────────────────────────────────────────────── */}
         <Box sx={{ display: { xs: "none", lg: "flex" }, alignItems: "center", gap: "20px" }}>
-          <Box sx={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            {/* Explore Services */}
-            <Button component={Link as React.ElementType} href='/explore-services' sx={navBtnSx}>
+          {/* Hover state lives on the whole group: entering any item switches the open
+              menu, and only leaving the group entirely closes it — so sliding sideways
+              between menus (or across the gaps) never flickers or gets stuck. */}
+          <Box
+            sx={{ display: "flex", gap: "10px", alignItems: "center" }}
+            onMouseLeave={() => setActiveDropdown(null)}>
+            {/* Explore Services — no dropdown, so hovering it clears any open menu */}
+            <Button
+              component={Link as React.ElementType}
+              href='/explore-services'
+              onMouseEnter={() => setActiveDropdown(null)}
+              sx={navBtnSx}>
               Explore Services
             </Button>
 
             {/* Why KickAir ▾ */}
-            <Box sx={{ position: "relative" }}>
+            <Box sx={{ position: "relative" }} onMouseEnter={() => setActiveDropdown("why")}>
               <Button
                 endIcon={
                   <KeyboardArrowDownIcon
@@ -267,7 +280,6 @@ export default function MainNavbar() {
                     }}
                   />
                 }
-                onMouseEnter={() => setActiveDropdown("why")}
                 aria-haspopup='true'
                 aria-expanded={activeDropdown === "why"}
                 sx={navBtnSx}>
@@ -275,9 +287,7 @@ export default function MainNavbar() {
               </Button>
 
               {activeDropdown === "why" && (
-                <Box
-                  onMouseLeave={() => setActiveDropdown(null)}
-                  sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
+                <Box sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
                   <Box sx={{ p: 3 }}>
                     <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
                       Learn why KickAir is the best platform for freelancing
@@ -308,7 +318,7 @@ export default function MainNavbar() {
             </Box>
 
             {/* For Freelancers ▾ */}
-            <Box sx={{ position: "relative" }}>
+            <Box sx={{ position: "relative" }} onMouseEnter={() => setActiveDropdown("freelancer")}>
               <Button
                 endIcon={
                   <KeyboardArrowDownIcon
@@ -319,7 +329,6 @@ export default function MainNavbar() {
                     }}
                   />
                 }
-                onMouseEnter={() => setActiveDropdown("freelancer")}
                 aria-haspopup='true'
                 aria-expanded={activeDropdown === "freelancer"}
                 sx={navBtnSx}>
@@ -327,9 +336,7 @@ export default function MainNavbar() {
               </Button>
 
               {activeDropdown === "freelancer" && (
-                <Box
-                  onMouseLeave={() => setActiveDropdown(null)}
-                  sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
+                <Box sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
                   <Box sx={{ p: 3 }}>
                     <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
                       Learn, earn, and grow your freelance career
@@ -362,7 +369,7 @@ export default function MainNavbar() {
             </Box>
 
             {/* For Clients ▾ */}
-            <Box sx={{ position: "relative" }}>
+            <Box sx={{ position: "relative" }} onMouseEnter={() => setActiveDropdown("client")}>
               <Button
                 endIcon={
                   <KeyboardArrowDownIcon
@@ -373,7 +380,6 @@ export default function MainNavbar() {
                     }}
                   />
                 }
-                onMouseEnter={() => setActiveDropdown("client")}
                 aria-haspopup='true'
                 aria-expanded={activeDropdown === "client"}
                 sx={navBtnSx}>
@@ -381,9 +387,7 @@ export default function MainNavbar() {
               </Button>
 
               {activeDropdown === "client" && (
-                <Box
-                  onMouseLeave={() => setActiveDropdown(null)}
-                  sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
+                <Box sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
                   <Box sx={{ p: 3 }}>
                     <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
                       Get work done with trusted freelancers
@@ -421,7 +425,6 @@ export default function MainNavbar() {
                 </Box>
               )}
             </Box>
-
           </Box>
 
           {/* ── Right Side: Language + Auth ──────────────────────────────────────── */}
@@ -485,175 +488,179 @@ export default function MainNavbar() {
                 <NotificationBell />
                 {/* Profile dropdown */}
                 <Box sx={{ position: "relative" }}>
-                <Button
-                  onClick={() => handleDropdownToggle("profile")}
-                  aria-haspopup='menu'
-                  aria-expanded={activeDropdown === "profile"}
-                  aria-label='Profile menu'
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 1.5,
-                    height: 44,
-                    fontSize: 12,
-                    color: "rgba(0,0,0,0.8)",
-                    textTransform: "none",
-                    "&:hover": { color: "black", bgcolor: "transparent" },
-                  }}>
-                  <Avatar src={profileImageSrc} alt={user.name} sx={{ width: 24, height: 24 }}>
-                    {!profileImageSrc && user.name?.charAt(0).toUpperCase()}
-                  </Avatar>
-                  <span>{user.name}</span>
-                  <KeyboardArrowDownIcon
+                  <Button
+                    onClick={() => handleDropdownToggle("profile")}
+                    aria-haspopup='menu'
+                    aria-expanded={activeDropdown === "profile"}
+                    aria-label='Profile menu'
                     sx={{
-                      fontSize: 14,
-                      opacity: 0.6,
-                      transition: "transform 0.2s",
-                      transform: activeDropdown === "profile" ? "rotate(180deg)" : "none",
-                    }}
-                  />
-                </Button>
-
-                {activeDropdown === "profile" && (
-                  <Box
-                    role='menu'
-                    sx={{
-                      ...dropdownPanelSx,
-                      width: 260,
-                      right: 0,
-                      mt: 1,
-                      borderRadius: 1.5,
-                      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 1,
+                      px: 1.5,
+                      height: 44,
+                      fontSize: 12,
+                      color: "rgba(0,0,0,0.8)",
+                      textTransform: "none",
+                      "&:hover": { color: "black", bgcolor: "transparent" },
                     }}>
-                    {/* Profile header */}
-                    <Box sx={{ p: 1.5, borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 1 }}>
-                        <Avatar src={profileImageSrc} alt={user.name} sx={{ width: 40, height: 40 }}>
-                          {!profileImageSrc && user.name?.charAt(0).toUpperCase()}
-                        </Avatar>
-                        <Box>
-                          <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{user.name}</Typography>
-                          <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", textTransform: "capitalize" }}>
-                            {currentMode} mode
-                          </Typography>
+                    <Avatar src={profileImageSrc} alt={user.name} sx={{ width: 24, height: 24 }}>
+                      {!profileImageSrc && user.name?.charAt(0).toUpperCase()}
+                    </Avatar>
+                    <span>{user.name}</span>
+                    <KeyboardArrowDownIcon
+                      sx={{
+                        fontSize: 14,
+                        opacity: 0.6,
+                        transition: "transform 0.2s",
+                        transform: activeDropdown === "profile" ? "rotate(180deg)" : "none",
+                      }}
+                    />
+                  </Button>
+
+                  {activeDropdown === "profile" && (
+                    <Box
+                      role='menu'
+                      sx={{
+                        ...dropdownPanelSx,
+                        width: 360,
+                        right: 0,
+                        mt: 1,
+                        borderRadius: 1.5,
+                        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                      }}>
+                      {/* Profile header */}
+                      <Box sx={{ p: 1.5, borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 1 }}>
+                          <Avatar src={profileImageSrc} alt={user.name} sx={{ width: 40, height: 40 }}>
+                            {!profileImageSrc && user.name?.charAt(0).toUpperCase()}
+                          </Avatar>
+                          <Box>
+                            <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{user.name}</Typography>
+                            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", textTransform: "capitalize" }}>
+                              {currentMode} mode
+                            </Typography>
+                          </Box>
                         </Box>
                       </Box>
-                    </Box>
 
-                    {/* Mode switcher */}
-                    <Box sx={{ p: 2, borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-                      <Typography
-                        sx={{
-                          fontSize: 11,
-                          color: "rgba(0,0,0,0.6)",
-                          textTransform: "uppercase",
-                          letterSpacing: "0.05em",
-                          mb: 1,
-                        }}>
-                        Mode
-                      </Typography>
-                      <Box sx={{ display: "flex", gap: 1 }}>
-                        {(["freelancer", "client"] as const).map(mode => {
-                          const hasRole = mode === "freelancer" ? isFreelancer : isClient;
-                          // For a role the user doesn't have yet, the button doubles as the
-                          // "Start selling / Start hiring" CTA that opens the enable-role dialog.
-                          const label = hasRole
-                            ? mode.charAt(0).toUpperCase() + mode.slice(1)
-                            : mode === "freelancer" ? "Start selling" : "Start hiring";
-                          return (
-                            <Button
-                              key={mode}
-                              onClick={() => handleModeSwitch(mode)}
-                              sx={{
-                                flex: 1,
-                                px: 1.5,
-                                py: 1,
-                                fontSize: 12,
-                                borderRadius: 2,
-                                textTransform: "none",
-                                bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
-                                color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
-                                "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
-                              }}>
-                              {label}
-                            </Button>
-                          );
-                        })}
+                      {/* Mode switcher */}
+                      <Box sx={{ p: 2, borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                        <Typography
+                          sx={{
+                            fontSize: 11,
+                            color: "rgba(0,0,0,0.6)",
+                            textTransform: "uppercase",
+                            letterSpacing: "0.05em",
+                            mb: 1,
+                          }}>
+                          Mode
+                        </Typography>
+                        <Box sx={{ display: "flex", gap: 1 }}>
+                          {(["freelancer", "client"] as const).map(mode => {
+                            const hasRole = mode === "freelancer" ? isFreelancer : isClient;
+                            // For a role the user doesn't have yet, the button doubles as the
+                            // "Start selling / Start hiring" CTA that opens the enable-role dialog.
+                            const label = hasRole
+                              ? mode.charAt(0).toUpperCase() + mode.slice(1)
+                              : mode === "freelancer"
+                                ? "Become freelancer"
+                                : "Become a client";
+                            return (
+                              <Button
+                                key={mode}
+                                onClick={() => handleModeSwitch(mode)}
+                                sx={{
+                                  flex: 1,
+                                  px: 1.5,
+                                  py: 1,
+                                  fontSize: 12,
+                                  borderRadius: 2,
+                                  textTransform: "none",
+                                  bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
+                                  color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
+                                  "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
+                                }}>
+                                {label}
+                              </Button>
+                            );
+                          })}
+                        </Box>
                       </Box>
-                    </Box>
 
-                    {/* Menu items */}
-                    <Box role='group' sx={{ py: 1 }}>
-                      {[
-                        ...(user?.is_admin
-                          ? [{
-                              href: "/admin",
-                              icon: <ShieldIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
-                              label: "Go to Admin Dashboard",
-                            }]
-                          : []),
-                        {
-                          href: currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client",
-                          icon: <BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
-                          label: currentMode === "freelancer" ? "Freelancer Space" : "Client Space",
-                        },
-                        {
-                          href: "/settings",
-                          icon: <SettingsIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
-                          label: "Settings",
-                        },
-                        {
-                          href: "/help",
-                          icon: <HelpOutline sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
-                          label: "Help & Support",
-                        },
-                      ].map(item => (
+                      {/* Menu items */}
+                      <Box role='group' sx={{ py: 1 }}>
+                        {[
+                          ...(user?.is_admin
+                            ? [
+                                {
+                                  href: "/admin",
+                                  icon: <ShieldIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                                  label: "Go to Admin Dashboard",
+                                },
+                              ]
+                            : []),
+                          {
+                            href: currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client",
+                            icon: <BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                            label: currentMode === "freelancer" ? "Freelancer Space" : "Client Space",
+                          },
+                          {
+                            href: "/settings",
+                            icon: <SettingsIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                            label: "Settings",
+                          },
+                          {
+                            href: "/help",
+                            icon: <HelpOutline sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                            label: "Help & Support",
+                          },
+                        ].map(item => (
+                          <Button
+                            key={item.href}
+                            role='menuitem'
+                            component={Link as React.ElementType}
+                            href={item.href}
+                            onClick={() => setActiveDropdown(null)}
+                            sx={{
+                              width: "100%",
+                              justifyContent: "flex-start",
+                              px: 2,
+                              py: 1.25,
+                              fontSize: 12,
+                              color: "black",
+                              textTransform: "none",
+                              "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                            }}>
+                            {item.icon}
+                            {item.label}
+                          </Button>
+                        ))}
+                      </Box>
+
+                      {/* Logout */}
+                      <Box sx={{ borderTop: "1px solid rgba(0,0,0,0.08)", p: 1 }}>
                         <Button
-                          key={item.href}
                           role='menuitem'
-                          component={Link as React.ElementType}
-                          href={item.href}
-                          onClick={() => setActiveDropdown(null)}
+                          onClick={handleLogout}
                           sx={{
                             width: "100%",
                             justifyContent: "flex-start",
                             px: 2,
                             py: 1.25,
                             fontSize: 12,
-                            color: "black",
+                            color: "#dc2626",
+                            borderRadius: 1,
                             textTransform: "none",
-                            "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
+                            "&:hover": { bgcolor: "#fef2f2" },
                           }}>
-                          {item.icon}
-                          {item.label}
+                          <Logout sx={{ fontSize: 14, mr: 1 }} />
+                          Logout
                         </Button>
-                      ))}
+                      </Box>
                     </Box>
-
-                    {/* Logout */}
-                    <Box sx={{ borderTop: "1px solid rgba(0,0,0,0.08)", p: 1 }}>
-                      <Button
-                        role='menuitem'
-                        onClick={handleLogout}
-                        sx={{
-                          width: "100%",
-                          justifyContent: "flex-start",
-                          px: 2,
-                          py: 1.25,
-                          fontSize: 12,
-                          color: "#dc2626",
-                          borderRadius: 1,
-                          textTransform: "none",
-                          "&:hover": { bgcolor: "#fef2f2" },
-                        }}>
-                        <Logout sx={{ fontSize: 14, mr: 1 }} />
-                        Logout
-                      </Button>
-                    </Box>
-                  </Box>
-                )}
-              </Box>
+                  )}
+                </Box>
               </>
             ) : (
               // Not logged in
@@ -738,7 +745,13 @@ export default function MainNavbar() {
                 borderRadius: 2,
                 "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
               }}>
-              {profileDialogLoading ? <CircularProgress size={16} sx={{ color: "white" }} /> : profileDialogType === "freelancer" ? "Start selling" : "Start hiring"}
+              {profileDialogLoading ? (
+                <CircularProgress size={16} sx={{ color: "white" }} />
+              ) : profileDialogType === "freelancer" ? (
+                "Start selling"
+              ) : (
+                "Start hiring"
+              )}
             </Button>
           </DialogActions>
         </Dialog>
