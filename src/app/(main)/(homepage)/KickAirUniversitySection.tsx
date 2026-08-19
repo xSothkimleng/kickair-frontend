@@ -1,85 +1,83 @@
-import { Box, Typography, Button, Chip } from "@mui/material";
-import { MenuBook as BookOpenIcon, ArrowForward } from "@mui/icons-material";
+import { BookOpen, ArrowRight } from "lucide-react";
+import { css } from "styled-system/css";
+import { Box } from "styled-system/jsx";
+
+// Solid white pill CTA on the blue gradient (marketing-specific — not the shared Button recipe).
+const ctaSolid = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "2",
+  px: "8",
+  py: "3.5",
+  borderRadius: "pill",
+  borderWidth: "0",
+  bg: "white",
+  color: "accent",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
+  transition: "background-color .15s",
+  _hover: { bg: "rgba(255, 255, 255, 0.9)" },
+});
+
+const badgePill = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "1.5",
+  borderRadius: "pill",
+  bg: "rgba(255, 255, 255, 0.2)",
+  backdropFilter: "blur(8px)",
+  color: "white",
+  fontSize: "11px",
+  fontWeight: 600,
+  py: "1",
+  px: "3",
+  mb: "6",
+});
 
 export default function KickAirUniversitySection() {
   return (
     <Box
-      component="section"
-      sx={{
-        background: "linear-gradient(to bottom right, #0071e3, #0077ed)",
-        py: { xs: 6, md: 10 },
-      }}
+      as="section"
+      bg="linear-gradient(to bottom right, #0071e3, #0077ed)"
+      py={{ base: "12", md: "20" }}
     >
-      <Box
-        sx={{
-          maxWidth: "1200px",
-          mx: "auto",
-          px: { xs: 3, sm: 6 },
-          textAlign: "center",
-          color: "white",
-        }}
-      >
-        <Chip
-          icon={<BookOpenIcon sx={{ fontSize: 14, color: "white" }} />}
-          label="FREE EDUCATION"
-          sx={{
-            bgcolor: "rgba(255, 255, 255, 0.2)",
-            backdropFilter: "blur(8px)",
-            color: "white",
-            fontSize: "11px",
-            fontWeight: 600,
-            height: "auto",
-            py: 0.5,
-            px: 1.5,
-            mb: 3,
-            "& .MuiChip-label": { px: 1 },
-            "& .MuiChip-icon": { ml: 0.5 },
-          }}
-        />
-        <Typography
-          component="h2"
-          sx={{
-            fontSize: { xs: "28px", md: "40px" },
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }} textAlign="center" color="white">
+        <span className={badgePill}>
+          <BookOpen size={14} color="white" />
+          FREE EDUCATION
+        </span>
+        <Box
+          as="h2"
+          className={css({
+            fontSize: { base: "28px", md: "40px" },
             fontWeight: 600,
             letterSpacing: "-0.02em",
-            mb: 2,
-          }}
+            mb: "4",
+          })}
         >
           KickAir University
-        </Typography>
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 4 }}>
-          <Typography
-            sx={{
-              fontSize: { xs: "16px", md: "19px" },
+        </Box>
+        <Box display="flex" justifyContent="center" mb="8">
+          <Box
+            as="p"
+            className={css({
+              fontSize: { base: "16px", md: "19px" },
               color: "rgba(255, 255, 255, 0.8)",
-              maxWidth: "672px",
+              maxW: "672px",
               mx: "auto",
-            }}
+            })}
           >
             Master freelancing with free courses on pricing, client management, marketing, and more
-          </Typography>
+          </Box>
         </Box>
-        <Button
-          //   onClick={() => onNavigate("university")}
-          variant="contained"
-          endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
-          sx={{
-            px: 4,
-            py: 1.75,
-            bgcolor: "white",
-            color: "#0071e3",
-            borderRadius: "50px",
-            fontSize: "15px",
-            fontWeight: 600,
-            textTransform: "none",
-            boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
-            "&:hover": {
-              bgcolor: "rgba(255, 255, 255, 0.9)",
-            },
-          }}
-        >
+        <button className={ctaSolid}>
           Start Learning Free
-        </Button>
+          <ArrowRight size={16} />
+        </button>
       </Box>
     </Box>
   );

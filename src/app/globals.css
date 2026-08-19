@@ -1,3 +1,9 @@
+/* Layer order for MUI (Emotion, via enableCssLayer) + Panda CSS coexistence
+   during the MUI→Panda migration. Panda's recipes/utilities are declared after
+   `mui` so a migrated component's styles win in any (rare) overlap. The Panda
+   PostCSS plugin emits generated CSS into these layers. */
+@layer reset, base, tokens, mui, recipes, utilities;
+
 /* :root {
   --background: #ffffff;
   --foreground: #171717;

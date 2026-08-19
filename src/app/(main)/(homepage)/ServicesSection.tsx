@@ -1,5 +1,6 @@
-import { Box, Typography, Button, Grid, Container } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import { ArrowRight } from "lucide-react";
+import { css } from "styled-system/css";
+import { Box, Grid } from "styled-system/jsx";
 import { ServiceCard } from "@/components/layout/card/ServiceCard";
 
 interface ServicesSectionProps {
@@ -11,81 +12,82 @@ interface ServicesSectionProps {
   }>;
 }
 
+// "View All" pill — white surface, hairline border, accent on hover.
+const viewAllBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "2",
+  px: "8",
+  py: "3.5",
+  bg: "surface",
+  color: "ink",
+  borderRadius: "pill",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  borderColor: "rgba(0, 0, 0, 0.1)",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+  transition: "color .15s, border-color .15s",
+  _hover: { borderColor: "accent", color: "accent" },
+});
+
 export default function ServicesSection({ serviceCategories }: ServicesSectionProps) {
   return (
-    <Box
-      component="section"
-      sx={{
-        bgcolor: "#F5F5F7",
-      }}
-    >
-      <Container sx={{ mx: "auto", px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
+    <Box as="section" bg="canvas">
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }} py={{ base: "12", md: "20" }}>
         {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 6 }}>
-          <Typography
-            component="h2"
-            sx={{
-              fontSize: { xs: "28px", md: "40px" },
+        <Box textAlign="center" mb="12">
+          <Box
+            as="h2"
+            className={css({
+              fontSize: { base: "28px", md: "40px" },
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.02em",
-              mb: 1.5,
-            }}
+              mb: "3",
+            })}
           >
             Browse Services
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: "16px", md: "19px" },
-              color: "rgba(0, 0, 0, 0.6)",
-            }}
+          </Box>
+          <Box
+            as="p"
+            className={css({
+              fontSize: { base: "16px", md: "19px" },
+              color: "ink2",
+            })}
           >
             Click any category to find the perfect freelancer
-          </Typography>
+          </Box>
         </Box>
 
         {/* Service Cards Grid - Show only first 6 */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid columns={{ base: 1, sm: 2, md: 3 }} gap="6" mb="8">
           {serviceCategories.slice(0, 6).map((category) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={category.id}>
-              <ServiceCard
-                name={category.name}
-                description={category.description}
-                icon={category.icon}
-                //   onClick={() => onNavigate("services", { category: category.id })}
-              />
-            </Grid>
+            <ServiceCard
+              key={category.id}
+              name={category.name}
+              description={category.description}
+              icon={category.icon}
+              //   onClick={() => onNavigate("services", { category: category.id })}
+            />
           ))}
         </Grid>
 
         {/* View All Services Button */}
-        <Box sx={{ textAlign: "center" }}>
-          <Button
+        <Box textAlign="center">
+          <button
+            type="button"
             //   onClick={() => onNavigate("services")}
-            variant="outlined"
-            endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
-            sx={{
-              px: 4,
-              py: 1.75,
-              bgcolor: "white",
-              border: "2px solid rgba(0, 0, 0, 0.1)",
-              color: "black",
-              borderRadius: "50px",
-              fontSize: "15px",
-              fontWeight: 600,
-              textTransform: "none",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              "&:hover": {
-                border: "2px solid #0071e3",
-                color: "#0071e3",
-                bgcolor: "white",
-              },
-            }}
+            className={viewAllBtn}
           >
             View All {serviceCategories.length} Services
-          </Button>
+            <ArrowRight size={16} />
+          </button>
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 }

@@ -1,9 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, Button } from "@mui/material";
-import { CheckCircle } from "@mui/icons-material";
-import { SearchInput } from "@/components/ui/inputs";
+import { Search, X, CheckCircle } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Box, Flex, Wrap } from "styled-system/jsx";
+
+// Pill search-submit button (marketing-specific — not the shared Button recipe).
+const searchBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  px: "6",
+  py: "2.5",
+  bg: "accent",
+  color: "white",
+  borderRadius: "pill",
+  borderWidth: "0",
+  fontSize: "13px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "background-color .15s",
+  _hover: { bg: "accentHover" },
+});
+
+// Bespoke pill CTAs (match FinalCTASection, sized to the hero).
+const ctaBase = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minW: "200px",
+  px: "8",
+  py: "3.5",
+  borderRadius: "pill",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "background-color .15s, color .15s, border-color .15s",
+});
+const ctaSolid = cx(
+  ctaBase,
+  css({
+    bg: "accent",
+    color: "white",
+    borderColor: "accent",
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+    _hover: { bg: "accentHover", borderColor: "accentHover" },
+  })
+);
+const ctaOutline = cx(
+  ctaBase,
+  css({
+    bg: "transparent",
+    color: "accent",
+    borderColor: "accent",
+    _hover: { bg: "accent", color: "white" },
+  })
+);
 
 export default function HeroSection() {
   const [searchQuery, setSearchQuery] = useState("");
@@ -14,186 +71,165 @@ export default function HeroSection() {
 
   return (
     <Box
-      component="section"
-      sx={{
-        bgcolor: "#F5F5F7",
-        mx: "auto",
-        px: { xs: 3, sm: 6 },
-        pt: { xs: 8, md: 12 },
-        pb: { xs: 12, md: 16 },
-        textAlign: "center",
-      }}
+      as="section"
+      bg="canvas"
+      mx="auto"
+      px={{ base: "6", sm: "12" }}
+      pt={{ base: "16", md: "24" }}
+      pb={{ base: "24", md: "32" }}
+      textAlign="center"
     >
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
+      <Flex direction="column" gap="8">
         {/* Hero Text */}
-        <Box sx={{ display: "flex", justifyContent: "center", flexDirection: "column", gap: 2 }}>
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: "32px", sm: "48px", md: "72px" },
+        <Flex justify="center" direction="column" gap="4">
+          <Box
+            as="h1"
+            className={css({
+              fontSize: { base: "32px", sm: "48px", md: "72px" },
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.02em",
               lineHeight: 1.05,
-            }}
+            })}
           >
-            Hire Cambodia's
+            Hire Cambodia&apos;s
             <br />
             Top Freelance Talent.
-          </Typography>
-          <div style={{ display: "flex", justifyContent: "center" }}>
-            <Typography
-              sx={{
-                fontSize: { xs: "21px", md: "24px" },
-                color: "rgba(0, 0, 0, 0.6)",
-                maxWidth: "740px",
+          </Box>
+          <Flex justify="center">
+            <Box
+              as="p"
+              className={css({
+                fontSize: { base: "21px", md: "24px" },
+                color: "ink2",
+                maxW: "740px",
                 mx: "auto",
                 lineHeight: 1.4,
-              }}
+              })}
             >
               Work with skilled professionals at transparent prices. Browse ready-to-buy services or hire freelancers for your next project.
-            </Typography>
-          </div>
-        </Box>
+            </Box>
+          </Flex>
+        </Flex>
 
         {/* Search Bar */}
-        <Box sx={{ maxWidth: "768px", mx: "auto", width: "100%" }}>
-          <Box
-            component="form"
-            onSubmit={(e) => { e.preventDefault(); handleSearch(); }}
-            sx={{ display: "flex", alignItems: "stretch", gap: 1.5 }}
+        <Box maxW="768px" mx="auto" w="100%">
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSearch();
+            }}
+            className={css({ display: "flex", alignItems: "stretch", gap: "3" })}
           >
-            <Box sx={{ flex: 1 }}>
-              <SearchInput
-                placeholder="Search for any service..."
+            <Box position="relative" flex="1" display="flex" alignItems="center">
+              <Box
+                position="absolute"
+                left="3.5"
+                display="inline-flex"
+                color="muted"
+                pointerEvents="none"
+              >
+                <Search size={18} />
+              </Box>
+              <input
+                type="search"
                 value={searchQuery}
-                onChange={setSearchQuery}
-                onEnter={handleSearch}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") handleSearch();
+                }}
+                placeholder="Search for any service..."
+                className={css({
+                  w: "full",
+                  h: "46px",
+                  pl: "10",
+                  pr: searchQuery ? "10" : "3.5",
+                  bg: "field",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: "border",
+                  borderRadius: "input",
+                  fontSize: "15px",
+                  fontFamily: "inherit",
+                  color: "heading",
+                  outline: "none",
+                  transition: "border-color .15s, box-shadow .15s",
+                  _placeholder: { color: "placeholder" },
+                  _hover: { borderColor: "borderStrong" },
+                  _focus: { borderColor: "accent", boxShadow: "focusRing" },
+                })}
               />
+              {searchQuery && (
+                <button
+                  type="button"
+                  aria-label="Clear search"
+                  onClick={() => setSearchQuery("")}
+                  className={css({
+                    position: "absolute",
+                    right: "3",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    color: "muted",
+                    bg: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    p: "1",
+                    _hover: { color: "body" },
+                  })}
+                >
+                  <X size={16} />
+                </button>
+              )}
             </Box>
-            <Button
-              type="submit"
-              variant="contained"
-              sx={{
-                px: 3,
-                py: 1.25,
-                bgcolor: "#0071e3",
-                color: "white",
-                borderRadius: "50px",
-                fontSize: "13px",
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: "none",
-                flexShrink: 0,
-                "&:hover": {
-                  bgcolor: "#0077ed",
-                  boxShadow: "none",
-                },
-              }}
-            >
+            <button type="submit" className={searchBtn}>
               Search
-            </Button>
-          </Box>
-          <Typography
-            sx={{
-              marginTop: "10px !important",
+            </button>
+          </form>
+          <Box
+            as="p"
+            className={css({
+              mt: "2.5",
               fontSize: "13px",
               color: "rgba(0, 0, 0, 0.5)",
-            }}
+            })}
           >
             Popular: Web Design, Logo Design, WordPress, Mobile App, Video Editing
-          </Typography>
+          </Box>
         </Box>
 
         {/* CTA Buttons */}
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 2,
-            pt: 2,
-          }}
-        >
-          <Button
-            // onClick={() => onNavigate("services")}
-            variant="contained"
-            sx={{
-              px: 4,
-              py: 1.75,
-              bgcolor: "#0071e3",
-              color: "white",
-              borderRadius: "50px",
-              minWidth: "200px",
-              fontSize: "15px",
-              fontWeight: 600,
-              textTransform: "none",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              "&:hover": {
-                bgcolor: "#0077ed",
-              },
-            }}
-          >
+        <Flex direction={{ base: "column", sm: "row" }} align="center" justify="center" gap="4" pt="4">
+          <button type="button" className={ctaSolid}>
             Explore Freelancers
-          </Button>
-          <Button
-            // onClick={() => onNavigate("register")}
-            variant="outlined"
-            sx={{
-              px: 4,
-              py: 1.75,
-              border: "2px solid #0071e3",
-              color: "#0071e3",
-              borderRadius: "50px",
-              minWidth: "200px",
-              fontSize: "15px",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                border: "2px solid #0071e3",
-                bgcolor: "#0071e3",
-                color: "white",
-              },
-            }}
-          >
+          </button>
+          <button type="button" className={ctaOutline}>
             Become a Freelancer
-          </Button>
-        </Box>
+          </button>
+        </Flex>
 
         {/* Trust Indicators */}
-        <Box
-          sx={{
-            display: "flex",
-            flexWrap: "wrap",
-            alignItems: "center",
-            justifyContent: "center",
-            gap: 4,
-            pt: 4,
-            fontSize: "13px",
-            color: "rgba(0, 0, 0, 0.6)",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CheckCircle sx={{ fontSize: 16, color: "#0071e3" }} />
-            <Typography component="span" sx={{ fontSize: "13px" }}>
+        <Wrap align="center" justify="center" gap="8" pt="8">
+          <Flex align="center" gap="2">
+            <CheckCircle size={16} color="#0071e3" />
+            <Box as="span" className={css({ fontSize: "13px", color: "ink2" })}>
               15,000+ Active Freelancers
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CheckCircle sx={{ fontSize: 16, color: "#0071e3" }} />
-            <Typography component="span" sx={{ fontSize: "13px" }}>
+            </Box>
+          </Flex>
+          <Flex align="center" gap="2">
+            <CheckCircle size={16} color="#0071e3" />
+            <Box as="span" className={css({ fontSize: "13px", color: "ink2" })}>
               50,000+ Projects Completed
-            </Typography>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <CheckCircle sx={{ fontSize: 16, color: "#0071e3" }} />
-            <Typography component="span" sx={{ fontSize: "13px" }}>
+            </Box>
+          </Flex>
+          <Flex align="center" gap="2">
+            <CheckCircle size={16} color="#0071e3" />
+            <Box as="span" className={css({ fontSize: "13px", color: "ink2" })}>
               4.9/5 Average Rating
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+            </Box>
+          </Flex>
+        </Wrap>
+      </Flex>
     </Box>
   );
 }

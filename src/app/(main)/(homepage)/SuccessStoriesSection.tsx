@@ -1,5 +1,34 @@
-import { Box, Typography, Grid, Chip, Button } from "@mui/material";
-import { TrendingUp, CheckCircle } from "@mui/icons-material";
+import { TrendingUp, CheckCircle } from "lucide-react";
+import { css } from "styled-system/css";
+import { Box, Flex, Grid } from "styled-system/jsx";
+
+// Small "eyebrow" chip — icon + uppercase label on a faint neutral fill.
+const chip = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "1.5",
+  px: "3",
+  py: "1",
+  mb: "4",
+  borderRadius: "pill",
+  bg: "rgba(0, 0, 0, 0.05)",
+  color: "ink2",
+  fontSize: "11px",
+  fontWeight: 600,
+});
+
+// Text-only link button ("Read Full Story →"), underline on hover.
+const storyLink = css({
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "accent",
+  bg: "transparent",
+  border: "none",
+  p: "0",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  _hover: { textDecoration: "underline" },
+});
 
 export default function SuccessStoriesSection() {
   const stories = [
@@ -30,135 +59,82 @@ export default function SuccessStoriesSection() {
   ];
 
   return (
-    <Box
-      component='section'
-      sx={{
-        bgcolor: "white",
-        py: { xs: 6, md: 10 },
-      }}>
-      <Box
-        sx={{
-          maxWidth: "1200px",
-          mx: "auto",
-          px: { xs: 3, sm: 6 },
-        }}>
+    <Box as="section" bg="surface" py={{ base: "12", md: "20" }}>
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }}>
         {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 6 }}>
-          <Chip
-            icon={<TrendingUp sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)" }} />}
-            label='SUCCESS STORIES'
-            sx={{
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              color: "rgba(0, 0, 0, 0.6)",
-              fontSize: "11px",
+        <Box textAlign="center" mb="12">
+          <Box as="span" className={chip}>
+            <TrendingUp size={14} />
+            SUCCESS STORIES
+          </Box>
+          <Box
+            as="h2"
+            className={css({
+              fontSize: { base: "28px", md: "40px" },
               fontWeight: 600,
-              height: "auto",
-              py: 0.5,
-              px: 1.5,
-              mb: 2,
-              "& .MuiChip-label": { px: 1 },
-              "& .MuiChip-icon": { ml: 0.5 },
-            }}
-          />
-          <Typography
-            component='h2'
-            sx={{
-              fontSize: { xs: "28px", md: "40px" },
-              fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.02em",
-              mb: 1.5,
-            }}>
+              mb: "3",
+            })}
+          >
             Made on KickAir
-          </Typography>
-          <Typography sx={{ fontSize: { xs: "16px", md: "19px" }, color: "rgba(0, 0, 0, 0.6)" }}>Real brands, real results, real success</Typography>
+          </Box>
+          <Box as="p" className={css({ fontSize: { base: "16px", md: "19px" }, color: "ink2" })}>
+            Real brands, real results, real success
+          </Box>
         </Box>
 
         {/* Story Cards */}
-        <Grid container spacing={4}>
+        <Grid columns={{ base: 1, sm: 2, md: 3 }} gap="8">
           {stories.map((story, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+            <Box
+              key={index}
+              bg="canvas"
+              borderRadius="card"
+              overflow="hidden"
+              borderWidth="1px"
+              borderStyle="solid"
+              borderColor="hairline"
+              transition="box-shadow 0.3s ease"
+              _hover={{ boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)" }}
+            >
               <Box
-                sx={{
-                  bgcolor: "#F5F5F7",
-                  borderRadius: "16px",
-                  overflow: "hidden",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
-                  transition: "box-shadow 0.3s ease",
-                  "&:hover": {
-                    boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-                  },
-                }}>
-                <Box
-                  sx={{
-                    height: 192,
-                    background: story.gradient,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                  }}>
-                  <Typography
-                    sx={{
-                      fontSize: "32px",
-                      fontWeight: 700,
-                      color: story.textColor,
-                    }}>
-                    {story.name}
-                  </Typography>
-                </Box>
-                <Box sx={{ p: 3 }}>
-                  <Typography
-                    sx={{
-                      fontSize: "19px",
-                      fontWeight: 600,
-                      color: "black",
-                      mb: 1,
-                    }}>
-                    {story.title}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "13px",
-                      color: "rgba(0, 0, 0, 0.6)",
-                      mb: 2,
-                      lineHeight: 1.6,
-                    }}>
-                    {story.description}
-                  </Typography>
-                  <Box sx={{ mb: 2 }}>
-                    {story.services.map((service, idx) => (
-                      <Box
-                        key={idx}
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1,
-                          mb: 1,
-                        }}>
-                        <CheckCircle sx={{ fontSize: 14, color: "#0071e3" }} />
-                        <Typography sx={{ fontSize: "12px", color: "rgba(0, 0, 0, 0.7)" }}>{service}</Typography>
-                      </Box>
-                    ))}
-                  </Box>
-                  <Button
-                    // onClick={() => onNavigate("why-kickair", { scrollTo: "success-stories" })}
-                    sx={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "#0071e3",
-                      textTransform: "none",
-                      p: 0,
-                      minWidth: "auto",
-                      "&:hover": {
-                        bgcolor: "transparent",
-                        textDecoration: "underline",
-                      },
-                    }}>
-                    Read Full Story →
-                  </Button>
+                h="192px"
+                display="flex"
+                alignItems="center"
+                justifyContent="center"
+                style={{ background: story.gradient }}
+              >
+                <Box as="span" className={css({ fontSize: "32px", fontWeight: 700 })} style={{ color: story.textColor }}>
+                  {story.name}
                 </Box>
               </Box>
-            </Grid>
+              <Box p="6">
+                <Box as="h3" className={css({ fontSize: "19px", fontWeight: 600, color: "ink", mb: "2" })}>
+                  {story.title}
+                </Box>
+                <Box as="p" className={css({ fontSize: "13px", color: "ink2", mb: "4", lineHeight: 1.6 })}>
+                  {story.description}
+                </Box>
+                <Box mb="4">
+                  {story.services.map((service, idx) => (
+                    <Flex key={idx} align="center" gap="2" mb="2">
+                      <CheckCircle size={14} color="#0071e3" style={{ flexShrink: 0 }} />
+                      <Box as="span" className={css({ fontSize: "12px", color: "rgba(0, 0, 0, 0.7)" })}>
+                        {service}
+                      </Box>
+                    </Flex>
+                  ))}
+                </Box>
+                <button
+                  type="button"
+                  // onClick={() => onNavigate("why-kickair", { scrollTo: "success-stories" })}
+                  className={storyLink}
+                >
+                  Read Full Story →
+                </button>
+              </Box>
+            </Box>
           ))}
         </Grid>
       </Box>

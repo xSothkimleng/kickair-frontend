@@ -1,8 +1,89 @@
-import { Box, Typography, Grid, Button, Container } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import { ArrowRight } from "lucide-react";
+import { css } from "styled-system/css";
+import { Box, Grid } from "styled-system/jsx";
+
+// Bespoke outline pill CTA (marketing-specific — not the shared Button recipe).
+const ctaOutline = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "2",
+  px: "8",
+  py: "3.5",
+  borderRadius: "pill",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  borderColor: "accent",
+  bg: "transparent",
+  color: "accent",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "background-color .15s, color .15s, border-color .15s",
+  _hover: { bg: "accent", color: "white" },
+});
+
+const stepCircle = css({
+  flexShrink: 0,
+  w: "40px",
+  h: "40px",
+  borderRadius: "50%",
+  bg: "accent",
+  color: "white",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "15px",
+  fontWeight: 600,
+});
+
+type Step = { number: number; title: string; description: string };
+
+function StepColumn({ heading, steps }: { heading: string; steps: Step[] }) {
+  return (
+    <Box
+      bg="surface"
+      borderRadius="16px"
+      borderWidth="1px"
+      borderStyle="solid"
+      borderColor="hairline"
+      p="8"
+      boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
+    >
+      <Box
+        as="h3"
+        className={css({
+          fontSize: "24px",
+          fontWeight: 600,
+          color: "ink",
+          mb: "6",
+          textAlign: "center",
+        })}
+      >
+        {heading}
+      </Box>
+      <Box display="flex" flexDirection="column" gap="6">
+        {steps.map((step) => (
+          <Box key={step.number} display="flex" gap="4">
+            <Box className={stepCircle}>{step.number}</Box>
+            <Box>
+              <Box as="p" className={css({ fontSize: "15px", fontWeight: 600, color: "ink", mb: "1" })}>
+                {step.title}
+              </Box>
+              <Box as="p" className={css({ fontSize: "13px", color: "ink2", lineHeight: 1.6 })}>
+                {step.description}
+              </Box>
+            </Box>
+          </Box>
+        ))}
+      </Box>
+    </Box>
+  );
+}
 
 export default function HowItWorksSection() {
-  const clientSteps = [
+  const clientSteps: Step[] = [
     {
       number: 1,
       title: "Browse or Post",
@@ -20,7 +101,7 @@ export default function HowItWorksSection() {
     },
   ];
 
-  const freelancerSteps = [
+  const freelancerSteps: Step[] = [
     {
       number: 1,
       title: "Create Profile",
@@ -39,199 +120,41 @@ export default function HowItWorksSection() {
   ];
 
   return (
-    <Box component="section" sx={{ bgcolor: "#F5F5F7" }}>
-      <Container
-        sx={{
-          px: { xs: 3, sm: 6 },
-          py: { xs: 6, md: 10 },
-        }}
-      >
+    <Box as="section" bg="canvas">
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }} py={{ base: "12", md: "20" }}>
         {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 6 }}>
-          <Typography
-            component="h2"
-            sx={{
-              fontSize: { xs: "28px", md: "40px" },
+        <Box textAlign="center" mb="12">
+          <Box
+            as="h2"
+            className={css({
+              fontSize: { base: "28px", md: "40px" },
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.02em",
-              mb: 1.5,
-            }}
+              mb: "3",
+            })}
           >
             How It Works
-          </Typography>
-          <Typography sx={{ fontSize: { xs: "16px", md: "19px" }, color: "rgba(0, 0, 0, 0.6)" }}>Get started in minutes, hire in hours</Typography>
+          </Box>
+          <Box as="p" className={css({ fontSize: { base: "16px", md: "19px" }, color: "ink2" })}>
+            Get started in minutes, hire in hours
+          </Box>
         </Box>
 
         {/* Steps Grid */}
-        <Grid container spacing={{ xs: 3, md: 6 }} sx={{ mb: 6 }}>
-          {/* For Clients */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                bgcolor: "white",
-                borderRadius: "16px",
-                border: "1px solid rgba(0, 0, 0, 0.08)",
-                p: 4,
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <Typography
-                component="h3"
-                sx={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  color: "black",
-                  mb: 3,
-                  textAlign: "center",
-                }}
-              >
-                For Clients
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                {clientSteps.map((step) => (
-                  <Box key={step.number} sx={{ display: "flex", gap: 2 }}>
-                    <Box
-                      sx={{
-                        flexShrink: 0,
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        bgcolor: "#0071e3",
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "15px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {step.number}
-                    </Box>
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: "15px",
-                          fontWeight: 600,
-                          color: "black",
-                          mb: 0.5,
-                        }}
-                      >
-                        {step.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "13px",
-                          color: "rgba(0, 0, 0, 0.6)",
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {step.description}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </Grid>
-
-          {/* For Freelancers */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                bgcolor: "white",
-                borderRadius: "16px",
-                border: "1px solid rgba(0, 0, 0, 0.08)",
-                p: 4,
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              }}
-            >
-              <Typography
-                component="h3"
-                sx={{
-                  fontSize: "24px",
-                  fontWeight: 600,
-                  color: "black",
-                  mb: 3,
-                  textAlign: "center",
-                }}
-              >
-                For Freelancers
-              </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                {freelancerSteps.map((step) => (
-                  <Box key={step.number} sx={{ display: "flex", gap: 2 }}>
-                    <Box
-                      sx={{
-                        flexShrink: 0,
-                        width: 40,
-                        height: 40,
-                        borderRadius: "50%",
-                        bgcolor: "#0071e3",
-                        color: "white",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        fontSize: "15px",
-                        fontWeight: 600,
-                      }}
-                    >
-                      {step.number}
-                    </Box>
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: "15px",
-                          fontWeight: 600,
-                          color: "black",
-                          mb: 0.5,
-                        }}
-                      >
-                        {step.title}
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: "13px",
-                          color: "rgba(0, 0, 0, 0.6)",
-                          lineHeight: 1.6,
-                        }}
-                      >
-                        {step.description}
-                      </Typography>
-                    </Box>
-                  </Box>
-                ))}
-              </Box>
-            </Box>
-          </Grid>
+        <Grid columns={{ base: 1, md: 2 }} gap={{ base: "6", md: "12" }} mb="12">
+          <StepColumn heading="For Clients" steps={clientSteps} />
+          <StepColumn heading="For Freelancers" steps={freelancerSteps} />
         </Grid>
 
         {/* CTA Button */}
-        <Box sx={{ textAlign: "center" }}>
-          <Button
-            //   onClick={() => onNavigate("why-kickair", { scrollTo: "how-it-works" })}
-            variant="outlined"
-            endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
-            sx={{
-              px: 4,
-              py: 1.75,
-              border: "2px solid #0071e3",
-              color: "#0071e3",
-              borderRadius: "50px",
-              fontSize: "15px",
-              fontWeight: 600,
-              textTransform: "none",
-              "&:hover": {
-                border: "2px solid #0071e3",
-                bgcolor: "#0071e3",
-                color: "white",
-              },
-            }}
-          >
+        <Box textAlign="center">
+          <button className={ctaOutline}>
             Learn More About Our Process
-          </Button>
+            <ArrowRight size={16} />
+          </button>
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 }

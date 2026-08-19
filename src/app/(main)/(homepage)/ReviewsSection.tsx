@@ -1,5 +1,18 @@
-import { Box, Typography, Grid, Avatar, Button, Container } from "@mui/material";
-import { Star } from "@mui/icons-material";
+import { Star } from "lucide-react";
+import { css } from "styled-system/css";
+import { Box, Grid } from "styled-system/jsx";
+
+// Bespoke text CTA (marketing-specific — not the shared Button recipe).
+const readAllBtn = css({
+  bg: "transparent",
+  border: "none",
+  fontSize: "15px",
+  fontWeight: 600,
+  color: "accent",
+  fontFamily: "inherit",
+  cursor: "pointer",
+  _hover: { textDecoration: "underline" },
+});
 
 export default function ReviewsSection() {
   const reviews = [
@@ -21,89 +34,78 @@ export default function ReviewsSection() {
   ];
 
   return (
-    <Box component="section" sx={{ bgcolor: "#F5F5F7" }}>
-      <Container sx={{ maxWidth: "1200px", mx: "auto", px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
+    <Box as="section" bg="canvas">
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }} py={{ base: "12", md: "20" }}>
         {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 6 }}>
-          <Typography
-            component="h2"
-            sx={{
-              fontSize: { xs: "28px", md: "40px" },
+        <Box textAlign="center" mb="12">
+          <Box
+            as="h2"
+            className={css({
+              fontSize: { base: "28px", md: "40px" },
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.02em",
-              mb: 1.5,
-            }}
+              mb: "3",
+            })}
           >
             Trusted by Thousands
-          </Typography>
-          <Typography sx={{ fontSize: { xs: "16px", md: "19px" }, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>See what freelancers and clients are saying</Typography>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 4 }}>
+          </Box>
+          <Box as="p" className={css({ fontSize: { base: "16px", md: "19px" }, color: "ink2", mb: "6" })}>
+            See what freelancers and clients are saying
+          </Box>
+          <Box display="flex" alignItems="center" justifyContent="center" gap="2" mb="8">
             {[...Array(5)].map((_, i) => (
-              <Star key={i} sx={{ fontSize: 32, fill: "black", color: "black" }} />
+              <Star key={i} size={32} fill="black" color="black" />
             ))}
-            <Typography sx={{ fontSize: "28px", fontWeight: 600, color: "black", ml: 1.5 }}>4.9/5</Typography>
+            <Box as="span" className={css({ fontSize: "28px", fontWeight: 600, color: "ink", ml: "3" })}>
+              4.9/5
+            </Box>
           </Box>
         </Box>
 
         {/* Review Cards */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid columns={{ base: 1, sm: 2, md: 3 }} gap="6" mb="8">
           {reviews.map((review, index) => (
-            <Grid size={{ xs: 12, sm: 6, md: 4 }} key={index}>
+            <Box
+              key={index}
+              bg="surface"
+              borderRadius="16px"
+              borderWidth="1px"
+              borderStyle="solid"
+              borderColor="hairline"
+              p="6"
+              boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
+            >
+              <Box display="flex" alignItems="center" gap="1" mb="4">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} size={16} fill="black" color="black" />
+                ))}
+              </Box>
               <Box
-                sx={{
-                  bgcolor: "white",
-                  borderRadius: "16px",
-                  border: "1px solid rgba(0, 0, 0, 0.08)",
-                  p: 3,
-                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                }}
+                as="p"
+                className={css({ fontSize: "14px", color: "rgba(0, 0, 0, 0.8)", lineHeight: 1.6, mb: "4" })}
               >
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 2 }}>
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} sx={{ fontSize: 16, fill: "black", color: "black" }} />
-                  ))}
-                </Box>
-                <Typography
-                  sx={{
-                    fontSize: "14px",
-                    color: "rgba(0, 0, 0, 0.8)",
-                    lineHeight: 1.6,
-                    mb: 2,
-                  }}
-                >
-                  {review.text}
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Avatar sx={{ width: 40, height: 40, bgcolor: "rgba(0, 0, 0, 0.1)" }} />
-                  <Box>
-                    <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "black" }}>{review.name}</Typography>
-                    <Typography sx={{ fontSize: "11px", color: "rgba(0, 0, 0, 0.6)" }}>{review.role}</Typography>
+                {review.text}
+              </Box>
+              <Box display="flex" alignItems="center" gap="3">
+                <Box w="40px" h="40px" borderRadius="50%" bg="rgba(0, 0, 0, 0.1)" flexShrink={0} />
+                <Box>
+                  <Box as="p" className={css({ fontSize: "13px", fontWeight: 600, color: "ink" })}>
+                    {review.name}
+                  </Box>
+                  <Box as="p" className={css({ fontSize: "11px", color: "ink2" })}>
+                    {review.role}
                   </Box>
                 </Box>
               </Box>
-            </Grid>
+            </Box>
           ))}
         </Grid>
 
-        <Box sx={{ textAlign: "center" }}>
-          <Button
-            //   onClick={() => onNavigate("why-kickair", { scrollTo: "reviews" })}
-            sx={{
-              fontSize: "15px",
-              fontWeight: 600,
-              color: "#0071e3",
-              textTransform: "none",
-              "&:hover": {
-                bgcolor: "transparent",
-                textDecoration: "underline",
-              },
-            }}
-          >
-            Read All Reviews →
-          </Button>
+        <Box textAlign="center">
+          <button className={readAllBtn}>Read All Reviews →</button>
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 }

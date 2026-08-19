@@ -1,230 +1,183 @@
-import { Box, Typography, Button, Grid, Chip, Card, CardContent } from "@mui/material";
-import { BusinessCenter as BriefcaseIcon, CheckCircle, ArrowForward } from "@mui/icons-material";
+import { css } from "styled-system/css";
+import { Box, Grid } from "styled-system/jsx";
+import { Briefcase, CheckCircle2, ArrowRight } from "lucide-react";
+
+// Marketing pill CTA (matches FinalCTASection's bespoke pills — not the shared Button recipe).
+const ctaPill = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "2",
+  px: "8",
+  py: "3.5",
+  bg: "accent",
+  color: "white",
+  borderRadius: "pill",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  borderWidth: "0",
+  cursor: "pointer",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+  transition: "background-color .15s",
+  _hover: { bg: "accentHover" },
+});
+
+const tagChip = css({
+  display: "inline-flex",
+  alignItems: "center",
+  bg: "rgba(0, 0, 0, 0.05)",
+  color: "ink",
+  borderRadius: "pill",
+  px: "2.5",
+  height: "24px",
+  fontSize: "11px",
+  fontWeight: 500,
+  whiteSpace: "nowrap",
+});
+
+const jobs = [
+  {
+    title: "Senior Web Developer",
+    org: "Tech Startup • Full-time Remote",
+    pay: "$3,000/mo",
+    tags: ["React", "Node.js", "MongoDB"],
+  },
+  {
+    title: "UI/UX Designer",
+    org: "E-commerce Agency • Part-time",
+    pay: "$1,500/mo",
+    tags: ["Figma", "Adobe XD"],
+  },
+  {
+    title: "Content Writer",
+    org: "Marketing Firm • Part-time",
+    pay: "$800/mo",
+    tags: ["SEO", "Copywriting"],
+  },
+];
+
+const benefits = [
+  "Recurring monthly contracts with guaranteed income",
+  "Part-time and full-time remote opportunities",
+  "Work with international clients from your home",
+];
 
 export default function StableJobsSection() {
   return (
-    <Box
-      component='section'
-      sx={{
-        bgcolor: "white",
-        py: { xs: 6, md: 10 },
-      }}>
-      <Box
-        sx={{
-          maxWidth: "1200px",
-          mx: "auto",
-          px: { xs: 3, sm: 6 },
-        }}>
-        <Grid container spacing={{ xs: 4, md: 6 }} alignItems='center'>
+    <Box as="section" bg="white" py={{ base: "12", md: "20" }}>
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }}>
+        <Grid gridTemplateColumns={{ base: "1fr", md: "1fr 1fr" }} gap={{ base: "8", md: "12" }} alignItems="center">
           {/* Left Content */}
-          <Grid size={{ xs: 12, md: 6 }}>
+          <Box>
             {/* Badge */}
-            <Chip
-              icon={<BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.6)" }} />}
-              label='STABLE OPPORTUNITIES'
-              sx={{
-                bgcolor: "rgba(0, 0, 0, 0.05)",
-                color: "rgba(0, 0, 0, 0.6)",
-                fontSize: "11px",
-                fontWeight: 600,
-                height: "auto",
-                py: 0.5,
-                px: 1.5,
-                mb: 2,
-                "& .MuiChip-label": {
-                  px: 1,
-                },
-                "& .MuiChip-icon": {
-                  ml: 0.5,
-                },
-              }}
-            />
+            <Box
+              display="inline-flex"
+              alignItems="center"
+              gap="1.5"
+              bg="rgba(0, 0, 0, 0.05)"
+              color="ink2"
+              borderRadius="pill"
+              px="3"
+              py="1"
+              mb="4"
+              fontSize="11px"
+              fontWeight={600}
+            >
+              <Briefcase size={14} />
+              STABLE OPPORTUNITIES
+            </Box>
 
-            <Typography
-              component='h2'
-              sx={{
-                fontSize: { xs: "28px", md: "40px" },
+            <Box
+              as="h2"
+              className={css({
+                fontSize: { base: "28px", md: "40px" },
                 fontWeight: 600,
-                color: "black",
+                color: "ink",
                 letterSpacing: "-0.02em",
-                mb: 2,
-              }}>
+                mb: "4",
+              })}
+            >
               Find Clients Posting Stable Jobs
-            </Typography>
+            </Box>
 
-            <Typography
-              sx={{
+            <Box
+              as="p"
+              className={css({
                 fontSize: "17px",
-                color: "rgba(0, 0, 0, 0.6)",
+                color: "ink2",
                 lineHeight: 1.6,
-                mb: 3,
-              }}>
-              Not just one-off gigs. Discover part-time and full-time positions from companies looking for long-term freelance
-              partnerships.
-            </Typography>
+                mb: "6",
+              })}
+            >
+              Not just one-off gigs. Discover part-time and full-time positions from companies looking for long-term freelance partnerships.
+            </Box>
 
             {/* Benefits List */}
-            <Box component='ul' sx={{ listStyle: "none", p: 0, m: 0, mb: 4 }}>
-              <Box component='li' sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
-                <CheckCircle sx={{ fontSize: 20, color: "#0071e3", flexShrink: 0, mt: 0.25 }} />
-                <Typography component='span' sx={{ fontSize: "15px", color: "rgba(0, 0, 0, 0.8)" }}>
-                  Recurring monthly contracts with guaranteed income
-                </Typography>
-              </Box>
-              <Box component='li' sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
-                <CheckCircle sx={{ fontSize: 20, color: "#0071e3", flexShrink: 0, mt: 0.25 }} />
-                <Typography component='span' sx={{ fontSize: "15px", color: "rgba(0, 0, 0, 0.8)" }}>
-                  Part-time and full-time remote opportunities
-                </Typography>
-              </Box>
-              <Box component='li' sx={{ display: "flex", alignItems: "flex-start", gap: 1.5, mb: 2 }}>
-                <CheckCircle sx={{ fontSize: 20, color: "#0071e3", flexShrink: 0, mt: 0.25 }} />
-                <Typography component='span' sx={{ fontSize: "15px", color: "rgba(0, 0, 0, 0.8)" }}>
-                  Work with international clients from your home
-                </Typography>
-              </Box>
+            <Box as="ul" listStyleType="none" p="0" m="0" mb="8">
+              {benefits.map((benefit) => (
+                <Box key={benefit} as="li" display="flex" alignItems="flex-start" gap="3" mb="4">
+                  <Box color="accent" flexShrink={0} mt="0.5" lineHeight={0}>
+                    <CheckCircle2 size={20} />
+                  </Box>
+                  <Box as="span" fontSize="15px" color="rgba(0, 0, 0, 0.8)">
+                    {benefit}
+                  </Box>
+                </Box>
+              ))}
             </Box>
 
-            <Button
-              //   onClick={() => onNavigate("jobs")}
-              variant='contained'
-              endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
-              sx={{
-                px: 4,
-                py: 1.75,
-                bgcolor: "#0071e3",
-                color: "white",
-                borderRadius: "50px",
-                fontSize: "15px",
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                "&:hover": {
-                  bgcolor: "#0077ed",
-                  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                },
-              }}>
+            <button className={ctaPill}>
               Browse Job Listings
-            </Button>
-          </Grid>
+              <ArrowRight size={16} />
+            </button>
+          </Box>
 
           {/* Right Content - Job Cards */}
-          <Grid size={{ xs: 12, md: 6 }}>
-            <Box
-              sx={{
-                background: "linear-gradient(to bottom right, rgba(0, 113, 227, 0.05), rgba(0, 113, 227, 0.1))",
-                borderRadius: "24px",
-                p: 4,
-                border: "1px solid rgba(0, 113, 227, 0.2)",
-              }}>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                {/* Job Card 1 */}
-                <Card
-                  sx={{
-                    borderRadius: "12px",
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
-                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                  }}>
-                  <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
-                      <Box>
-                        <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "black", mb: 0.5 }}>
-                          Senior Web Developer
-                        </Typography>
-                        <Typography sx={{ fontSize: "13px", color: "rgba(0, 0, 0, 0.6)" }}>
-                          Tech Startup • Full-time Remote
-                        </Typography>
+          <Box
+            bg="linear-gradient(to bottom right, rgba(0, 113, 227, 0.05), rgba(0, 113, 227, 0.1))"
+            borderRadius="24px"
+            p="8"
+            borderWidth="1px"
+            borderStyle="solid"
+            borderColor="rgba(0, 113, 227, 0.2)"
+          >
+            <Box display="flex" flexDirection="column" gap="4">
+              {jobs.map((job) => (
+                <Box
+                  key={job.title}
+                  bg="white"
+                  borderRadius="cardSm"
+                  borderWidth="1px"
+                  borderStyle="solid"
+                  borderColor="hairline"
+                  boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
+                  p="6"
+                >
+                  <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb="3">
+                    <Box>
+                      <Box as="p" fontSize="15px" fontWeight={600} color="ink" mb="1">
+                        {job.title}
                       </Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0071e3" }}>$3,000/mo</Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                      <Chip
-                        label='React'
-                        size='small'
-                        sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", fontSize: "11px", fontWeight: 500, height: 24 }}
-                      />
-                      <Chip
-                        label='Node.js'
-                        size='small'
-                        sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", fontSize: "11px", fontWeight: 500, height: 24 }}
-                      />
-                      <Chip
-                        label='MongoDB'
-                        size='small'
-                        sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", fontSize: "11px", fontWeight: 500, height: 24 }}
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-
-                {/* Job Card 2 */}
-                <Card
-                  sx={{
-                    borderRadius: "12px",
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
-                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                  }}>
-                  <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
-                      <Box>
-                        <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "black", mb: 0.5 }}>
-                          UI/UX Designer
-                        </Typography>
-                        <Typography sx={{ fontSize: "13px", color: "rgba(0, 0, 0, 0.6)" }}>
-                          E-commerce Agency • Part-time
-                        </Typography>
+                      <Box as="p" fontSize="13px" color="ink2">
+                        {job.org}
                       </Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0071e3" }}>$1,500/mo</Typography>
                     </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                      <Chip
-                        label='Figma'
-                        size='small'
-                        sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", fontSize: "11px", fontWeight: 500, height: 24 }}
-                      />
-                      <Chip
-                        label='Adobe XD'
-                        size='small'
-                        sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", fontSize: "11px", fontWeight: 500, height: 24 }}
-                      />
+                    <Box as="p" fontSize="13px" fontWeight={600} color="accent" whiteSpace="nowrap">
+                      {job.pay}
                     </Box>
-                  </CardContent>
-                </Card>
-
-                {/* Job Card 3 */}
-                <Card
-                  sx={{
-                    borderRadius: "12px",
-                    border: "1px solid rgba(0, 0, 0, 0.08)",
-                    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                  }}>
-                  <CardContent sx={{ p: 3, "&:last-child": { pb: 3 } }}>
-                    <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.5 }}>
-                      <Box>
-                        <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "black", mb: 0.5 }}>
-                          Content Writer
-                        </Typography>
-                        <Typography sx={{ fontSize: "13px", color: "rgba(0, 0, 0, 0.6)" }}>Marketing Firm • Part-time</Typography>
-                      </Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#0071e3" }}>$800/mo</Typography>
-                    </Box>
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                      <Chip
-                        label='SEO'
-                        size='small'
-                        sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", fontSize: "11px", fontWeight: 500, height: 24 }}
-                      />
-                      <Chip
-                        label='Copywriting'
-                        size='small'
-                        sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", fontSize: "11px", fontWeight: 500, height: 24 }}
-                      />
-                    </Box>
-                  </CardContent>
-                </Card>
-              </Box>
+                  </Box>
+                  <Box display="flex" alignItems="center" gap="2" flexWrap="wrap">
+                    {job.tags.map((tag) => (
+                      <span key={tag} className={tagChip}>
+                        {tag}
+                      </span>
+                    ))}
+                  </Box>
+                </Box>
+              ))}
             </Box>
-          </Grid>
+          </Box>
         </Grid>
       </Box>
     </Box>

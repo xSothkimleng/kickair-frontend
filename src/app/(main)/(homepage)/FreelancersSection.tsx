@@ -1,5 +1,6 @@
-import { Box, Typography, Button, Avatar } from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import { ArrowRight } from "lucide-react";
+import { css } from "styled-system/css";
+import { Box } from "styled-system/jsx";
 
 interface Freelancer {
   id: string;
@@ -15,92 +16,123 @@ interface ExploreFreelancersSectionProps {
   freelancers: Freelancer[];
 }
 
+// Marketing pill CTA (matches FinalCTASection's bespoke pills — not the shared Button recipe).
+const ctaPill = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "2",
+  px: "8",
+  py: "3.5",
+  bg: "accent",
+  color: "white",
+  borderRadius: "pill",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  borderWidth: "0",
+  cursor: "pointer",
+  boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+  transition: "background-color .15s",
+  _hover: { bg: "accentHover" },
+});
+
 export default function ExploreFreelancersSection({ freelancers }: ExploreFreelancersSectionProps) {
   return (
-    <Box
-      component='section'
-      sx={{
-        bgcolor: "white",
-        py: { xs: 6, md: 10 },
-      }}>
-      <Box
-        sx={{
-          maxWidth: "1200px",
-          mx: "auto",
-          px: { xs: 3, sm: 6 },
-        }}>
+    <Box as="section" bg="white" py={{ base: "12", md: "20" }}>
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }}>
         {/* Header */}
-        <Box sx={{ textAlign: "center", mb: 6 }}>
-          <Typography
-            component='h2'
-            sx={{
-              fontSize: { xs: "28px", md: "40px" },
+        <Box textAlign="center" mb="12">
+          <Box
+            as="h2"
+            className={css({
+              fontSize: { base: "28px", md: "40px" },
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.02em",
-              mb: 1.5,
-            }}>
+              mb: "3",
+            })}
+          >
             Meet Top Freelancers
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: "16px", md: "19px" },
-              color: "rgba(0, 0, 0, 0.6)",
-            }}>
+          </Box>
+          <Box
+            as="p"
+            className={css({
+              fontSize: { base: "16px", md: "19px" },
+              color: "ink2",
+            })}
+          >
             Premium talent with proven portfolios and verified reviews
-          </Typography>
+          </Box>
         </Box>
 
-        {/* Freelancer Cards Grid — plain CSS grid (MUI v7 Grid drops the column gap
-            when fractional sizes sum to 12, which made the cards sit flush and overlap on hover). */}
+        {/* Freelancer cards — responsive CSS grid (1 → 2 → 3 → 5 columns). */}
         <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-              lg: "repeat(5, 1fr)",
-            },
-            gap: 3,
-          }}>
-          {freelancers.slice(0, 10).map(freelancer => (
+          display="grid"
+          gridTemplateColumns={{
+            base: "1fr",
+            sm: "repeat(2, 1fr)",
+            md: "repeat(3, 1fr)",
+            lg: "repeat(5, 1fr)",
+          }}
+          gap="6"
+        >
+          {freelancers.slice(0, 10).map((freelancer) => (
             <Box
               key={freelancer.id}
-              sx={{
-                position: "relative",
-                bgcolor: "white",
-                borderRadius: "16px",
-                p: 3,
-                border: "1px solid rgba(0, 0, 0, 0.08)",
-                textAlign: "center",
-                cursor: "pointer",
-                transition: "border-color 0.2s ease, box-shadow 0.2s ease",
-                "&:hover": {
-                  zIndex: 1,
-                  borderColor: "rgba(0, 0, 0, 0.12)",
-                  boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
-                },
-              }}>
-              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
-                <Avatar
-                  src={freelancer.profileImage}
-                  alt={freelancer.name}
-                  sx={{ width: 96, height: 96, bgcolor: "rgba(0, 0, 0, 0.05)" }}>
-                  {freelancer.name.charAt(0)}
-                </Avatar>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1, width: "100%" }}>
-                  <Typography component="h3" sx={{ fontSize: "18px", color: "black", fontWeight: 500 }}>
+              position="relative"
+              bg="white"
+              borderRadius="card"
+              p="6"
+              borderWidth="1px"
+              borderStyle="solid"
+              borderColor="hairline"
+              textAlign="center"
+              cursor="pointer"
+              transition="border-color 0.2s ease, box-shadow 0.2s ease"
+              _hover={{
+                zIndex: 1,
+                borderColor: "rgba(0, 0, 0, 0.12)",
+                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.1)",
+              }}
+            >
+              <Box display="flex" flexDirection="column" alignItems="center" gap="4">
+                <Box
+                  position="relative"
+                  w="96px"
+                  h="96px"
+                  borderRadius="full"
+                  overflow="hidden"
+                  bg="rgba(0, 0, 0, 0.05)"
+                  display="flex"
+                  alignItems="center"
+                  justifyContent="center"
+                  flexShrink={0}
+                >
+                  <Box as="span" fontSize="32px" fontWeight={500} color="ink2">
+                    {freelancer.name.charAt(0)}
+                  </Box>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={freelancer.profileImage}
+                    alt={freelancer.name}
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover" }}
+                  />
+                </Box>
+                <Box display="flex" flexDirection="column" gap="2" w="100%">
+                  <Box as="h3" fontSize="18px" color="ink" fontWeight={500}>
                     {freelancer.name}
-                  </Typography>
-                  <Typography sx={{ fontSize: "14px", color: "rgba(0, 0, 0, 0.6)" }}>
+                  </Box>
+                  <Box as="p" fontSize="14px" color="ink2">
                     {freelancer.role}
-                  </Typography>
-                  <Box sx={{ pt: 1 }}>
-                    <Typography sx={{ fontSize: "12px", color: "rgba(0, 0, 0, 0.6)" }}>Starting at</Typography>
-                    <Typography sx={{ fontSize: "18px", color: "black", fontWeight: 500 }}>
+                  </Box>
+                  <Box pt="2">
+                    <Box as="p" fontSize="12px" color="ink2">
+                      Starting at
+                    </Box>
+                    <Box as="p" fontSize="18px" color="ink" fontWeight={500}>
                       ${freelancer.tiers[0].price}
-                    </Typography>
+                    </Box>
                   </Box>
                 </Box>
               </Box>
@@ -109,28 +141,11 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
         </Box>
 
         {/* View All Button */}
-        <Box sx={{ textAlign: "center", mt: 6 }}>
-          <Button
-            // onClick={() => onNavigate("services")}
-            variant='contained'
-            endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
-            sx={{
-              px: 4,
-              py: 1.75,
-              bgcolor: "#0071e3",
-              color: "white",
-              borderRadius: "50px",
-              fontSize: "15px",
-              fontWeight: 600,
-              textTransform: "none",
-              boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              "&:hover": {
-                bgcolor: "#0077ed",
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-              },
-            }}>
+        <Box textAlign="center" mt="12">
+          <button className={ctaPill}>
             View All Freelancers
-          </Button>
+            <ArrowRight size={16} />
+          </button>
         </Box>
       </Box>
     </Box>

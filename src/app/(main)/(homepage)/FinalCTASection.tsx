@@ -1,97 +1,101 @@
-import { Box, Typography, Button, Container } from "@mui/material";
+import Link from "next/link";
+import { css, cx } from "styled-system/css";
+import { Box } from "styled-system/jsx";
+
+// Bespoke pill CTAs (marketing-specific — not part of the shared Button recipe).
+const ctaBase = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minW: "220px",
+  px: "8",
+  py: "3.5",
+  borderRadius: "pill",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  textDecoration: "none",
+  cursor: "pointer",
+  transition: "background-color .15s, color .15s, border-color .15s",
+});
+const ctaSolid = cx(
+  ctaBase,
+  css({
+    bg: "accent",
+    color: "white",
+    borderColor: "accent",
+    boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
+    _hover: { bg: "accentHover", borderColor: "accentHover" },
+  })
+);
+const ctaOutline = cx(
+  ctaBase,
+  css({
+    bg: "transparent",
+    color: "accent",
+    borderColor: "accent",
+    _hover: { bg: "accent", color: "white" },
+  })
+);
 
 export default function FinalCtaSection() {
   return (
-    <Box component="section" sx={{ bgcolor: "#F5F5F7" }}>
-      <Container sx={{ px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
+    <Box as="section" bg="canvas">
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }} py={{ base: "12", md: "20" }}>
         <Box
-          sx={{
-            bgcolor: "white",
-            borderRadius: "24px",
-            border: "1px solid rgba(0, 0, 0, 0.08)",
-            p: { xs: 4, sm: 6, md: 8 },
-            textAlign: "center",
-            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-          }}
+          bg="surface"
+          borderRadius="24px"
+          borderWidth="1px"
+          borderStyle="solid"
+          borderColor="hairline"
+          boxShadow="0 1px 3px rgba(0, 0, 0, 0.1)"
+          textAlign="center"
+          p={{ base: "8", sm: "12", md: "16" }}
         >
-          <Typography
-            component="h2"
-            sx={{
-              fontSize: { xs: "28px", md: "40px" },
+          <Box
+            as="h2"
+            className={css({
+              fontSize: { base: "28px", md: "40px" },
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.02em",
-              mb: 2,
-            }}
+              mb: "4",
+            })}
           >
             Ready to Start Your Journey?
-          </Typography>
-          <Typography
-            sx={{
-              fontSize: { xs: "16px", md: "19px" },
-              color: "rgba(0, 0, 0, 0.6)",
-              maxWidth: "672px",
+          </Box>
+          <Box
+            as="p"
+            className={css({
+              fontSize: { base: "16px", md: "19px" },
+              color: "ink2",
+              maxW: "672px",
               mx: "auto",
-              mb: 5,
-            }}
+              mb: "10",
+            })}
           >
             Join thousands of freelancers building their brands and clients finding premium talent
-          </Typography>
+          </Box>
           <Box
-            sx={{
+            className={css({
               display: "flex",
-              flexDirection: { xs: "column", sm: "row" },
+              flexDirection: { base: "column", sm: "row" },
               alignItems: "center",
               justifyContent: "center",
-              gap: 2,
-            }}
+              gap: "4",
+            })}
           >
-            <Button
-              // onClick={() => onNavigate("register")}
-              variant="contained"
-              sx={{
-                px: 4,
-                py: 1.75,
-                bgcolor: "#0071e3",
-                color: "white",
-                borderRadius: "50px",
-                minWidth: "220px",
-                fontSize: "15px",
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
-                "&:hover": {
-                  bgcolor: "#0077ed",
-                },
-              }}
-            >
+            <Link href="/auth/sign-up" className={ctaSolid}>
               Sign Up Now
-            </Button>
-            <Button
-              // onClick={() => onNavigate("services")}
-              variant="outlined"
-              sx={{
-                px: 4,
-                py: 1.75,
-                border: "2px solid #0071e3",
-                color: "#0071e3",
-                borderRadius: "50px",
-                minWidth: "220px",
-                fontSize: "15px",
-                fontWeight: 600,
-                textTransform: "none",
-                "&:hover": {
-                  border: "2px solid #0071e3",
-                  bgcolor: "#0071e3",
-                  color: "white",
-                },
-              }}
-            >
+            </Link>
+            <Link href="/find-freelancer" className={ctaOutline}>
               Explore Freelancers
-            </Button>
+            </Link>
           </Box>
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 }

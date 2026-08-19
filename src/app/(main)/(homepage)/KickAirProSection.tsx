@@ -1,164 +1,140 @@
-import { Box, Typography, Button, Grid, Chip, Container } from "@mui/material";
-import { EmojiEvents as CrownIcon, People as UsersIcon, Security as ShieldIcon, EmojiEvents as AwardIcon, ArrowForward } from "@mui/icons-material";
+import { Crown, Users, Shield, Award, ArrowRight } from "lucide-react";
+import { css } from "styled-system/css";
+import { Box, Grid } from "styled-system/jsx";
+
+// Solid pill CTA on dark surface (marketing-specific — not the shared Button recipe).
+const ctaSolid = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "2",
+  px: "8",
+  py: "3.5",
+  borderRadius: "pill",
+  borderWidth: "0",
+  bg: "accent",
+  color: "white",
+  fontSize: "15px",
+  fontWeight: 600,
+  fontFamily: "inherit",
+  cursor: "pointer",
+  boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
+  transition: "background-color .15s",
+  _hover: { bg: "accentHover" },
+});
+
+const badgePill = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "1.5",
+  borderRadius: "pill",
+  bg: "rgba(255, 255, 255, 0.1)",
+  backdropFilter: "blur(8px)",
+  color: "rgba(255, 255, 255, 0.8)",
+  fontSize: "11px",
+  fontWeight: 600,
+  py: "1",
+  px: "3",
+  mb: "6",
+});
+
+const features = [
+  { Icon: Users, title: "Team Workspace", description: "Manage multiple freelancers on one visual canvas" },
+  { Icon: Shield, title: "Priority Support", description: "Get help when you need it with 24/7 dedicated support" },
+  { Icon: Award, title: "Exclusive Talent", description: "Access to pre-vetted, top 1% freelancers only" },
+];
 
 export default function KickAirProSection() {
   return (
-    <Box
-      component="section"
-      sx={{
-        bgcolor: "#F5F5F7",
-      }}
-    >
-      <Container sx={{ mx: "auto", px: { xs: 3, sm: 6 }, py: { xs: 6, md: 10 } }}>
+    <Box as="section" bg="canvas">
+      <Box maxW="1200px" mx="auto" px={{ base: "6", sm: "12" }} py={{ base: "12", md: "20" }}>
         <Box
-          sx={{
-            background: "linear-gradient(to bottom right, #000000, rgba(0, 0, 0, 0.9))",
-            borderRadius: "24px",
-            p: { xs: 3, sm: 5, md: 8 },
-            textAlign: "center",
-            color: "white",
-            position: "relative",
-            overflow: "hidden",
-          }}
+          bg="linear-gradient(to bottom right, #000000, rgba(0, 0, 0, 0.9))"
+          borderRadius="24px"
+          p={{ base: "6", sm: "10", md: "16" }}
+          textAlign="center"
+          color="white"
+          position="relative"
+          overflow="hidden"
         >
           {/* Radial Gradient Overlays */}
           <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background: "radial-gradient(circle at 30% 20%, rgba(0, 113, 227, 0.15), transparent 50%)",
-            }}
+            position="absolute"
+            inset="0"
+            bg="radial-gradient(circle at 30% 20%, rgba(0, 113, 227, 0.15), transparent 50%)"
           />
           <Box
-            sx={{
-              position: "absolute",
-              inset: 0,
-              background: "radial-gradient(circle at 70% 80%, rgba(0, 113, 227, 0.1), transparent 50%)",
-            }}
+            position="absolute"
+            inset="0"
+            bg="radial-gradient(circle at 70% 80%, rgba(0, 113, 227, 0.1), transparent 50%)"
           />
 
-          <Box sx={{ position: "relative", zIndex: 10 }}>
+          <Box position="relative" zIndex={10}>
             {/* Badge */}
-            <Chip
-              icon={<CrownIcon sx={{ fontSize: 14, color: "#0071e3" }} />}
-              label="ENTERPRISE SOLUTION"
-              sx={{
-                bgcolor: "rgba(255, 255, 255, 0.1)",
-                backdropFilter: "blur(8px)",
-                color: "rgba(255, 255, 255, 0.8)",
-                fontSize: "11px",
-                fontWeight: 600,
-                height: "auto",
-                py: 0.5,
-                px: 1.5,
-                mb: 3,
-                "& .MuiChip-label": {
-                  px: 1,
-                },
-                "& .MuiChip-icon": {
-                  ml: 0.5,
-                },
-              }}
-            />
+            <span className={badgePill}>
+              <Crown size={14} color="#0071e3" />
+              ENTERPRISE SOLUTION
+            </span>
 
-            <Typography
-              component="h2"
-              sx={{
-                fontSize: { xs: "28px", md: "40px", lg: "48px" },
+            <Box
+              as="h2"
+              className={css({
+                fontSize: { base: "28px", md: "40px", lg: "48px" },
                 fontWeight: 600,
                 letterSpacing: "-0.02em",
-                mb: 2,
-              }}
+                mb: "4",
+              })}
             >
               Introducing KickAir Pro
-            </Typography>
+            </Box>
 
-            <Typography
-              sx={{
-                fontSize: { xs: "16px", md: "19px" },
+            <Box
+              as="p"
+              className={css({
+                fontSize: { base: "16px", md: "19px" },
                 color: "rgba(255, 255, 255, 0.7)",
-                maxWidth: "672px",
+                maxW: "672px",
                 mx: "auto",
-                mb: 4,
-              }}
+                mb: "8",
+              })}
             >
-              Scale your business with advanced team management, priority support, and exclusive access to top-tier freelancers
-            </Typography>
+              Scale your business with advanced team management, priority support, and exclusive access to top-tier
+              freelancers
+            </Box>
 
             {/* Features Grid */}
-            <Grid container spacing={3} sx={{ maxWidth: "896px", mx: "auto", mb: 5 }}>
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+            <Grid columns={{ base: 1, sm: 2, md: 3 }} gap="6" maxW="896px" mx="auto" mb="10">
+              {features.map(({ Icon, title, description }) => (
                 <Box
-                  sx={{
-                    bgcolor: "rgba(255, 255, 255, 0.05)",
-                    backdropFilter: "blur(8px)",
-                    borderRadius: "16px",
-                    p: 3,
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}
+                  key={title}
+                  bg="rgba(255, 255, 255, 0.05)"
+                  backdropFilter="blur(8px)"
+                  borderRadius="16px"
+                  p="6"
+                  borderWidth="1px"
+                  borderStyle="solid"
+                  borderColor="rgba(255, 255, 255, 0.1)"
                 >
-                  <UsersIcon sx={{ fontSize: 32, color: "#0071e3", mb: 1.5, mx: "auto" }} />
-                  <Typography sx={{ fontSize: "17px", fontWeight: 600, mb: 1 }}>Team Workspace</Typography>
-                  <Typography sx={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)" }}>Manage multiple freelancers on one visual canvas</Typography>
+                  <Box display="flex" justifyContent="center" mb="3">
+                    <Icon size={32} color="#0071e3" />
+                  </Box>
+                  <Box as="p" className={css({ fontSize: "17px", fontWeight: 600, mb: "2" })}>
+                    {title}
+                  </Box>
+                  <Box as="p" className={css({ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)" })}>
+                    {description}
+                  </Box>
                 </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <Box
-                  sx={{
-                    bgcolor: "rgba(255, 255, 255, 0.05)",
-                    backdropFilter: "blur(8px)",
-                    borderRadius: "16px",
-                    p: 3,
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}
-                >
-                  <ShieldIcon sx={{ fontSize: 32, color: "#0071e3", mb: 1.5, mx: "auto" }} />
-                  <Typography sx={{ fontSize: "17px", fontWeight: 600, mb: 1 }}>Priority Support</Typography>
-                  <Typography sx={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)" }}>Get help when you need it with 24/7 dedicated support</Typography>
-                </Box>
-              </Grid>
-
-              <Grid size={{ xs: 12, sm: 6, md: 4 }}>
-                <Box
-                  sx={{
-                    bgcolor: "rgba(255, 255, 255, 0.05)",
-                    backdropFilter: "blur(8px)",
-                    borderRadius: "16px",
-                    p: 3,
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                  }}
-                >
-                  <AwardIcon sx={{ fontSize: 32, color: "#0071e3", mb: 1.5, mx: "auto" }} />
-                  <Typography sx={{ fontSize: "17px", fontWeight: 600, mb: 1 }}>Exclusive Talent</Typography>
-                  <Typography sx={{ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)" }}>Access to pre-vetted, top 1% freelancers only</Typography>
-                </Box>
-              </Grid>
+              ))}
             </Grid>
 
-            <Button
-              variant="contained"
-              endIcon={<ArrowForward sx={{ fontSize: 16 }} />}
-              sx={{
-                px: 4,
-                py: 1.75,
-                bgcolor: "#0071e3",
-                color: "white",
-                borderRadius: "50px",
-                fontSize: "15px",
-                fontWeight: 600,
-                textTransform: "none",
-                boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
-                "&:hover": {
-                  bgcolor: "#0077ed",
-                },
-              }}
-            >
+            <button className={ctaSolid}>
               Learn More About Pro
-            </Button>
+              <ArrowRight size={16} />
+            </button>
           </Box>
         </Box>
-      </Container>
+      </Box>
     </Box>
   );
 }

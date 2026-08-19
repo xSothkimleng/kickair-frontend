@@ -1,28 +1,41 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Container, Typography, Button, Grid, Card, CardContent, Stack, Chip } from "@mui/material";
-
-// MUI Icons
+import Link from "next/link";
 import {
   ChevronLeft,
-  MenuBook,
-  AttachMoney,
-  People,
+  BookOpen,
+  DollarSign,
+  Users,
   Star,
   TrendingUp,
-  Forum,
+  MessagesSquare,
   Shield,
   CheckCircle,
   PlayCircle,
-  Description,
-  EmojiEvents,
-} from "@mui/icons-material";
-import Link from "next/link";
+  FileText,
+  Trophy,
+} from "lucide-react";
+import { css } from "styled-system/css";
+import { Box, Stack } from "styled-system/jsx";
 
 interface KickAirUniversityPageProps {
   userType?: "freelancer" | "client";
 }
+
+// Text-style link/action (marketing "Start Learning →" etc.)
+const textLink = css({
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "accent",
+  fontFamily: "inherit",
+  bg: "transparent",
+  border: "none",
+  p: "0",
+  minW: "auto",
+  cursor: "pointer",
+  _hover: { textDecoration: "underline" },
+});
 
 export default function KickAirUniversityPage({ userType = "freelancer" }: KickAirUniversityPageProps) {
   const [activeTab, setActiveTab] = useState<"freelancer" | "client">(userType);
@@ -31,7 +44,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
     activeTab === "freelancer"
       ? [
           {
-            icon: <PlayCircle sx={{ fontSize: 24 }} />,
+            icon: <PlayCircle size={24} />,
             color: "#0071e3",
             title: "Getting Started",
             description:
@@ -46,7 +59,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             duration: "2 hours",
           },
           {
-            icon: <AttachMoney sx={{ fontSize: 24 }} />,
+            icon: <DollarSign size={24} />,
             color: "#0071e3",
             title: "Pricing Strategies",
             description:
@@ -61,7 +74,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             duration: "1.5 hours",
           },
           {
-            icon: <People sx={{ fontSize: 24 }} />,
+            icon: <Users size={24} />,
             color: "#0071e3",
             title: "Client Management",
             description:
@@ -76,7 +89,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             duration: "3 hours",
           },
           {
-            icon: <TrendingUp sx={{ fontSize: 24 }} />,
+            icon: <TrendingUp size={24} />,
             color: "#0071e3",
             title: "Marketing & Growth",
             description:
@@ -93,7 +106,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
         ]
       : [
           {
-            icon: <People sx={{ fontSize: 24 }} />,
+            icon: <Users size={24} />,
             color: "#0071e3",
             title: "Finding the Right Talent",
             description: "Learn how to identify, evaluate, and hire the perfect freelancer for your project needs.",
@@ -107,7 +120,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             duration: "2 hours",
           },
           {
-            icon: <Description sx={{ fontSize: 24 }} />,
+            icon: <FileText size={24} />,
             color: "#0071e3",
             title: "Writing Clear Job Posts",
             description: "Craft job descriptions that attract top talent and set clear expectations from the start.",
@@ -121,7 +134,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             duration: "1.5 hours",
           },
           {
-            icon: <Shield sx={{ fontSize: 24 }} />,
+            icon: <Shield size={24} />,
             color: "#0071e3",
             title: "Managing Remote Teams",
             description: "Master remote collaboration and get the best results from your freelance team.",
@@ -135,7 +148,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             duration: "3 hours",
           },
           {
-            icon: <Star sx={{ fontSize: 24 }} />,
+            icon: <Star size={24} />,
             color: "#0071e3",
             title: "Maximizing Value",
             description: "Learn strategies to get exceptional results while staying within budget.",
@@ -154,21 +167,21 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
     activeTab === "freelancer"
       ? [
           {
-            icon: <Description sx={{ fontSize: 24 }} />,
+            icon: <FileText size={24} />,
             title: "Templates & Tools",
             description: "Download free contract templates, proposal formats, and invoicing tools",
             buttonText: "Browse Resources →",
             onClick: () => {},
           },
           {
-            icon: <Forum sx={{ fontSize: 24 }} />,
+            icon: <MessagesSquare size={24} />,
             title: "Community Forum",
             description: "Connect with other freelancers, share tips, and get advice",
             buttonText: "Join Discussion →",
             onClick: () => {},
           },
           {
-            icon: <EmojiEvents sx={{ fontSize: 24 }} />,
+            icon: <Trophy size={24} />,
             title: "Success Stories",
             description: "Learn from freelancers who built six-figure careers on KickAir",
             buttonText: "Read Stories →",
@@ -177,21 +190,21 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
         ]
       : [
           {
-            icon: <Description sx={{ fontSize: 24 }} />,
+            icon: <FileText size={24} />,
             title: "Templates & Guides",
             description: "Download job post templates, project briefs, and evaluation checklists",
             buttonText: "Browse Resources →",
             onClick: () => {},
           },
           {
-            icon: <Forum sx={{ fontSize: 24 }} />,
+            icon: <MessagesSquare size={24} />,
             title: "Client Community",
             description: "Connect with other clients and share best practices for hiring",
             buttonText: "Join Discussion →",
             onClick: () => {},
           },
           {
-            icon: <EmojiEvents sx={{ fontSize: 24 }} />,
+            icon: <Trophy size={24} />,
             title: "Case Studies",
             description: "See how businesses grew with KickAir's freelance talent",
             buttonText: "Read Case Studies →",
@@ -200,358 +213,376 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
         ];
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
+    <Box minH="100vh" bg="canvas">
       {/* Header */}
-      <Box sx={{ bgcolor: "white", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-        <Container maxWidth='lg' sx={{ px: 3, py: 4 }}>
-          <Link href='/' passHref>
-            <Button
-              startIcon={<ChevronLeft sx={{ fontSize: 16 }} />}
-              sx={{
-                fontSize: "12px",
-                color: "rgba(0,0,0,0.6)",
-                textTransform: "none",
-                mb: 2,
-                "&:hover": {
-                  color: "black",
-                  bgcolor: "transparent",
-                },
-              }}>
-              Back to Home
-            </Button>
+      <Box bg="surface" borderBottomWidth="1px" borderBottomStyle="solid" borderBottomColor="hairline">
+        <Box maxW="1200px" mx="auto" px="6" py="8">
+          <Link
+            href="/"
+            className={css({
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "1.5",
+              fontSize: "12px",
+              color: "ink2",
+              fontFamily: "inherit",
+              textDecoration: "none",
+              mb: "4",
+              cursor: "pointer",
+              _hover: { color: "ink" },
+            })}>
+            <ChevronLeft size={16} />
+            Back to Home
           </Link>
-          <Box sx={{ mb: 3 }}>
-            <Chip
-              icon={<MenuBook sx={{ fontSize: 14 }} />}
-              label='EDUCATION'
-              sx={{
-                bgcolor: "rgba(0,0,0,0.05)",
-                color: "rgba(0,0,0,0.6)",
+          <Box mb="6">
+            <Box
+              as="span"
+              className={css({
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "1.5",
+                bg: "rgba(0,0,0,0.05)",
+                color: "ink2",
                 fontSize: "11px",
                 fontWeight: 600,
-                height: "auto",
-                py: 0.5,
-                mb: 2,
-                "& .MuiChip-icon": {
-                  color: "rgba(0,0,0,0.6)",
-                },
-              }}
-            />
-            <Typography
-              variant='h1'
-              sx={{
-                fontSize: { xs: "32px", md: "48px" },
+                borderRadius: "pill",
+                py: "1",
+                px: "3",
+                mb: "4",
+              })}>
+              <BookOpen size={14} />
+              EDUCATION
+            </Box>
+            <Box
+              as="h1"
+              className={css({
+                fontSize: { base: "32px", md: "48px" },
                 fontWeight: 600,
-                color: "black",
+                color: "ink",
                 letterSpacing: "-0.02em",
-                mb: 1,
-              }}>
+                mb: "2",
+              })}>
               KickAir University
-            </Typography>
-            <Typography
-              sx={{
+            </Box>
+            <Box
+              as="p"
+              className={css({
                 fontSize: "19px",
-                color: "rgba(0,0,0,0.6)",
-                maxWidth: "600px",
-              }}>
+                color: "ink2",
+                maxW: "600px",
+              })}>
               Master the skills you need to succeed. Free courses and resources for freelancers and clients.
-            </Typography>
+            </Box>
           </Box>
 
           {/* Tab Switcher */}
           <Box
-            sx={{
+            className={css({
               display: "inline-flex",
-              bgcolor: "rgba(0,0,0,0.05)",
-              p: 0.5,
+              bg: "rgba(0,0,0,0.05)",
+              p: "1",
               borderRadius: "12px",
-              gap: 1,
-            }}>
-            <Button
+              gap: "2",
+            })}>
+            <button
+              type="button"
               onClick={() => setActiveTab("freelancer")}
-              sx={{
-                px: 3,
-                py: 1,
+              className={css({
+                px: "6",
+                py: "2",
                 fontSize: "13px",
                 fontWeight: 500,
                 borderRadius: "8px",
-                textTransform: "none",
-                bgcolor: activeTab === "freelancer" ? "white" : "transparent",
-                color: activeTab === "freelancer" ? "black" : "rgba(0,0,0,0.6)",
+                fontFamily: "inherit",
+                border: "none",
+                cursor: "pointer",
+                transition: "background-color .15s, color .15s, box-shadow .15s",
+                bg: activeTab === "freelancer" ? "surface" : "transparent",
+                color: activeTab === "freelancer" ? "ink" : "ink2",
                 boxShadow: activeTab === "freelancer" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                "&:hover": {
-                  bgcolor: activeTab === "freelancer" ? "white" : "rgba(0,0,0,0.02)",
-                  color: "black",
+                _hover: {
+                  bg: activeTab === "freelancer" ? "surface" : "rgba(0,0,0,0.02)",
+                  color: "ink",
                 },
-              }}>
+              })}>
               For Freelancers
-            </Button>
-            <Button
+            </button>
+            <button
+              type="button"
               onClick={() => setActiveTab("client")}
-              sx={{
-                px: 3,
-                py: 1,
+              className={css({
+                px: "6",
+                py: "2",
                 fontSize: "13px",
                 fontWeight: 500,
                 borderRadius: "8px",
-                textTransform: "none",
-                bgcolor: activeTab === "client" ? "white" : "transparent",
-                color: activeTab === "client" ? "black" : "rgba(0,0,0,0.6)",
+                fontFamily: "inherit",
+                border: "none",
+                cursor: "pointer",
+                transition: "background-color .15s, color .15s, box-shadow .15s",
+                bg: activeTab === "client" ? "surface" : "transparent",
+                color: activeTab === "client" ? "ink" : "ink2",
                 boxShadow: activeTab === "client" ? "0 1px 3px rgba(0,0,0,0.1)" : "none",
-                "&:hover": {
-                  bgcolor: activeTab === "client" ? "white" : "rgba(0,0,0,0.02)",
-                  color: "black",
+                _hover: {
+                  bg: activeTab === "client" ? "surface" : "rgba(0,0,0,0.02)",
+                  color: "ink",
                 },
-              }}>
+              })}>
               For Clients
-            </Button>
+            </button>
           </Box>
-        </Container>
+        </Box>
       </Box>
 
       {/* Main Content */}
-      <Container maxWidth='lg' sx={{ px: 3, py: 8 }}>
-        <Box sx={{ mb: 8 }}>
-          <Typography
-            variant='h2'
-            sx={{
+      <Box maxW="1200px" mx="auto" px="6" py="16">
+        <Box mb="16">
+          <Box
+            as="h2"
+            className={css({
               fontSize: "32px",
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.01em",
-              mb: 1.5,
-            }}>
+              mb: "3",
+            })}>
             {activeTab === "freelancer" ? "Build Your Freelance Career" : "Hire Smarter, Work Better"}
-          </Typography>
-          <Typography
-            sx={{
+          </Box>
+          <Box
+            as="p"
+            className={css({
               fontSize: "17px",
-              color: "rgba(0,0,0,0.6)",
-              mb: 6,
-            }}>
+              color: "ink2",
+              mb: "12",
+            })}>
             {activeTab === "freelancer"
               ? "Everything you need to know to launch, grow, and scale your freelancing business"
               : "Master the art of working with freelancers and get the most value from every project"}
-          </Typography>
+          </Box>
 
           {/* Course Grid */}
-          <Grid container spacing={3} sx={{ mb: 6 }}>
+          <Box
+            display="grid"
+            gridTemplateColumns={{ base: "1fr", md: "repeat(2, 1fr)" }}
+            gap="6"
+            mb="12">
             {courseCards.map((course, index) => (
-              <Grid size={6} key={index}>
-                <Card
-                  sx={{
-                    height: "100%",
-                    borderRadius: "16px",
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    boxShadow: "none",
-                    transition: "box-shadow 0.3s",
-                    "&:hover": {
-                      boxShadow: "0 8px 24px rgba(0,0,0,0.12)",
-                    },
-                  }}>
-                  <CardContent sx={{ p: 4 }}>
-                    <Box
-                      sx={{
-                        width: 48,
-                        height: 48,
-                        borderRadius: "50%",
-                        bgcolor: "rgba(0,113,227,0.1)",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        color: course.color,
-                        mb: 2,
-                      }}>
-                      {course.icon}
-                    </Box>
-                    <Typography
-                      variant='h3'
-                      sx={{
-                        fontSize: "21px",
-                        fontWeight: 600,
-                        color: "black",
-                        mb: 1,
-                      }}>
-                      {course.title}
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "14px",
-                        color: "rgba(0,0,0,0.6)",
-                        mb: 3,
-                        lineHeight: 1.5,
-                      }}>
-                      {course.description}
-                    </Typography>
-                    <Stack spacing={1.5}>
-                      {course.items.map((item, idx) => (
-                        <Box key={idx} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
-                          <CheckCircle sx={{ fontSize: 16, color: "#0071e3", flexShrink: 0, mt: 0.25 }} />
-                          <Typography sx={{ fontSize: "13px", color: "rgba(0,0,0,0.8)" }}>{item}</Typography>
-                        </Box>
-                      ))}
-                    </Stack>
-                  </CardContent>
+              <Box
+                key={index}
+                className={css({
+                  display: "flex",
+                  flexDirection: "column",
+                  height: "100%",
+                  bg: "surface",
+                  borderRadius: "card",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: "hairline",
+                  overflow: "hidden",
+                  transition: "box-shadow 0.3s",
+                  _hover: { boxShadow: "0 8px 24px rgba(0,0,0,0.12)" },
+                })}>
+                <Box p="8" flex="1">
                   <Box
-                    sx={{
-                      px: 4,
-                      py: 2,
-                      bgcolor: "rgba(0,0,0,0.02)",
-                      borderTop: "1px solid rgba(0,0,0,0.08)",
+                    className={css({
+                      width: "48px",
+                      height: "48px",
+                      borderRadius: "50%",
+                      bg: "rgba(0,113,227,0.1)",
                       display: "flex",
-                      justifyContent: "space-between",
                       alignItems: "center",
-                    }}>
-                    <Typography sx={{ fontSize: "12px", color: "rgba(0,0,0,0.6)" }}>
-                      {course.lessons} • {course.duration}
-                    </Typography>
-                    <Button
-                      sx={{
-                        fontSize: "13px",
-                        fontWeight: 600,
-                        color: "#0071e3",
-                        textTransform: "none",
-                        p: 0,
-                        minWidth: "auto",
-                        "&:hover": {
-                          bgcolor: "transparent",
-                          textDecoration: "underline",
-                        },
-                      }}>
-                      Start Learning →
-                    </Button>
+                      justifyContent: "center",
+                      color: "accent",
+                      mb: "4",
+                    })}>
+                    {course.icon}
                   </Box>
-                </Card>
-              </Grid>
+                  <Box
+                    as="h3"
+                    className={css({
+                      fontSize: "21px",
+                      fontWeight: 600,
+                      color: "ink",
+                      mb: "2",
+                    })}>
+                    {course.title}
+                  </Box>
+                  <Box
+                    as="p"
+                    className={css({
+                      fontSize: "14px",
+                      color: "ink2",
+                      mb: "6",
+                      lineHeight: 1.5,
+                    })}>
+                    {course.description}
+                  </Box>
+                  <Stack gap="3">
+                    {course.items.map((item, idx) => (
+                      <Box
+                        key={idx}
+                        className={css({ display: "flex", gap: "3", alignItems: "flex-start" })}>
+                        <CheckCircle
+                          size={16}
+                          color="#0071e3"
+                          className={css({ flexShrink: 0, mt: "0.5" })}
+                        />
+                        <Box as="span" className={css({ fontSize: "13px", color: "rgba(0,0,0,0.8)" })}>
+                          {item}
+                        </Box>
+                      </Box>
+                    ))}
+                  </Stack>
+                </Box>
+                <Box
+                  className={css({
+                    px: "8",
+                    py: "4",
+                    bg: "rgba(0,0,0,0.02)",
+                    borderTopWidth: "1px",
+                    borderTopStyle: "solid",
+                    borderTopColor: "hairline",
+                    display: "flex",
+                    justifyContent: "space-between",
+                    alignItems: "center",
+                  })}>
+                  <Box as="span" className={css({ fontSize: "12px", color: "ink2" })}>
+                    {course.lessons} • {course.duration}
+                  </Box>
+                  <button type="button" className={textLink}>
+                    Start Learning →
+                  </button>
+                </Box>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </Box>
 
         {/* Additional Resources */}
-        <Box sx={{ mb: 8 }}>
-          <Typography
-            variant='h2'
-            sx={{
+        <Box mb="16">
+          <Box
+            as="h2"
+            className={css({
               fontSize: "32px",
               fontWeight: 600,
-              color: "black",
+              color: "ink",
               letterSpacing: "-0.01em",
-              mb: 4,
-            }}>
+              mb: "8",
+            })}>
             Additional Resources
-          </Typography>
+          </Box>
 
-          <Grid container spacing={3}>
+          <Box display="grid" gridTemplateColumns={{ base: "1fr", md: "repeat(3, 1fr)" }} gap="6">
             {resourceCards.map((resource, index) => (
-              <Grid size={4} key={index}>
-                <Card
-                  sx={{
-                    borderRadius: "16px",
-                    border: "1px solid rgba(0,0,0,0.08)",
-                    boxShadow: "none",
-                    p: 3,
-                  }}>
-                  <Box sx={{ color: "rgba(0,0,0,0.6)", mb: 1.5 }}>{resource.icon}</Box>
-                  <Typography
-                    variant='h4'
-                    sx={{
-                      fontSize: "17px",
-                      fontWeight: 600,
-                      color: "black",
-                      mb: 1,
-                    }}>
-                    {resource.title}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "13px",
-                      color: "rgba(0,0,0,0.6)",
-                      mb: 2,
-                      lineHeight: 1.5,
-                    }}>
-                    {resource.description}
-                  </Typography>
-                  <Button
-                    onClick={resource.onClick}
-                    sx={{
-                      fontSize: "13px",
-                      fontWeight: 600,
-                      color: "#0071e3",
-                      textTransform: "none",
-                      p: 0,
-                      minWidth: "auto",
-                      "&:hover": {
-                        bgcolor: "transparent",
-                        textDecoration: "underline",
-                      },
-                    }}>
-                    {resource.buttonText}
-                  </Button>
-                </Card>
-              </Grid>
+              <Box
+                key={index}
+                className={css({
+                  bg: "surface",
+                  borderRadius: "card",
+                  borderWidth: "1px",
+                  borderStyle: "solid",
+                  borderColor: "hairline",
+                  p: "6",
+                })}>
+                <Box className={css({ color: "ink2", mb: "3", display: "flex" })}>{resource.icon}</Box>
+                <Box
+                  as="h4"
+                  className={css({
+                    fontSize: "17px",
+                    fontWeight: 600,
+                    color: "ink",
+                    mb: "2",
+                  })}>
+                  {resource.title}
+                </Box>
+                <Box
+                  as="p"
+                  className={css({
+                    fontSize: "13px",
+                    color: "ink2",
+                    mb: "4",
+                    lineHeight: 1.5,
+                  })}>
+                  {resource.description}
+                </Box>
+                <button type="button" onClick={resource.onClick} className={textLink}>
+                  {resource.buttonText}
+                </button>
+              </Box>
             ))}
-          </Grid>
+          </Box>
         </Box>
 
         {/* Stats Section */}
-        <Card
-          sx={{
-            borderRadius: "16px",
-            border: "1px solid rgba(0,0,0,0.08)",
-            boxShadow: "none",
-            p: 6,
+        <Box
+          className={css({
+            bg: "surface",
+            borderRadius: "card",
+            borderWidth: "1px",
+            borderStyle: "solid",
+            borderColor: "hairline",
+            p: "12",
             textAlign: "center",
-          }}>
-          <Typography
-            variant='h2'
-            sx={{
+          })}>
+          <Box
+            as="h2"
+            className={css({
               fontSize: "28px",
               fontWeight: 600,
-              color: "black",
-              mb: 4,
-            }}>
+              color: "ink",
+              mb: "8",
+            })}>
             Join Thousands Learning on KickAir
-          </Typography>
-          <Grid container spacing={4}>
-            <Grid size={4}>
-              <Typography
-                sx={{
+          </Box>
+          <Box display="grid" gridTemplateColumns="repeat(3, 1fr)" gap="8">
+            <Box>
+              <Box
+                as="p"
+                className={css({
                   fontSize: "48px",
                   fontWeight: 600,
-                  color: "black",
-                  mb: 1,
-                }}>
+                  color: "ink",
+                  mb: "2",
+                })}>
                 15,000+
-              </Typography>
-              <Typography sx={{ fontSize: "14px", color: "rgba(0,0,0,0.6)" }}>Active Students</Typography>
-            </Grid>
-            <Grid size={4}>
-              <Typography
-                sx={{
+              </Box>
+              <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+                Active Students
+              </Box>
+            </Box>
+            <Box>
+              <Box
+                as="p"
+                className={css({
                   fontSize: "48px",
                   fontWeight: 600,
-                  color: "black",
-                  mb: 1,
-                }}>
+                  color: "ink",
+                  mb: "2",
+                })}>
                 50+
-              </Typography>
-              <Typography sx={{ fontSize: "14px", color: "rgba(0,0,0,0.6)" }}>Free Courses</Typography>
-            </Grid>
-            <Grid size={4}>
-              <Typography
-                sx={{
+              </Box>
+              <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+                Free Courses
+              </Box>
+            </Box>
+            <Box>
+              <Box
+                as="p"
+                className={css({
                   fontSize: "48px",
                   fontWeight: 600,
-                  color: "black",
-                  mb: 1,
-                }}>
+                  color: "ink",
+                  mb: "2",
+                })}>
                 4.8/5
-              </Typography>
-              <Typography sx={{ fontSize: "14px", color: "rgba(0,0,0,0.6)" }}>Average Rating</Typography>
-            </Grid>
-          </Grid>
-        </Card>
-      </Container>
+              </Box>
+              <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+                Average Rating
+              </Box>
+            </Box>
+          </Box>
+        </Box>
+      </Box>
     </Box>
   );
 }
