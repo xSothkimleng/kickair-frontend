@@ -1,9 +1,13 @@
 "use client";
 
 import { useState, useRef, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { useQuery } from "@tanstack/react-query";
 import { Box, Typography, TextField, Avatar, Badge, IconButton, Button, CircularProgress, Chip } from "@mui/material";
-import { SendOutlined, AddOutlined, WorkOutlineOutlined, SearchOutlined } from "@mui/icons-material";
-import { Conversation, Message } from "@/types/message";
+import { SendOutlined, AddOutlined, WorkOutlineOutlined, SearchOutlined, ReceiptLongOutlined } from "@mui/icons-material";
+import { Conversation, ConversationOrderEvent, Message } from "@/types/message";
+import { api } from "@/lib/api";
+import { qk } from "@/lib/queryKeys";
 import MessageBubble from "./MessageBubble";
 
 interface ChatViewProps {
@@ -13,7 +17,27 @@ interface ChatViewProps {
   sending: boolean;
   onSendMessage: (body: string) => Promise<void>;
   participantLabel?: string;
+  /** Which side of the marketplace the viewer is on — decides order links. */
+  viewerRole?: "client" | "freelancer";
 }
+
+const EVENT_LABEL: Record<string, string> = {
+  order_placed: "Order placed",
+  order_accepted: "Order accepted",
+  work_delivered: "Work delivered",
+  work_resubmitted: "Work resubmitted",
+  revision_requested: "Revision requested",
+  order_completed: "Order completed",
+  order_cancelled: "Order cancelled",
+  dispute_opened: "Dispute opened",
+  dispute_resolved: "Dispute resolved",
+  evidence_submitted: "Evidence submitted",
+};
+
+/** A message or an inline order event, unified for chronological rendering. */
+type ChatItem =
+  | { kind: "message"; at: string; message: Message }
+  | { kind: "event"; at: string; event: ConversationOrderEvent };
 
 function formatDateHeader(dateString: string): string {
   const date = new Date(dateString);
@@ -33,9 +57,24 @@ export default function ChatView({
   sending,
   onSendMessage,
   participantLabel = "participant",
+  viewerRole = "client",
 }: ChatViewProps) {
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const router = useRouter();
+
+  const orderRoute = (orderId: number) =>
+    viewerRole === "freelancer" ? `/dashboard/freelancer/orders/${orderId}` : `/dashboard/orders/${orderId}`;
+
+  // Order history for every order between the two participants, interleaved
+  // with the messages chronologically.
+  const { data: eventsRes } = useQuery({
+    queryKey: qk.conversationEvents(conversation?.id ?? 0),
+    queryFn: () => api.getConversationOrderEvents(conversation!.id),
+    enabled: !!conversation,
+    staleTime: 30_000,
+  });
+  const orderEvents = eventsRes?.data ?? [];
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -59,15 +98,20 @@ export default function ChatView({
     }
   };
 
-  // Group messages by date
-  const groupedMessages: { date: string; messages: Message[] }[] = [];
-  messages.forEach(msg => {
-    const dateStr = new Date(msg.created_at).toDateString();
-    const lastGroup = groupedMessages[groupedMessages.length - 1];
-    if (lastGroup && new Date(lastGroup.messages[0].created_at).toDateString() === dateStr) {
-      lastGroup.messages.push(msg);
+  // Interleave messages and order events chronologically, then group by date.
+  const items: ChatItem[] = [
+    ...messages.map((m): ChatItem => ({ kind: "message", at: m.created_at, message: m })),
+    ...orderEvents.map((e): ChatItem => ({ kind: "event", at: e.created_at, event: e })),
+  ].sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
+
+  const groupedItems: { date: string; items: ChatItem[] }[] = [];
+  items.forEach(item => {
+    const dateStr = new Date(item.at).toDateString();
+    const lastGroup = groupedItems[groupedItems.length - 1];
+    if (lastGroup && new Date(lastGroup.items[0].at).toDateString() === dateStr) {
+      lastGroup.items.push(item);
     } else {
-      groupedMessages.push({ date: msg.created_at, messages: [msg] });
+      groupedItems.push({ date: item.at, items: [item] });
     }
   });
 
@@ -167,6 +211,7 @@ export default function ChatView({
                 />
               </Box>
               <Button
+                onClick={() => conversation.order && router.push(orderRoute(conversation.order.id))}
                 sx={{
                   fontSize: 11,
                   color: "#3b82f6",
@@ -195,12 +240,12 @@ export default function ChatView({
           <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
             <CircularProgress size={24} />
           </Box>
-        ) : messages.length === 0 ? (
+        ) : items.length === 0 ? (
           <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.5)" }}>No messages yet. Start the conversation!</Typography>
           </Box>
         ) : (
-          groupedMessages.map((group, groupIdx) => (
+          groupedItems.map((group, groupIdx) => (
             <Box key={groupIdx}>
               <Box sx={{ display: "flex", justifyContent: "center", mb: 2, mt: groupIdx > 0 ? 2 : 0 }}>
                 <Chip
@@ -213,9 +258,33 @@ export default function ChatView({
                   }}
                 />
               </Box>
-              {group.messages.map(message => (
-                <MessageBubble key={message.id} message={message} />
-              ))}
+              {group.items.map(item =>
+                item.kind === "message" ? (
+                  <MessageBubble key={`m-${item.message.id}`} message={item.message} />
+                ) : (
+                  <Box key={`e-${item.event.id}`} sx={{ display: "flex", justifyContent: "center", my: 1.25 }}>
+                    <Box
+                      onClick={() => router.push(orderRoute(item.event.order_id))}
+                      sx={{
+                        display: "flex", alignItems: "center", gap: 0.75, px: 1.5, py: 0.6,
+                        bgcolor: "rgba(37, 99, 235, 0.06)", border: "1px solid rgba(37, 99, 235, 0.14)",
+                        borderRadius: "999px", cursor: "pointer", maxWidth: "86%",
+                        "&:hover": { bgcolor: "rgba(37, 99, 235, 0.1)" },
+                      }}>
+                      <ReceiptLongOutlined sx={{ fontSize: 13, color: "#3b82f6", flexShrink: 0 }} />
+                      <Typography sx={{ fontSize: 11.5, color: "#1D4ED8", fontWeight: 600, whiteSpace: "nowrap" }}>
+                        Order #{item.event.order_id}
+                      </Typography>
+                      <Typography sx={{ fontSize: 11.5, color: "rgba(0,0,0,0.65)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {EVENT_LABEL[item.event.event_type] ?? item.event.event_type} · {item.event.order_title}
+                      </Typography>
+                      <Typography sx={{ fontSize: 10.5, color: "rgba(0,0,0,0.45)", whiteSpace: "nowrap" }}>
+                        {new Date(item.event.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
+                      </Typography>
+                    </Box>
+                  </Box>
+                )
+              )}
             </Box>
           ))
         )}

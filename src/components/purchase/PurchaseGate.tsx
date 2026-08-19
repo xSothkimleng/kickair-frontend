@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Box, Button, CircularProgress, Dialog, IconButton, Typography } from "@mui/material";
 import {
   Close as CloseIcon,
+  ErrorOutline,
   LockOutlined,
   VerifiedUserOutlined,
   CheckCircleOutline,
@@ -48,7 +49,7 @@ const CONTENT = {
   },
   "become-client": {
     heading: "Switch to a client account",
-    body: "Orders are placed from a client account. Add one to continue — you keep your freelancer account and can switch between them anytime.",
+    body: "Orders are placed from a client account. Add one to continue — you keep your freelancer account and can switch anytime.",
     primary: "Become a client",
     secondary: "Cancel",
   },
@@ -151,7 +152,7 @@ export function usePurchaseGate(options: UsePurchaseGateOptions = {}) {
             aria-label="Close"
             onClick={close}
             disabled={busy}
-            sx={{ position: "absolute", top: 12, right: 12, width: 32, height: 32, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
+            sx={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
             <CloseIcon sx={{ fontSize: 18 }} />
           </IconButton>
 
@@ -180,7 +181,13 @@ export function usePurchaseGate(options: UsePurchaseGateOptions = {}) {
                 roles={{ is_client: true }}
                 onAuthenticated={afterGoogle}
                 onError={setError}
-                sx={{ borderRadius: "999px", borderColor: tokens.borderStrong, color: tokens.text, "&:hover": { borderColor: tokens.borderStrong, backgroundColor: tokens.surface2 } }}
+                sx={{
+                  borderRadius: "999px",
+                  borderColor: tokens.borderStrong,
+                  color: tokens.text,
+                  transition: "background 0.15s, box-shadow 0.15s",
+                  "&:hover": { borderColor: tokens.borderStrong, backgroundColor: tokens.surface2, boxShadow: "0 1px 4px rgba(0,0,0,0.10)" },
+                }}
               />
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, my: 2 }}>
                 <Box sx={{ flex: 1, height: "1px", bgcolor: tokens.border }} />
@@ -192,7 +199,8 @@ export function usePurchaseGate(options: UsePurchaseGateOptions = {}) {
 
           {/* Error (become-client can fail) */}
           {error && (
-            <Box role="alert" sx={{ display: "flex", alignItems: "flex-start", gap: 1, bgcolor: tokens.errorTint, border: `1px solid ${tokens.error}33`, borderRadius: "10px", p: "10px 12px", mb: 1.75 }}>
+            <Box role="alert" sx={{ display: "flex", alignItems: "flex-start", gap: "9px", bgcolor: tokens.errorTint, border: `1px solid ${tokens.error}33`, borderRadius: "10px", p: "10px 12px", mb: 1.75 }}>
+              <ErrorOutline sx={{ fontSize: 16, flex: "0 0 16px", mt: "1px", color: tokens.error }} />
               <Typography sx={{ fontSize: 13, lineHeight: 1.4, color: tokens.error }}>{error}</Typography>
             </Box>
           )}
@@ -221,7 +229,18 @@ export function usePurchaseGate(options: UsePurchaseGateOptions = {}) {
             <Button
               fullWidth
               onClick={onPrimary}
-              sx={{ height: 46, borderRadius: "999px", bgcolor: tokens.accent, color: "#fff", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: tokens.accentHover } }}>
+              sx={{
+                height: 46,
+                borderRadius: "999px",
+                bgcolor: tokens.accent,
+                color: "#fff",
+                textTransform: "none",
+                fontSize: 15,
+                fontWeight: 500,
+                transition: "background 0.15s",
+                "&:hover": { bgcolor: tokens.accentHover },
+                "&:focus-visible": { outline: "none", boxShadow: `0 0 0 3px rgba(${tokens.accentRgb}, 0.18)` },
+              }}>
               {c.primary}
             </Button>
           )}
@@ -231,7 +250,7 @@ export function usePurchaseGate(options: UsePurchaseGateOptions = {}) {
             fullWidth
             onClick={onSecondary}
             disabled={busy}
-            sx={{ mt: 1.25, height: 46, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: tokens.text, textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
+            sx={{ mt: 1.25, height: 46, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: tokens.text, textTransform: "none", fontSize: 15, fontWeight: 500, transition: "background 0.15s", "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
             {c.secondary}
           </Button>
 

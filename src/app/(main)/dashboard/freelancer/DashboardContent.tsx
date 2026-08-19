@@ -2,11 +2,15 @@
 
 import { useRouter } from "next/navigation";
 import { Box, Typography, Paper, Grid, Avatar, Button, Chip, CircularProgress, Stack } from "@mui/material";
-import { AttachMoney, ChatBubbleOutline, Star, VisibilityOutlined, ArrowRight, Shield } from "@mui/icons-material";
+import { AttachMoney, ChatBubbleOutline, VisibilityOutlined, ArrowRight } from "@mui/icons-material";
+import { ProfileAvatar, LevelBadge, Stars5 } from "@/components/profile/profileKit";
+import { useAuth } from "@/components/context/AuthContext";
 import { useFreelancerDashboard } from "@/hooks/useFreelancerDashboard";
 import { DashboardNotification, DashboardConversation } from "@/types/dashboard";
 import { Notification } from "@/types/notification";
 import { getNotificationRoute } from "@/components/notifications/shared";
+import { invalidateForNotification } from "@/lib/realtimeInvalidation";
+import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Tab } from "./page";
 
@@ -25,16 +29,6 @@ const timeAgo = (iso: string) => {
   const hours = Math.floor(minutes / 60);
   if (hours < 24) return `${hours}h ago`;
   return `${Math.floor(hours / 24)}d ago`;
-};
-
-const getLevelGradient = (level: string) => {
-  switch (level) {
-    case "Bronze": return "linear-gradient(135deg, #92400e 0%, #d97706 100%)";
-    case "Silver": return "linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)";
-    case "Gold": return "linear-gradient(135deg, #d97706 0%, #fbbf24 100%)";
-    case "Platinum": return "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)";
-    default: return "linear-gradient(135deg, #9CA3AF 0%, #D1D5DB 100%)";
-  }
 };
 
 const getStatusLabel = (status: string) => {
@@ -78,7 +72,12 @@ interface Props {
 
 export default function DashboardContent({ onTabChange }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const { data, loading, error } = useFreelancerDashboard();
+  // The public profile route is keyed by the freelancer PROFILE id (the dashboard
+  // payload's profile.id is the user id) — same source as the Profile tab's preview.
+  const freelancerProfileId = user?.freelancer_profile?.id;
 
   if (loading) {
     return (
@@ -100,6 +99,8 @@ export default function DashboardContent({ onTabChange }: Props) {
 
   const openNotification = (n: DashboardNotification) => {
     if (n.readAt === null) api.markNotificationRead(n.id).catch(() => {});
+    // Refresh the destination's cached queries so the page shows fresh data.
+    invalidateForNotification(queryClient, n.type);
     const route = getNotificationRoute({ ...n, role: "freelancer" } as unknown as Notification);
     if (route) router.push(route);
   };
@@ -115,47 +116,35 @@ export default function DashboardContent({ onTabChange }: Props) {
           borderRadius: 4,
           border: "1px solid rgba(0, 0, 0, 0.08)",
         }}>
-        <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "start", gap: 2 }}>
-            <Avatar src={profile.avatarUrl ?? undefined} alt={profile.name} sx={{ width: 80, height: 80 }} />
-            <Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-                <Typography sx={{ fontSize: 20, fontWeight: 600, color: "black" }}>{profile.name}</Typography>
-                {profile.verified && <Shield sx={{ fontSize: 16, color: "#2563eb" }} />}
+        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2, flexWrap: "wrap", mb: 3 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 2, minWidth: 0 }}>
+            <ProfileAvatar name={profile.name} src={profile.avatarUrl} size={80} verified={profile.verified} />
+            <Box sx={{ minWidth: 0 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1.125, flexWrap: "wrap" }}>
+                <Typography sx={{ fontSize: 20, fontWeight: 600, color: "black", letterSpacing: "-0.02em" }}>{profile.name}</Typography>
+                {profile.level && <LevelBadge level={profile.level} small />}
               </Box>
               {profile.tagline && (
-                <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)", mb: 1.5 }}>{profile.tagline}</Typography>
+                <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)", mt: 0.25 }}>{profile.tagline}</Typography>
               )}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
-                {profile.level && (
-                  <Box
-                    sx={{
-                      px: 1.5,
-                      py: 0.5,
-                      background: getLevelGradient(profile.level),
-                      borderRadius: 2,
-                    }}>
-                    <Typography sx={{ fontSize: 11, fontWeight: 600, color: "white" }}>{profile.level}</Typography>
-                  </Box>
-                )}
-
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 1, flexWrap: "wrap" }}>
                 {profile.rating !== null && profile.totalReviews > 0 && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <Star sx={{ fontSize: 14, color: "#f59e0b", fill: "#f59e0b" }} />
+                  <>
+                    <Stars5 rating={parseFloat(profile.rating)} size={14} />
                     <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black" }}>{profile.rating}</Typography>
                     <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>({profile.totalReviews} reviews)</Typography>
-                  </Box>
+                    <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "rgba(0,0,0,0.25)" }} />
+                  </>
                 )}
-
                 {profile.responseRate !== null && (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+                  <>
                     <ChatBubbleOutline sx={{ fontSize: 14, color: "#2563eb" }} />
                     <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>
                       {profile.responseRate}% response rate
                     </Typography>
-                  </Box>
+                    <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "rgba(0,0,0,0.25)" }} />
+                  </>
                 )}
-
                 <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.5)" }}>
                   Member since {formatMemberSince(profile.memberSince)}
                 </Typography>
@@ -164,6 +153,8 @@ export default function DashboardContent({ onTabChange }: Props) {
           </Box>
 
           <Button
+            onClick={() => freelancerProfileId && router.push(`/find-freelancer/${freelancerProfileId}`)}
+            disabled={!freelancerProfileId}
             startIcon={<VisibilityOutlined sx={{ fontSize: 14 }} />}
             sx={{
               px: 2,
@@ -173,6 +164,7 @@ export default function DashboardContent({ onTabChange }: Props) {
               bgcolor: "rgba(0, 0, 0, 0.05)",
               borderRadius: 10,
               textTransform: "none",
+              flexShrink: 0,
               "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
             }}>
             View Public Profile

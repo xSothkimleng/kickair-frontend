@@ -17,6 +17,7 @@ import {
   AccessTime,
   OpenInNew,
   MoveToInboxOutlined,
+  AddRounded,
 } from "@mui/icons-material";
 import { tokens } from "@/theme";
 import { api } from "@/lib/api";
@@ -25,6 +26,7 @@ import { notifTimeAgo } from "@/components/notifications/shared";
 import { Money, coCard, coLabel, Chip, AttachChip, initials } from "./kit";
 import { useIncomingCustomOrders, useCoInvalidate } from "./hooks";
 import OfferComposer from "./OfferComposer";
+import DirectOfferDialog from "./DirectOfferDialog";
 
 type Filter = "all" | "new" | "offered" | "declined";
 
@@ -38,6 +40,7 @@ export default function CustomRequestsInbox() {
   const [selId, setSelId] = useState<number | null>(null);
   const [composing, setComposing] = useState(false);
   const [declining, setDeclining] = useState(false);
+  const [proposing, setProposing] = useState(false);
 
   const rows = requests.filter((r) =>
     filter === "all" ? true : filter === "new" ? isNew(r) : r.status === filter
@@ -197,14 +200,22 @@ export default function CustomRequestsInbox() {
 
   return (
     <Box>
-      <Box sx={{ mb: { xs: 2.5, sm: 3.5 } }}>
+      <Box sx={{ mb: { xs: 2.5, sm: 3.5 }, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
         <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
           <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom requests</Typography>
           <Typography sx={{ fontSize: 14, color: tokens.text2, mb: 0.5 }}>
             {isLoading ? "Loading…" : `${newCount} new · ${requests.length} total`}
           </Typography>
         </Box>
+        {/* Freelancer-initiated path: draft an offer for a client who can't (or
+            won't) write the request themselves. The client still has to accept. */}
+        <Button onClick={() => setProposing(true)} startIcon={<AddRounded />}
+          sx={{ textTransform: "none", fontWeight: 600, fontSize: 13.5, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", px: 2.25, height: 40, boxShadow: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" } }}>
+          Propose custom order
+        </Button>
       </Box>
+
+      <DirectOfferDialog open={proposing} onClose={() => setProposing(false)} />
 
       {!isLoading && requests.length === 0 ? (
         <EmptyState onSettings={() => router.push("/dashboard/freelancer?tab=services")} />

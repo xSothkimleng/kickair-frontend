@@ -112,6 +112,7 @@ function ClientMessagesContent() {
             sending={sending}
             onSendMessage={handleSendMessage}
             participantLabel="freelancer"
+            viewerRole="client"
           />
         </Paper>
       </Box>

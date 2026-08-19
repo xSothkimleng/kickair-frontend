@@ -32,6 +32,8 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 const portfolioDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-US", { month: "short", year: "numeric" }) : null);
+// Legacy rows may hold scheme-less URLs ("example.com") — prepend https:// so the link doesn't resolve relative to our site.
+const externalUrl = (url: string) => (/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`);
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
@@ -131,7 +133,19 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
           : <Typography sx={{ color: tokens.text3, fontSize: 14 }}>No education listed.</Typography>}
       </PPBlock>
       <PPBlock title="Certifications" last>
-        {certificates.length ? <Box>{certificates.map((c, i) => <EntryRow key={i} icon={<WorkspacePremiumOutlined sx={{ fontSize: 19 }} />} title={c.title} sub={c.source} />)}</Box>
+        {certificates.length ? <Box>{certificates.map((c, i) => (
+          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <EntryRow icon={<WorkspacePremiumOutlined sx={{ fontSize: 19 }} />} title={c.title} sub={c.source} />
+            </Box>
+            {c.file_url && (
+              <Typography component="a" href={c.file_url} target="_blank" rel="noopener noreferrer"
+                sx={{ fontSize: 12.5, fontWeight: 600, color: tokens.accent, textDecoration: "none", whiteSpace: "nowrap", "&:hover": { textDecoration: "underline" } }}>
+                View certificate
+              </Typography>
+            )}
+          </Box>
+        ))}</Box>
           : <Typography sx={{ color: tokens.text3, fontSize: 14 }}>No certifications listed.</Typography>}
       </PPBlock>
     </Box>
@@ -160,7 +174,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
               <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1.125 }}>
                 {date && <Typography sx={{ fontSize: 12, color: tokens.text3, fontFamily: tokens.mono }}>{date}</Typography>}
                 {item.project_url && (
-                  <Box component="a" href={item.project_url} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
+                  <Box component="a" href={externalUrl(item.project_url)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
                     sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, fontSize: 12, fontWeight: 600, color: tokens.accent, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>
                     View project <OpenInNewOutlined sx={{ fontSize: 13 }} />
                   </Box>

@@ -12,7 +12,7 @@ import {
   SchoolOutlined, WorkspacePremiumOutlined, GridViewOutlined, ShieldOutlined, BadgeOutlined, PhoneOutlined,
   MailOutline, AutoAwesomeOutlined, ImageOutlined, LinkOutlined, OpenInNewOutlined, CheckRounded,
 } from "@mui/icons-material";
-import { TextInput, TextArea, SelectInput, MultiSelectInput, DatePicker, FileUpload, AutocompleteInput } from "@/components/ui/inputs";
+import { TextInput, TextArea, SelectInput, MultiAutocompleteInput, DatePicker, FileUpload, AutocompleteInput } from "@/components/ui/inputs";
 import { useAuth } from "@/components/context/AuthContext";
 import { useFreelancerDashboard } from "@/hooks/useFreelancerDashboard";
 import { api } from "@/lib/api";
@@ -86,6 +86,7 @@ export default function ProfileContent() {
 
   const [educationDialog, setEducationDialog] = useState<{ open: boolean; editIndex: number | null; data: Education }>({ open: false, editIndex: null, data: { facility: "", studies: "" } });
   const [certificateDialog, setCertificateDialog] = useState<{ open: boolean; editIndex: number | null; data: Certificate }>({ open: false, editIndex: null, data: { title: "", source: "" } });
+  const [certFileUploading, setCertFileUploading] = useState(false);
   const [languageDialog, setLanguageDialog] = useState<{ open: boolean; selectedLanguage: Language | null; proficiency: ProficiencyLevel }>({ open: false, selectedLanguage: null, proficiency: "conversational" });
 
   // Portfolio (own endpoints — images, so not part of the JSON profile save)
@@ -255,6 +256,41 @@ export default function ProfileContent() {
     setCertificates(certificates.filter((_, i) => i !== index));
     setHasUnsavedChanges(true);
   };
+  const handleCertificateFileUpload = async (files: FileList | null) => {
+    const file = files?.[0];
+    if (!file) return;
+    setCertFileUploading(true);
+    try {
+      const token = await api.getUploadToken();
+      const res = await api.uploadFormData("/api/temporary-uploads", file, { upload_token: token });
+      setCertificateDialog(prev => ({ ...prev, data: { ...prev.data, file_url: res.data.file_url, file_name: res.data.file_name } }));
+    } catch {
+      setSnackbar({ open: true, message: "Failed to upload the certificate file.", severity: "error" });
+    } finally {
+      setCertFileUploading(false);
+    }
+  };
+
+  // Skill (expertise) creation — the typeahead's `Add "xyz"` option lands here.
+  const handleCreateExpertise = async (name: string) => {
+    const trimmed = name.trim().replace(/\s+/g, " ").slice(0, 80);
+    if (!trimmed) return;
+    const existing = expertises.find(e => e.expertise_name.toLowerCase() === trimmed.toLowerCase());
+    if (existing) {
+      setSelectedExpertiseIds(prev => (prev.includes(existing.id) ? prev : [...prev, existing.id]));
+      setHasUnsavedChanges(true);
+      return;
+    }
+    try {
+      const created = await api.createExpertise(trimmed);
+      setExpertises(prev => (prev.some(e => e.id === created.id) ? prev : [...prev, created]));
+      setSelectedExpertiseIds(prev => (prev.includes(created.id) ? prev : [...prev, created.id]));
+      setHasUnsavedChanges(true);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Failed to add skill";
+      setSnackbar({ open: true, message, severity: "error" });
+    }
+  };
 
   // Language handlers
   const handleOpenLanguageDialog = () => {
@@ -296,7 +332,8 @@ export default function ProfileContent() {
       const fd = new FormData();
       fd.append("title", pf.title.trim());
       fd.append("description", pf.description.trim());
-      if (pf.projectUrl.trim()) fd.append("project_url", pf.projectUrl.trim());
+      const projectUrl = pf.projectUrl.trim();
+      if (projectUrl) fd.append("project_url", /^[a-z][a-z0-9+.-]*:\/\//i.test(projectUrl) ? projectUrl : `https://${projectUrl}`);
       if (pf.date) fd.append("completed_on", ymd(pf.date));
       pfNewFiles.forEach(f => fd.append("images[]", f));
       const editing = portfolioDialog.editing;
@@ -486,11 +523,12 @@ export default function ProfileContent() {
 
       {/* Skills */}
       <SectionCard icon={<AutoAwesomeOutlined sx={{ fontSize: 19 }} />} title="Skills & expertise" hint="These power search and recommendations.">
-        <MultiSelectInput
+        <MultiAutocompleteInput
           value={selectedExpertiseIds}
           onChange={ids => { setSelectedExpertiseIds(ids as number[]); setHasUnsavedChanges(true); }}
           options={expertises.map(exp => ({ value: exp.id, label: exp.expertise_name }))}
-          placeholder="Select your skills and expertise"
+          placeholder="Search skills — or type a new one and press Enter"
+          onCreate={handleCreateExpertise}
         />
       </SectionCard>
 
@@ -514,7 +552,9 @@ export default function ProfileContent() {
         {certificates.length > 0 ? (
           <Box>
             {certificates.map((c, i) => (
-              <EntryRow key={i} icon={<WorkspacePremiumOutlined sx={{ fontSize: 19 }} />} title={c.title} sub={c.source} onEdit={() => handleOpenCertificateDialog(i)} onDelete={() => handleRemoveCertificate(i)} />
+              <EntryRow key={i} icon={<WorkspacePremiumOutlined sx={{ fontSize: 19 }} />} title={c.title}
+                sub={c.file_url ? `${c.source} · has certificate file` : c.source}
+                onEdit={() => handleOpenCertificateDialog(i)} onDelete={() => handleRemoveCertificate(i)} />
             ))}
           </Box>
         ) : (
@@ -617,6 +657,32 @@ export default function ProfileContent() {
           onChange={v => setCertificateDialog(prev => ({ ...prev, data: { ...prev.data, title: (v ?? "").slice(0, 255) } }))} placeholder="e.g. Google UX Design Certificate" />
         <AutocompleteInput label="Issuing organization" freeSolo options={certIssuerOptions} value={certificateDialog.data.source}
           onChange={v => setCertificateDialog(prev => ({ ...prev, data: { ...prev.data, source: (v ?? "").slice(0, 255) } }))} placeholder="e.g. Google" />
+
+        {/* Optional proof file (PDF or image) */}
+        <Box>
+          <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#334155", mb: 0.875 }}>
+            Certificate file <Typography component="span" sx={{ color: "rgba(0,0,0,0.4)" }}>(optional · PDF or image)</Typography>
+          </Typography>
+          {certificateDialog.data.file_url ? (
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: "8px 12px", border: `1px solid ${tokens.border}`, borderRadius: 2 }}>
+              <WorkspacePremiumOutlined sx={{ fontSize: 16, color: tokens.text3 }} />
+              <Typography component="a" href={certificateDialog.data.file_url} target="_blank" rel="noopener noreferrer"
+                sx={{ flex: 1, fontSize: 13, color: tokens.accent, textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", "&:hover": { textDecoration: "underline" } }}>
+                {certificateDialog.data.file_name || "Attached file"}
+              </Typography>
+              <Button onClick={() => setCertificateDialog(prev => ({ ...prev, data: { ...prev.data, file_url: null, file_name: null } }))}
+                sx={{ fontSize: 12, textTransform: "none", color: tokens.text2, minWidth: 0 }}>
+                Remove
+              </Button>
+            </Box>
+          ) : (
+            <Button component="label" disabled={certFileUploading}
+              sx={{ height: 38, px: 2, borderRadius: 2, textTransform: "none", fontSize: 13, fontWeight: 600, border: `1px dashed ${tokens.borderStrong}`, color: tokens.text2, "&:hover": { bgcolor: tokens.surface2 } }}>
+              {certFileUploading ? "Uploading…" : "Upload certificate (PDF/JPG/PNG)"}
+              <input type="file" hidden accept=".pdf,.jpg,.jpeg,.png,.webp" onChange={e => handleCertificateFileUpload(e.target.files)} />
+            </Button>
+          )}
+        </Box>
       </PfDialog>
 
       {/* Portfolio Dialog */}

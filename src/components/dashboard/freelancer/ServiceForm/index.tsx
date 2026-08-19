@@ -11,6 +11,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
 import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
+import EarningsBreakdown from "./EarningsBreakdown";
 import MediaGallerySection from "./MediaGallerySection";
 import FAQsSection from "./FAQsSection";
 import CustomOrdersSection from "./CustomOrdersSection";
@@ -213,10 +214,43 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       if (!tier.deliveryTime) errs[`${t}_delivery`]  = "Delivery time is required";
     }
 
+    // Cross-tier price ordering: Basic ≤ Standard ≤ Premium (compared among enabled tiers).
+    const TIER_LABEL = { basic: "Basic", standard: "Standard", premium: "Premium" } as const;
+    const pricedTiers = enabledTiers.filter(t => formData.pricing[t].price);
+    for (let i = 1; i < pricedTiers.length; i++) {
+      const lower = pricedTiers[i - 1];
+      const higher = pricedTiers[i];
+      if (parseFloat(formData.pricing[lower].price) > parseFloat(formData.pricing[higher].price)) {
+        errs[`${higher}_price`] = `${TIER_LABEL[lower]} can't cost more than ${TIER_LABEL[higher]}`;
+      }
+    }
+
     setFieldErrors(errs);
     if (Object.keys(errs).length === 0) return null;
+    scrollToFirstError(errs);
     // One friendly summary; each field shows its own red indicator below.
     return "Please complete the required fields highlighted below before publishing.";
+  };
+
+  // Bring the first invalid field into view (in page order) so the user
+  // doesn't have to hunt for the red indicator on a long form.
+  const ERROR_ANCHORS: Array<[key: string, anchorId: string]> = [
+    ["title", "svc-section-basic"],
+    ["category", "svc-section-basic"],
+    ["noTier", "svc-section-pricing"],
+    ...(["basic", "standard", "premium"] as const).flatMap(t =>
+      ["price", "revisions", "delivery"].map(f => [`${t}_${f}`, `svc-tier-${t}`] as [string, string]),
+    ),
+    ["image", "svc-section-media"],
+  ];
+
+  const scrollToFirstError = (errs: Record<string, string>) => {
+    for (const [key, anchorId] of ERROR_ANCHORS) {
+      if (errs[key]) {
+        document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+    }
   };
 
   const handlePublish = async () => {
@@ -384,6 +418,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         </Paper>
       )}
 
+      <Box id='svc-section-basic'>
       <BasicInfoSection
         formData={formData}
         onFormDataChange={(data) => { setFormData(data); setFieldErrors(prev => ({ ...prev, title: "", category: "" })); }}
@@ -391,13 +426,14 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         categoriesLoading={categoriesLoading}
         fieldErrors={{ title: fieldErrors.title, category: fieldErrors.category }}
       />
+      </Box>
       <PricingSection
         formData={formData}
         onFormDataChange={setFormData}
         fieldErrors={fieldErrors}
         onClearTierError={(key) => setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n; })}
       />
-      <Box sx={fieldErrors.image ? { border: "1px solid #ef4444", borderRadius: 4 } : undefined}>
+      <Box id='svc-section-media' sx={fieldErrors.image ? { border: "1px solid #ef4444", borderRadius: 4 } : undefined}>
         <MediaGallerySection
           serviceId={service?.id || null}
           media={media}
@@ -428,6 +464,9 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
 
       {/* TODO: After implementing Message feature */}
       {/* <RequirementsSection formData={formData} onFormDataChange={setFormData} /> */}
+
+      {/* Price breakdown — what the freelancer nets per tier, shown BEFORE the T&C */}
+      <EarningsBreakdown pricing={formData.pricing} />
 
       {/* Terms & Actions */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>

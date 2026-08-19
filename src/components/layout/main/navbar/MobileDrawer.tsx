@@ -234,7 +234,7 @@ export function MobileDrawer({
                     const hasRole = mode === "freelancer" ? !!user?.is_freelancer : !!user?.is_client;
                     const label = hasRole
                       ? mode.charAt(0).toUpperCase() + mode.slice(1)
-                      : mode === "freelancer" ? "Become freelancer" : "Become a client";
+                      : mode === "freelancer" ? "Become a freelancer" : "Become a client";
                     return (
                       <Button
                         key={mode}

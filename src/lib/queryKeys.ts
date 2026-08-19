@@ -34,6 +34,7 @@ export const qk = {
     mine: () => ["jobs", "mine"] as const,
   },
   conversations: () => ["conversations"] as const,
+  conversationEvents: (id: number | string) => ["conversations", "events", String(id)] as const,
   messages: {
     list: (conversationId: number | string) => ["messages", String(conversationId)] as const,
     unreadCount: () => ["messages", "unread-count"] as const,

@@ -7,6 +7,7 @@ import { Close as CloseIcon, Add as AddIcon, InfoOutlined as InfoIcon } from "@m
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { tokens } from "@/theme";
+import { CurrencyInput, parseMoney } from "@/components/ui/inputs";
 import AbaMethodSelector, { type AbaMethod } from "./AbaMethodSelector";
 import { usePaymentProcessing } from "./usePaymentProcessing";
 import { fmtUsd } from "./format";
@@ -47,7 +48,7 @@ export default function TopUpDialog({
     }
   }, [open, suggestedAmount]);
 
-  const amt = Number(amount) || 0;
+  const amt = parseMoney(amount) ?? 0;
   const valid = amt >= 1 && !!method;
 
   const finish = () => {
@@ -162,33 +163,8 @@ export default function TopUpDialog({
             Custom amount
           </Box>
           {custom && (
-            <Box sx={{ position: "relative", mb: 2.5 }}>
-              <Box component='span' sx={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: tokens.text3, fontSize: 16 }}>
-                $
-              </Box>
-              <Box
-                component='input'
-                type='number'
-                autoFocus
-                placeholder='0.00'
-                value={amount}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setAmount(e.target.value)}
-                sx={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  height: 44,
-                  pl: "28px",
-                  pr: "14px",
-                  border: `1px solid ${tokens.borderStrong}`,
-                  borderRadius: `${tokens.radius.input}px`,
-                  bgcolor: tokens.surface,
-                  font: "inherit",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  outline: "none",
-                  "&:focus": { borderColor: tokens.accent, boxShadow: `0 0 0 3px ${tokens.accentFill}` },
-                }}
-              />
+            <Box sx={{ mb: 2.5 }}>
+              <CurrencyInput autoFocus placeholder='0.00' value={amount} onChange={setAmount} />
             </Box>
           )}
 

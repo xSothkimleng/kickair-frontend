@@ -5,7 +5,6 @@ import { Box, Typography, Button, Avatar, Chip, Card, CardContent, Grid, Stack, 
 import {
   LocationOn as MapPinIcon,
   CalendarToday as CalendarIcon,
-  Visibility as EyeIcon,
   Work as BriefcaseIcon,
   Message as MessageCircleIcon,
   AccountBalanceWallet as WalletIcon,
@@ -13,6 +12,7 @@ import {
   TrendingUp as ArrowUpRightIcon,
   Shield as ShieldIcon,
 } from "@mui/icons-material";
+import { ProfileAvatar } from "@/components/profile/profileKit";
 import { useClientDashboard } from "@/hooks/useClientDashboard";
 import { DashboardNotification, DashboardConversation } from "@/types/dashboard";
 import { Notification } from "@/types/notification";
@@ -126,71 +126,52 @@ export default function DashboardContent({ onTabChange }: Props) {
         }}>
         <CardContent sx={{ p: 3 }}>
           <Stack spacing={3}>
-            <Stack direction='row' justifyContent='space-between' alignItems='flex-start'>
-              <Stack direction='row' spacing={2} alignItems='flex-start'>
-                <Avatar src={profile.avatarUrl ?? undefined} alt={profile.name} sx={{ width: 80, height: 80 }} />
-                <Box>
-                  <Stack direction='row' spacing={1} alignItems='center' mb={0.5}>
-                    <Typography variant='h6' fontWeight={600}>
-                      {profile.name}
-                    </Typography>
-                    {profile.verified && (
-                      <Chip
-                        icon={<ShieldIcon sx={{ fontSize: 12 }} />}
-                        label='Verified'
-                        size='small'
-                        sx={{
-                          height: 20,
-                          fontSize: 10,
-                          fontWeight: 500,
-                          bgcolor: "rgba(37, 99, 235, 0.1)",
-                          color: "#2563eb",
-                          "& .MuiChip-icon": { color: "#2563eb" },
-                        }}
-                      />
-                    )}
-                  </Stack>
-                  {profile.company && (
-                    <Typography variant='body2' color='text.secondary' mb={0.5}>
-                      {profile.company}
-                    </Typography>
+            {/* No public client profile route exists, so there is no "View Public Profile" button here. */}
+            <Stack direction='row' spacing={2} alignItems='center'>
+              <ProfileAvatar name={profile.name} src={profile.avatarUrl} size={80} />
+              <Box sx={{ minWidth: 0 }}>
+                <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap'>
+                  <Typography variant='h6' fontWeight={600} sx={{ letterSpacing: "-0.02em" }}>
+                    {profile.name}
+                  </Typography>
+                  {profile.verified && (
+                    <Chip
+                      icon={<ShieldIcon sx={{ fontSize: 12 }} />}
+                      label='Verified'
+                      size='small'
+                      sx={{
+                        height: 20,
+                        fontSize: 10,
+                        fontWeight: 500,
+                        bgcolor: "rgba(37, 99, 235, 0.1)",
+                        color: "#2563eb",
+                        "& .MuiChip-icon": { color: "#2563eb" },
+                      }}
+                    />
                   )}
-                  <Stack direction='row' spacing={2} alignItems='center'>
-                    {profile.location && (
-                      <Stack direction='row' spacing={0.5} alignItems='center'>
-                        <MapPinIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                        <Typography variant='caption' color='text.secondary'>
-                          {profile.location}
-                        </Typography>
-                      </Stack>
-                    )}
+                </Stack>
+                {profile.company && (
+                  <Typography variant='body2' color='text.secondary' sx={{ mt: 0.25 }}>
+                    {profile.company}
+                  </Typography>
+                )}
+                <Stack direction='row' spacing={2} alignItems='center' flexWrap='wrap' sx={{ mt: 1 }}>
+                  {profile.location && (
                     <Stack direction='row' spacing={0.5} alignItems='center'>
-                      <CalendarIcon sx={{ fontSize: 12, color: "text.secondary" }} />
+                      <MapPinIcon sx={{ fontSize: 12, color: "text.secondary" }} />
                       <Typography variant='caption' color='text.secondary'>
-                        Member since {formatMemberSince(profile.memberSince)}
+                        {profile.location}
                       </Typography>
                     </Stack>
+                  )}
+                  <Stack direction='row' spacing={0.5} alignItems='center'>
+                    <CalendarIcon sx={{ fontSize: 12, color: "text.secondary" }} />
+                    <Typography variant='caption' color='text.secondary'>
+                      Member since {formatMemberSince(profile.memberSince)}
+                    </Typography>
                   </Stack>
-                </Box>
-              </Stack>
-
-              <Button
-                variant='contained'
-                startIcon={<EyeIcon sx={{ fontSize: 14 }} />}
-                sx={{
-                  bgcolor: "rgba(0,0,0,0.05)",
-                  color: "black",
-                  fontSize: 12,
-                  textTransform: "none",
-                  borderRadius: 10,
-                  boxShadow: "none",
-                  "&:hover": {
-                    bgcolor: "rgba(0,0,0,0.1)",
-                    boxShadow: "none",
-                  },
-                }}>
-                View Public Profile
-              </Button>
+                </Stack>
+              </Box>
             </Stack>
 
             {/* Profile Stats */}

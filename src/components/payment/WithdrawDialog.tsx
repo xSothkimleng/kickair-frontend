@@ -12,6 +12,7 @@ import {
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { tokens } from "@/theme";
+import { CurrencyInput, parseMoney } from "@/components/ui/inputs";
 import PaymentOption from "./PaymentOption";
 import StatusChip from "./StatusChip";
 import { fmtUsd } from "./format";
@@ -62,7 +63,7 @@ export default function WithdrawDialog({
     }
   }, [open]);
 
-  const amt = Number(amount) || 0;
+  const amt = parseMoney(amount) ?? 0;
   const valid = amt >= 1 && amt <= available;
 
   const submit = async () => {
@@ -122,8 +123,8 @@ export default function WithdrawDialog({
         <>
           <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: "20px 24px", borderBottom: `1px solid ${tokens.border}` }}>
             <Box>
-              <Annot>Freelancer withdrawal · manual payout</Annot>
-              <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em" }}>Withdraw earnings</Typography>
+              <Annot>Wallet withdrawal · manual payout</Annot>
+              <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em" }}>Withdraw funds</Typography>
             </Box>
             <IconButton onClick={onClose} disabled={submitting} sx={{ color: tokens.text2 }}>
               <CloseIcon sx={{ fontSize: 20 }} />
@@ -137,31 +138,13 @@ export default function WithdrawDialog({
             </Box>
 
             <FieldLabel>Amount (USD)</FieldLabel>
-            <Box sx={{ position: "relative", mb: amt > available ? 0.75 : 2.5 }}>
-              <Box component='span' sx={{ position: "absolute", left: 14, top: "50%", transform: "translateY(-50%)", color: tokens.text3, fontSize: 16 }}>$</Box>
-              <Box
-                component='input'
-                type='number'
+            <Box sx={{ mb: amt > available ? 0.75 : 2.5 }}>
+              <CurrencyInput
                 placeholder='0.00'
                 value={amount}
-                onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-                  setAmount(e.target.value);
+                onChange={(v) => {
+                  setAmount(v);
                   setError(null);
-                }}
-                sx={{
-                  width: "100%",
-                  boxSizing: "border-box",
-                  height: 44,
-                  pl: "28px",
-                  pr: "14px",
-                  border: `1px solid ${tokens.borderStrong}`,
-                  borderRadius: `${tokens.radius.input}px`,
-                  bgcolor: tokens.surface,
-                  font: "inherit",
-                  fontSize: 16,
-                  fontWeight: 600,
-                  outline: "none",
-                  "&:focus": { borderColor: tokens.accent, boxShadow: `0 0 0 3px ${tokens.accentFill}` },
                 }}
               />
             </Box>

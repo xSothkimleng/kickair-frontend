@@ -8,6 +8,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/components/context/AuthContext";
 import { getEcho } from "@/lib/echo";
 import { invalidateForNotification } from "@/lib/realtimeInvalidation";
+import { ensureSubscribed } from "@/lib/webPush";
 import { Notification } from "@/types/notification";
 
 interface Toast {
@@ -49,6 +50,11 @@ export default function GlobalNotificationToast() {
 
   useEffect(() => {
     if (!user) return;
+
+    // Silent web-push keep-alive: if the user already granted browser-notification
+    // permission (and hasn't opted out), refresh the subscription with the API.
+    // Fire-and-forget — a failure must never affect the realtime toasts below.
+    ensureSubscribed().catch(() => {});
 
     let echo: ReturnType<typeof getEcho>;
     try { echo = getEcho(); } catch { return; }

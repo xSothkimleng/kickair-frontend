@@ -52,4 +52,25 @@ export function invalidateForNotification(queryClient: QueryClient, type?: strin
     queryClient.invalidateQueries({ queryKey: qk.jobs.all() });
     return;
   }
+
+  if (type.startsWith("custom_order") || type.startsWith("milestone")) {
+    queryClient.invalidateQueries({ queryKey: qk.customOrders.all() });
+    queryClient.invalidateQueries({ queryKey: qk.orders.all() });
+    queryClient.invalidateQueries({ queryKey: qk.wallet() });
+    return;
+  }
+
+  if (type.startsWith("withdrawal")) {
+    queryClient.invalidateQueries({ queryKey: qk.wallet() });
+    queryClient.invalidateQueries({ queryKey: qk.transactions() });
+    return;
+  }
+
+  if (type.startsWith("kyc")) {
+    // KYC gates publishing and both dashboards' verification banners.
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.client() });
+    queryClient.invalidateQueries({ queryKey: qk.dashboard.freelancer() });
+    queryClient.invalidateQueries({ queryKey: qk.services.all() });
+    return;
+  }
 }

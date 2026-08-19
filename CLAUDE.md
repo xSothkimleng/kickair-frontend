@@ -1,8 +1,8 @@
 # KickAir Frontend — Project Context
 
 ## Stack
-- **Framework**: Next.js 14 (App Router, `app/` directory)
-- **UI**: Material UI (MUI) v6 — no Tailwind; all styling via `sx` props and MUI components
+- **Framework**: Next.js 16.1.1 (App Router, `app/` directory), React 19.2.3, React Compiler enabled (`babel-plugin-react-compiler`)
+- **UI**: Material UI (MUI) v7.3.6 (`@mui/material`, `@mui/icons-material`, `@mui/material-nextjs` v16-appRouter, `@mui/x-charts` v8) on Emotion — no Tailwind; nearly all styling via inline `sx` props (~4,800 sites across ~170 components), a handful via `styled()`. Design tokens live as plain JS objects in `src/theme.ts` (`tokens`, payment surfaces) and `src/components/ui/inputs/tokens.ts` (`tokens`, form fields) — read inside `sx`, NOT wired into the MUI palette. Custom input system in `src/components/ui/inputs/` wraps MUI fields; shared "kits" (`profileKit.tsx`, `admin/adminKit.tsx`, `customOrders/kit.tsx`, `dashboard/ManagementCard.tsx`) concentrate repeated patterns.
 - **Auth**: `AuthContext` (`src/components/context/AuthContext.tsx`) — `useAuth()` hook; tokens stored in localStorage
 - **API client**: `src/lib/api.ts` — singleton `api` instance of the `ApiClient` class; all HTTP calls go through `api.get/post/put/patch/delete`
 - **Types**: `src/types/` — domain types used across the app

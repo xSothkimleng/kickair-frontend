@@ -1,6 +1,6 @@
 import { Box, Typography } from "@mui/material";
 import RichTextEditor from "@/components/ui/RichTextEditor";
-import { TextInput, Switch } from "@/components/ui/inputs";
+import { CurrencyInput, TextInput, Switch } from "@/components/ui/inputs";
 import { PricingTier } from "../types";
 
 interface PricingTierCardProps {
@@ -10,9 +10,11 @@ interface PricingTierCardProps {
   onToggle: (enabled: boolean) => void;
   errors?: { price?: string; revisions?: string; delivery?: string };
   onClearError?: (field: "price" | "revisions" | "delivery") => void;
+  /** Platform commission rate (0.2 = 20%); null while loading. */
+  commissionRate?: number | null;
 }
 
-export default function PricingTierCard({ tier, data, onChange, onToggle, errors, onClearError }: PricingTierCardProps) {
+export default function PricingTierCard({ tier, data, onChange, onToggle, errors, onClearError, commissionRate }: PricingTierCardProps) {
   const disabled = !data.enabled;
 
   return (
@@ -63,16 +65,27 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
             error={errors?.delivery}
           />
 
-          <TextInput
+          <CurrencyInput
             size="sm"
             label="Price (USD)"
             required
-            inputMode="decimal"
             value={data.price}
             onChange={(v) => { onChange({ ...data, price: v }); onClearError?.("price"); }}
             error={errors?.price}
-            startIcon="$"
           />
+
+          {/* Live earnings preview — the seller-side commission, shown before posting */}
+          {commissionRate != null && parseFloat(data.price) > 0 && (
+            <Box sx={{ p: "8px 12px", bgcolor: "rgba(22,163,74,0.06)", border: "1px solid rgba(22,163,74,0.15)", borderRadius: 2 }}>
+              <Typography sx={{ fontSize: 12.5, color: "#166534" }}>
+                You&apos;ll receive{" "}
+                <Box component="span" sx={{ fontWeight: 700 }}>
+                  ${(parseFloat(data.price) * (1 - commissionRate)).toFixed(2)}
+                </Box>
+                {" "}· after the {Math.round(commissionRate * 100)}% platform fee
+              </Typography>
+            </Box>
+          )}
         </Box>
       )}
     </Box>

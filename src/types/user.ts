@@ -8,6 +8,8 @@ export interface Education {
 export interface Certificate {
   title: string;   // Certificate name
   source: string;  // Issuing organization
+  file_url?: string | null;  // optional proof (PDF/image)
+  file_name?: string | null;
 }
 
 export interface PortfolioImage {
@@ -121,9 +123,6 @@ export interface ClientProfile {
 }
 
 export type KycStatus = 'pending' | 'approved' | 'rejected';
-
-// Channel for delivering a phone verification code. Telegram is primary, SMS the fallback.
-export type OtpChannel = 'telegram' | 'sms';
 
 // Document type the user verified with. null on legacy submissions made before the revamp.
 export type KycDocumentType = 'national_id' | 'passport' | 'drivers_license';

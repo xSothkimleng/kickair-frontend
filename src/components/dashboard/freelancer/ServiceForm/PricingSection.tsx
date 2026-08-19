@@ -1,6 +1,7 @@
 import { Box, Paper, Typography, Grid } from "@mui/material";
 import { ServiceFormData } from "../types";
 import PricingTierCard from "./PricingTierCard";
+import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 interface PricingSectionProps {
   formData: ServiceFormData;
@@ -10,6 +11,8 @@ interface PricingSectionProps {
 }
 
 export default function PricingSection({ formData, onFormDataChange, fieldErrors, onClearTierError }: PricingSectionProps) {
+  const commissionRate = useCommissionRate();
+
   const handleTierChange = (tier: "basic" | "standard" | "premium", data: ServiceFormData["pricing"]["basic"]) => {
     onFormDataChange({
       ...formData,
@@ -31,7 +34,7 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
   };
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
+    <Paper id='svc-section-pricing' elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
       <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>Pricing Options</Typography>
       <Typography sx={{ fontSize: 11, color: fieldErrors?.noTier ? "#ef4444" : "rgba(0, 0, 0, 0.6)", fontWeight: fieldErrors?.noTier ? 600 : 400, mb: 3 }}>
         {fieldErrors?.noTier || "Enable the tiers you want to offer. At least one tier is required."}
@@ -39,7 +42,7 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
 
       <Grid container spacing={2}>
         {(["basic", "standard", "premium"] as const).map(tier => (
-          <Grid size={{ xs: 12, md: 4 }} key={tier}>
+          <Grid size={{ xs: 12, md: 4 }} key={tier} id={`svc-tier-${tier}`}>
             <PricingTierCard
               tier={tier}
               data={formData.pricing[tier]}
@@ -51,6 +54,7 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
                 delivery: fieldErrors?.[`${tier}_delivery`],
               }}
               onClearError={(field) => onClearTierError?.(`${tier}_${field}`)}
+              commissionRate={commissionRate}
             />
           </Grid>
         ))}

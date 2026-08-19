@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { registerBellRefresh } from "@/components/layout/GlobalNotificationToast";
 import NotificationsIcon from "@mui/icons-material/Notifications";
@@ -11,6 +12,7 @@ import { Notification } from "@/types/notification";
 import { useAuth } from "@/components/context/AuthContext";
 import { tokens } from "@/theme";
 import { TypeTile, RoleChip, UnreadDot, getNotificationRoute, notifTimeAgo } from "@/components/notifications/shared";
+import { invalidateForNotification } from "@/lib/realtimeInvalidation";
 
 const POPUP_W = 380;
 
@@ -77,6 +79,7 @@ function PopupRowSkeleton() {
 export function NotificationBell() {
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -125,6 +128,9 @@ export function NotificationBell() {
       api.markNotificationRead(n.id).catch(() => {});
       setNotifications(prev => prev.map(x => (x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x)));
     }
+    // Refresh the queries behind the destination so the page shows fresh data,
+    // not whatever was cached before the notification arrived.
+    invalidateForNotification(queryClient, n.type);
     const route = getNotificationRoute(n);
     if (route) { router.push(route); handleClose(); }
   };

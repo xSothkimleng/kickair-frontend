@@ -19,6 +19,11 @@ import {
   CircularProgress,
   Alert,
   Chip,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogContentText,
+  DialogActions,
 } from "@mui/material";
 import {
   ChevronLeft,
@@ -41,6 +46,7 @@ import { Service, ServiceDetailResponse } from "@/types/service";
 import { useAuth } from "@/components/context/AuthContext";
 import RequestCustomOrderDialog from "@/components/customOrders/RequestCustomOrderDialog";
 import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/PurchaseGate";
+import { useServiceListingLive } from "@/hooks/useServiceListingLive";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import { RequestQuoteOutlined } from "@mui/icons-material";
 
@@ -64,6 +70,11 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const [isFavorite, setIsFavorite] = useState(false);
   const [showCustomOrderDialog, setShowCustomOrderDialog] = useState(false);
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
+  // Set when a live "service.changed" event arrives for this service — the freelancer edited
+  // (delisted) or deleted it while the visitor was on this page. Blocks purchases of the stale
+  // version; the backend rejects them too as a safety net.
+  const [listingChanged, setListingChanged] = useState(false);
+  useServiceListingLive(serviceId, () => setListingChanged(true));
 
   // Purchase gate — carries the selected package as order context and, after auth,
   // returns the buyer straight to checkout for this tier.
@@ -634,7 +645,9 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                           <Button
                             fullWidth
                             variant='contained'
+                            disabled={listingChanged}
                             onClick={() => {
+                              if (listingChanged) return;
                               if (ensureCanPurchase()) {
                                 router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`);
                               }
@@ -678,7 +691,8 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                               fullWidth
                               variant='contained'
                               startIcon={<RequestQuoteOutlined />}
-                              onClick={() => setShowCustomOrderDialog(true)}
+                              disabled={listingChanged}
+                              onClick={() => !listingChanged && setShowCustomOrderDialog(true)}
                               sx={{
                                 height: 44,
                                 bgcolor: "black",
@@ -782,6 +796,36 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
 
       {/* Purchase precondition gate (login / client role / KYC) */}
       {gateDialog}
+
+      {/* Live-edit guard — the freelancer changed/removed this service while it was open here.
+          Blocking: no onClose, so backdrop clicks and Escape can't dismiss it. */}
+      <Dialog open={listingChanged && !isOwnService} maxWidth='xs' fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ fontSize: 17, fontWeight: 600, px: 3, pt: 3, pb: 1 }}>This service was just updated</DialogTitle>
+        <DialogContent sx={{ px: 3 }}>
+          <DialogContentText sx={{ fontSize: 13.5, lineHeight: 1.6, color: "rgba(0,0,0,0.7)" }}>
+            This service was just updated by the freelancer and is awaiting admin approval. It&apos;s no longer
+            available in its current form.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            fullWidth
+            variant='contained'
+            onClick={() => window.location.reload()}
+            sx={{
+              height: 44,
+              bgcolor: "#0071e3",
+              color: "white",
+              fontSize: "13px",
+              fontWeight: 500,
+              borderRadius: 28,
+              textTransform: "none",
+              "&:hover": { bgcolor: "#0077ED" },
+            }}>
+            Refresh page
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

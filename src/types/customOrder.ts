@@ -102,3 +102,13 @@ export interface SendCustomOfferRequest {
   is_split: boolean;
   milestones: MilestoneInput[];
 }
+
+/**
+ * Freelancer-initiated custom order: the same offer shape sent directly to a
+ * chosen client (no prior client request). The client still has to accept.
+ */
+export interface CreateDirectCustomOfferRequest extends SendCustomOfferRequest {
+  service_id: number;
+  client_user_id: number;
+  description?: string | null;
+}

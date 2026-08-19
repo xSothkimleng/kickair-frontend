@@ -8,17 +8,26 @@ import { Message as MessageCircleIcon, CheckCircle as AcceptIcon, Cancel as Canc
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { Order, OrderStatus, FreelancerOrdersResponse } from "@/types/order";
+import { DatePicker } from "@/components/ui/inputs";
+
+const toYmd = (d: Date | null) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : "");
 
 export default function OrdersContent() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const [activeFilter, setActiveFilter] = useState<"all" | OrderStatus>("all");
   const [actionLoading, setActionLoading] = useState<number | null>(null);
+  const [fromDate, setFromDate] = useState<Date | null>(null);
+  const [toDate, setToDate] = useState<Date | null>(null);
 
   const { data: orders = [], isLoading: loading, error: queryError } = useQuery({
-    queryKey: qk.orders.list("freelancer"),
+    queryKey: qk.orders.list("freelancer", { from: toYmd(fromDate), to: toYmd(toDate) }),
     queryFn: async () => {
-      const response: FreelancerOrdersResponse = await api.get("/api/freelancer-orders");
+      const params = new URLSearchParams();
+      if (fromDate) params.set("from", toYmd(fromDate));
+      if (toDate) params.set("to", toYmd(toDate));
+      const qs = params.toString();
+      const response: FreelancerOrdersResponse = await api.get(`/api/freelancer-orders${qs ? `?${qs}` : ""}`);
       return response.data;
     },
   });
@@ -174,6 +183,22 @@ export default function OrdersContent() {
         ))}
       </Stack>
 
+      {/* Date range */}
+      <Stack direction="row" spacing={1.5} mb={3} alignItems="flex-end" flexWrap="wrap" useFlexGap>
+        <Box sx={{ width: 190 }}>
+          <DatePicker label="From" placeholder="Any date" value={fromDate} onChange={setFromDate} maxDate={toDate ?? undefined} />
+        </Box>
+        <Box sx={{ width: 190 }}>
+          <DatePicker label="To" placeholder="Any date" value={toDate} onChange={setToDate} minDate={fromDate ?? undefined} />
+        </Box>
+        {(fromDate || toDate) && (
+          <Button onClick={() => { setFromDate(null); setToDate(null); }}
+            sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.6)", mb: 0.5 }}>
+            Clear dates
+          </Button>
+        )}
+      </Stack>
+
       {/* Orders List */}
       {filteredOrders.length === 0 ? (
         <Box textAlign="center" py={6}>
@@ -219,7 +244,13 @@ export default function OrdersContent() {
                         <Typography variant="body2" color="text.secondary" mb={1}>
                           Client: {client?.user?.name || "Unknown"}
                         </Typography>
-                        <Stack direction="row" spacing={1.5} alignItems="center">
+                        <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
+                          <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "rgba(0,0,0,0.55)" }}>
+                            {order.reference ?? `ORD-${String(order.id).padStart(6, "0")}`}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            •
+                          </Typography>
                           <Typography variant="caption" color="text.secondary">
                             Order Date: {formatDate(order.created_at)}
                           </Typography>

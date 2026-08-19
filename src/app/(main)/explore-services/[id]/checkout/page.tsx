@@ -75,6 +75,10 @@ function CheckoutContent() {
   const balance = wallet ? parseFloat(wallet.available_balance_raw) : 0;
   const insufficient = balance < total;
   const topUpSuggested = Math.max(10, Math.ceil((total - balance) / 5) * 5);
+  // Wallet-as-hub: ABA only ever tops up the exact shortfall — the wallet then
+  // funds the full gig price into escrow. The client never pays more than sticker.
+  const shortfall = Math.max(0, Math.round((total - balance) * 100) / 100);
+  const walletCovers = Math.round((total - shortfall) * 100) / 100;
 
   // Purchase gate — carries the order context and returns the buyer to this exact
   // checkout after they authenticate / add a client role.
@@ -99,6 +103,11 @@ function CheckoutContent() {
     merchant: "KickAir",
     perform: async () => {
       if (!selectedPricing) throw new Error("No package selected");
+      // ABA path: top up exactly the shortfall into the wallet first, then the
+      // wallet funds the full order — one pool, one escrow entry.
+      if (paySource === "aba" && shortfall > 0) {
+        await api.post("/api/wallet/deposit", { amount: shortfall });
+      }
       const res: CreateOrderResponse = await api.post("/api/orders", { pricing_option_id: selectedPricing.id });
       createdOrderId.current = res.data.id;
       await qc.invalidateQueries({ queryKey: qk.wallet() });
@@ -122,7 +131,8 @@ function CheckoutContent() {
     if (!selectedPricing) return;
     if (!ensureCanPurchase()) return;
     if (paySource === "wallet" && !insufficient) flow.startWallet(total);
-    else if (paySource === "aba" && abaMethod) flow.startAba(abaMethod, total);
+    // ABA charges only the shortfall (or the full price when the wallet is empty).
+    else if (paySource === "aba" && abaMethod) flow.startAba(abaMethod, shortfall > 0 ? shortfall : total);
   };
 
   if (isLoading) {
@@ -222,8 +232,18 @@ function CheckoutContent() {
 
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
               <PriceRow label='Package price' value={fmtUsd(total)} />
+              {paySource === "aba" && shortfall > 0 && (
+                <>
+                  <PriceRow label='Paid from wallet' value={`−${fmtUsd(walletCovers)}`} />
+                  <PriceRow label='Top-up via ABA PayWay' value={fmtUsd(shortfall)} />
+                </>
+              )}
               <Box sx={{ height: 1, bgcolor: tokens.border }} />
-              <PriceRow label='Total' sub='USD · charged once' value={fmtUsd(total)} strong />
+              {paySource === "aba" && shortfall > 0 ? (
+                <PriceRow label='Charged now' sub='USD · only the shortfall — no service fees' value={fmtUsd(shortfall)} strong />
+              ) : (
+                <PriceRow label='Total' sub='USD · charged once · no service fees' value={fmtUsd(total)} strong />
+              )}
             </Box>
 
             <Box sx={{ display: "flex", gap: 1, mt: 2.25, p: "12px 14px", bgcolor: tokens.pendingTint, borderRadius: `${tokens.radius.tile}px` }}>
@@ -262,7 +282,11 @@ function CheckoutContent() {
                     </IconTile>
                     <Box>
                       <Typography sx={{ fontWeight: 600, fontSize: 15 }}>ABA PayWay</Typography>
-                      <Typography sx={{ fontSize: 13, color: tokens.text2 }}>KHQR, card, Alipay or WeChat</Typography>
+                      <Typography sx={{ fontSize: 13, color: tokens.text2 }}>
+                        {shortfall > 0 && shortfall < total
+                          ? `Tops up the ${fmtUsd(shortfall)} shortfall — wallet covers the rest`
+                          : "KHQR, card, Alipay or WeChat"}
+                      </Typography>
                     </Box>
                   </Box>
                   <Box sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
@@ -282,7 +306,7 @@ function CheckoutContent() {
                   <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: tokens.errorText }}>Insufficient balance</Typography>
                 </Box>
                 <Typography sx={{ fontSize: 13, color: tokens.errorText, mb: 1.5 }}>
-                  You need {fmtUsd(total - balance)} more to cover this order. Top up your wallet, then come back to finish.
+                  You need {fmtUsd(total - balance)} more to cover this order. Top up your wallet — or pick ABA PayWay above and we&apos;ll charge just the difference.
                 </Typography>
                 <Button
                   onClick={() => setTopUpOpen(true)}
@@ -317,7 +341,11 @@ function CheckoutContent() {
                   "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
                   "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.18)", color: "#fff" },
                 }}>
-                {paySource === "wallet" ? `Pay ${fmtUsd(total)} from wallet` : `Confirm & Pay ${fmtUsd(total)}`}
+                {paySource === "wallet"
+                  ? `Pay ${fmtUsd(total)} from wallet`
+                  : shortfall > 0
+                    ? `Confirm & Pay ${fmtUsd(shortfall)} via ABA`
+                    : `Confirm & Pay ${fmtUsd(total)}`}
               </Button>
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75, mt: 1.5, color: tokens.text3 }}>
                 <LockIcon sx={{ fontSize: 12 }} />

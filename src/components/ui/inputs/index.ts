@@ -14,7 +14,7 @@ export { default as PasswordInput } from "./PasswordInput";
 export type { PasswordInputProps } from "./PasswordInput";
 export { default as NumberInput } from "./NumberInput";
 export type { NumberInputProps } from "./NumberInput";
-export { default as CurrencyInput } from "./CurrencyInput";
+export { default as CurrencyInput, sanitizeMoneyInput, parseMoney } from "./CurrencyInput";
 export type { CurrencyInputProps } from "./CurrencyInput";
 export { default as PhoneInput } from "./PhoneInput";
 export type { PhoneInputProps } from "./PhoneInput";
@@ -30,6 +30,8 @@ export { default as MultiSelectInput } from "./MultiSelectInput";
 export type { MultiSelectInputProps } from "./MultiSelectInput";
 export { default as AutocompleteInput } from "./AutocompleteInput";
 export type { AutocompleteInputProps } from "./AutocompleteInput";
+export { default as MultiAutocompleteInput } from "./MultiAutocompleteInput";
+export type { MultiAutocompleteInputProps } from "./MultiAutocompleteInput";
 export { default as TagInput } from "./TagInput";
 export type { TagInputProps } from "./TagInput";
 

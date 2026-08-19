@@ -1,10 +1,13 @@
 "use client";
 
-import { Box, Paper, Typography, Stack, Chip } from "@mui/material";
+import { useState } from "react";
+import { Box, Paper, Typography, Stack, Chip, CircularProgress } from "@mui/material";
 import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import ImageIcon from "@mui/icons-material/Image";
 import LocalShippingOutlinedIcon from "@mui/icons-material/LocalShippingOutlined";
 import ReplayIcon from "@mui/icons-material/Replay";
+import DownloadIcon from "@mui/icons-material/Download";
+import { downloadOrderAttachment } from "@/lib/downloadFile";
 
 type Attachment = { url: string; file_name: string; file_type: string };
 type DeliveryEntry = { note: string | null; attachments: Attachment[]; submitted_at: string };
@@ -23,21 +26,35 @@ function formatDateTime(iso: string): string {
   return d.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
 }
 
-function AttachmentLink({ file }: { file: Attachment }) {
+function AttachmentLink({ file, orderId }: { file: Attachment; orderId: number }) {
+  const [downloading, setDownloading] = useState(false);
+  const [error, setError] = useState(false);
+
+  const handleDownload = async () => {
+    setDownloading(true); setError(false);
+    try { await downloadOrderAttachment(orderId, file.url, file.file_name); }
+    catch { setError(true); }
+    finally { setDownloading(false); }
+  };
+
   return (
     <Box
-      component="a"
-      href={file.url}
-      target="_blank"
-      rel="noopener noreferrer"
       sx={{
         display: "flex", alignItems: "center", gap: 1, p: 1,
         border: "1px solid", borderColor: "rgba(0,0,0,0.12)", borderRadius: 1.5,
-        textDecoration: "none", color: "inherit", "&:hover": { borderColor: "rgba(0,0,0,0.35)" },
       }}>
       {file.file_type === "image" ? <ImageIcon fontSize="small" color="action" /> : <InsertDriveFileIcon fontSize="small" color="action" />}
       <Typography variant="caption" sx={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.file_name}</Typography>
-      <Typography variant="caption" color="primary">Open</Typography>
+      {error && <Typography variant="caption" color="error">Unavailable</Typography>}
+      <Typography component="a" href={file.url} target="_blank" rel="noopener noreferrer" variant="caption" color="primary" sx={{ textDecoration: "none" }}>
+        Open
+      </Typography>
+      <Box
+        onClick={downloading ? undefined : handleDownload}
+        sx={{ display: "flex", alignItems: "center", gap: 0.4, cursor: "pointer", color: "primary.main", "&:hover": { textDecoration: "underline" } }}>
+        {downloading ? <CircularProgress size={11} /> : <DownloadIcon sx={{ fontSize: 13 }} />}
+        <Typography variant="caption" color="primary">Download</Typography>
+      </Box>
     </Box>
   );
 }
@@ -47,9 +64,11 @@ function AttachmentLink({ file }: { file: Attachment }) {
  * Stays visible after completion/dispute so all parties (and admins) can review the actual work.
  */
 export default function DeliverablesReference({
+  orderId,
   deliveryHistory,
   revisionHistory,
 }: {
+  orderId: number;
   deliveryHistory?: DeliveryEntry[];
   revisionHistory?: RevisionEntry[];
 }) {
@@ -118,7 +137,7 @@ export default function DeliverablesReference({
 
               {e.attachments.length > 0 && (
                 <Stack spacing={1} mt={1.25}>
-                  {e.attachments.map((f, fi) => <AttachmentLink key={fi} file={f} />)}
+                  {e.attachments.map((f, fi) => <AttachmentLink key={fi} file={f} orderId={orderId} />)}
                 </Stack>
               )}
             </Box>

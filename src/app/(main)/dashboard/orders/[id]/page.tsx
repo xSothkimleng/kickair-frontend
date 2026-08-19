@@ -29,10 +29,10 @@ import {
   CheckCircle as CheckIcon,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
+import { downloadOrderAttachment } from "@/lib/downloadFile";
 import { Order, OrderStatus, MyOrdersResponse, Dispute, EvidenceFile } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
-import OrderTimeline from "@/components/dashboard/OrderTimeline";
-import DeliverablesReference from "@/components/dashboard/DeliverablesReference";
+import OrderRecord from "@/components/dashboard/OrderRecord";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 
@@ -150,8 +150,19 @@ function ReadonlyStars({ rating }: { rating: number }) {
   );
 }
 
-function FileRow({ file }: { file: UploadedFile }) {
+function FileRow({ file, orderId }: { file: UploadedFile; orderId?: number }) {
   const isImage = file.file_type?.startsWith("image/");
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!orderId) { window.open(file.url, "_blank"); return; }
+    setDownloading(true);
+    try { await downloadOrderAttachment(orderId, file.url, file.file_name); }
+    catch { window.open(file.url, "_blank"); }
+    finally { setDownloading(false); }
+  };
+
   return (
     <Box component="a" href={file.url} target="_blank" rel="noopener noreferrer"
       sx={{ display: "flex", alignItems: "center", gap: 1.5, p: "10px 12px", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "8px", textDecoration: "none", color: "inherit", transition: "border-color 0.12s", "&:hover": { borderColor: "#CBD5E1" } }}>
@@ -161,8 +172,9 @@ function FileRow({ file }: { file: UploadedFile }) {
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.file_name}</Typography>
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 12, fontWeight: 600, color: "#334155", px: 1.25, py: 0.75, borderRadius: "6px", "&:hover": { bgcolor: "#F1F5F9" } }}>
-        <DownloadIcon sx={{ fontSize: 14 }} /> Download
+      <Box onClick={handleDownload}
+        sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 12, fontWeight: 600, color: "#334155", px: 1.25, py: 0.75, borderRadius: "6px", "&:hover": { bgcolor: "#F1F5F9" } }}>
+        {downloading ? <CircularProgress size={13} /> : <DownloadIcon sx={{ fontSize: 14 }} />} Download
       </Box>
     </Box>
   );
@@ -170,7 +182,7 @@ function FileRow({ file }: { file: UploadedFile }) {
 
 type DeliveryHistoryEntry = { note: string | null; attachments: UploadedFile[]; submitted_at: string };
 
-function PreviousSubmissions({ history }: { history?: DeliveryHistoryEntry[] }) {
+function PreviousSubmissions({ history, orderId }: { history?: DeliveryHistoryEntry[]; orderId?: number }) {
   if (!history || history.length <= 1) return null;
   const prior = history.slice(0, -1).reverse(); // everything before the current delivery, newest first
   return (
@@ -186,7 +198,7 @@ function PreviousSubmissions({ history }: { history?: DeliveryHistoryEntry[] }) 
             </Typography>
             {sub.note && <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mb: sub.attachments.length ? 1 : 0 }}>{sub.note}</Typography>}
             {sub.attachments.length > 0 && (
-              <Stack spacing={1}>{sub.attachments.map((f, j) => <FileRow key={j} file={f} />)}</Stack>
+              <Stack spacing={1}>{sub.attachments.map((f, j) => <FileRow key={j} file={f} orderId={orderId} />)}</Stack>
             )}
           </Box>
         ))}
@@ -299,6 +311,7 @@ export default function ClientOrderDetailPage() {
   const [revisionOpen, setRevisionOpen] = useState(false);
   const [disputeOpen, setDisputeOpen] = useState(false);
   const [evidenceOpen, setEvidenceOpen] = useState(false);
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   // Form values
   const [revisionNote, setRevisionNote] = useState("");
@@ -354,6 +367,13 @@ export default function ClientOrderDetailPage() {
     setSubmitting(true); setActionError(null);
     try { await api.approveOrder(orderId); await fetchOrder(); }
     catch { setActionError("Failed to approve order."); }
+    finally { setSubmitting(false); }
+  };
+
+  const handleCancelOrder = async () => {
+    setSubmitting(true); setActionError(null);
+    try { await api.cancelOrder(orderId); setCancelOpen(false); await fetchOrder(); }
+    catch { setActionError("Failed to cancel order."); }
     finally { setSubmitting(false); }
   };
 
@@ -433,7 +453,7 @@ export default function ClientOrderDetailPage() {
         <Box sx={{ mb: 3.5 }}>
           <Stack direction="row" alignItems="center" gap={1.5} mb={0.75} flexWrap="wrap">
             <Typography sx={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.025em", color: "#0F172A" }}>
-              Order #{order.id}
+              Order {order.reference ?? `#${order.id}`}
             </Typography>
             <StatusBadge status={order.status} />
           </Stack>
@@ -508,13 +528,8 @@ export default function ClientOrderDetailPage() {
             </Box>
           </Box>
 
-          {/* ── Section 4: Timeline ── */}
-          <Box sx={CARD}>
-            <OrderTimeline orderId={order.id} createdAt={order.created_at} />
-          </Box>
-
-          {/* ── Deliverables & revisions — always visible, survives completion/dispute ── */}
-          <DeliverablesReference deliveryHistory={order.delivery_history} revisionHistory={order.revision_history} />
+          {/* ── Section 4: Order record — events, deliveries & revisions in one timeline ── */}
+          <OrderRecord orderId={orderId} createdAt={order.created_at} deliveryHistory={order.delivery_history} revisionHistory={order.revision_history} />
 
           {/* ── Section 5: Status card ── */}
 
@@ -533,10 +548,10 @@ export default function ClientOrderDetailPage() {
               )}
               {order.delivery_attachments?.length > 0 && (
                 <Stack spacing={1} mt={1.75}>
-                  {order.delivery_attachments.map((f, i) => <FileRow key={i} file={f} />)}
+                  {order.delivery_attachments.map((f, i) => <FileRow key={i} file={f} orderId={orderId} />)}
                 </Stack>
               )}
-              <PreviousSubmissions history={order.delivery_history} />
+              <PreviousSubmissions history={order.delivery_history} orderId={orderId} />
             </Box>
           )}
 
@@ -645,9 +660,12 @@ export default function ClientOrderDetailPage() {
               </Stack>
             )}
 
-            {/* pending — no client actions */}
+            {/* pending — client may cancel freely until the freelancer accepts */}
             {order.status === "pending" && (
-              <Typography sx={{ fontSize: 13, color: "#94A3B8", textAlign: "right" }}>Awaiting freelancer acceptance</Typography>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.25} flexWrap="wrap">
+                <Typography sx={{ fontSize: 13, color: "#94A3B8" }}>Awaiting freelancer acceptance</Typography>
+                <Button variant="outlined" onClick={() => setCancelOpen(true)} sx={BTN_DANGER}>Cancel Order</Button>
+              </Stack>
             )}
           </Box>
 
@@ -655,6 +673,22 @@ export default function ClientOrderDetailPage() {
       </Container>
 
       {/* ── Dialogs ── */}
+
+      {/* Cancel pending order */}
+      <Dialog open={cancelOpen} onClose={() => setCancelOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px" } }}>
+        <Box sx={{ p: "22px 24px 0" }}>
+          <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.015em", mb: 0.5 }}>Cancel this order?</Typography>
+          <Typography sx={{ fontSize: 13, color: "#64748B" }}>
+            The freelancer hasn&apos;t accepted yet, so you can cancel freely. Your ${Number(order.price ?? pricingOption?.price ?? 0).toFixed(2)} will be returned to your wallet immediately.
+          </Typography>
+        </Box>
+        <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "20px 24px 22px" }}>
+          <Button variant="outlined" onClick={() => setCancelOpen(false)} sx={BTN_OUTLINE}>Keep Order</Button>
+          <Button variant="contained" disabled={submitting} onClick={handleCancelOrder} sx={{ ...BTN_PRIMARY, backgroundColor: "#DC2626", "&:hover": { backgroundColor: "#B91C1C" } }}>
+            {submitting ? <CircularProgress size={14} color="inherit" /> : "Cancel & Refund"}
+          </Button>
+        </Stack>
+      </Dialog>
 
       {/* Request Revision */}
       <Dialog open={revisionOpen} onClose={() => setRevisionOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px" } }}>

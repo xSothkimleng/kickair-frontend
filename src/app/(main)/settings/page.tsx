@@ -28,7 +28,7 @@ import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
-import { TextInput, PasswordInput, OtpInput } from "@/components/ui/inputs";
+import { TextInput, PasswordInput, PhoneInput, OtpInput } from "@/components/ui/inputs";
 
 // ─── Style tokens ──────────────────────────────────────────────────────────────
 
@@ -249,7 +249,7 @@ export default function SettingsPage() {
   const phone = user?.telephone ?? "";
   const phoneVerified = user?.is_verified_phone ?? false;
   const [phoneDialogOpen, setPhoneDialogOpen] = React.useState(false);
-  const [newPhone, setNewPhone] = React.useState("");
+  const [newPhone, setNewPhone] = React.useState(""); // local digits — +855 prefix comes from PhoneInput
   const [phoneOtpSent, setPhoneOtpSent] = React.useState(false);
   const [phoneCode, setPhoneCode] = React.useState("");
   const [sendingPhoneOtp, setSendingPhoneOtp] = React.useState(false);
@@ -303,12 +303,15 @@ export default function SettingsPage() {
 
   // ── Handlers ──
 
+  // PhoneInput collects the local part only — convert to E.164 the same way sign-up does.
+  const e164NewPhone = () => `+855${newPhone.replace(/\D/g, "").replace(/^0+/, "")}`;
+
   const handleSendPhoneOtp = async () => {
-    if (!newPhone) return;
+    if (!newPhone.replace(/\D/g, "")) return;
     setSendingPhoneOtp(true);
     setPhoneMsg(null);
     try {
-      await api.sendPhoneOtp(newPhone);
+      await api.sendPhoneOtp(e164NewPhone());
       setPhoneOtpSent(true);
     } catch (err) {
       setPhoneMsg({ type: "error", text: err instanceof Error ? err.message : "Failed to send code." });
@@ -321,7 +324,7 @@ export default function SettingsPage() {
     setSavingPhone(true);
     setPhoneMsg(null);
     try {
-      const updatedUser = await api.updatePhone(newPhone, phoneCode);
+      const updatedUser = await api.updatePhone(e164NewPhone(), phoneCode);
       setUser(updatedUser);
       setPhoneDialogOpen(false);
       setNewPhone("");
@@ -470,9 +473,15 @@ export default function SettingsPage() {
     return d.toLocaleDateString();
   };
 
+  // Token names are now device labels from the backend ("Chrome · Windows",
+  // "Safari · iPhone"). Tokens created before that change are still named
+  // "api-token" — show those as "Unknown device".
+  const displaySessionName = (tokenName: string) =>
+    tokenName === "api-token" ? "Unknown device" : tokenName;
+
   const guessDevice = (tokenName: string): "desktop" | "mobile" => {
     const lower = tokenName.toLowerCase();
-    if (lower.includes("mobile") || lower.includes("android") || lower.includes("iphone")) return "mobile";
+    if (["iphone", "ipad", "android", "mobile"].some((k) => lower.includes(k))) return "mobile";
     return "desktop";
   };
 
@@ -756,27 +765,37 @@ export default function SettingsPage() {
           <DialogContent>
             <DialogContentText sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
               {phone && !phoneVerified
-                ? `Send a code to ${phone} to verify it, or enter a new number below.`
-                : "Enter your phone number in international format. We'll send you a verification code."}
+                ? "Enter your Cambodian mobile number below — we'll send a verification code to it via Telegram."
+                : "Enter your Cambodian mobile number. We'll send a verification code via Telegram."}
             </DialogContentText>
+
+            {phoneMsg?.type === "error" && (
+              <Alert
+                severity="error"
+                onClose={() => setPhoneMsg(null)}
+                sx={{ mb: 2, borderRadius: "8px", fontSize: 13 }}
+              >
+                {phoneMsg.text}
+              </Alert>
+            )}
 
             <Stack spacing={1.5}>
               {/* Phone input + send code */}
               <Stack direction="row" spacing={1} alignItems="flex-start">
                 <Box sx={{ flex: 1 }}>
-                  <TextInput
-                    type="tel"
-                    placeholder={phone || "+855 12 345 678"}
+                  <PhoneInput
+                    placeholder="12 345 678"
                     value={newPhone}
                     onChange={(v) => { setNewPhone(v); setPhoneOtpSent(false); setPhoneCode(""); }}
                     disabled={savingPhone}
                     size="sm"
+                    helper="Cambodian number — digits only, we add the +855 for you."
                   />
                 </Box>
                 <Button
                   variant="outlined"
-                  onClick={handleSendPhoneOtp}
-                  disabled={sendingPhoneOtp || !newPhone || savingPhone}
+                  onClick={() => handleSendPhoneOtp()}
+                  disabled={sendingPhoneOtp || !newPhone.replace(/\D/g, "") || savingPhone}
                   sx={{ ...secondaryBtnSx, minWidth: 100, flexShrink: 0 }}
                 >
                   {sendingPhoneOtp
@@ -785,13 +804,15 @@ export default function SettingsPage() {
                 </Button>
               </Stack>
 
-              <Typography variant="caption" color="text.secondary">
-                Include country code, e.g. +855 for Cambodia
-              </Typography>
-
               {/* Code input — shown after OTP sent */}
               {phoneOtpSent && (
-                <OtpInput value={phoneCode} onChange={setPhoneCode} disabled={savingPhone} autoFocus />
+                <>
+                  <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                    We sent a 6-digit code to <strong>{e164NewPhone()}</strong> via{" "}
+                    <strong>Telegram</strong>. Check your Telegram app.
+                  </Typography>
+                  <OtpInput value={phoneCode} onChange={setPhoneCode} disabled={savingPhone} autoFocus />
+                </>
               )}
             </Stack>
           </DialogContent>
@@ -919,11 +940,18 @@ export default function SettingsPage() {
                   </Box>
                   <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
-                      <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{s.name}</Typography>
+                      <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
+                        {displaySessionName(s.name)}
+                      </Typography>
                       {s.current && <StatusChip label="This device" variant="success" />}
                     </Stack>
                     <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                      {formatSessionTime(s.last_used_at || s.created_at)}
+                      {(() => {
+                        const rel = formatSessionTime(s.last_used_at || s.created_at);
+                        return rel === "Active now"
+                          ? rel
+                          : `Last active ${rel.charAt(0).toLowerCase()}${rel.slice(1)}`;
+                      })()}
                     </Typography>
                   </Box>
                   {!s.current && (

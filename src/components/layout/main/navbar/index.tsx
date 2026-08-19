@@ -46,6 +46,11 @@ export default function MainNavbar() {
   // Wraps both click-based dropdowns (language + profile) for the outside-click handler
   const clickDropdownRef = useRef<HTMLDivElement>(null);
 
+  // Pending close for the hover mega-menus — lets the mouse cross the small gap
+  // between a trigger and its panel (or between adjacent triggers) without the
+  // menu flickering shut, while still closing reliably once the mouse leaves.
+  const hoverCloseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const { user, loading, logout, enableRole } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -100,6 +105,33 @@ export default function MainNavbar() {
     };
     document.addEventListener("keydown", handleKeyDown);
     return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  // Close any open dropdown (hover menus + profile/language) on route change,
+  // and drop any pending hover-close so it can't fire against the new page.
+  useEffect(() => {
+    setActiveDropdown(null);
+    if (hoverCloseTimer.current) {
+      clearTimeout(hoverCloseTimer.current);
+      hoverCloseTimer.current = null;
+    }
+  }, [pathname]);
+
+  // The navbar is sticky, so scrolling keeps a trigger under the cursor while
+  // the page moves — close hover menus so they don't hang over shifted content.
+  useEffect(() => {
+    const handleScroll = () => {
+      setActiveDropdown(prev => (prev === "why" || prev === "freelancer" || prev === "client" ? null : prev));
+    };
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  // Clear any pending hover-close timer on unmount
+  useEffect(() => {
+    return () => {
+      if (hoverCloseTimer.current) clearTimeout(hoverCloseTimer.current);
+    };
   }, []);
 
   // Restore the last-used mode on mount so neutral pages don't reset a dual-role user's view.
@@ -162,7 +194,41 @@ export default function MainNavbar() {
   };
 
   const handleDropdownToggle = (dropdown: DropdownType) => {
+    cancelHoverClose();
     setActiveDropdown(prev => (prev === dropdown ? null : dropdown));
+  };
+
+  // ── Hover mega-menu open/close ────────────────────────────────────────────
+  const isHoverMenu = (d: DropdownType) => d === "why" || d === "freelancer" || d === "client";
+
+  const cancelHoverClose = () => {
+    if (hoverCloseTimer.current) {
+      clearTimeout(hoverCloseTimer.current);
+      hoverCloseTimer.current = null;
+    }
+  };
+
+  // Opening a hover menu replaces whatever surface is open — including the
+  // click-opened profile/language dropdowns — so only one panel shows at a time.
+  const openHoverMenu = (menu: DropdownType) => {
+    cancelHoverClose();
+    setActiveDropdown(menu);
+  };
+
+  // Immediate close for hover menus only (leaves profile/language alone)
+  const closeHoverMenuNow = () => {
+    cancelHoverClose();
+    setActiveDropdown(prev => (isHoverMenu(prev) ? null : prev));
+  };
+
+  // Slightly delayed close: fired on mouseleave of a trigger/panel region, and
+  // cancelled if the mouse re-enters one before the timer runs out.
+  const scheduleHoverClose = () => {
+    cancelHoverClose();
+    hoverCloseTimer.current = setTimeout(() => {
+      hoverCloseTimer.current = null;
+      setActiveDropdown(prev => (isHoverMenu(prev) ? null : prev));
+    }, 200);
   };
 
   const handleModeSwitch = (mode: UserMode) => {
@@ -184,7 +250,7 @@ export default function MainNavbar() {
     setProfileDialogError(null);
   };
 
-  // Enable the second account role (Start selling / Start hiring). No KYC gate — this
+  // Enable the second account role (Become a freelancer / Become a client). No KYC gate — this
   // just flips the role flag and creates the missing profile, then drops the user into
   // that dashboard. The publish gate still applies when they create a service or job.
   const handleCreateProfile = async () => {
@@ -253,23 +319,26 @@ export default function MainNavbar() {
 
         {/* ── Desktop Nav ──────────────────────────────────────────────────────── */}
         <Box sx={{ display: { xs: "none", lg: "flex" }, alignItems: "center", gap: "20px" }}>
-          {/* Hover state lives on the whole group: entering any item switches the open
-              menu, and only leaving the group entirely closes it — so sliding sideways
-              between menus (or across the gaps) never flickers or gets stuck. */}
+          {/* Hover state: entering any trigger opens (or switches) its menu; leaving a
+              trigger/panel region schedules a short-delay close that re-entering cancels,
+              so sliding between trigger and panel never flickers, but leaving closes. */}
           <Box
             sx={{ display: "flex", gap: "10px", alignItems: "center" }}
-            onMouseLeave={() => setActiveDropdown(null)}>
-            {/* Explore Services — no dropdown, so hovering it clears any open menu */}
+            onMouseLeave={scheduleHoverClose}>
+            {/* Explore Services — no dropdown, so hovering it clears any open hover menu */}
             <Button
               component={Link as React.ElementType}
               href='/explore-services'
-              onMouseEnter={() => setActiveDropdown(null)}
+              onMouseEnter={closeHoverMenuNow}
               sx={navBtnSx}>
               Explore Services
             </Button>
 
             {/* Why KickAir ▾ */}
-            <Box sx={{ position: "relative" }} onMouseEnter={() => setActiveDropdown("why")}>
+            <Box
+              sx={{ position: "relative" }}
+              onMouseEnter={() => openHoverMenu("why")}
+              onMouseLeave={scheduleHoverClose}>
               <Button
                 endIcon={
                   <KeyboardArrowDownIcon
@@ -318,7 +387,10 @@ export default function MainNavbar() {
             </Box>
 
             {/* For Freelancers ▾ */}
-            <Box sx={{ position: "relative" }} onMouseEnter={() => setActiveDropdown("freelancer")}>
+            <Box
+              sx={{ position: "relative" }}
+              onMouseEnter={() => openHoverMenu("freelancer")}
+              onMouseLeave={scheduleHoverClose}>
               <Button
                 endIcon={
                   <KeyboardArrowDownIcon
@@ -369,7 +441,10 @@ export default function MainNavbar() {
             </Box>
 
             {/* For Clients ▾ */}
-            <Box sx={{ position: "relative" }} onMouseEnter={() => setActiveDropdown("client")}>
+            <Box
+              sx={{ position: "relative" }}
+              onMouseEnter={() => openHoverMenu("client")}
+              onMouseLeave={scheduleHoverClose}>
               <Button
                 endIcon={
                   <KeyboardArrowDownIcon
@@ -560,11 +635,11 @@ export default function MainNavbar() {
                           {(["freelancer", "client"] as const).map(mode => {
                             const hasRole = mode === "freelancer" ? isFreelancer : isClient;
                             // For a role the user doesn't have yet, the button doubles as the
-                            // "Start selling / Start hiring" CTA that opens the enable-role dialog.
+                            // "Become a freelancer / Become a client" CTA that opens the enable-role dialog.
                             const label = hasRole
                               ? mode.charAt(0).toUpperCase() + mode.slice(1)
                               : mode === "freelancer"
-                                ? "Become freelancer"
+                                ? "Become a freelancer"
                                 : "Become a client";
                             return (
                               <Button
@@ -705,13 +780,13 @@ export default function MainNavbar() {
           onModeSwitch={handleModeSwitch}
         />
 
-        {/* ── Enable second role dialog (Start selling / Start hiring) ───────────── */}
+        {/* ── Enable second role dialog (Become a freelancer / Become a client) ──── */}
         <Dialog
           open={profileDialogOpen}
           onClose={handleDialogClose}
           slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 400, p: 1 } } }}>
           <DialogTitle sx={{ fontSize: 18, fontWeight: 600, pb: 1 }}>
-            {profileDialogType === "freelancer" ? "Start selling on KickAir" : "Start hiring on KickAir"}
+            {profileDialogType === "freelancer" ? "Become a freelancer" : "Become a client"}
           </DialogTitle>
           <DialogContent>
             <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }}>
@@ -748,9 +823,9 @@ export default function MainNavbar() {
               {profileDialogLoading ? (
                 <CircularProgress size={16} sx={{ color: "white" }} />
               ) : profileDialogType === "freelancer" ? (
-                "Start selling"
+                "Become a freelancer"
               ) : (
-                "Start hiring"
+                "Become a client"
               )}
             </Button>
           </DialogActions>

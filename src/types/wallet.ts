@@ -6,11 +6,17 @@ export interface Wallet {
   pending_balance: string;
   pending_balance_raw: string;
   total_earnings: string;
-  total_earnings_raw: string;
+  total_earnings_raw: number | string;
   total_spent: string;
-  total_spent_raw: string;
+  total_spent_raw: number | string;
   total_balance: string;
   total_balance_raw: number;
+  /** Buyer-side escrow: money this user paid into orders they're buying. */
+  committed_to_orders?: string;
+  committed_to_orders_raw?: number;
+  /** Seller-side escrow: money coming to this user from orders they're delivering. */
+  pending_earnings?: string;
+  pending_earnings_raw?: number;
   created_at: string;
   updated_at: string;
 }
@@ -85,16 +91,33 @@ export interface TransactionOrder {
   };
 }
 
+export type TransactionType =
+  | "deposit"
+  | "payment"
+  | "release"
+  | "refund"
+  | "earning"
+  | "clearance"
+  | "withdrawal"
+  | "dispute_release"
+  | "dispute_refund";
+
+/** Which hat the user wore for this row (derived server-side). */
+export type TransactionRole = "buyer" | "seller" | "account";
+
 export interface Transaction {
   id: number;
+  reference?: string; // "TXN-000123"
   wallet_id: number;
   order_id: number | null;
-  type: "payment" | "deposit" | "withdrawal" | "refund" | "escrow" | "earning";
+  order_reference?: string | null; // "ORD-000045"
+  type: TransactionType;
+  role?: TransactionRole;
   amount: string;
   amount_raw: string;
   balance_after: string;
   balance_after_raw: string;
-  status: "completed" | "pending" | "failed";
+  status: "completed" | "pending" | "cancelled";
   description: string;
   metadata: TransactionMetadata;
   created_at: string;

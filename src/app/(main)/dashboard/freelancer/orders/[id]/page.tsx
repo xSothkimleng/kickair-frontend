@@ -29,9 +29,10 @@ import {
   Star,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
+import { downloadOrderAttachment } from "@/lib/downloadFile";
+import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { Order, OrderStatus, Dispute, EvidenceFile } from "@/types/order";
-import OrderTimeline from "@/components/dashboard/OrderTimeline";
-import DeliverablesReference from "@/components/dashboard/DeliverablesReference";
+import OrderRecord from "@/components/dashboard/OrderRecord";
 
 // ─── Design tokens (same as client page) ─────────────────────────────────────
 
@@ -125,8 +126,19 @@ function StatusBadge({ status }: { status: OrderStatus }) {
   );
 }
 
-function FileRow({ file }: { file: UploadedFile }) {
+function FileRow({ file, orderId }: { file: UploadedFile; orderId?: number }) {
   const isImage = file.file_type?.startsWith("image/");
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.preventDefault(); e.stopPropagation();
+    if (!orderId) { window.open(file.url, "_blank"); return; }
+    setDownloading(true);
+    try { await downloadOrderAttachment(orderId, file.url, file.file_name); }
+    catch { window.open(file.url, "_blank"); }
+    finally { setDownloading(false); }
+  };
+
   return (
     <Box component="a" href={file.url} target="_blank" rel="noopener noreferrer"
       sx={{ display: "flex", alignItems: "center", gap: 1.5, p: "10px 12px", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "8px", textDecoration: "none", color: "inherit", transition: "border-color 0.12s", "&:hover": { borderColor: "#CBD5E1" } }}>
@@ -136,8 +148,9 @@ function FileRow({ file }: { file: UploadedFile }) {
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Typography sx={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.file_name}</Typography>
       </Box>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 12, fontWeight: 600, color: "#334155", px: 1.25, py: 0.75, borderRadius: "6px", "&:hover": { bgcolor: "#F1F5F9" } }}>
-        <DownloadIcon sx={{ fontSize: 14 }} /> Download
+      <Box onClick={handleDownload}
+        sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 12, fontWeight: 600, color: "#334155", px: 1.25, py: 0.75, borderRadius: "6px", "&:hover": { bgcolor: "#F1F5F9" } }}>
+        {downloading ? <CircularProgress size={13} /> : <DownloadIcon sx={{ fontSize: 14 }} />} Download
       </Box>
     </Box>
   );
@@ -145,7 +158,7 @@ function FileRow({ file }: { file: UploadedFile }) {
 
 type DeliveryHistoryEntry = { note: string | null; attachments: UploadedFile[]; submitted_at: string };
 
-function PreviousSubmissions({ history }: { history?: DeliveryHistoryEntry[] }) {
+function PreviousSubmissions({ history, orderId }: { history?: DeliveryHistoryEntry[]; orderId?: number }) {
   if (!history || history.length <= 1) return null;
   const prior = history.slice(0, -1).reverse();
   return (
@@ -161,7 +174,7 @@ function PreviousSubmissions({ history }: { history?: DeliveryHistoryEntry[] }) 
             </Typography>
             {sub.note && <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mb: sub.attachments.length ? 1 : 0 }}>{sub.note}</Typography>}
             {sub.attachments.length > 0 && (
-              <Stack spacing={1}>{sub.attachments.map((f, j) => <FileRow key={j} file={f} />)}</Stack>
+              <Stack spacing={1}>{sub.attachments.map((f, j) => <FileRow key={j} file={f} orderId={orderId} />)}</Stack>
             )}
           </Box>
         ))}
@@ -265,6 +278,7 @@ export default function FreelancerOrderDetailPage() {
   const params = useParams();
   const router = useRouter();
   const orderId = Number(params.id);
+  const commissionRate = useCommissionRate();
 
   const [actionError, setActionError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -421,7 +435,7 @@ export default function FreelancerOrderDetailPage() {
         <Box sx={{ mb: 3.5 }}>
           <Stack direction="row" alignItems="center" gap={1.5} mb={0.75} flexWrap="wrap">
             <Typography sx={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.025em", color: "#0F172A" }}>
-              Order #{order.id}
+              Order {order.reference ?? `#${order.id}`}
             </Typography>
             <StatusBadge status={order.status} />
           </Stack>
@@ -491,20 +505,20 @@ export default function FreelancerOrderDetailPage() {
               ))}
             </Box>
             <Box sx={{ bgcolor: "#F1F5F9", borderRadius: "10px", p: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Earnings</Typography>
+              <Box>
+                <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Your earnings</Typography>
+                {commissionRate != null && (
+                  <Typography sx={{ fontSize: 10.5, color: "#94A3B8" }}>after the {Math.round(commissionRate * 100)}% platform fee</Typography>
+                )}
+              </Box>
               <Typography sx={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#10B981" }}>
-                ${pricingOption?.price ?? order.price ?? "0"}
+                ${(parseFloat(String(pricingOption?.price ?? order.price ?? "0")) * (1 - (commissionRate ?? 0))).toFixed(2)}
               </Typography>
             </Box>
           </Box>
 
-          {/* ── Section 4: Timeline ── */}
-          <Box sx={CARD}>
-            <OrderTimeline orderId={order.id} createdAt={order.created_at} />
-          </Box>
-
-          {/* ── Deliverables & revisions — always visible, survives completion/dispute ── */}
-          <DeliverablesReference deliveryHistory={order.delivery_history} revisionHistory={order.revision_history} />
+          {/* ── Section 4: Order record — events, deliveries & revisions in one timeline ── */}
+          <OrderRecord orderId={orderId} createdAt={order.created_at} deliveryHistory={order.delivery_history} revisionHistory={order.revision_history} />
 
           {/* ── Section 5: Status card ── */}
 
@@ -523,10 +537,10 @@ export default function FreelancerOrderDetailPage() {
               )}
               {order.delivery_attachments?.length > 0 && (
                 <Stack spacing={1} mt={1.75}>
-                  {order.delivery_attachments.map((f, i) => <FileRow key={i} file={f} />)}
+                  {order.delivery_attachments.map((f, i) => <FileRow key={i} file={f} orderId={orderId} />)}
                 </Stack>
               )}
-              <PreviousSubmissions history={order.delivery_history} />
+              <PreviousSubmissions history={order.delivery_history} orderId={orderId} />
             </Box>
           )}
 

@@ -12,7 +12,6 @@ import {
   TextInput, PasswordInput, PhoneInput, OtpInput, SegmentedControl,
   FieldLabel, FieldHelper, fieldSx, tokens,
 } from "@/components/ui/inputs";
-import { OtpChannel } from "@/types/user";
 
 type Role = "client" | "freelancer";
 type Method = "email" | "phone";
@@ -30,7 +29,6 @@ function SignUpContent() {
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
-  const [channel, setChannel] = useState<OtpChannel>("telegram");
   const [code, setCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -67,7 +65,7 @@ function SignUpContent() {
         await registerEmail({ name: name.trim(), email: email.trim(), password, password_confirmation: confirm, ...roleFlags() });
         router.push(destination());
       } else {
-        await api.sendPhoneOtp(e164Phone(), channel);
+        await api.sendPhoneOtp(e164Phone());
         setStep("otp");
       }
     } catch (err) {
@@ -77,12 +75,11 @@ function SignUpContent() {
     }
   };
 
-  const resendWith = async (next: OtpChannel) => {
-    setChannel(next);
+  const resendCode = async () => {
     setError("");
     setIsLoading(true);
     try {
-      await api.sendPhoneOtp(e164Phone(), next);
+      await api.sendPhoneOtp(e164Phone());
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not resend the code.");
     } finally {
@@ -207,7 +204,7 @@ function SignUpContent() {
                 Verify your phone
               </Typography>
               <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 2.5 }}>
-                We sent a 6-digit code to {e164Phone()} via {channel === "telegram" ? "Telegram" : "SMS"}.
+                We sent a 6-digit code to {e164Phone()} via Telegram. Check your Telegram app.
               </Typography>
 
               {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
@@ -221,12 +218,9 @@ function SignUpContent() {
                 </Button>
               </Box>
 
-              <Box sx={{ display: "flex", justifyContent: "center", gap: 1, mt: 2 }}>
-                <Button onClick={() => resendWith(channel)} disabled={isLoading} sx={{ fontSize: 13, color: tokens.muted, textTransform: "none" }}>
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
+                <Button onClick={resendCode} disabled={isLoading} sx={{ fontSize: 13, color: tokens.muted, textTransform: "none" }}>
                   Resend code
-                </Button>
-                <Button onClick={() => resendWith(channel === "telegram" ? "sms" : "telegram")} disabled={isLoading} sx={{ fontSize: 13, color: tokens.accent, textTransform: "none" }}>
-                  {channel === "telegram" ? "Use SMS instead" : "Use Telegram instead"}
                 </Button>
               </Box>
             </>

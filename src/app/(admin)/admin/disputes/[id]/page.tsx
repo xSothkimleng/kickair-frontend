@@ -213,6 +213,7 @@ export default function AdminDisputeDetailPage() {
 
           {/* Delivered work & revision requests — persistent record for judging the dispute */}
           <DeliverablesReference
+            orderId={dispute.order.id}
             deliveryHistory={dispute.order.delivery_history}
             revisionHistory={dispute.order.revision_history}
           />

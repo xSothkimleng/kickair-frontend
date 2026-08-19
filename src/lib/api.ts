@@ -14,7 +14,6 @@ import {
   FreelancerProfilesListResponse,
   IdentityVerification,
   AdminKycSubmission,
-  OtpChannel,
 } from "@/types/user";
 import {
   JobPost,
@@ -32,6 +31,7 @@ import {
   CustomOrder,
   CreateCustomOrderRequest,
   SendCustomOfferRequest,
+  CreateDirectCustomOfferRequest,
 } from "@/types/customOrder";
 
 export class EmailUnverifiedError extends Error {
@@ -217,10 +217,10 @@ class ApiClient {
     return response.data.user;
   }
 
-  async sendPhoneOtp(phone: string, channel: OtpChannel = "telegram"): Promise<void> {
+  async sendPhoneOtp(phone: string): Promise<void> {
     await this.request("/api/auth/phone/send-otp", {
       method: "POST",
-      body: JSON.stringify({ phone, channel }),
+      body: JSON.stringify({ phone }),
     });
   }
 
@@ -426,6 +426,12 @@ class ApiClient {
 
   async getExpertises(): Promise<Expertise[]> {
     const response = await this.get("/api/user-expertises");
+    return response.data;
+  }
+
+  // Creates a new expertise (or returns the existing row on a case-insensitive match).
+  async createExpertise(name: string): Promise<Expertise> {
+    const response = await this.post("/api/user-expertises", { expertise_name: name });
     return response.data;
   }
 
@@ -785,6 +791,26 @@ class ApiClient {
     return response.data;
   }
 
+  async cancelOrder(orderId: number): Promise<Order> {
+    const response = await this.post(`/api/orders/${orderId}/cancel`, {});
+    return response.data;
+  }
+
+  async downloadOrderAttachment(orderId: number, fileUrl: string): Promise<Blob> {
+    const token = this.getToken();
+    const res = await fetch(`${API_URL}/api/orders/${orderId}/attachments/download?url=${encodeURIComponent(fileUrl)}`, {
+      headers: {
+        Authorization: token ? `Bearer ${token}` : "",
+        Accept: "application/json",
+      },
+    });
+    if (!res.ok) {
+      const json = await res.json().catch(() => null);
+      throw new Error(json?.message || "Download failed.");
+    }
+    return res.blob();
+  }
+
   async requestRevision(orderId: number, revisionNote: string): Promise<Order> {
     const response = await this.post(`/api/orders/${orderId}/request-revision`, { revision_note: revisionNote });
     return response.data;
@@ -870,6 +896,22 @@ class ApiClient {
     await this.post("/api/notifications/read-all", {});
   }
 
+  // ── Browser push subscriptions ────────────────────────────────────────────
+
+  async storePushSubscription(subscription: {
+    endpoint: string;
+    keys: { p256dh: string; auth: string };
+  }): Promise<void> {
+    await this.post("/api/push-subscriptions", subscription);
+  }
+
+  async deletePushSubscription(endpoint: string): Promise<void> {
+    await this.request("/api/push-subscriptions", {
+      method: "DELETE",
+      body: JSON.stringify({ endpoint }),
+    });
+  }
+
   // ── Admin: Service moderation ──────────────────────────────────────────────
   async getAdminServices(status?: string): Promise<Service[]> {
     const q = status ? `?status=${status}` : "";
@@ -893,6 +935,12 @@ class ApiClient {
   // ── Order timeline ─────────────────────────────────────────────────────────
   async getOrderTimeline(orderId: number): Promise<{ data: OrderTimelineEvent[] }> {
     return this.get(`/api/orders/${orderId}/timeline`);
+  }
+
+  // Timeline events for every order between a conversation's two participants,
+  // so the chat can interleave order history with messages.
+  async getConversationOrderEvents(conversationId: number): Promise<{ data: import("@/types/message").ConversationOrderEvent[] }> {
+    return this.get(`/api/conversations/${conversationId}/order-events`);
   }
 
   async getAdminUsers(params: {
@@ -1008,6 +1056,13 @@ class ApiClient {
 
   async sendCustomOffer(id: number, payload: SendCustomOfferRequest): Promise<CustomOrder> {
     const res = await this.post(`/api/custom-orders/${id}/offer`, payload);
+    return res.data;
+  }
+
+  // Freelancer proposes a custom order directly to a client (lands as an offer
+  // the client must still accept — the freelancer can never self-approve).
+  async createDirectCustomOffer(payload: CreateDirectCustomOfferRequest): Promise<CustomOrder> {
+    const res = await this.post("/api/custom-orders/direct", payload);
     return res.data;
   }
 

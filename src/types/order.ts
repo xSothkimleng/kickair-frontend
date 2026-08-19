@@ -160,6 +160,7 @@ export interface OrderProposal {
 
 export interface Order {
   id: number;
+  reference?: string; // human-readable id, e.g. "ORD-000123"
   client_profile_id: number;
   pricing_option_id: number | null;  // null for job-based orders
   proposal_id: number | null;        // null for service-based orders

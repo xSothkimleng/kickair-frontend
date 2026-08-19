@@ -22,6 +22,7 @@ import {
   StarRounded,
 } from "@mui/icons-material";
 import { tokens } from "@/theme";
+import { sanitizeMoneyInput } from "@/components/ui/inputs";
 import { api } from "@/lib/api";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import { Money, coLabel, initials } from "./kit";
@@ -190,7 +191,7 @@ export default function RequestCustomOrderDialog({ open, onClose, serviceId, fre
               <Box>
                 <Typography sx={{ fontSize: 12, fontWeight: 600, mb: 0.75 }}>Budget (USD)</Typography>
                 <TextField
-                  fullWidth value={budget} onChange={(e) => setBudget(e.target.value)}
+                  fullWidth value={budget} onChange={(e) => setBudget(sanitizeMoneyInput(e.target.value))}
                   placeholder="2,000" inputMode="decimal"
                   InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }}
                   sx={fieldSx}

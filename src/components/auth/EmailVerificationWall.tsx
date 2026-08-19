@@ -23,8 +23,8 @@ export default function EmailVerificationWall({ email, onResend, onLogout }: Ema
     try {
       await onResend();
       setResendSuccess(true);
-    } catch {
-      setResendError("Failed to resend. Please try again.");
+    } catch (err) {
+      setResendError(err instanceof Error && err.message ? err.message : "Failed to resend. Please try again.");
     } finally {
       setResending(false);
     }

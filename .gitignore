@@ -44,3 +44,9 @@ extra/
 next-env.d.ts
 
 nul
+## Panda
+styled-system
+styled-system-studio
+# Throwaway client-feedback tracker (dev-only, delete when feedback round done)
+/src/app/feedback-task/
+/public/feedback-shots/

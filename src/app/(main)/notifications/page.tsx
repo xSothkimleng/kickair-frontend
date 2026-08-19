@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import { Box, Container, Typography, Button, Skeleton } from "@mui/material";
 import { Check as CheckIcon, ArrowForwardOutlined } from "@mui/icons-material";
 import { api } from "@/lib/api";
@@ -8,6 +9,8 @@ import { Notification } from "@/types/notification";
 import { useAuth } from "@/components/context/AuthContext";
 import { tokens } from "@/theme";
 import { TypeTile, RoleChip, UnreadDot, typeMeta, getNotificationRoute, notifTimeAgo, notifGroup } from "@/components/notifications/shared";
+import { invalidateForNotification } from "@/lib/realtimeInvalidation";
+import PushToggle from "@/components/notifications/PushToggle";
 
 type RoleTab = "all" | "freelancer" | "client" | "admin";
 
@@ -68,6 +71,7 @@ function PageCardSkeleton() {
 export default function NotificationsPage() {
   const { user } = useAuth();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [loading, setLoading] = useState(true);
   const [markingAll, setMarkingAll] = useState(false);
@@ -101,6 +105,8 @@ export default function NotificationsPage() {
 
   const openNotif = (n: Notification) => {
     if (!n.readAt) markRead(n.id);
+    // Refresh the destination's cached queries so the page shows fresh data.
+    invalidateForNotification(queryClient, n.type);
     const route = getNotificationRoute(n);
     if (route) router.push(route);
   };
@@ -162,12 +168,15 @@ export default function NotificationsPage() {
                 </Typography>
               )}
             </Box>
-            {!loading && unreadCount > 0 && (
-              <Button onClick={handleMarkAll} disabled={markingAll} startIcon={<CheckIcon sx={{ fontSize: 16 }} />}
-                sx={{ height: 40, px: 2, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 600, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
-                {markingAll ? "Marking…" : "Mark all as read"}
-              </Button>
-            )}
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap" }}>
+              <PushToggle />
+              {!loading && unreadCount > 0 && (
+                <Button onClick={handleMarkAll} disabled={markingAll} startIcon={<CheckIcon sx={{ fontSize: 16 }} />}
+                  sx={{ height: 40, px: 2, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 600, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
+                  {markingAll ? "Marking…" : "Mark all as read"}
+                </Button>
+              )}
+            </Box>
           </Box>
 
           {showRole && !loading && total > 0 && (

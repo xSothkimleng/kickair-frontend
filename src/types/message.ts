@@ -51,6 +51,17 @@ export interface Conversation {
   created_at: string;
 }
 
+/** An order lifecycle event shown inline in a conversation. */
+export interface ConversationOrderEvent {
+  id: number;
+  order_id: number;
+  order_title: string;
+  event_type: string;
+  description: string | null;
+  actor_role: string | null;
+  created_at: string;
+}
+
 export interface ConversationsResponse {
   data: Conversation[];
 }

@@ -23,6 +23,7 @@ import {
   InfoOutlined,
 } from "@mui/icons-material";
 import { tokens } from "@/theme";
+import { sanitizeMoneyInput } from "@/components/ui/inputs";
 import { api } from "@/lib/api";
 import { CustomOrder, MilestoneInput } from "@/types/customOrder";
 import { Money, coCard, coLabel, initials } from "./kit";
@@ -159,7 +160,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
                   <TextField fullWidth size="small" placeholder="Milestone title" value={m.title} onChange={(e) => setRow(i, { title: e.target.value })} sx={fieldSx} InputProps={{ sx: { fontWeight: 600 } }} />
                   <TextField fullWidth size="small" placeholder="What the client gets in this phase" value={m.description} onChange={(e) => setRow(i, { description: e.target.value })} sx={fieldSx} />
                   <Box sx={{ display: "flex", gap: 1.25 }}>
-                    <TextField size="small" placeholder="0" value={m.amount} onChange={(e) => setRow(i, { amount: e.target.value.replace(/[^0-9.]/g, "") })}
+                    <TextField size="small" placeholder="0" value={m.amount} onChange={(e) => setRow(i, { amount: sanitizeMoneyInput(e.target.value) })}
                       InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={{ ...fieldSx, flex: 1 }} />
                     <TextField size="small" value={m.due_days} onChange={(e) => setRow(i, { due_days: e.target.value.replace(/[^0-9]/g, "") })}
                       InputProps={{ endAdornment: <InputAdornment position="end">days</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={{ ...fieldSx, flex: 1 }} />
@@ -176,7 +177,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
         ) : (
           <Box sx={{ p: 2, border: `1px solid ${tokens.borderStrong}`, borderRadius: `${tokens.radius.tile}px`, display: "flex", flexDirection: "column", gap: 1.25 }}>
             <Typography sx={{ fontWeight: 600, fontSize: 14 }}>Complete project — single payment</Typography>
-            <TextField size="small" sx={{ ...fieldSx, maxWidth: 200 }} value={singleAmount} onChange={(e) => setSingleAmount(e.target.value.replace(/[^0-9.]/g, ""))}
+            <TextField size="small" sx={{ ...fieldSx, maxWidth: 200 }} value={singleAmount} onChange={(e) => setSingleAmount(sanitizeMoneyInput(e.target.value))}
               InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }} />
           </Box>
         )}

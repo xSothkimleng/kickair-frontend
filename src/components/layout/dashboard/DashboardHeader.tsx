@@ -1,5 +1,4 @@
-import { Box, Typography, Button, Container } from "@mui/material";
-import { ChevronLeft } from "@mui/icons-material";
+import { Box, Typography, Container } from "@mui/material";
 
 type DashboardHeaderProps = {
   title: string;
@@ -15,22 +14,6 @@ export default function DashboardHeader({ title, description }: DashboardHeaderP
         borderColor: "rgba(0, 0, 0, 0.08)",
       }}>
       <Container sx={{ px: 3, py: 3 }}>
-        <Button
-          //   onClick={() => onNavigate("home")}
-          startIcon={<ChevronLeft sx={{ fontSize: 16 }} />}
-          sx={{
-            fontSize: 12,
-            color: "rgba(0, 0, 0, 0.6)",
-            textTransform: "none",
-            mb: 2,
-            "&:hover": {
-              color: "black",
-              bgcolor: "transparent",
-            },
-          }}>
-          Back to Home
-        </Button>
-
         <Box>
           <Typography
             variant='h4'
