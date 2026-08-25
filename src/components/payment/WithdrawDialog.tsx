@@ -30,8 +30,8 @@ const DESTINATIONS: { id: Destination; name: string; sub: string }[] = [
  * disbursement yet — matches the existing admin withdrawals approve/reject flow),
  * so this submits a request and lands in a "pending review" state.
  *
- * Note: destination + note are UI-only until the backend stores them; only
- * `amount` is sent to POST /api/wallet/withdraw today.
+ * The remark is the user's own reference note — it's stored on the transaction
+ * and shown back in their Finance history, not a message to the payout team.
  */
 export default function WithdrawDialog({
   open,
@@ -74,7 +74,7 @@ export default function WithdrawDialog({
     try {
       setSubmitting(true);
       setError(null);
-      await api.post("/api/wallet/withdraw", { amount: amt });
+      await api.post("/api/wallet/withdraw", { amount: amt, destination: dest, note: note.trim() || null });
       await qc.invalidateQueries({ queryKey: qk.wallet() });
       qc.invalidateQueries({ queryKey: qk.dashboard.freelancer() });
       setSubmitted(true);
@@ -165,11 +165,11 @@ export default function WithdrawDialog({
               ))}
             </Box>
 
-            <FieldLabel>Note for our payout team (optional)</FieldLabel>
+            <FieldLabel>Remarks (optional)</FieldLabel>
             <Box
               component='textarea'
               rows={3}
-              placeholder='e.g. preferred transfer time, alternate account number…'
+              placeholder='A note for yourself — stays on this transaction in your history'
               value={note}
               onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
               sx={{

@@ -286,7 +286,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
         {/* Body: content + sticky CTA */}
         <Box sx={{ display: "flex", gap: 3, mt: 2.25, alignItems: "flex-start" }}>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: "flex", gap: 3.25, borderBottom: `1px solid ${tokens.border}`, mb: 2.75, overflowX: "auto" }}>
+            <Box sx={{ display: "flex", gap: 3.25, borderBottom: `1px solid ${tokens.border}`, mb: 2.75, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", "&::-webkit-scrollbar": { display: "none" } }}>
               {TABS.map(t => {
                 const on = activeTab === t.id;
                 return (

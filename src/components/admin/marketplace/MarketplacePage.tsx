@@ -51,7 +51,7 @@ const JOB_FILTERS: PillOption[] = [
 
 const REJECT_PRESETS: Record<"reject" | "disable", string[]> = {
   reject: ["Incomplete or low-quality listing", "Misleading title or description", "Prohibited / out-of-policy", "Pricing looks fraudulent"],
-  disable: ["Repeated buyer complaints", "Quality below marketplace standard", "Policy violation reported"],
+  disable: ["Repeated client complaints", "Quality below marketplace standard", "Policy violation reported"],
 };
 
 function listingPill(status: string): { tone: CardTone; label: string } {

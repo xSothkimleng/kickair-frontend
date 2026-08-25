@@ -61,7 +61,7 @@ export default function ResultsToolbar({ query, onQueryChange, sort, onSortChang
           id="results-toolbar-search"
           value={query}
           onChange={onQueryChange}
-          placeholder="Search services, skills, or sellers…"
+          placeholder="Search services, skills, or freelancers…"
         />
         <Box sx={{ minWidth: 180 }}>
           <SelectInput

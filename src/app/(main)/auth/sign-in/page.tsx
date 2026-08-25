@@ -60,7 +60,7 @@ function SignInContent() {
   return (
     <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, sm: 6 }, backgroundColor: tokens.page }}>
       <Box sx={{ width: "100%", maxWidth: 420 }}>
-        <Paper elevation={0} sx={{ borderRadius: 4, border: `1px solid ${tokens.border}`, p: { xs: 3, sm: 4 }, boxShadow: "0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.07)" }}>
+        <Paper elevation={0} sx={{ borderRadius: 0, border: `1px solid ${tokens.border}`, p: { xs: 3, sm: 4 }, boxShadow: "0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.07)" }}>
           <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
             <Box component="img" src="/assets/images/kickair-logo.png" alt="KickAir" sx={{ height: 36 }} />
           </Box>
@@ -106,7 +106,7 @@ function SignInContent() {
                 </Typography>
                 <Button
                   type="button"
-                  onClick={() => router.push("/forgot-password")}
+                  onClick={() => router.push("/auth/forgot-password")}
                   sx={{ minWidth: 0, p: 0, fontSize: 13, color: tokens.accent, textTransform: "none", "&:hover": { backgroundColor: "transparent", textDecoration: "underline" } }}>
                   Forgot password?
                 </Button>

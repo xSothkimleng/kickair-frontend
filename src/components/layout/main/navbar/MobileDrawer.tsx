@@ -7,6 +7,7 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import { Logout, Settings as SettingsIcon, HelpOutline, Work as BriefcaseIcon } from "@mui/icons-material";
 import { Box, Button, Avatar, Typography, CircularProgress, Drawer, IconButton, Divider } from "@mui/material";
 import { LANGUAGES, type Language, type UserMode } from "./types";
+import { WalletChip } from "./WalletChip";
 
 export interface MobileDrawerProps {
   open: boolean;
@@ -218,10 +219,11 @@ export function MobileDrawer({
                 <Avatar src={avatarSrc} alt={user.name} sx={{ width: 32, height: 32 }}>
                   {!avatarSrc && user.name?.charAt(0).toUpperCase()}
                 </Avatar>
-                <Box>
+                <Box sx={{ flex: 1, minWidth: 0 }}>
                   <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{user.name}</Typography>
                   <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)", textTransform: "capitalize" }}>{currentMode} mode</Typography>
                 </Box>
+                <WalletChip />
               </Box>
 
               {/* Mode switcher */}

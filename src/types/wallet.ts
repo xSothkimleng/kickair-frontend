@@ -25,6 +25,10 @@ export interface TransactionMetadata {
   service_title?: string;
   pricing_option_title?: string;
   source?: string;
+  /** Withdrawal payout destination chosen in the dialog ("aba" | "other") */
+  destination?: string;
+  /** The user's own remark, shown back on the transaction in Finance history */
+  note?: string;
   [key: string]: string | undefined;
 }
 

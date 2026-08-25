@@ -28,8 +28,8 @@ const STATUS_FILTERS: [StatusFilter, string][] = [
 type RoleFilter = "all" | "buyer" | "seller" | "account";
 const ROLE_FILTERS: [RoleFilter, string][] = [
   ["all", "All activity"],
-  ["buyer", "As buyer"],
-  ["seller", "As seller"],
+  ["buyer", "As client"],
+  ["seller", "As freelancer"],
   ["account", "Top-ups & withdrawals"],
 ];
 
@@ -62,8 +62,8 @@ function typeDisplay(t: Transaction): { label: string; flow: "in" | "out" | "inf
 }
 
 const ROLE_TAG: Record<TransactionRole, { label: string; color: string; bg: string }> = {
-  buyer: { label: "As buyer", color: "#92400E", bg: "rgba(234,88,12,0.08)" },
-  seller: { label: "As seller", color: "#166534", bg: "rgba(22,163,74,0.08)" },
+  buyer: { label: "As client", color: "#92400E", bg: "rgba(234,88,12,0.08)" },
+  seller: { label: "As freelancer", color: "#166534", bg: "rgba(22,163,74,0.08)" },
   account: { label: "Account", color: "#475569", bg: "rgba(0,0,0,0.05)" },
 };
 
@@ -210,10 +210,10 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
           {/* Lifetime totals — deliberately demoted, never confused with live balances */}
           <Box sx={{ display: "flex", gap: 3, px: 0.5, flexWrap: "wrap" }}>
             <Typography sx={{ fontSize: 12.5, color: tokens.text3 }}>
-              Lifetime spent as buyer: <Box component="span" sx={{ fontFamily: tokens.mono, fontWeight: 600, color: tokens.text2 }}>{fmtUsd(totalSpent)}</Box>
+              Lifetime spent as client: <Box component="span" sx={{ fontFamily: tokens.mono, fontWeight: 600, color: tokens.text2 }}>{fmtUsd(totalSpent)}</Box>
             </Typography>
             <Typography sx={{ fontSize: 12.5, color: tokens.text3 }}>
-              Lifetime earned as seller: <Box component="span" sx={{ fontFamily: tokens.mono, fontWeight: 600, color: tokens.text2 }}>{fmtUsd(totalEarned)}</Box>
+              Lifetime earned as freelancer: <Box component="span" sx={{ fontFamily: tokens.mono, fontWeight: 600, color: tokens.text2 }}>{fmtUsd(totalEarned)}</Box>
             </Typography>
           </Box>
 
@@ -276,6 +276,11 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
                           {display.label} · {formatDate(t.created_at)}
                           {t.order_reference ? <Box component="span" sx={{ fontFamily: tokens.mono }}> · {t.order_reference}</Box> : null}
                         </Typography>
+                        {t.metadata?.note && (
+                          <Typography sx={{ fontSize: 12, color: tokens.text3, fontStyle: "italic", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            “{t.metadata.note}”
+                          </Typography>
+                        )}
                       </Box>
                       <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.625 }}>
                         <Typography sx={{ fontFamily: tokens.mono, fontSize: 15, fontWeight: 600, color: display.flow === "in" ? tokens.successText : display.flow === "out" ? tokens.text : tokens.text3 }}>

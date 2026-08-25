@@ -35,7 +35,7 @@ export default function RequirementsSection({ formData, onFormDataChange }: Requ
         <Box>
           <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 0.5 }}>Requirements (Optional)</Typography>
           <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
-            Questions for buyers to answer before ordering. Helps you gather necessary information.
+            Questions for clients to answer before ordering. Helps you gather necessary information.
           </Typography>
         </Box>
         <Button

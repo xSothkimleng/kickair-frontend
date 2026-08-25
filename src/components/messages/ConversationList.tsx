@@ -165,18 +165,20 @@ export default function ConversationList({
                     )}
                   </Box>
 
-                  <Typography
-                    sx={{
-                      fontSize: 11,
-                      color: "rgba(0, 0, 0, 0.6)",
-                      mb: 0.5,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {conv.order?.title ?? "Direct message"}
-                  </Typography>
+                  {conv.order?.title && (
+                    <Typography
+                      sx={{
+                        fontSize: 11,
+                        color: "rgba(0, 0, 0, 0.6)",
+                        mb: 0.5,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {conv.order.title}
+                    </Typography>
+                  )}
 
                   {conv.latest_message && (
                     <Typography

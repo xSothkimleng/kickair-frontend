@@ -158,18 +158,20 @@ export default function MessagesContent() {
                     )}
                   </Box>
 
-                  <Typography
-                    sx={{
-                      fontSize: 11,
-                      color: "rgba(0, 0, 0, 0.6)",
-                      mb: 0.5,
-                      overflow: "hidden",
-                      textOverflow: "ellipsis",
-                      whiteSpace: "nowrap",
-                    }}
-                  >
-                    {conversation.order?.title ?? "Direct message"}
-                  </Typography>
+                  {conversation.order?.title && (
+                    <Typography
+                      sx={{
+                        fontSize: 11,
+                        color: "rgba(0, 0, 0, 0.6)",
+                        mb: 0.5,
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {conversation.order.title}
+                    </Typography>
+                  )}
 
                   {conversation.latest_message && (
                     <Typography

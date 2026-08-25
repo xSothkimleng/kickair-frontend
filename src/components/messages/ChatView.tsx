@@ -178,7 +178,7 @@ export default function ChatView({
               <Typography sx={{ fontSize: 15, fontWeight: 600, color: "black" }}>
                 {conversation.other_participant.name}
               </Typography>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{conversation.order ? conversation.order.title : "Direct message"}</Typography>
+              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{conversation.order ? conversation.order.title : "One thread — all your orders & messages"}</Typography>
             </Box>
           </Box>
         </Box>

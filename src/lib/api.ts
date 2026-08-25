@@ -245,6 +245,11 @@ class ApiClient {
     await this.request("/api/auth/email/resend", { method: "POST" });
   }
 
+  // Public re-send by address (the expired-link screen, where nobody is signed in).
+  async resendVerificationLink(email: string): Promise<void> {
+    await this.request("/api/auth/email/resend-link", { method: "POST", body: JSON.stringify({ email }) });
+  }
+
   // Add an email to an account that signed up with phone only. Sends a verification
   // link and returns the updated user. Backend rejects accounts that already have one.
   async addEmail(email: string): Promise<User> {

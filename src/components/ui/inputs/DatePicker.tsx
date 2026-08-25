@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Box, Typography, Popover, IconButton } from "@mui/material";
-import { CalendarTodayOutlined, ChevronLeft, ChevronRight, KeyboardArrowDown } from "@mui/icons-material";
+import { CalendarTodayOutlined, ChevronLeft, ChevronRight, KeyboardArrowDown, ArrowDropDown } from "@mui/icons-material";
 import { FieldShell } from "./FieldShell";
 import { FieldBaseProps, tokens, FOCUS_RING } from "./tokens";
 
@@ -23,6 +23,8 @@ const sameDay = (a: Date | null | undefined, b: Date) =>
   !!a && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 const formatDate = (d: Date) => `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.getFullYear()}`;
 
+type Pane = "days" | "months" | "years";
+
 export default function DatePicker({
   label, helper, error, required, fullWidth = true, disabled, value = null, onChange, placeholder = "Select a date…", id, minDate, maxDate,
 }: DatePickerProps) {
@@ -30,11 +32,17 @@ export default function DatePicker({
   // would make the calendar build an array of NaN length and crash the whole page.
   const safeValue = value && !Number.isNaN(value.getTime()) ? value : null;
   const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [pane, setPane] = useState<Pane>("days");
   const [view, setView] = useState(() => {
     const base = safeValue ?? new Date();
     return new Date(base.getFullYear(), base.getMonth(), 1);
   });
   const open = Boolean(anchor);
+
+  const openPopover = (el: HTMLElement) => {
+    setPane("days");
+    setAnchor(el);
+  };
 
   const year = view.getFullYear();
   const month = view.getMonth();
@@ -51,14 +59,35 @@ export default function DatePicker({
   };
   const pick = (d: number) => { onChange?.(new Date(year, month, d)); setAnchor(null); };
 
+  // Years pane shows a stable 12-year page (e.g. 2016–2027); arrows jump a page.
+  const yearPageStart = year - (year % 12);
+  const yearCells = Array.from({ length: 12 }, (_, i) => yearPageStart + i);
+
+  const headerLabel = pane === "years" ? `${yearPageStart} – ${yearPageStart + 11}` : `${MONTHS[month]} ${year}`;
+  const onPrev = () => (pane === "years" ? setView(new Date(year - 12, month, 1)) : setView(new Date(year, month - 1, 1)));
+  const onNext = () => (pane === "years" ? setView(new Date(year + 12, month, 1)) : setView(new Date(year, month + 1, 1)));
+
+  const gridButtonSx = (selected: boolean) => ({
+    height: 34,
+    border: "none",
+    borderRadius: "8px",
+    fontFamily: "inherit",
+    cursor: "pointer",
+    background: selected ? tokens.accent : "transparent",
+    color: selected ? "#fff" : tokens.body,
+    fontSize: 13.5,
+    fontWeight: selected ? 500 : 400,
+    "&:hover": { background: selected ? tokens.accent : tokens.fill },
+  });
+
   return (
     <FieldShell label={label} required={required} helper={helper} error={error} htmlFor={id} fullWidth={fullWidth}>
       <Box
         id={id}
         role="button"
         tabIndex={disabled ? -1 : 0}
-        onClick={(e) => !disabled && setAnchor(e.currentTarget)}
-        onKeyDown={(e) => { if (!disabled && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setAnchor(e.currentTarget); } }}
+        onClick={(e) => !disabled && openPopover(e.currentTarget)}
+        onKeyDown={(e) => { if (!disabled && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openPopover(e.currentTarget); } }}
         sx={{
           display: "flex", alignItems: "center", gap: 1, height: 46, px: 1.75, borderRadius: "10px",
           cursor: disabled ? "not-allowed" : "pointer",
@@ -82,37 +111,82 @@ export default function DatePicker({
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         slotProps={{ paper: { sx: { mt: 1, borderRadius: "12px", border: `1px solid ${tokens.border}`, boxShadow: "0 12px 32px rgba(15,23,42,0.14)", p: 1.75, width: 280 } } }}>
         <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-          <IconButton size="small" onClick={() => setView(new Date(year, month - 1, 1))} aria-label="Previous month"><ChevronLeft fontSize="small" /></IconButton>
-          <Typography sx={{ fontSize: 14, fontWeight: 600, color: tokens.heading }}>{MONTHS[month]} {year}</Typography>
-          <IconButton size="small" onClick={() => setView(new Date(year, month + 1, 1))} aria-label="Next month"><ChevronRight fontSize="small" /></IconButton>
+          <IconButton size="small" onClick={onPrev} aria-label={pane === "years" ? "Previous years" : "Previous month"}><ChevronLeft fontSize="small" /></IconButton>
+          {/* Clickable header: days → years → (pick year) → months → (pick month) → days */}
+          <Box
+            component="button"
+            onClick={() => setPane(pane === "days" ? "years" : "days")}
+            aria-label="Choose month and year"
+            sx={{
+              display: "flex", alignItems: "center", gap: 0.25, border: "none", background: "transparent",
+              fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: tokens.heading, cursor: "pointer",
+              borderRadius: "8px", px: 1, py: 0.5, "&:hover": { background: tokens.fill },
+            }}>
+            {headerLabel}
+            <ArrowDropDown sx={{ fontSize: 18, color: tokens.muted, transform: pane === "days" ? "none" : "rotate(180deg)" }} />
+          </Box>
+          <IconButton size="small" onClick={onNext} aria-label={pane === "years" ? "Next years" : "Next month"}><ChevronRight fontSize="small" /></IconButton>
         </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25, mb: 0.5 }}>
-          {DOW.map((d, i) => <Box key={i} sx={{ textAlign: "center", fontSize: 11, fontWeight: 600, color: tokens.muted, py: 0.5 }}>{d}</Box>)}
-        </Box>
-        <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25, justifyItems: "center" }}>
-          {cells.map((d, i) => d === null ? <Box key={i} /> : (() => {
-            const date = new Date(year, month, d);
-            const selected = sameDay(safeValue, date);
-            return (
+
+        {pane === "years" && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0.5 }}>
+            {yearCells.map((y) => (
               <Box
-                key={i}
+                key={y}
                 component="button"
-                disabled={isDisabled(d)}
-                onClick={() => pick(d)}
-                sx={{
-                  width: 34, height: 34, border: "none", borderRadius: "8px", fontFamily: "inherit",
-                  cursor: isDisabled(d) ? "not-allowed" : "pointer",
-                  background: selected ? tokens.accent : "transparent",
-                  color: isDisabled(d) ? tokens.placeholder : selected ? "#fff" : tokens.body,
-                  fontSize: 13.5, fontWeight: selected ? 500 : 400,
-                  boxShadow: sameDay(today, date) && !selected ? `inset 0 0 0 1px ${tokens.borderStrong}` : "none",
-                  "&:hover:not(:disabled)": { background: selected ? tokens.accent : tokens.fill },
-                }}>
-                {d}
+                onClick={() => { setView(new Date(y, month, 1)); setPane("months"); }}
+                sx={gridButtonSx(y === (safeValue?.getFullYear() ?? year))}>
+                {y}
               </Box>
-            );
-          })())}
-        </Box>
+            ))}
+          </Box>
+        )}
+
+        {pane === "months" && (
+          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0.5 }}>
+            {MONTHS.map((m, i) => (
+              <Box
+                key={m}
+                component="button"
+                onClick={() => { setView(new Date(year, i, 1)); setPane("days"); }}
+                sx={gridButtonSx(i === month)}>
+                {m.slice(0, 3)}
+              </Box>
+            ))}
+          </Box>
+        )}
+
+        {pane === "days" && (
+          <>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25, mb: 0.5 }}>
+              {DOW.map((d, i) => <Box key={i} sx={{ textAlign: "center", fontSize: 11, fontWeight: 600, color: tokens.muted, py: 0.5 }}>{d}</Box>)}
+            </Box>
+            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25, justifyItems: "center" }}>
+              {cells.map((d, i) => d === null ? <Box key={i} /> : (() => {
+                const date = new Date(year, month, d);
+                const selected = sameDay(safeValue, date);
+                return (
+                  <Box
+                    key={i}
+                    component="button"
+                    disabled={isDisabled(d)}
+                    onClick={() => pick(d)}
+                    sx={{
+                      width: 34, height: 34, border: "none", borderRadius: "8px", fontFamily: "inherit",
+                      cursor: isDisabled(d) ? "not-allowed" : "pointer",
+                      background: selected ? tokens.accent : "transparent",
+                      color: isDisabled(d) ? tokens.placeholder : selected ? "#fff" : tokens.body,
+                      fontSize: 13.5, fontWeight: selected ? 500 : 400,
+                      boxShadow: sameDay(today, date) && !selected ? `inset 0 0 0 1px ${tokens.borderStrong}` : "none",
+                      "&:hover:not(:disabled)": { background: selected ? tokens.accent : tokens.fill },
+                    }}>
+                    {d}
+                  </Box>
+                );
+              })())}
+            </Box>
+          </>
+        )}
       </Popover>
     </FieldShell>
   );

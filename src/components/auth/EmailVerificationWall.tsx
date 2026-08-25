@@ -1,8 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Paper, Typography, Button, Alert, Divider } from "@mui/material";
-import { MarkEmailUnread, MailOutline } from "@mui/icons-material";
+import Box from "@mui/material/Box";
+import Typography from "@mui/material/Typography";
+import { tokens } from "@/theme";
+import { VerifyBody, VerifyButton, VerifyCard, VerifyHeadline, VerifyNotice, VerifyOverline } from "./verifyKit";
 
 interface EmailVerificationWallProps {
   email: string | null;
@@ -10,27 +12,25 @@ interface EmailVerificationWallProps {
   onLogout: () => Promise<void>;
 }
 
+/** Full-screen wall shown in place of the app until the user clicks the verification link. */
 export default function EmailVerificationWall({ email, onResend, onLogout }: EmailVerificationWallProps) {
-  const [resending, setResending] = useState(false);
-  const [resendSuccess, setResendSuccess] = useState(false);
-  const [resendError, setResendError] = useState("");
+  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">("idle");
+  const [error, setError] = useState("");
   const [loggingOut, setLoggingOut] = useState(false);
 
-  const handleResend = async () => {
-    setResending(true);
-    setResendError("");
-    setResendSuccess(false);
+  const resend = async () => {
+    setStatus("sending");
+    setError("");
     try {
       await onResend();
-      setResendSuccess(true);
+      setStatus("sent");
     } catch (err) {
-      setResendError(err instanceof Error && err.message ? err.message : "Failed to resend. Please try again.");
-    } finally {
-      setResending(false);
+      setError(err instanceof Error && err.message ? err.message : "We couldn't resend the email. Please try again.");
+      setStatus("error");
     }
   };
 
-  const handleLogout = async () => {
+  const logout = async () => {
     setLoggingOut(true);
     try {
       await onLogout();
@@ -40,130 +40,88 @@ export default function EmailVerificationWall({ email, onResend, onLogout }: Ema
   };
 
   return (
-    <Box
-      sx={{
-        bgcolor: "#F5F5F7",
-        minHeight: "100vh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        px: { xs: 3, sm: 6 },
-      }}>
-      <Box sx={{ width: "100%", maxWidth: 448 }}>
-        <Paper
-          elevation={0}
-          sx={{ borderRadius: 6, border: 1, borderColor: "divider", p: { xs: 4, md: 6 }, textAlign: "center" }}>
-          {/* Icon with outer ring */}
-          <Box sx={{ position: "relative", width: 88, height: 88, mx: "auto", mb: 4 }}>
-            <Box
-              sx={{
-                position: "absolute",
-                inset: -10,
-                borderRadius: "50%",
-                bgcolor: "primary.main",
-                opacity: 0.1,
-              }}
-            />
-            <Box
-              sx={{
-                width: 88,
-                height: 88,
-                borderRadius: "50%",
-                bgcolor: "primary.main",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-              }}>
-              <MarkEmailUnread sx={{ fontSize: 40, color: "primary.contrastText" }} />
-            </Box>
-          </Box>
+    <VerifyCard>
+      <VerifyOverline>Email verification</VerifyOverline>
+      <VerifyHeadline>
+        One click and
+        <br />
+        you&apos;re in.
+      </VerifyHeadline>
+      <Box sx={{ mt: 2.5 }}>
+        <VerifyBody>We sent a verification link to</VerifyBody>
+      </Box>
 
-          <Typography variant="h4" fontWeight={700} mb={1.5} color="text.primary">
-            Verify your email
-          </Typography>
-
-          <Typography variant="body1" color="text.secondary" mb={2}>
-            We sent a verification link to
-          </Typography>
-
-          {/* Email chip */}
-          {email && (
-            <Box
-              sx={{
-                display: "inline-flex",
-                alignItems: "center",
-                gap: 0.75,
-                bgcolor: "action.hover",
-                border: 1,
-                borderColor: "divider",
-                borderRadius: 2,
-                px: 2,
-                py: 0.75,
-                mb: 3.5,
-              }}>
-              <MailOutline sx={{ fontSize: 16, color: "text.secondary" }} />
-              <Typography variant="body2" fontWeight={600} color="text.primary">
-                {email}
-              </Typography>
-            </Box>
-          )}
-
-          <Typography variant="body2" color="text.secondary" mb={4} sx={{ lineHeight: 1.75 }}>
-            Click the link in the email to activate your account.{" "}
-            <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>
-              Check your spam folder
-            </Box>{" "}
-            if you don&apos;t see it within a few minutes.
-          </Typography>
-
-          {resendSuccess && (
-            <Alert severity="success" sx={{ mb: 3, borderRadius: 2, textAlign: "left" }}>
-              Verification email resent successfully!
-            </Alert>
-          )}
-          {resendError && (
-            <Alert severity="error" sx={{ mb: 3, borderRadius: 2, textAlign: "left" }}>
-              {resendError}
-            </Alert>
-          )}
-
-          <Button
-            variant="contained"
-            fullWidth
-            onClick={handleResend}
-            disabled={resending || resendSuccess}
-            sx={{
-              height: 48,
-              borderRadius: 3,
-              textTransform: "none",
-              fontSize: "1rem",
-              fontWeight: 500,
-              mb: 2,
-              color: "white !important",
-              "&:hover": { backgroundColor: "primary.dark" },
-            }}>
-            {resending ? "Sending..." : resendSuccess ? "Email sent" : "Resend verification email"}
-          </Button>
-
-          <Divider sx={{ mb: 2 }} />
-
-          <Button
-            variant="text"
-            fullWidth
-            onClick={handleLogout}
+      {email ? (
+        <Box
+          sx={{
+            mt: 1.5,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            gap: 2,
+            px: 2,
+            py: 1.5,
+            bgcolor: tokens.canvas,
+            border: `1px solid ${tokens.border}`,
+          }}>
+          <Typography sx={{ fontFamily: tokens.mono, fontSize: 14, color: tokens.text, wordBreak: "break-all" }}>{email}</Typography>
+          <Typography
+            component="button"
+            type="button"
+            onClick={logout}
             disabled={loggingOut}
             sx={{
-              height: 44,
-              borderRadius: 3,
-              textTransform: "none",
-              fontSize: "0.875rem",
-              color: "text.secondary",
-              "&:hover": { color: "text.primary", bgcolor: "action.hover" },
+              flexShrink: 0,
+              background: "none",
+              border: 0,
+              p: 0,
+              fontFamily: "inherit",
+              fontSize: 12,
+              fontWeight: 600,
+              color: tokens.accent,
+              cursor: "pointer",
+              "&:hover": { color: tokens.accentHover },
+              "&:disabled": { opacity: 0.5, cursor: "default" },
             }}>
-            {loggingOut ? "Signing out..." : "Sign out"}
-          </Button>
-        </Paper>
+            {loggingOut ? "Signing out…" : "Not you?"}
+          </Typography>
+        </Box>
+      ) : (
+        <Box sx={{ mt: 1.5 }}>
+          <VerifyBody sx={{ color: tokens.text }}>the address you signed up with.</VerifyBody>
+        </Box>
+      )}
+
+      <Box sx={{ mt: 2.5 }}>
+        <VerifyBody>
+          Open it and press <strong style={{ color: tokens.text, fontWeight: 600 }}>Verify email address</strong> — it takes about ten
+          seconds. The link works for 60 minutes.
+        </VerifyBody>
       </Box>
-    </Box>
+
+      {status === "error" && <VerifyNotice tone="error">{error}</VerifyNotice>}
+      {status === "sent" && (
+        <VerifyNotice tone="success">A fresh link is on its way{email ? ` to ${email}` : ""}. Give it a minute.</VerifyNotice>
+      )}
+
+      <Box sx={{ mt: 3.5, display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+        <VerifyButton onClick={resend} disabled={status === "sending" || status === "sent"}>
+          {status === "sending" ? "Sending…" : status === "sent" ? "Email sent" : "Resend email"}
+        </VerifyButton>
+        <VerifyButton variant="secondary" onClick={logout} disabled={loggingOut}>
+          {loggingOut ? "Signing out…" : "Sign out"}
+        </VerifyButton>
+      </Box>
+
+      <Box sx={{ mt: 4.5, pt: 3, borderTop: `1px solid ${tokens.border}` }}>
+        <Typography component="div" sx={{ fontSize: 13, fontWeight: 600, color: tokens.text, mb: 0.5 }}>
+          Didn&apos;t get it?
+        </Typography>
+        <Typography sx={{ fontSize: 13, lineHeight: 1.6, color: tokens.text3 }}>
+          Give it a minute, then check your Spam or Promotions folder. If the address above is wrong, sign out and create the
+          account again with the right one.
+        </Typography>
+      </Box>
+    </VerifyCard>
   );
 }

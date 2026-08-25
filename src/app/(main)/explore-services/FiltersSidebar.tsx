@@ -351,7 +351,7 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
         <Divider sx={{ my: 1.5, borderColor: "#F1F5F9" }} />
 
         {/* Rating */}
-        <FilterSection title="Seller rating" defaultOpen={false} meta={filters.rating === "any" ? undefined : `${filters.rating}★ & up`}>
+        <FilterSection title="Freelancer rating" defaultOpen={false} meta={filters.rating === "any" ? undefined : `${filters.rating}★ & up`}>
           <RadioGroup value={filters.rating} onChange={e => set("rating", e.target.value as Filters["rating"])} sx={{ gap: 0.25 }}>
             {([{ v: "any", label: "Any rating" }, { v: "4.5", label: "4.5 & up" }, { v: "4.0", label: "4.0 & up" }] as const).map(opt => (
               <FormControlLabel

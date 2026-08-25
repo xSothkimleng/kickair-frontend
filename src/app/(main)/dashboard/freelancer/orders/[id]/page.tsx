@@ -189,7 +189,7 @@ const OUTCOME_LABEL: Record<string, string> = {
   partial: "Partial resolution — split between both parties",
 };
 
-function EvidenceParty({ label, files, statement }: { label: string; files: EvidenceFile[] | null; statement: string | null }) {
+function EvidenceParty({ label, files, statement, orderId }: { label: string; files: EvidenceFile[] | null; statement: string | null; orderId?: number }) {
   const has = (files?.length ?? 0) > 0 || !!statement;
   return (
     <Box sx={{ flex: 1, minWidth: 220 }}>
@@ -199,14 +199,14 @@ function EvidenceParty({ label, files, statement }: { label: string; files: Evid
       ) : (
         <>
           {statement && <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mb: files?.length ? 1 : 0 }}>{statement}</Typography>}
-          {files?.length ? <Stack spacing={1}>{files.map((f, i) => <FileRow key={i} file={f} />)}</Stack> : null}
+          {files?.length ? <Stack spacing={1}>{files.map((f, i) => <FileRow key={i} file={f} orderId={orderId} />)}</Stack> : null}
         </>
       )}
     </Box>
   );
 }
 
-function DisputeBlock({ dispute }: { dispute: Dispute }) {
+function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number }) {
   const resolved = dispute.status === "resolved";
   return (
     <Box sx={CARD}>
@@ -239,8 +239,8 @@ function DisputeBlock({ dispute }: { dispute: Dispute }) {
       )}
 
       <Box sx={{ display: "flex", gap: 2.5, flexWrap: "wrap", mt: 2.25 }}>
-        <EvidenceParty label="Client's evidence" files={dispute.client_evidence} statement={dispute.client_statement} />
-        <EvidenceParty label="Freelancer's evidence" files={dispute.freelancer_evidence} statement={dispute.freelancer_statement} />
+        <EvidenceParty label="Client's evidence" files={dispute.client_evidence} statement={dispute.client_statement} orderId={orderId} />
+        <EvidenceParty label="Freelancer's evidence" files={dispute.freelancer_evidence} statement={dispute.freelancer_statement} orderId={orderId} />
       </Box>
     </Box>
   );
@@ -561,7 +561,7 @@ export default function FreelancerOrderDetailPage() {
           )}
 
           {/* Disputed */}
-          {order.dispute && <DisputeBlock dispute={order.dispute} />}
+          {order.dispute && <DisputeBlock dispute={order.dispute} orderId={order.id} />}
 
           {/* Completed */}
           {order.status === "completed" && (

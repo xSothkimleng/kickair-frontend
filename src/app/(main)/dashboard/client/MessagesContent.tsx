@@ -162,15 +162,17 @@ export default function MessagesContent() {
                     )}
                   </Stack>
 
-                  <Typography
-                    variant="caption"
-                    color="text.secondary"
-                    display="block"
-                    noWrap
-                    mb={0.5}
-                  >
-                    {conversation.order?.title ?? "Direct message"}
-                  </Typography>
+                  {conversation.order?.title && (
+                    <Typography
+                      variant="caption"
+                      color="text.secondary"
+                      display="block"
+                      noWrap
+                      mb={0.5}
+                    >
+                      {conversation.order.title}
+                    </Typography>
+                  )}
 
                   {conversation.latest_message && (
                     <Stack direction="row" justifyContent="space-between" alignItems="center">

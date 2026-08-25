@@ -22,6 +22,7 @@ import { tokens } from "@/theme";
 import { useAuth } from "@/components/context/AuthContext";
 import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/PurchaseGate";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
+import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import type { Service, ServiceDetailResponse } from "@/types/service";
 import type { CreateOrderResponse } from "@/types/order";
 import type { Wallet } from "@/types/wallet";
@@ -226,7 +227,9 @@ function CheckoutContent() {
                 <Meta icon={<RevisionIcon sx={{ fontSize: 14, color: tokens.text3 }} />}>{revisionsText(selectedPricing.revisions)}</Meta>
               </Box>
               {selectedPricing.description && (
-                <Typography sx={{ mt: 1.5, fontSize: 13.5, color: tokens.text2, lineHeight: 1.5 }}>{selectedPricing.description}</Typography>
+                <Box sx={{ mt: 1.5, fontSize: 13.5, color: tokens.text2, lineHeight: 1.5, "& p": { m: 0 }, "& ul, & ol": { m: 0, pl: 2.5 } }}>
+                  <RichTextDisplay value={selectedPricing.description} />
+                </Box>
               )}
             </Box>
 
@@ -235,7 +238,7 @@ function CheckoutContent() {
               {paySource === "aba" && shortfall > 0 && (
                 <>
                   <PriceRow label='Paid from wallet' value={`−${fmtUsd(walletCovers)}`} />
-                  <PriceRow label='Top-up via ABA PayWay' value={fmtUsd(shortfall)} />
+                  <PriceRow label='Top-up via bank transfer' value={fmtUsd(shortfall)} />
                 </>
               )}
               <Box sx={{ height: 1, bgcolor: tokens.border }} />
@@ -281,7 +284,7 @@ function CheckoutContent() {
                       <CardIcon sx={{ fontSize: 20, color: tokens.text }} />
                     </IconTile>
                     <Box>
-                      <Typography sx={{ fontWeight: 600, fontSize: 15 }}>ABA PayWay</Typography>
+                      <Typography sx={{ fontWeight: 600, fontSize: 15 }}>Bank Transfer</Typography>
                       <Typography sx={{ fontSize: 13, color: tokens.text2 }}>
                         {shortfall > 0 && shortfall < total
                           ? `Tops up the ${fmtUsd(shortfall)} shortfall — wallet covers the rest`
@@ -306,7 +309,7 @@ function CheckoutContent() {
                   <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: tokens.errorText }}>Insufficient balance</Typography>
                 </Box>
                 <Typography sx={{ fontSize: 13, color: tokens.errorText, mb: 1.5 }}>
-                  You need {fmtUsd(total - balance)} more to cover this order. Top up your wallet — or pick ABA PayWay above and we&apos;ll charge just the difference.
+                  You need {fmtUsd(total - balance)} more to cover this order. Top up your wallet — or pick Bank Transfer above and we&apos;ll charge just the difference.
                 </Typography>
                 <Button
                   onClick={() => setTopUpOpen(true)}
@@ -349,7 +352,7 @@ function CheckoutContent() {
               </Button>
               <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75, mt: 1.5, color: tokens.text3 }}>
                 <LockIcon sx={{ fontSize: 12 }} />
-                <Typography sx={{ fontSize: 12 }}>Secured by ABA PayWay · you can review before paying</Typography>
+                <Typography sx={{ fontSize: 12 }}>Secured bank transfer · you can review before paying</Typography>
               </Box>
             </Box>
           </Card>

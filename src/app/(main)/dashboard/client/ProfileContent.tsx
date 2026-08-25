@@ -94,13 +94,16 @@ export default function ProfileContent() {
     if (!user?.client_profile) return;
     setSaving(true);
     try {
+      // Send cleared fields as null (not undefined) — undefined keys are dropped
+      // from the JSON body, so the API would silently keep the old value.
+      const website = formData.website.trim();
       const requestData: ClientProfileRequest = {
-        company_name: formData.company_name || undefined,
-        industry_id: formData.industry_id ? Number(formData.industry_id) : undefined,
-        company_size: formData.company_size || undefined,
-        location: formData.location || undefined,
-        website: formData.website || undefined,
-        about: formData.about || undefined,
+        company_name: formData.company_name || null,
+        industry_id: formData.industry_id ? Number(formData.industry_id) : null,
+        company_size: formData.company_size || null,
+        location: formData.location || null,
+        website: website && !/^[a-z][a-z0-9+.-]*:\/\//i.test(website) ? `https://${website}` : website || null,
+        about: formData.about || null,
       };
       await api.updateClientProfile(user.client_profile.id, requestData);
       await refreshUser();

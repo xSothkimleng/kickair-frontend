@@ -50,7 +50,7 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
 
         <TagInput
           label={`Search Tags (${formData.searchTags.length}/5)`}
-          helper="Add keywords that buyers might search for. Press Enter to add (up to 5)."
+          helper="Add keywords that clients might search for. Press Enter to add (up to 5)."
           value={formData.searchTags}
           onChange={(v) => onFormDataChange({ ...formData, searchTags: v.slice(0, 5) })}
           placeholder="Type a keyword and press Enter"

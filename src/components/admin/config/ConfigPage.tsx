@@ -21,8 +21,8 @@ const PAGES = [
   { title: "Terms & Conditions", url: "/terms", lastUpdated: "2025-01-10", status: "Published" },
   { title: "Privacy Policy", url: "/privacy", lastUpdated: "2025-01-10", status: "Published" },
   { title: "How It Works", url: "/how-it-works", lastUpdated: "2024-12-15", status: "Published" },
-  { title: "FAQ - Buyers", url: "/faq-buyers", lastUpdated: "2024-12-20", status: "Published" },
-  { title: "FAQ - Sellers", url: "/faq-sellers", lastUpdated: "2024-12-20", status: "Published" },
+  { title: "FAQ - Clients", url: "/faq-buyers", lastUpdated: "2024-12-20", status: "Published" },
+  { title: "FAQ - Freelancers", url: "/faq-sellers", lastUpdated: "2024-12-20", status: "Published" },
   { title: "About Kickair", url: "/about", lastUpdated: "2024-11-30", status: "Draft" },
 ];
 
@@ -239,9 +239,9 @@ export default function ConfigPage() {
               <Stack gap={1.5}>
                 {([
                   { key: "disputes",      label: "Enable Disputes",          desc: "Allow users to open disputes for orders" },
-                  { key: "tips",          label: "Enable Tips",               desc: "Allow buyers to tip freelancers" },
+                  { key: "tips",          label: "Enable Tips",               desc: "Allow clients to tip freelancers" },
                   { key: "subscriptions", label: "Enable Subscriptions",      desc: "Allow freelancers to offer subscription plans" },
-                  { key: "kycSellers",    label: "Require KYC for Sellers",   desc: "Mandate identity verification for all sellers" },
+                  { key: "kycSellers",    label: "Require KYC for Freelancers", desc: "Mandate identity verification for all freelancers" },
                   { key: "gigApproval",   label: "Enable Gig Approval Queue", desc: "Review all gigs before going live" },
                   { key: "multiLanguage", label: "Enable Multiple Languages", desc: "Support Khmer and English interfaces" },
                 ] as { key: keyof typeof features; label: string; desc: string }[]).map((f) => (
@@ -511,7 +511,7 @@ export default function ConfigPage() {
                   <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={1.5}>
                     <Box>
                       <Typography fontWeight={500} color="grey.900">New Year Promotion 2025</Typography>
-                      <Typography variant="body2" color="grey.600">20% off for all first-time buyers</Typography>
+                      <Typography variant="body2" color="grey.600">20% off for all first-time clients</Typography>
                     </Box>
                     <Switch defaultChecked size="small" />
                   </Stack>

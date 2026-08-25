@@ -50,3 +50,5 @@ styled-system-studio
 # Throwaway client-feedback tracker (dev-only, delete when feedback round done)
 /src/app/feedback-task/
 /public/feedback-shots/
+/src/app/feedback-task-2/
+/public/feedback2-shots/

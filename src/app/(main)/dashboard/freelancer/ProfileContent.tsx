@@ -333,7 +333,9 @@ export default function ProfileContent() {
       fd.append("title", pf.title.trim());
       fd.append("description", pf.description.trim());
       const projectUrl = pf.projectUrl.trim();
-      if (projectUrl) fd.append("project_url", /^[a-z][a-z0-9+.-]*:\/\//i.test(projectUrl) ? projectUrl : `https://${projectUrl}`);
+      // Always send the field — an empty value must reach the API so a cleared
+      // link is actually removed (the backend turns "" into null).
+      fd.append("project_url", projectUrl && !/^[a-z][a-z0-9+.-]*:\/\//i.test(projectUrl) ? `https://${projectUrl}` : projectUrl);
       if (pf.date) fd.append("completed_on", ymd(pf.date));
       pfNewFiles.forEach(f => fd.append("images[]", f));
       const editing = portfolioDialog.editing;
@@ -603,7 +605,7 @@ export default function ProfileContent() {
             })}
           </Box>
         ) : (
-          <Empty icon={<GridViewOutlined sx={{ fontSize: 24 }} />} title="No projects yet" sub="Show your best work — projects with multiple images convert browsers into buyers."
+          <Empty icon={<GridViewOutlined sx={{ fontSize: 24 }} />} title="No projects yet" sub="Show your best work — projects with multiple images convert browsers into clients."
             action={<Button onClick={() => openPortfolioDialog()} startIcon={<AddOutlined sx={{ fontSize: 15 }} />} sx={{ ...primaryBtnSx, height: 38, mt: 0.5 }}>Add your first project</Button>} />
         )}
       </SectionCard>
@@ -689,7 +691,7 @@ export default function ProfileContent() {
       <PfDialog open={portfolioDialog.open} onClose={() => !pfSaving && setPortfolioDialog(prev => ({ ...prev, open: false }))} width={560}
         eyebrow={portfolioDialog.editing ? "Edit project" : "Add portfolio project"}
         title={portfolioDialog.editing ? "Edit project" : "Add portfolio project"}
-        sub="Showcase a piece of work. Add several images — buyers can page through them in a gallery."
+        sub="Showcase a piece of work. Add several images — clients can page through them in a gallery."
         footer={<>
           <Button onClick={() => setPortfolioDialog(prev => ({ ...prev, open: false }))} disabled={pfSaving} sx={ghostBtnSx}>Cancel</Button>
           <Button onClick={handleSavePortfolio} disabled={!pf.title.trim() || pfSaving} sx={primaryBtnSx}>{pfSaving ? <CircularProgress size={18} sx={{ color: "white" }} /> : portfolioDialog.editing ? "Save project" : "Add project"}</Button>

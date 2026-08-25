@@ -31,7 +31,7 @@ export default function AnalyticsPage() {
           { label: "Weekly Active Users",    icon: PeopleIcon },
           { label: "User Retention (30d)",   icon: BarChartIcon },
           { label: "Avg Order Value",        icon: AttachMoneyIcon },
-          { label: "Repeat Buyers",          icon: RepeatIcon },
+          { label: "Repeat Clients",         icon: RepeatIcon },
         ].map(({ label, icon: Icon }) => (
           <Paper key={label} variant="outlined" sx={{ p: 3, borderRadius: 2, flex: "1 1 180px", minWidth: 160 }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>

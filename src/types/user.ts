@@ -211,12 +211,12 @@ export interface FreelancerProfileRequest {
 }
 
 export interface ClientProfileRequest {
-  company_name?: string;
-  industry_id?: number;
-  company_size?: '1-10' | '11-50' | '51-200' | '201-500' | '500+';
-  location?: string;
-  website?: string;
-  about?: string;
+  company_name?: string | null;
+  industry_id?: number | null;
+  company_size?: '1-10' | '11-50' | '51-200' | '201-500' | '500+' | null;
+  location?: string | null;
+  website?: string | null;
+  about?: string | null;
 }
 
 // Pagination types for freelancer profile list

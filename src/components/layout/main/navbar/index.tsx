@@ -33,6 +33,7 @@ import { DropdownItem } from "./DropdownItem";
 import { MobileDrawer } from "./MobileDrawer";
 import { NotificationBell } from "./NotificationBell";
 import { MessageBell } from "./MessageBell";
+import { WalletChip } from "./WalletChip";
 
 export default function MainNavbar() {
   const [activeDropdown, setActiveDropdown] = useState<DropdownType>(null);
@@ -559,6 +560,7 @@ export default function MainNavbar() {
               <CircularProgress size={24} sx={{ color: "rgba(0,0,0,0.6)" }} />
             ) : user ? (
               <>
+                <WalletChip />
                 <MessageBell />
                 <NotificationBell />
                 {/* Profile dropdown */}
