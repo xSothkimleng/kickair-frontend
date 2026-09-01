@@ -19,6 +19,7 @@ import { api } from "@/lib/api";
 import { tokens } from "@/theme";
 import { SEED_SCHOOLS, SEED_DEGREES, SEED_CERT_ISSUERS, SEED_CERT_NAMES, mergeSuggestions } from "@/data/profileSuggestions";
 import { Education, Certificate, Language, Expertise, FreelancerProfileRequest, LanguageWithProficiency, PortfolioItem, PortfolioImage } from "@/types/user";
+import LevelDialog from "@/components/profile/LevelDialog";
 import {
   ProfileAvatar, Stars5, LevelBadge, SectionCard, Field, LockedField, LangChip, VerifyRow, EntryRow, Empty, AddPill, RoundIconBtn,
 } from "@/components/profile/profileKit";
@@ -91,6 +92,7 @@ export default function ProfileContent() {
 
   // Portfolio (own endpoints — images, so not part of the JSON profile save)
   const [portfolioItems, setPortfolioItems] = useState<PortfolioItem[]>([]);
+  const [levelOpen, setLevelOpen] = useState(false);
   const [portfolioDialog, setPortfolioDialog] = useState<{ open: boolean; editing: PortfolioItem | null }>({ open: false, editing: null });
   const [pf, setPf] = useState<{ title: string; description: string; projectUrl: string; date: Date | null }>({ title: "", description: "", projectUrl: "", date: null });
   const [pfExisting, setPfExisting] = useState<PortfolioImage[]>([]);
@@ -434,7 +436,13 @@ export default function ProfileContent() {
             <AutoAwesomeOutlined sx={{ fontSize: 18, color: tokens.accent }} />
             <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>Profile strength</Typography>
           </Box>
-          <Typography sx={{ fontSize: 15, fontWeight: 600, fontFamily: tokens.mono, color: strengthPct === 100 ? tokens.success : tokens.accent }}>{strengthPct}%</Typography>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+            <Button onClick={() => setLevelOpen(true)}
+              sx={{ height: 28, px: 1.5, borderRadius: "999px", textTransform: "none", fontSize: 12, fontWeight: 600, color: tokens.text, bgcolor: "rgba(0,0,0,0.05)", "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
+              View all steps
+            </Button>
+            <Typography sx={{ fontSize: 15, fontWeight: 600, fontFamily: tokens.mono, color: strengthPct === 100 ? tokens.success : tokens.accent }}>{strengthPct}%</Typography>
+          </Box>
         </Box>
         <LinearProgress variant="determinate" value={strengthPct} sx={{ height: 8, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.06)", "& .MuiLinearProgress-bar": { borderRadius: "999px", bgcolor: strengthPct === 100 ? tokens.success : tokens.accent } }} />
         {remainingTasks.length > 0 ? (
@@ -454,6 +462,8 @@ export default function ProfileContent() {
         )}
       </Box>
 
+      <LevelDialog open={levelOpen} onClose={() => setLevelOpen(false)} />
+
       {/* Identity card */}
       <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 2.75 } }}>
         <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, alignItems: { xs: "flex-start", sm: "center" }, gap: { xs: 2, sm: 2.5 } }}>
@@ -469,7 +479,11 @@ export default function ProfileContent() {
           <Box sx={{ flex: 1, minWidth: 0 }}>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1.125, flexWrap: "wrap" }}>
               <Typography sx={{ fontSize: { xs: 20, md: 23 }, fontWeight: 600, letterSpacing: "-0.02em" }}>{user.name}</Typography>
-              {level && <LevelBadge level={level} small />}
+              {level && (
+                <Box component="button" onClick={() => setLevelOpen(true)} sx={{ all: "unset", cursor: "pointer", display: "inline-flex" }} aria-label="View your level">
+                  <LevelBadge level={level} small />
+                </Box>
+              )}
             </Box>
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, mt: 0.75, flexWrap: "wrap" }}>
               {reviewCount > 0 ? (

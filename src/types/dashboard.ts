@@ -143,7 +143,15 @@ export interface FreelancerDashboardResponse {
   data: FreelancerDashboardData;
 }
 
+export interface ProfileXpStep {
+  key: string;
+  label: string;
+  xp: number;
+  done: boolean;
+}
+
 export interface LevelStats {
+  steps: ProfileXpStep[];
   xp_points: number;
   level: "Bronze" | "Silver" | "Gold" | "Platinum" | "Diamond";
   current_level_threshold: number;

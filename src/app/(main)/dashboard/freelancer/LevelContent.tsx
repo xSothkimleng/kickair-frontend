@@ -281,9 +281,9 @@ export default function LevelContent() {
         <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 3 }}>How to Earn Points & Level Up</Typography>
         <Grid container spacing={2}>
           {[
-            { icon: "✅", title: "Complete Projects", desc: "Successfully complete projects — XP scales with order value", pts: "+10–50 XP per project" },
+            { icon: "📋", title: "Complete Your Profile", desc: "Every profile step pays one-time XP — a finished profile reaches Silver on its own", pts: "+135 XP total" },
+            { icon: "✅", title: "Complete Projects", desc: "Successfully complete projects — XP scales with order value", pts: "+51–100 XP per project" },
             { icon: "⭐", title: "Get High Ratings", desc: "Every review earns XP; higher ratings earn significantly more", pts: "+30–70 XP per review" },
-            { icon: "💰", title: "Increase Earnings", desc: "Higher-value orders unlock bigger XP bonuses per project", pts: "Scales with order price" },
           ].map(item => (
             <Grid size={{ xs: 12, sm: 4 }} key={item.title}>
               <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)" }}>

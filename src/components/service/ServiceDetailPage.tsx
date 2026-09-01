@@ -51,6 +51,7 @@ import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/Pur
 import { useServiceListingLive } from "@/hooks/useServiceListingLive";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import { RequestQuoteOutlined } from "@mui/icons-material";
+import { LevelBadge } from "@/components/profile/profileKit";
 
 interface ServiceDetailPageProps {
   serviceId: number;
@@ -401,10 +402,11 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   </Avatar>
                   <Box sx={{ flex: 1 }}>
                     <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Box>
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
                         <Typography variant='h6' sx={{ fontSize: "17px", fontWeight: 600 }}>
                           {freelancerName}
                         </Typography>
+                        {freelancer?.level && <LevelBadge level={freelancer.level} small />}
                       </Box>
                       <Button
                         onClick={() => router.push(`/find-freelancer/${freelancer?.id}`)}
