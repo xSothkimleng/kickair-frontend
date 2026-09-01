@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Paper, Typography, Button, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import { Box, Paper, Typography, Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogActions } from "@mui/material";
 import { AddOutlined, WorkOutlined } from "@mui/icons-material";
 import { Service } from "@/types/service";
 import ServiceCard from "@/components/dashboard/freelancer/ServiceCard";
@@ -150,8 +150,8 @@ export default function ServicesContent() {
 
       {/* Delete confirmation dialog */}
       <Dialog open={!!deleteTarget} onClose={() => !deleting && setDeleteTarget(null)}>
-        <DialogTitle sx={{ fontSize: 16, fontWeight: 600 }}>Delete Service</DialogTitle>
         <DialogContent>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>Delete Service</Typography>
           <DialogContentText sx={{ fontSize: 13 }}>
             Are you sure you want to delete <strong>{deleteTarget?.title}</strong>? This cannot be undone.
           </DialogContentText>

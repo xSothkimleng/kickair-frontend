@@ -138,7 +138,7 @@ export default function RequestCustomOrderDialog({ open, onClose, serviceId, fre
             Your request is on its way to {freelancerName.split(" ")[0]}.
           </Typography>
           <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5 }}>
-            {responds ? `They typically respond ${responds}. ` : ""}You&apos;ll get a notification when a custom offer arrives — nothing is charged until you accept and fund the first milestone.
+            {responds ? `They typically respond ${responds}. ` : ""}You&apos;ll get a notification when a custom offer arrives — nothing is charged until you accept and pay.
           </Typography>
           <Button fullWidth sx={primaryBtn} onClick={() => { handleClose(); router.push("/dashboard/client?tab=custom-orders"); }}>
             View my requests
@@ -192,7 +192,7 @@ export default function RequestCustomOrderDialog({ open, onClose, serviceId, fre
                 <Typography sx={{ fontSize: 12, fontWeight: 600, mb: 0.75 }}>Budget (USD)</Typography>
                 <TextField
                   fullWidth value={budget} onChange={(e) => setBudget(sanitizeMoneyInput(e.target.value))}
-                  placeholder="2,000" inputMode="decimal"
+                  placeholder="0.00" inputMode="decimal"
                   InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }}
                   sx={fieldSx}
                 />

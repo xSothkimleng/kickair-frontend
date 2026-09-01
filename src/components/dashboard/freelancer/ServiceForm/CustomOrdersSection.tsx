@@ -1,5 +1,5 @@
 import { Box, Paper, Typography, Grid } from "@mui/material";
-import { TextInput, Checkbox, Switch } from "@/components/ui/inputs";
+import { TextInput, Switch } from "@/components/ui/inputs";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { ServiceFormData } from "../types";
 
@@ -40,30 +40,6 @@ export default function CustomOrdersSection({ formData, onFormDataChange }: Cust
           </Box>
 
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box sx={{ mb: 1.5 }}>
-                <Checkbox
-                  checked={customOrders.acceptHourlyRate}
-                  onChange={(c) => handleChange("acceptHourlyRate", c)}
-                  label="Accept hourly rate projects"
-                />
-              </Box>
-
-              {customOrders.acceptHourlyRate && (
-                <TextInput
-                  size="sm"
-                  label="Hourly Rate (USD/hour)"
-                  required
-                  inputMode="decimal"
-                  value={customOrders.hourlyRate}
-                  onChange={(v) => handleChange("hourlyRate", v)}
-                  placeholder="50"
-                  startIcon="$"
-                  endIcon="/hour"
-                />
-              )}
-            </Grid>
-
             <Grid size={{ xs: 12, md: 6 }}>
               <TextInput
                 size="sm"

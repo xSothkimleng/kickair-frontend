@@ -26,6 +26,7 @@ import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import type { Service, ServiceDetailResponse } from "@/types/service";
 import type { CreateOrderResponse } from "@/types/order";
 import type { Wallet } from "@/types/wallet";
+import { serviceCoverUrl } from "@/lib/serviceCover";
 import {
   AbaMethodSelector,
   Annot,
@@ -86,7 +87,7 @@ function CheckoutContent() {
   const gateSummary: PurchaseSummary | null =
     service && selectedPricing
       ? {
-          imageUrl: service.feature_image?.file_url ?? null,
+          imageUrl: serviceCoverUrl(service),
           title: service.title,
           tierLabel: selectedPricing.title,
           sellerName: service.freelancer_profile?.user?.name ?? null,
@@ -220,7 +221,6 @@ function CheckoutContent() {
             <Box sx={{ border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.tile}px`, p: 2, mb: 2.5 }}>
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5, gap: 1 }}>
                 <Typography sx={{ fontWeight: 600, fontSize: 14 }}>{selectedPricing.title}</Typography>
-                <PayLogo id='khqr' size='sm' />
               </Box>
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                 <Meta icon={<ClockIcon sx={{ fontSize: 14, color: tokens.text3 }} />}>{deliveryText(selectedPricing.delivery_time)}</Meta>
@@ -293,7 +293,7 @@ function CheckoutContent() {
                     </Box>
                   </Box>
                   <Box sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
-                    {(["khqr", "visa", "mc"] as const).map(l => (
+                    {(["visa", "mc"] as const).map(l => (
                       <PayLogo key={l} id={l} size='sm' />
                     ))}
                   </Box>
@@ -309,7 +309,7 @@ function CheckoutContent() {
                   <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: tokens.errorText }}>Insufficient balance</Typography>
                 </Box>
                 <Typography sx={{ fontSize: 13, color: tokens.errorText, mb: 1.5 }}>
-                  You need {fmtUsd(total - balance)} more to cover this order. Top up your wallet — or pick Bank Transfer above and we&apos;ll charge just the difference.
+                  You need {fmtUsd(total - balance)} more to cover this order. Top up your wallet to continue.
                 </Typography>
                 <Button
                   onClick={() => setTopUpOpen(true)}

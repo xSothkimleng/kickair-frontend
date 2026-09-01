@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Paper, Typography, Button, Checkbox, FormControlLabel, CircularProgress, Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions } from "@mui/material";
+import { Box, Paper, Typography, Button, Checkbox, FormControlLabel, CircularProgress, Dialog, DialogContent, DialogContentText, DialogActions } from "@mui/material";
 import { ChevronLeftOutlined, RestoreOutlined, VerifiedUserOutlined } from "@mui/icons-material";
 import { Service, ServiceCategory, ServiceMedia, CreateServiceRequest, TemporaryUpload, UploadToken } from "@/types/service";
 import { ServiceFormData } from "../types";
@@ -98,8 +98,6 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       },
       customOrders: {
         enabled: service?.custom_orders_enabled ?? false,
-        acceptHourlyRate: service?.custom_hourly_rate != null,
-        hourlyRate: service?.custom_hourly_rate != null ? String(service.custom_hourly_rate) : "",
         minimumBudget: service?.custom_min_budget != null ? String(service.custom_min_budget) : "",
         customInstructions: service?.custom_instructions ?? "",
       },
@@ -182,10 +180,6 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       // Custom-order settings (the gig escape hatch)
       custom_orders_enabled: formData.customOrders.enabled,
       custom_min_budget: formData.customOrders.minimumBudget ? parseFloat(formData.customOrders.minimumBudget) : null,
-      custom_hourly_rate:
-        formData.customOrders.enabled && formData.customOrders.acceptHourlyRate && formData.customOrders.hourlyRate
-          ? parseFloat(formData.customOrders.hourlyRate)
-          : null,
       custom_instructions: formData.customOrders.customInstructions || null,
       // Include upload token for new services (links temp uploads to the service)
       ...(uploadToken && !isEditing && { upload_token: uploadToken }),
@@ -567,10 +561,10 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         maxWidth="xs"
         fullWidth
         PaperProps={{ sx: { borderRadius: 4, p: 1 } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: 18, fontWeight: 600 }}>
-          <VerifiedUserOutlined sx={{ color: "#f59e0b" }} /> Saved as a draft
-        </DialogTitle>
         <DialogContent>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: 18, fontWeight: 600, pt: 1, mb: 1 }}>
+            <VerifiedUserOutlined sx={{ color: "#f59e0b" }} /> Saved as a draft
+          </Box>
           <DialogContentText sx={{ fontSize: 14, color: "rgba(0,0,0,0.75)" }}>
             {kycNotice}
           </DialogContentText>

@@ -953,12 +953,16 @@ class ApiClient {
     search?: string;
     role?: string;
     kyc?: string;
+    sort?: string;
+    dir?: "asc" | "desc";
   } = {}): Promise<{ data: AdminUser[]; meta: { current_page: number; last_page: number; per_page: number; total: number } }> {
     const query = new URLSearchParams();
     if (params.page) query.set("page", String(params.page));
     if (params.search) query.set("search", params.search);
     if (params.role) query.set("role", params.role);
     if (params.kyc) query.set("kyc", params.kyc);
+    if (params.sort) query.set("sort", params.sort);
+    if (params.dir) query.set("dir", params.dir);
     const res = await this.get(`/api/admin/users?${query}`);
     return res.data;
   }

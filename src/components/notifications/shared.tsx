@@ -84,7 +84,7 @@ export const TYPE_META: Record<NotificationType, TypeMeta> = {
   custom_order_withdrawn: { Icon: CancelOutlined, tone: "neutral", cta: "View request" },
   custom_order_ended: { Icon: FlagOutlined, tone: "neutral", cta: "View order" },
   milestone_funded: { Icon: LockOutlined, tone: "pending", cta: "Open workspace" },
-  milestone_submitted: { Icon: LocalShippingOutlined, tone: "blue", cta: "Review milestone" },
+  milestone_submitted: { Icon: LocalShippingOutlined, tone: "blue", cta: "Review delivery" },
   milestone_payment_released: { Icon: PaidOutlined, tone: "success", cta: "Open workspace" },
   milestone_revision_requested: { Icon: ReplayOutlined, tone: "pending", cta: "Open workspace" },
   // Identity verification & payouts

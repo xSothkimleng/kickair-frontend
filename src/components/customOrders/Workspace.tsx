@@ -79,7 +79,7 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
 
   // ── turn hint ──
   const turn = (() => {
-    if (complete) return { who: "done" as const, text: "Project complete — all milestones released." };
+    if (complete) return { who: "done" as const, text: "Project complete — payment released." };
     const sub = ms.find((m) => m.status === "submitted");
     if (sub) return isClient
       ? { who: "you" as const, text: `Review “${sub.title}” — approve to release ${money(sub.amount)} from escrow.` }
@@ -90,8 +90,8 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
       : { who: "you" as const, text: `Deliver “${work.title}” — submit when it’s ready for review.` };
     const up = firstUpcomingIdx >= 0 ? ms[firstUpcomingIdx] : null;
     if (up) return isClient
-      ? { who: "you" as const, text: `Fund “${up.title}” to start the next phase.` }
-      : { who: "them" as const, text: `Waiting for ${otherName.split(" ")[0]} to fund “${up.title}”.` };
+      ? { who: "you" as const, text: ms.length > 1 ? `Fund “${up.title}” to start the next phase.` : "Fund the project to get started." }
+      : { who: "them" as const, text: ms.length > 1 ? `Waiting for ${otherName.split(" ")[0]} to fund “${up.title}”.` : `Waiting for ${otherName.split(" ")[0]} to fund the project.` };
     return { who: "done" as const, text: "" };
   })();
 
@@ -112,9 +112,9 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
         {/* header */}
         <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
           <Box>
-            <Typography sx={{ ...coLabel, fontFamily: tokens.mono, color: tokens.accent }}>Milestone workspace</Typography>
+            <Typography sx={{ ...coLabel, fontFamily: tokens.mono, color: tokens.accent }}>Project workspace</Typography>
             <Typography sx={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>{order.service.title ?? "Custom order"}</Typography>
-            <Typography sx={{ fontSize: 14, color: tokens.text2 }}>Custom order · paid by milestone</Typography>
+            <Typography sx={{ fontSize: 14, color: tokens.text2 }}>{ms.length > 1 ? "Custom order · paid by milestone" : "Custom order · one-time payment"}</Typography>
           </Box>
           <Box sx={{ display: "flex", gap: 1.25, alignItems: "flex-start" }}>
             {order.order && (
@@ -152,7 +152,7 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
         <Box sx={{ mb: 2.75 }}><EscrowSummary escrow={order.escrow} /></Box>
 
         {/* tracker */}
-        <Typography sx={{ ...coLabel, display: "block", mb: 1.75 }}>Milestones</Typography>
+        <Typography sx={{ ...coLabel, display: "block", mb: 1.75 }}>{ms.length > 1 ? "Milestones" : "Payment & delivery"}</Typography>
         <Box>
           {ms.map((m, i) => {
             const prevDone = i > 0 && DONE.includes(ms[i - 1].status);
@@ -200,7 +200,7 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
         <FundMilestoneDialog
           open onClose={() => setFundTarget(null)}
           milestoneTitle={fundTarget.title} amount={fundTarget.amount} submitting={busy} error={error}
-          title={`Fund milestone ${fundTarget.seq}`}
+          title={ms.length > 1 ? `Fund milestone ${fundTarget.seq}` : "Fund the project"}
           ctaLabel={`Confirm & fund $${fundTarget.amount.toLocaleString()}`}
           onConfirm={async () => { const ok = await run(() => api.fundMilestone(fundTarget.id)); if (ok) setFundTarget(null); }}
         />
@@ -254,15 +254,15 @@ function MilestoneCard({
       </Box>
     ) : <Waiting text={`Awaiting ${otherName.split(" ")[0]}’s approval`} />;
   } else if (m.status === "funded" || m.status === "in_progress") {
-    action = isClient ? <Waiting text={`${otherName.split(" ")[0]} is working on this phase`} /> : (
+    action = isClient ? <Waiting text={`${otherName.split(" ")[0]} is working on this`} /> : (
       <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
-        <ActBtn primary onClick={onSubmit} disabled={busy} icon={<ArrowForward sx={{ fontSize: 16 }} />}>Submit milestone</ActBtn>
+        <ActBtn primary onClick={onSubmit} disabled={busy} icon={<ArrowForward sx={{ fontSize: 16 }} />}>Submit work</ActBtn>
         <ActBtn onClick={onChat}>Message client</ActBtn>
       </Box>
     );
   } else if (m.status === "upcoming" && isFirstUpcoming) {
     action = isClient
-      ? <ActBtn primary onClick={onFund} disabled={busy} icon={<LockOutlined sx={{ fontSize: 15 }} />}>Fund this milestone · {money(m.amount)}</ActBtn>
+      ? <ActBtn primary onClick={onFund} disabled={busy} icon={<LockOutlined sx={{ fontSize: 15 }} />}>Fund · {money(m.amount)}</ActBtn>
       : <Waiting text={`Waiting for ${otherName.split(" ")[0]} to fund`} muted />;
   }
 
@@ -413,8 +413,8 @@ function SubmitMilestoneDialog({ open, busy, onClose, onConfirm }: {
     <Dialog open={open} onClose={close} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "16px", border: `1px solid ${tokens.border}` } }}>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" }}>
         <Box>
-          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>Deliver this phase</Typography>
-          <Typography sx={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>Submit milestone</Typography>
+          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>Deliver your work</Typography>
+          <Typography sx={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>Submit work</Typography>
         </Box>
         <IconButton onClick={close} size="small" disabled={busy || uploading}><Close sx={{ fontSize: 20 }} /></IconButton>
       </Box>
@@ -496,11 +496,11 @@ function EndDialog({ order, role, busy, onClose, onConfirm }: { order: CustomOrd
         <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5 }}>
           Milestone escrow keeps the split fair — you only ever settle for the work that actually changed hands.
         </Typography>
-        <Group icon={<Check sx={{ fontSize: 15 }} />} title="Released milestones stay paid" color={tokens.successText} bg={tokens.successTint} items={released}
+        <Group icon={<Check sx={{ fontSize: 15 }} />} title="Released payments stay paid" color={tokens.successText} bg={tokens.successTint} items={released}
           note="Approved work has already been released to the freelancer. Nothing here is refundable." />
-        <Group icon={<ShieldOutlined sx={{ fontSize: 15 }} />} title="In-escrow milestones" color={tokens.pendingText} bg={tokens.pendingTint} items={inEscrow}
+        <Group icon={<ShieldOutlined sx={{ fontSize: 15 }} />} title="Held in escrow" color={tokens.pendingText} bg={tokens.pendingTint} items={inEscrow}
           note="Held funds are refunded to you when the order ends." />
-        <Group icon={<Close sx={{ fontSize: 15 }} />} title="Unfunded milestones cancelled" color={tokens.text3} bg="rgba(0,0,0,0.05)" items={unfunded}
+        <Group icon={<Close sx={{ fontSize: 15 }} />} title="Unfunded work cancelled" color={tokens.text3} bg="rgba(0,0,0,0.05)" items={unfunded}
           note="Never funded, so they’re simply cancelled. You pay nothing for these." />
 
         <Box sx={{ display: "flex", gap: 1.25, mt: 0.5 }}>

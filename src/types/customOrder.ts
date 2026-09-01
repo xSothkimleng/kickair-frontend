@@ -1,4 +1,5 @@
-// Custom orders — negotiated, off-menu work paid in progress-based milestones.
+// Custom orders — negotiated, off-menu work, paid as a one-time payment.
+// (The milestone shape remains for legacy split orders; new offers send exactly one.)
 
 export type CustomOrderStatus =
   | "pending"

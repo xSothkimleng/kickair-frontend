@@ -11,7 +11,6 @@ import {
   Chip,
   Alert,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
@@ -759,10 +758,10 @@ export default function SettingsPage() {
           fullWidth
           PaperProps={{ sx: { borderRadius: "14px", p: 1 } }}
         >
-          <DialogTitle sx={{ fontWeight: 600, fontSize: 16, pb: 0.5 }}>
-            {phone ? (phoneVerified ? "Change phone number" : "Verify phone number") : "Add phone number"}
-          </DialogTitle>
           <DialogContent>
+            <Typography sx={{ fontWeight: 600, fontSize: 16, mb: 1 }}>
+              {phone ? (phoneVerified ? "Change phone number" : "Verify phone number") : "Add phone number"}
+            </Typography>
             <DialogContentText sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
               {phone && !phoneVerified
                 ? "Enter your Cambodian mobile number below — we'll send a verification code to it via Telegram."
@@ -1042,10 +1041,10 @@ export default function SettingsPage() {
         onClose={() => setDeactivateOpen(false)}
         PaperProps={{ sx: { borderRadius: "14px", p: 1, maxWidth: 420 } }}
       >
-        <DialogTitle sx={{ fontSize: 16, fontWeight: 600, pb: 1 }}>
-          Deactivate your account?
-        </DialogTitle>
         <DialogContent>
+          <Typography sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>
+            Deactivate your account?
+          </Typography>
           <DialogContentText sx={{ fontSize: 13, color: "text.secondary" }}>
             Your profile will be hidden from clients and you&apos;ll be signed out everywhere. You
             can reactivate within 30 days by signing back in.

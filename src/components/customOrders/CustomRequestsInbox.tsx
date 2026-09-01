@@ -181,7 +181,7 @@ export default function CustomRequestsInbox() {
         {selected.status === "accepted" && (
           <Button fullWidth onClick={() => router.push(`/dashboard/custom-orders/${selected.id}`)} startIcon={<OpenInNew />}
             sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", height: 44, "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }}>
-            Open milestone workspace
+            Open project workspace
           </Button>
         )}
         {selected.status === "declined" && (

@@ -8,12 +8,12 @@ import {
   DeleteOutlined,
   ReplayOutlined,
   InfoOutlined,
-  AccessTimeOutlined,
 } from "@mui/icons-material";
 import { Service } from "@/types/service";
 import { tokens } from "@/theme";
+import { serviceCoverUrl } from "@/lib/serviceCover";
 import {
-  StatusPill, CategoryPill, Facts, Banner, CoverThumb, Chevron, mgCardSx,
+  StatusPill, Facts, Banner, CoverThumb, Chevron, mgCardSx,
   type CardTone, type Fact,
 } from "@/components/dashboard/ManagementCard";
 
@@ -83,9 +83,8 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
   const banner =
     service.status === "rejected" ? <Banner tone="error" icon={<InfoOutlined sx={{ fontSize: 16 }} />} label="Rejected by admin" text={service.rejection_reason || "No reason provided. Use Resubmit to send it for review again."} />
       : service.status === "disabled" ? <Banner tone="error" icon={<InfoOutlined sx={{ fontSize: 16 }} />} label="Disabled by admin" text={service.rejection_reason || "This service has been taken down. Contact support for details."} />
-        : service.status === "pending_review" ? <Banner tone="quiet" icon={<AccessTimeOutlined sx={{ fontSize: 16 }} />} label="Awaiting admin approval — not public yet" />
-          : service.status === "draft" ? <Banner tone="quiet" icon={<EditOutlined sx={{ fontSize: 16 }} />} label="Draft — only you can see this" />
-            : null;
+        : service.status === "draft" ? <Banner tone="quiet" icon={<EditOutlined sx={{ fontSize: 16 }} />} label="Draft — only you can see this" />
+          : null;
 
   return (
     <Box
@@ -93,11 +92,11 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
       tabIndex={0}
       onClick={() => (onView ? onView() : onEdit())}
       sx={{ ...mgCardSx, ...(muted ? { bgcolor: tokens.surface2 } : {}), display: "flex", alignItems: "center", gap: 2.25, p: 2.25 }}>
-      <CoverThumb src={service.feature_image?.file_url} size={92} radius={12} />
+      <CoverThumb src={serviceCoverUrl(service)} size={92} radius={12} />
       <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, flex: 1, minWidth: 0 }}>
         <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5 }}>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", minWidth: 0, alignItems: "center" }}>
-            <CategoryPill>{service.category?.category_name || "Uncategorized"}</CategoryPill>
+            <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25, color: muted ? tokens.text2 : tokens.text }}>{service.title}</Typography>
             <StatusPill tone={cfg.tone} label={cfg.label} />
           </Box>
           {/* Visible actions (replaces the old kebab menu) */}
@@ -115,7 +114,6 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
             <ActionButton danger icon={<DeleteOutlined sx={{ fontSize: 16 }} />} label="Delete" onClick={onDelete} />
           </Box>
         </Box>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25, color: muted ? tokens.text2 : tokens.text }}>{service.title}</Typography>
         <Facts items={facts} />
         {banner}
       </Box>

@@ -4,7 +4,7 @@ import { Box, Typography } from "@mui/material";
 import { tokens } from "@/theme";
 import PayLogo, { type PayLogoId } from "./PayLogo";
 
-const FOOTER_METHODS: PayLogoId[] = ["khqr", "visa", "mc", "unionpay", "jcb", "alipay", "wechat"];
+const FOOTER_METHODS: PayLogoId[] = ["visa", "mc", "unionpay", "jcb", "alipay", "wechat"];
 
 /**
  * Accepted-payments strip for the site footer (ABA guideline requirement).

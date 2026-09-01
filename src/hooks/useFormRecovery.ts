@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/components/context/AuthContext";
 
 interface Stored<T> {
   data: T;
@@ -17,8 +18,13 @@ interface Stored<T> {
  * - It only begins auto-saving once the value actually changes from initial,
  *   so an untouched form never clobbers a meaningful saved snapshot.
  * - Call `clear()` after a successful save/publish, `discard()` to drop it.
+ * - Snapshots are scoped to the signed-in account so a draft never leaks into
+ *   another account on the same browser; saving is off until the user is known.
  */
-export function useFormRecovery<T>(key: string, value: T, enabled: boolean = true) {
+export function useFormRecovery<T>(baseKey: string, value: T, enabled: boolean = true) {
+  const { user } = useAuth();
+  const key = user ? `${baseKey}:u${user.id}` : baseKey;
+  enabled = enabled && user != null;
   const [recovered, setRecovered] = useState<{ data: T; savedAt: number } | null>(null);
   const initialRef = useRef<string>(JSON.stringify(value));
   const hydratedRef = useRef(false);

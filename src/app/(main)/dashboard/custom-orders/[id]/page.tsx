@@ -73,7 +73,7 @@ export default function CustomOrderDetailPage() {
               <AccessTime sx={{ fontSize: 16 }} />
               <Typography sx={{ fontSize: 13.5, fontWeight: 500 }}>Offer sent — awaiting the client&apos;s decision.</Typography>
             </Box>
-            <Typography sx={{ ...coLabel, mb: 1.5 }}>Your milestone plan · {order.milestones.length} phases</Typography>
+            <Typography sx={{ ...coLabel, mb: 1.5 }}>{order.milestones.length > 1 ? `Your milestone plan · ${order.milestones.length} phases` : "Your offer"}</Typography>
             {order.milestones.map((m, i) => (
               <Box key={m.id} sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.25, borderBottom: i < order.milestones.length - 1 ? `1px solid ${tokens.border}` : "none" }}>
                 <Typography sx={{ fontSize: 14, fontWeight: 500 }}>{m.seq}. {m.title}</Typography>

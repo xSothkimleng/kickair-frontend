@@ -20,7 +20,6 @@ import {
   Alert,
   Chip,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogContentText,
   DialogActions,
@@ -40,6 +39,9 @@ import {
   LocationOn,
   ShoppingBag,
   StarRounded,
+  PlayCircleOutline,
+  PictureAsPdfOutlined,
+  OpenInNew,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse } from "@/types/service";
@@ -177,7 +179,12 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const sortedImageMedia = service.feature_image_id
     ? [...imageMedia.filter(m => m.id === service.feature_image_id), ...imageMedia.filter(m => m.id !== service.feature_image_id)]
     : imageMedia;
-  const gallery = sortedImageMedia.map(m => m.file_url);
+  // Gallery shows images (feature image first) then videos; PDFs get their own document list.
+  const gallery: { type: "image" | "video"; url: string }[] = [
+    ...sortedImageMedia.map(m => ({ type: "image" as const, url: m.file_url })),
+    ...media.filter(m => m.file_type === "video").map(m => ({ type: "video" as const, url: m.file_url })),
+  ];
+  const documents = media.filter(m => m.file_type === "pdf");
   const selectedPricing = pricingOptions[selectedPackage];
 
   return (
@@ -230,10 +237,18 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
               {/* Image Gallery */}
               <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)" }}>
                 <Box sx={{ position: "relative", aspectRatio: "16/9", bgcolor: "rgba(0,0,0,0.05)" }}>
-                  {gallery.length > 0 && !imageError[`main-${selectedImage}`] ? (
+                  {gallery.length > 0 && gallery[selectedImage]?.type === "video" ? (
+                    <video
+                      key={gallery[selectedImage].url}
+                      src={gallery[selectedImage].url}
+                      controls
+                      preload='metadata'
+                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+                    />
+                  ) : gallery.length > 0 && !imageError[`main-${selectedImage}`] ? (
                     <Image
                       unoptimized={true}
-                      src={gallery[selectedImage] || gallery[0]}
+                      src={(gallery[selectedImage] || gallery[0]).url}
                       alt={service.title}
                       fill
                       style={{ objectFit: "cover" }}
@@ -255,7 +270,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                 </Box>
                 {gallery.length > 1 && (
                   <Grid container spacing={1.5} sx={{ p: 2 }}>
-                    {gallery.map((img, idx) => (
+                    {gallery.map((item, idx) => (
                       <Grid size={{ xs: 4 }} key={idx}>
                         <Box
                           onClick={() => setSelectedImage(idx)}
@@ -269,10 +284,22 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                             transition: "all 0.2s",
                             "&:hover": { borderColor: selectedImage === idx ? "#0071e3" : "rgba(0,0,0,0.2)" },
                           }}>
-                          {!imageError[`thumb-${idx}`] ? (
+                          {item.type === "video" ? (
+                            <>
+                              <video
+                                src={item.url}
+                                preload='metadata'
+                                muted
+                                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none", background: "#000" }}
+                              />
+                              <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.25)" }}>
+                                <PlayCircleOutline sx={{ fontSize: 28, color: "#fff" }} />
+                              </Box>
+                            </>
+                          ) : !imageError[`thumb-${idx}`] ? (
                             <Image
                               unoptimized={true}
-                              src={img}
+                              src={item.url}
                               alt={`Gallery ${idx + 1}`}
                               fill
                               style={{ objectFit: "cover" }}
@@ -462,6 +489,50 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   </Box>
                 )}
               </Card>
+
+              {/* Documents (PDF work samples) */}
+              {documents.length > 0 && (
+                <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
+                  <Typography variant='h5' sx={{ fontSize: "21px", fontWeight: 600, mb: 2 }}>
+                    Documents
+                  </Typography>
+                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                    {documents.map(doc => (
+                      <Box
+                        key={doc.id}
+                        component='a'
+                        href={doc.file_url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1.5,
+                          p: "12px 14px",
+                          borderRadius: 2,
+                          border: "1px solid rgba(0,0,0,0.08)",
+                          textDecoration: "none",
+                          color: "inherit",
+                          transition: "all 0.15s",
+                          "&:hover": { borderColor: "rgba(0,0,0,0.2)", bgcolor: "rgba(0,0,0,0.02)" },
+                        }}>
+                        <Box sx={{ width: 38, height: 38, borderRadius: 1.5, bgcolor: "rgba(220,38,38,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+                          <PictureAsPdfOutlined sx={{ fontSize: 20, color: "#dc2626" }} />
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {doc.file_name}
+                          </Typography>
+                          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)" }}>
+                            PDF{doc.file_size ? ` · ${(doc.file_size / 1024 / 1024).toFixed(1)} MB` : ""}
+                          </Typography>
+                        </Box>
+                        <OpenInNew sx={{ fontSize: 16, color: "rgba(0,0,0,0.35)" }} />
+                      </Box>
+                    ))}
+                  </Box>
+                </Card>
+              )}
 
               {/* FAQ */}
               {faqs.length > 0 && (
@@ -800,8 +871,8 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
       {/* Live-edit guard — the freelancer changed/removed this service while it was open here.
           Blocking: no onClose, so backdrop clicks and Escape can't dismiss it. */}
       <Dialog open={listingChanged && !isOwnService} maxWidth='xs' fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontSize: 17, fontWeight: 600, px: 3, pt: 3, pb: 1 }}>This service was just updated</DialogTitle>
-        <DialogContent sx={{ px: 3 }}>
+        <DialogContent sx={{ px: 3, pt: 3 }}>
+          <Typography sx={{ fontSize: 17, fontWeight: 600, mb: 1 }}>This service was just updated</Typography>
           <DialogContentText sx={{ fontSize: 13.5, lineHeight: 1.6, color: "rgba(0,0,0,0.7)" }}>
             This service was just updated by the freelancer and is awaiting admin approval. It&apos;s no longer
             available in its current form.

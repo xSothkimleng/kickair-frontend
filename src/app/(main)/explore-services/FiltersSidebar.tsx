@@ -17,6 +17,8 @@ import {
   Slider,
   Divider,
   Badge,
+  useMediaQuery,
+  useTheme,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
@@ -152,6 +154,13 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
   const filteredCats = categories.filter(c => c.label.toLowerCase().includes(catQuery.toLowerCase()));
   const fmt = (n: number) => (n >= 1000 ? `$${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k` : `$${n}`);
 
+  // On small screens the sidebar sits above the results and would otherwise fill
+  // the whole viewport — collapse it behind the "Filters" header there.
+  const theme = useTheme();
+  const desktop = useMediaQuery(theme.breakpoints.up("lg"), { noSsr: true });
+  const [mobileOpen, setMobileOpen] = React.useState(false);
+  const expanded = desktop || mobileOpen;
+
   return (
     <Box
       component="aside"
@@ -166,9 +175,14 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
         overflow: "hidden",
       }}>
       <Box
-        sx={{ p: "20px 20px 24px" }}>
-        {/* Header */}
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
+        sx={{ p: expanded ? "20px 20px 24px" : "14px 20px" }}>
+        {/* Header — tap to expand/collapse on mobile */}
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          onClick={() => { if (!desktop) setMobileOpen(v => !v); }}
+          sx={{ mb: expanded ? 2 : 0, cursor: { xs: "pointer", lg: "default" }, userSelect: "none" }}>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>Filters</Typography>
             {activeCount > 0 && (
@@ -191,9 +205,14 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
               />
             )}
           </Stack>
+          {!desktop && (
+            <KeyboardArrowDownIcon
+              sx={{ fontSize: 20, color: "text.disabled", transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s ease", ml: "auto" }}
+            />
+          )}
           {activeCount > 0 && (
             <Button
-              onClick={reset}
+              onClick={e => { e.stopPropagation(); reset(); }}
               variant="text"
               size="small"
               sx={{
@@ -210,6 +229,7 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
           )}
         </Stack>
 
+        <Collapse in={expanded} unmountOnExit={false}>
         {/* Active filter chips */}
         {activeCount > 0 && (
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 2.5 }}>
@@ -364,6 +384,7 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
             ))}
           </RadioGroup>
         </FilterSection>
+        </Collapse>
       </Box>
     </Box>
   );

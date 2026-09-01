@@ -37,6 +37,11 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
 
   if (!offer || !m1) return null;
 
+  // One-time payment: new offers carry a single payment. (Older split offers
+  // may still have later phases — those keep funding as they go.)
+  const payNow = m1.amount;
+  const fundedLater = offer.total - payNow;
+
   const handleAccept = async () => {
     setSubmitting(true);
     setError(null);
@@ -77,31 +82,9 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
         <Typography sx={{ fontSize: 14, lineHeight: 1.55, my: 1, mb: 2 }}>{offer.scope}</Typography>
         <Box sx={{ display: "flex", gap: 2.25, flexWrap: "wrap", color: tokens.text2, fontSize: 12.5 }}>
           {offer.delivery_days != null && <Span icon={<AccessTime sx={{ fontSize: 14 }} />}>{offer.delivery_days}-day delivery</Span>}
-          {offer.revisions != null && <Span icon={<ReplayOutlined sx={{ fontSize: 14 }} />}>{offer.revisions} revisions / phase</Span>}
+          {offer.revisions != null && <Span icon={<ReplayOutlined sx={{ fontSize: 14 }} />}>{offer.revisions} revisions</Span>}
           {offer.expires_at && !expired && <Span icon={<AccessTime sx={{ fontSize: 14 }} />}>Expires {new Date(offer.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</Span>}
         </Box>
-      </Box>
-
-      {/* milestone plan */}
-      <Box sx={{ ...coCard, p: { xs: 2.5, md: 3 } }}>
-        <Typography sx={{ ...coLabel, mb: 2 }}>Milestone plan · {ms.length} {ms.length === 1 ? "phase" : "phases"}</Typography>
-        {ms.map((m, i) => (
-          <Box key={m.id} sx={{ display: "flex", gap: 1.75, py: 1.875, borderBottom: i < ms.length - 1 ? `1px solid ${tokens.border}` : "none", alignItems: "flex-start" }}>
-            <Box sx={{ width: 22, height: 22, mt: 0.25, borderRadius: "50%", bgcolor: "rgba(0,0,0,0.05)", display: "grid", placeItems: "center", fontFamily: tokens.mono, fontSize: 11, fontWeight: 600, color: tokens.text2, flex: "none" }}>{m.seq}</Box>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-                <Typography sx={{ fontWeight: 600, fontSize: 14.5 }}>{m.title}</Typography>
-                {i === 0 && <Chip tone="pending">Funded now</Chip>}
-              </Box>
-              {m.description && <Typography sx={{ fontSize: 13, color: tokens.text2, mt: 0.25 }}>{m.description}</Typography>}
-              {m.due_days && <Typography sx={{ fontSize: 11.5, color: tokens.text3, mt: 0.25 }}>Due ~{m.due_days} days after funding</Typography>}
-            </Box>
-            <Box sx={{ textAlign: "right" }}>
-              <Money value={m.amount} size={15} weight={600} />
-              {i !== 0 && <Typography sx={{ fontSize: 10.5, color: tokens.text3 }}>later</Typography>}
-            </Box>
-          </Box>
-        ))}
       </Box>
 
       {/* escrow explainer */}
@@ -111,9 +94,9 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
             <ShieldOutlined sx={{ fontSize: 19, color: tokens.pendingText }} />
           </Box>
           <Box>
-            <Typography sx={{ fontWeight: 600, fontSize: 14.5 }}>You fund one milestone at a time</Typography>
+            <Typography sx={{ fontWeight: 600, fontSize: 14.5 }}>Your payment is protected</Typography>
             <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5, mt: 0.5 }}>
-              Milestone 1 is funded into escrow now. Later milestones cost nothing until you choose to fund them — and escrow only releases to {freelancerName.split(" ")[0]} after you approve each delivery.
+              The payment goes into escrow now — it only releases to {freelancerName.split(" ")[0]} after you approve the delivery.
             </Typography>
           </Box>
         </Box>
@@ -125,14 +108,16 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
     <Box sx={{ ...coCard, p: { xs: 2.5, md: 3 }, position: { md: "sticky" }, top: 24 }}>
       <Typography sx={coLabel}>To start the project</Typography>
       <Box sx={{ p: 2, my: 1.5, borderRadius: "12px", bgcolor: tokens.pendingTint, border: "1px solid rgba(234,88,12,0.18)" }}>
-        <Typography sx={{ ...coLabel, color: tokens.pendingText }}>You pay now · Milestone 1</Typography>
-        <Box sx={{ mt: 0.75 }}><Money value={m1.amount} size={32} weight={600} color={tokens.pendingText} cents /></Box>
-        <Typography sx={{ fontSize: 11.5, color: tokens.pendingText, opacity: 0.85 }}>&ldquo;{m1.title}&rdquo; → held in escrow</Typography>
+        <Typography sx={{ ...coLabel, color: tokens.pendingText }}>You pay now</Typography>
+        <Box sx={{ mt: 0.75 }}><Money value={payNow} size={32} weight={600} color={tokens.pendingText} cents /></Box>
+        <Typography sx={{ fontSize: 11.5, color: tokens.pendingText, opacity: 0.85 }}>One-time payment → held in escrow</Typography>
       </Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mb: 2 }}>
-        <Between label="Total project value"><Money value={offer.total} size={14} weight={500} /></Between>
-        <Between label={`Funded later (${ms.length - 1} ${ms.length - 1 === 1 ? "phase" : "phases"})`}><Money value={offer.total - m1.amount} size={14} weight={500} color={tokens.text3} /></Between>
-      </Box>
+      {fundedLater > 0 && (
+        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mb: 2 }}>
+          <Between label="Total project value"><Money value={offer.total} size={14} weight={500} /></Between>
+          <Between label="Funded later"><Money value={fundedLater} size={14} weight={500} color={tokens.text3} /></Between>
+        </Box>
+      )}
 
       {error && <Typography sx={{ fontSize: 12.5, color: tokens.errorText, mb: 1.5 }}>{error}</Typography>}
 
@@ -145,7 +130,7 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
         <>
           <Button fullWidth startIcon={<LockOutlined />} onClick={() => setFundOpen(true)}
             sx={{ textTransform: "none", fontWeight: 600, fontSize: 15, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", height: 48, boxShadow: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" } }}>
-            Accept &amp; Fund Milestone 1
+            Accept &amp; Pay
           </Button>
           <Button fullWidth onClick={handleDecline} disabled={declining} sx={{ mt: 1.25, textTransform: "none", fontWeight: 600, fontSize: 13.5, color: tokens.text2, borderRadius: "999px" }}>
             {declining ? <CircularProgress size={16} /> : "Decline"}
@@ -168,12 +153,12 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
         open={fundOpen}
         onClose={() => setFundOpen(false)}
         milestoneTitle={m1.title}
-        amount={m1.amount}
+        amount={payNow}
         onConfirm={handleAccept}
         submitting={submitting}
-        title="Fund Milestone 1"
+        title="Fund the project"
         annotation="Accept & fund into escrow"
-        ctaLabel={`Confirm & fund $${m1.amount.toLocaleString()}`}
+        ctaLabel={`Confirm & pay $${payNow.toLocaleString()}`}
         error={error}
       />
     </>

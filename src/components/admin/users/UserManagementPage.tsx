@@ -17,6 +17,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableSortLabel,
   Typography,
 } from "@mui/material";
 import { useRouter } from "next/navigation";
@@ -68,11 +69,13 @@ export default function UserManagementPage() {
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("all");
   const [kycFilter, setKycFilter] = useState("all");
+  const [sort, setSort] = useState<"name" | "rating" | "joined" | null>(null);
+  const [dir, setDir] = useState<"asc" | "desc">("desc");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const openUser = (id: number) => router.push(`/admin/users/${id}`);
 
-  const fetchUsers = useCallback(async (p: number, s: string, r: string, k: string) => {
+  const fetchUsers = useCallback(async (p: number, s: string, r: string, k: string, so: string | null, d: "asc" | "desc") => {
     setLoading(true);
     try {
       const res = await api.getAdminUsers({
@@ -80,6 +83,8 @@ export default function UserManagementPage() {
         search: s || undefined,
         role: r !== "all" ? r : undefined,
         kyc: k !== "all" ? k : undefined,
+        sort: so ?? undefined,
+        dir: so ? d : undefined,
       });
       setUsers(res.data);
       setTotalPages(res.meta.last_page);
@@ -91,21 +96,30 @@ export default function UserManagementPage() {
     }
   }, []);
 
-  // Debounce search, reset page on filter change
+  // Debounce search, reset page on filter/sort change
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       setPage(1);
-      fetchUsers(1, search, roleFilter, kycFilter);
+      fetchUsers(1, search, roleFilter, kycFilter, sort, dir);
     }, 300);
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
-  }, [search, roleFilter, kycFilter, fetchUsers]);
+  }, [search, roleFilter, kycFilter, sort, dir, fetchUsers]);
 
   // Re-fetch on page change
   useEffect(() => {
-    fetchUsers(page, search, roleFilter, kycFilter);
+    fetchUsers(page, search, roleFilter, kycFilter, sort, dir);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page]);
+
+  const toggleSort = (key: "name" | "rating" | "joined") => {
+    if (sort === key) {
+      setDir(d => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSort(key);
+      setDir(key === "name" ? "asc" : "desc");
+    }
+  };
 
   return (
     <Box sx={{ p: 4 }}>
@@ -187,9 +201,15 @@ export default function UserManagementPage() {
             <Table>
               <TableHead>
                 <TableRow sx={{ bgcolor: "grey.50" }}>
-                  {["User", "Role", "KYC", "Rating", "Joined", "Actions"].map(h => (
-                    <TableCell key={h} sx={{ fontWeight: 600, fontSize: 12, color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                      {h}
+                  {([["User", "name"], ["Role", null], ["KYC", null], ["Rating", "rating"], ["Joined", "joined"], ["Actions", null]] as const).map(([h, key]) => (
+                    <TableCell key={h} sortDirection={key && sort === key ? dir : false} sx={{ fontWeight: 600, fontSize: 12, color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5 }}>
+                      {key ? (
+                        <TableSortLabel active={sort === key} direction={sort === key ? dir : "asc"} onClick={() => toggleSort(key)}>
+                          {h}
+                        </TableSortLabel>
+                      ) : (
+                        h
+                      )}
                     </TableCell>
                   ))}
                 </TableRow>

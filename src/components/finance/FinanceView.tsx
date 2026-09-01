@@ -20,8 +20,8 @@ import { Annot, PayLogo, PaymentFooterLogos, StatusChip, TopUpDialog, WithdrawDi
 type StatusFilter = "all" | "completed" | "pending" | "cancelled";
 const STATUS_FILTERS: [StatusFilter, string][] = [
   ["all", "All"],
-  ["completed", "Completed"],
   ["pending", "Pending"],
+  ["completed", "Completed"],
   ["cancelled", "Cancelled"],
 ];
 
@@ -317,7 +317,7 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
           <Box sx={{ height: 1, bgcolor: tokens.border, my: 2.25 }} />
           <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, mb: 1.5 }}>Accepted via ABA PayWay</Typography>
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-            {(["khqr", "visa", "mc", "unionpay", "jcb", "alipay", "wechat"] as PayLogoId[]).map(id => (
+            {(["visa", "mc", "unionpay", "jcb", "alipay", "wechat"] as PayLogoId[]).map(id => (
               <PayLogo key={id} id={id} size='sm' />
             ))}
           </Box>

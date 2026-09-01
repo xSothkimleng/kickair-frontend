@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Box from "@mui/material/Box";
 import Typography from "@mui/material/Typography";
 import InputBase from "@mui/material/InputBase";
 import { tokens } from "@/theme";
 import { api } from "@/lib/api";
+import { useAuth } from "@/components/context/AuthContext";
 import { VerifyBody, VerifyButton, VerifyCard, VerifyHeadline, VerifyNotice, VerifyTag } from "@/components/auth/verifyKit";
 
 export type VerifiedStatus = "verified" | "expired" | "invalid" | "already";
@@ -85,6 +87,16 @@ function ResendLinkForm() {
 }
 
 export default function EmailVerifiedContent({ status }: { status: VerifiedStatus }) {
+  const { user, loading } = useAuth();
+  const router = useRouter();
+  const verifiedOk = status === "verified" || status === "already";
+
+  // Registration already signed the user in — once the email is confirmed there is
+  // nothing left to do here, so take them straight to Explore Services.
+  useEffect(() => {
+    if (verifiedOk && !loading && user) router.replace("/explore-services");
+  }, [verifiedOk, loading, user, router]);
+
   if (status === "expired" || status === "invalid") {
     const expired = status === "expired";
     return (
@@ -125,13 +137,15 @@ export default function EmailVerifiedContent({ status }: { status: VerifiedStatu
       </VerifyHeadline>
       <Box sx={{ mt: 2.5 }}>
         <VerifyBody>
-          {already
-            ? "This address was confirmed earlier — nothing else to do here. Sign in and pick up where you left off."
-            : "Your email is confirmed and your account is active. Sign in to finish your profile — a finished profile gets noticed first."}
+          {user
+            ? "You're signed in and ready. Taking you to Explore Services…"
+            : already
+              ? "This address was confirmed earlier — nothing else to do here. Sign in and pick up where you left off."
+              : "Your email is confirmed and your account is active. Sign in to finish your profile — a finished profile gets noticed first."}
         </VerifyBody>
       </Box>
       <Box sx={{ mt: 3.5 }}>
-        <VerifyButton href="/auth/sign-in">Continue to sign in</VerifyButton>
+        <VerifyButton href={user ? "/explore-services" : "/auth/sign-in"}>{user ? "Go to Explore Services" : "Continue to sign in"}</VerifyButton>
       </Box>
     </VerifyCard>
   );

@@ -19,7 +19,6 @@ import {
   Typography,
   CircularProgress,
   Dialog,
-  DialogTitle,
   DialogContent,
   DialogActions,
   IconButton,
@@ -135,26 +134,31 @@ export default function MainNavbar() {
     };
   }, []);
 
-  // Restore the last-used mode on mount so neutral pages don't reset a dual-role user's view.
+  // Per-account storage key so one account's mode never carries over to another.
+  const modeKey = user ? `kickair_mode:u${user.id}` : null;
+
+  // Restore the last-used mode so neutral pages don't reset a dual-role user's view.
   useEffect(() => {
+    if (!modeKey) return;
     try {
-      const saved = localStorage.getItem("kickair_mode");
+      const saved = localStorage.getItem(modeKey);
       if (saved === "client" || saved === "freelancer") setModePref(saved);
     } catch {
       // localStorage unavailable in private browsing / SSR
     }
-  }, []);
+  }, [modeKey]);
 
   // Remember the mode whenever the user lands on a mode-specific dashboard.
   useEffect(() => {
     if (!urlMode) return;
     setModePref(urlMode);
+    if (!modeKey) return;
     try {
-      localStorage.setItem("kickair_mode", urlMode);
+      localStorage.setItem(modeKey, urlMode);
     } catch {
       // ignore
     }
-  }, [urlMode]);
+  }, [urlMode, modeKey]);
 
   // Restore language preference from localStorage on mount
   useEffect(() => {
@@ -276,7 +280,7 @@ export default function MainNavbar() {
       await logout();
       setModePref(null);
       try {
-        localStorage.removeItem("kickair_mode");
+        localStorage.removeItem("kickair_mode"); // legacy unscoped key
       } catch {
         /* ignore */
       }
@@ -787,10 +791,10 @@ export default function MainNavbar() {
           open={profileDialogOpen}
           onClose={handleDialogClose}
           slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 400, p: 1 } } }}>
-          <DialogTitle sx={{ fontSize: 18, fontWeight: 600, pb: 1 }}>
-            {profileDialogType === "freelancer" ? "Become a freelancer" : "Become a client"}
-          </DialogTitle>
           <DialogContent>
+            <Typography sx={{ fontSize: 18, fontWeight: 600, mb: 1 }}>
+              {profileDialogType === "freelancer" ? "Become a freelancer" : "Become a client"}
+            </Typography>
             <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }}>
               {profileDialogType === "freelancer"
                 ? "Enable your freelancer account to offer services and apply to jobs. It's free — you can set up your profile next."

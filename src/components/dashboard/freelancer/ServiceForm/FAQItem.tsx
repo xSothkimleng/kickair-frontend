@@ -36,7 +36,7 @@ export default function FAQItem({ faq, onChange, onRemove }: FAQItemProps) {
 
         <IconButton
           onClick={onRemove}
-          sx={{ p: 1, color: "rgba(0, 0, 0, 0.3)", borderRadius: 2, "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.05)" } }}>
+          sx={{ p: 1, color: "rgba(0, 0, 0, 0.45)", bgcolor: "rgba(0, 0, 0, 0.05)", border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 2, "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.2)" } }}>
           <CloseOutlined sx={{ fontSize: 16 }} />
         </IconButton>
       </Box>

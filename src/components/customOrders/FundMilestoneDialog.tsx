@@ -44,7 +44,7 @@ export default function FundMilestoneDialog({
   amount,
   onConfirm,
   submitting,
-  title = "Fund milestone",
+  title = "Fund the project",
   annotation = "Fund into escrow",
   ctaLabel,
   error,
@@ -92,7 +92,7 @@ export default function FundMilestoneDialog({
         {/* wallet rows */}
         <Box>
           <Row label="Available balance" valueEl={<Money value={available} size={14} weight={600} color={insufficient ? tokens.errorText : tokens.text} cents />} />
-          <Row label="This milestone" valueEl={<Box component="span" sx={{ fontFamily: tokens.mono, fontSize: 14 }}>−{`$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</Box>} />
+          <Row label="This payment" valueEl={<Box component="span" sx={{ fontFamily: tokens.mono, fontSize: 14 }}>−{`$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</Box>} />
           <Row
             last
             label={insufficient ? "Short by" : "Balance after"}
@@ -106,7 +106,7 @@ export default function FundMilestoneDialog({
           <>
             <Box sx={{ display: "flex", gap: 1, p: 1.5, bgcolor: tokens.errorTint, borderRadius: "10px" }}>
               <Typography sx={{ fontSize: 12.5, lineHeight: 1.45, color: tokens.errorText }}>
-                Not enough in your wallet to fund this milestone. Top up{" "}
+                Not enough in your wallet for this payment. Top up{" "}
                 <Box component="span" sx={{ fontFamily: tokens.mono }}>${short.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Box>{" "}
                 or more, then fund.
               </Typography>

@@ -36,7 +36,7 @@ export default function CustomOrdersContent() {
     <Box>
       <Box sx={{ mb: { xs: 2.5, sm: 3.5 } }}>
         <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom orders</Typography>
-        <Typography sx={{ fontSize: 14, color: tokens.text2 }}>Negotiated, off-menu work paid by milestone.</Typography>
+        <Typography sx={{ fontSize: 14, color: tokens.text2 }}>Negotiated, off-menu work with a one-time payment.</Typography>
       </Box>
 
       {isLoading ? (

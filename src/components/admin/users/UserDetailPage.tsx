@@ -37,6 +37,7 @@ import {
 } from "@mui/icons-material";
 import { api, AdminAccountStatus, AdminUserDetail, AdminUserKyc, AdminUserKycDocument } from "@/lib/api";
 import { TextArea, TextInput } from "@/components/ui/inputs";
+import RichTextDisplay from "@/components/ui/RichTextDisplay";
 
 // ─── Design tokens (match KickAir auth / input system) ──────────────────────────
 const C = {
@@ -899,7 +900,11 @@ export default function UserDetailPage({ userId }: { userId: number }) {
                   <Box>
                     <SubHead>Freelancer profile</SubHead>
                     {f.tagline && <Typography sx={{ fontSize: 15, fontWeight: 600, color: C.heading, mb: 0.75 }}>{f.tagline}</Typography>}
-                    {f.about && <Typography sx={{ m: 0, mb: 2.25, fontSize: 14, color: C.body, lineHeight: 1.6, maxWidth: 660 }}>{f.about}</Typography>}
+                    {f.about && (
+                      <Box sx={{ m: 0, mb: 2.25, fontSize: 14, color: C.body, lineHeight: 1.6, maxWidth: 660, "& p": { m: 0, mb: 1 }, "& p:last-child": { mb: 0 } }}>
+                        <RichTextDisplay value={f.about} />
+                      </Box>
+                    )}
                     <Stack direction="row" alignItems="center" gap={1.5} flexWrap="wrap" sx={{ mb: 2.25, p: "12px 14px", borderRadius: 2.5, bgcolor: C.fill, width: "fit-content" }}>
                       <Stars value={f.rating ?? 0} />
                       <Typography sx={{ fontSize: 15, fontWeight: 700, color: C.heading }}>{f.rating != null ? f.rating.toFixed(1) : "—"}</Typography>
@@ -931,7 +936,11 @@ export default function UserDetailPage({ userId }: { userId: number }) {
                         {c.website ? <Box component="a" href={c.website.startsWith("http") ? c.website : `https://${c.website}`} target="_blank" rel="noopener noreferrer" sx={{ color: C.accent, textDecoration: "none", fontWeight: 500 }}>{c.website}</Box> : "—"}
                       </DefRow>
                     </Box>
-                    {c.about && <Typography sx={{ mt: 2, fontSize: 14, color: C.body, lineHeight: 1.6, maxWidth: 660 }}>{c.about}</Typography>}
+                    {c.about && (
+                      <Box sx={{ mt: 2, fontSize: 14, color: C.body, lineHeight: 1.6, maxWidth: 660, "& p": { m: 0, mb: 1 }, "& p:last-child": { mb: 0 } }}>
+                        <RichTextDisplay value={c.about} />
+                      </Box>
+                    )}
                   </Box>
                 )}
               </Card>

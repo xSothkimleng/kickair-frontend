@@ -774,7 +774,7 @@ export default function FreelancerOrderDetailModal({
                 <Button
                   fullWidth
                   variant="contained"
-                  disabled={submitting || !separateEvidenceFiles.length}
+                  disabled={submitting || uploading || !separateEvidenceFiles.length}
                   startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
                   onClick={handleSubmitEvidence}
                   sx={{
@@ -853,7 +853,7 @@ export default function FreelancerOrderDetailModal({
                         size="small"
                         variant="outlined"
                         color="error"
-                        disabled={submitting || !disputeReason.trim()}
+                        disabled={submitting || uploading || !disputeReason.trim()}
                         onClick={handleOpenDispute}
                         sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
                         {submitting ? <CircularProgress size={14} /> : "Open Dispute"}

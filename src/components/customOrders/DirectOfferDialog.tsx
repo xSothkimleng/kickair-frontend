@@ -16,7 +16,6 @@ import {
 } from "@mui/material";
 import {
   Close,
-  AddRounded,
   CheckCircle,
   LockOutlined,
 } from "@mui/icons-material";
@@ -25,17 +24,9 @@ import { sanitizeMoneyInput } from "@/components/ui/inputs";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { Service } from "@/types/service";
-import { MilestoneInput } from "@/types/customOrder";
 import { useConversations } from "@/hooks/useConversations";
 import { coLabel, Money } from "./kit";
 import { useCoInvalidate } from "./hooks";
-
-interface Row {
-  title: string;
-  description: string;
-  amount: string;
-  due_days: string;
-}
 
 const fieldSx = {
   "& .MuiOutlinedInput-root": {
@@ -64,8 +55,8 @@ const primaryBtn = {
 
 /**
  * Freelancer-initiated custom order: pick a client you've talked to, anchor it
- * to one of your active services, and send a milestone offer. The client must
- * accept and fund milestone 1 — the freelancer can never approve it themselves.
+ * to one of your active services, and send a one-time-payment offer. The client
+ * must accept and pay — the freelancer can never approve it themselves.
  */
 export default function DirectOfferDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   const invalidate = useCoInvalidate();
@@ -100,22 +91,18 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
   const [revisions, setRevisions] = useState("3");
   const [expiresIn, setExpiresIn] = useState("3");
   const [note, setNote] = useState("");
-  const [rows, setRows] = useState<Row[]>([{ title: "", description: "", amount: "", due_days: "7" }]);
+  const [amount, setAmount] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
 
-  const total = rows.reduce((s, r) => s + (Number(r.amount) || 0), 0);
+  const total = Number(amount) || 0;
   const clientName = people.find((p) => p.id === clientUserId)?.name ?? "the client";
-
-  const setRow = (i: number, patch: Partial<Row>) => setRows((rs) => rs.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-  const addRow = () => setRows((rs) => [...rs, { title: "", description: "", amount: "", due_days: "7" }]);
-  const delRow = (i: number) => setRows((rs) => (rs.length <= 1 ? rs : rs.filter((_, j) => j !== i)));
 
   const reset = () => {
     setClientUserId(""); setServiceId(""); setScope(""); setNote("");
     setDeliveryDays("30"); setRevisions("3"); setExpiresIn("3");
-    setRows([{ title: "", description: "", amount: "", due_days: "7" }]);
+    setAmount("");
     setError(null); setSent(false);
   };
 
@@ -129,16 +116,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
     if (!clientUserId) { setError("Pick who this offer is for."); return; }
     if (!serviceId) { setError("Pick one of your services to anchor the offer."); return; }
     if (!scope.trim()) { setError("Describe the work you're proposing."); return; }
-    if (rows.some((r) => !r.title.trim() || !Number(r.amount))) {
-      setError("Each milestone needs a title and an amount.");
-      return;
-    }
-    const milestones: MilestoneInput[] = rows.map((r) => ({
-      title: r.title.trim(),
-      description: r.description.trim() || null,
-      amount: Number(r.amount),
-      due_days: r.due_days ? Number(r.due_days) : null,
-    }));
+    if (!total) { setError("Add a project price."); return; }
 
     setSubmitting(true);
     setError(null);
@@ -152,8 +130,8 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
         offer_revisions: revisions ? Number(revisions) : null,
         offer_note: note.trim() || null,
         offer_expires_in_days: expiresIn ? Number(expiresIn) : null,
-        is_split: milestones.length > 1,
-        milestones,
+        is_split: false,
+        milestones: [{ title: "Complete project", amount: total, due_days: Number(deliveryDays) || null }],
       });
       await invalidate();
       setSent(true);
@@ -192,7 +170,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
             Your offer is on its way to {clientName}.
           </Typography>
           <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5 }}>
-            They&apos;ll see it with your milestone plan and can accept whenever they&apos;re ready. Nothing starts until they accept and fund the first milestone.
+            They&apos;ll see your offer and can accept whenever they&apos;re ready. Nothing starts until they accept and pay.
           </Typography>
           <Button fullWidth sx={primaryBtn} onClick={handleClose}>Done</Button>
         </Box>
@@ -261,31 +239,11 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
               </Box>
             </Box>
 
-            {/* milestone plan (same row pattern as OfferComposer) */}
+            {/* one-time project price */}
             <Box>
-              <Typography sx={{ ...coLabel, mb: 1.25 }}>Milestone plan</Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-                {rows.map((m, i) => (
-                  <Box key={i} sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", p: "14px 14px 14px 12px", border: `1px solid ${tokens.borderStrong}`, borderRadius: `${tokens.radius.tile}px` }}>
-                    <Box sx={{ width: 22, height: 22, mt: 0.5, borderRadius: "50%", bgcolor: "rgba(0,0,0,0.05)", display: "grid", placeItems: "center", fontFamily: tokens.mono, fontSize: 11, fontWeight: 600, color: tokens.text2, flex: "none" }}>{i + 1}</Box>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 1, flex: 1, minWidth: 0 }}>
-                      <TextField fullWidth size="small" placeholder="Milestone title" value={m.title} onChange={(e) => setRow(i, { title: e.target.value })} sx={fieldSx} InputProps={{ sx: { fontWeight: 600 } }} />
-                      <TextField fullWidth size="small" placeholder="What the client gets in this phase" value={m.description} onChange={(e) => setRow(i, { description: e.target.value })} sx={fieldSx} />
-                      <Box sx={{ display: "flex", gap: 1.25 }}>
-                        <TextField size="small" placeholder="0" value={m.amount} onChange={(e) => setRow(i, { amount: sanitizeMoneyInput(e.target.value) })}
-                          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={{ ...fieldSx, flex: 1 }} />
-                        <TextField size="small" value={m.due_days} onChange={(e) => setRow(i, { due_days: e.target.value.replace(/[^0-9]/g, "") })}
-                          InputProps={{ endAdornment: <InputAdornment position="end">days</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={{ ...fieldSx, flex: 1 }} />
-                      </Box>
-                    </Box>
-                    <IconButton size="small" disabled={rows.length <= 1} onClick={() => delRow(i)}><Close sx={{ fontSize: 18 }} /></IconButton>
-                  </Box>
-                ))}
-                <Button startIcon={<AddRounded />} onClick={addRow}
-                  sx={{ alignSelf: "flex-start", textTransform: "none", fontWeight: 600, fontSize: 13, color: tokens.text, bgcolor: "rgba(0,0,0,0.05)", borderRadius: "999px", px: 1.75, "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
-                  Add milestone
-                </Button>
-              </Box>
+              <Typography sx={labelSx}>Project price <Box component="span" sx={{ color: tokens.text3, fontWeight: 400 }}>· one-time payment</Box></Typography>
+              <TextField size="small" sx={{ ...fieldSx, maxWidth: 220 }} placeholder="0" value={amount} onChange={(e) => setAmount(sanitizeMoneyInput(e.target.value))}
+                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }} />
             </Box>
 
             <Box>

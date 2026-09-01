@@ -665,7 +665,7 @@ export default function FreelancerOrderDetailPage() {
         </DialogContent>
         <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
           <Button variant="outlined" onClick={() => { setDeliveryOpen(false); setDeliveryNote(""); setDeliveryFiles([]); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="contained" disabled={submitting} onClick={handleDeliver} sx={BTN_PRIMARY}>
+          <Button variant="contained" disabled={submitting || uploading} onClick={handleDeliver} sx={BTN_PRIMARY}>
             {submitting ? <CircularProgress size={14} color="inherit" /> : "Submit delivery"}
           </Button>
         </Stack>
@@ -685,7 +685,7 @@ export default function FreelancerOrderDetailPage() {
         </DialogContent>
         <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
           <Button variant="outlined" onClick={() => { setResubmitOpen(false); setResubmitNote(""); setResubmitFiles([]); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="contained" disabled={submitting} onClick={handleResubmit} sx={BTN_PRIMARY}>
+          <Button variant="contained" disabled={submitting || uploading} onClick={handleResubmit} sx={BTN_PRIMARY}>
             {submitting ? <CircularProgress size={14} color="inherit" /> : "Resubmit work"}
           </Button>
         </Stack>
@@ -705,7 +705,7 @@ export default function FreelancerOrderDetailPage() {
         </DialogContent>
         <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
           <Button variant="outlined" onClick={() => { setDisputeOpen(false); setDisputeReason(""); setDisputeFiles([]); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="outlined" disabled={submitting || !disputeReason.trim()} onClick={handleOpenDispute} sx={BTN_DANGER}>
+          <Button variant="outlined" disabled={submitting || uploading || !disputeReason.trim()} onClick={handleOpenDispute} sx={BTN_DANGER}>
             {submitting ? <CircularProgress size={14} sx={{ color: "#DC2626" }} /> : "Open dispute"}
           </Button>
         </Stack>
@@ -726,7 +726,7 @@ export default function FreelancerOrderDetailPage() {
         </DialogContent>
         <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
           <Button variant="outlined" onClick={() => { setEvidenceOpen(false); setEvidenceFiles([]); setEvidenceStatement(""); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="contained" disabled={submitting || (!evidenceFiles.length && !evidenceStatement.trim())} onClick={handleSubmitEvidence} sx={BTN_PRIMARY}>
+          <Button variant="contained" disabled={submitting || uploading || (!evidenceFiles.length && !evidenceStatement.trim())} onClick={handleSubmitEvidence} sx={BTN_PRIMARY}>
             {submitting ? <CircularProgress size={14} color="inherit" /> : "Submit evidence"}
           </Button>
         </Stack>

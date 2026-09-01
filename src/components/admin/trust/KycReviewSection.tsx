@@ -1,7 +1,7 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import {
-  Avatar, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Skeleton,
+  Avatar, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, Skeleton,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography,
 } from "@mui/material";
 import { TextArea } from "@/components/ui/inputs";
@@ -178,13 +178,13 @@ export default function KycReviewSection() {
 
       {/* Document review dialog */}
       <Dialog open={!!previewKyc} onClose={() => setPreviewKyc(null)} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 600, fontSize: 18 }}>
-          Identity verification — {previewKyc?.user.name}
-          {previewKyc?.document_type && (
-            <Typography component="span" sx={{ ml: 1.5, fontSize: 13, color: tokens.text2 }}>{DOC_TYPE_LABEL[previewKyc.document_type] ?? previewKyc.document_type}</Typography>
-          )}
-        </DialogTitle>
         <DialogContent>
+          <Typography component="div" sx={{ fontWeight: 600, fontSize: 18, pt: 1 }}>
+            Identity verification — {previewKyc?.user.name}
+            {previewKyc?.document_type && (
+              <Typography component="span" sx={{ ml: 1.5, fontSize: 13, fontWeight: 400, color: tokens.text2 }}>{DOC_TYPE_LABEL[previewKyc.document_type] ?? previewKyc.document_type}</Typography>
+            )}
+          </Typography>
           <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(auto-fit, minmax(180px, 1fr))" }, gap: 2, mt: 1 }}>
             {[
               { label: previewKyc?.document_type === "passport" ? "Passport" : "ID front", url: previewKyc?.id_document_url },
@@ -229,8 +229,8 @@ export default function KycReviewSection() {
 
       {/* Reject dialog */}
       <Dialog open={!!rejectTarget} onClose={() => setRejectTarget(null)} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogTitle sx={{ fontWeight: 600, fontSize: 18 }}>Reject verification — {rejectTarget?.user.name}</DialogTitle>
         <DialogContent>
+          <Typography sx={{ fontWeight: 600, fontSize: 18, pt: 1, mb: 1 }}>Reject verification — {rejectTarget?.user.name}</Typography>
           <Typography sx={{ fontSize: 13.5, color: tokens.text2, mb: 2 }}>Tell the user what to fix. They&rsquo;ll see this message and can resubmit.</Typography>
           <TextArea label="Rejection reason" minRows={3} value={rejectNote} onChange={v => { setRejectNote(v); setRejectError(""); }} error={rejectError || undefined} placeholder="e.g. Document is blurry or expired." />
         </DialogContent>

@@ -6,6 +6,7 @@ import { FavoriteBorder, Favorite, ShoppingBag, StarRounded } from "@mui/icons-m
 import Image from "next/image";
 import Link from "next/link";
 import { Service } from "@/types/service";
+import { serviceCoverUrl } from "@/lib/serviceCover";
 
 interface ServiceCardProps {
   service: Service;
@@ -19,7 +20,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   const freelancerName = service.freelancer_profile?.user?.name || "Unknown";
   const freelancerAvatar = service.freelancer_profile?.user?.avatar_url || "";
   const categoryName = service.category?.category_name || "Uncategorized";
-  const image = service.feature_image?.file_url || service.media?.[0]?.file_url || "";
+  const image = serviceCoverUrl(service) || "";
 
   // Get the lowest price from pricing options
   const lowestPrice = service.pricing_options?.length ? Math.min(...service.pricing_options.map(p => Number(p.price_raw))) : 0;

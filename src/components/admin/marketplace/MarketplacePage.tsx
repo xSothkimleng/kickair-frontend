@@ -24,6 +24,7 @@ import CategoryAssignDialog, { CategoryAssignTarget } from "./CategoryAssignDial
 import { registerAdminRefresh } from "@/components/layout/GlobalNotificationToast";
 import { SectionTabs, FilterPills, AdminEmpty, adminCardSx, adminTableSx, type PillOption } from "@/components/admin/adminKit";
 import { StatusPill, CoverThumb, CategoryPill, type CardTone } from "@/components/dashboard/ManagementCard";
+import { serviceCoverUrl } from "@/lib/serviceCover";
 
 type TabId = "services" | "jobs" | "hiring" | "disputes" | "reviews";
 
@@ -345,7 +346,7 @@ export default function MarketplacePage() {
                           const needsCategory = !!s.requested_category && s.category_id == null;
                           return (
                             <TableRow key={s.id} sx={needsCategory ? { "& td:first-of-type": { borderLeft: `3px solid ${tokens.pendingText}` } } : undefined}>
-                              <TableCell sx={{ maxWidth: 320 }}><ListingCell src={s.feature_image?.file_url} title={s.title} /></TableCell>
+                              <TableCell sx={{ maxWidth: 320 }}><ListingCell src={serviceCoverUrl(s) ?? undefined} title={s.title} /></TableCell>
                               <TableCell><PartyCell name={s.freelancer_profile?.user?.name ?? "—"} avatar={s.freelancer_profile?.user?.avatar_url} /></TableCell>
                               <TableCell><CategoryCell category={s.category} requested={s.requested_category} /></TableCell>
                               <TableCell align="right"><Typography sx={{ fontSize: 13.5, fontWeight: 600, fontFamily: tokens.mono }}>{price != null ? `$${price}` : "—"}</Typography></TableCell>

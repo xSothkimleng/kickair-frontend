@@ -6,6 +6,7 @@ import { StarRounded, ShoppingBag, AccessTimeOutlined } from "@mui/icons-materia
 import Image from "next/image";
 import Link from "next/link";
 import { Service } from "@/types/service";
+import { serviceCoverUrl } from "@/lib/serviceCover";
 
 interface ServiceListCardProps {
   service: Service;
@@ -17,7 +18,7 @@ export default function ServiceListCard({ service }: ServiceListCardProps) {
   const freelancerName = service.freelancer_profile?.user?.name || "Unknown";
   const freelancerAvatar = service.freelancer_profile?.user?.avatar_url || "";
   const categoryName = service.category?.category_name || "Uncategorized";
-  const image = service.feature_image?.file_url || service.media?.[0]?.file_url || "";
+  const image = serviceCoverUrl(service) || "";
   const lowestPrice = service.pricing_options?.length ? Math.min(...service.pricing_options.map(p => Number(p.price_raw))) : 0;
   const fastestDelivery = service.pricing_options?.length
     ? Math.min(...service.pricing_options.map(p => parseInt(String(p.delivery_time))))

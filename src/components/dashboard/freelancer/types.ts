@@ -24,8 +24,6 @@ export interface PricingTier {
 
 export interface CustomOrdersData {
   enabled: boolean;
-  acceptHourlyRate: boolean;
-  hourlyRate: string;
   minimumBudget: string;
   customInstructions: string;
 }

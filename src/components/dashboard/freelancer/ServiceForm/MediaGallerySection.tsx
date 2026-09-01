@@ -369,9 +369,11 @@ export default function MediaGallerySection({
 
   return (
     <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>Gallery / Media</Typography>
+      <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>
+        Gallery / Media <Box component='span' sx={{ color: "#ef4444" }}>*</Box>
+      </Typography>
       <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
-        Upload images, videos, or PDFs to showcase your work
+        Upload images, videos, or PDFs to showcase your work — at least one image is required to publish
       </Typography>
 
       {error && (
