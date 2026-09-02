@@ -103,10 +103,10 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
       <Container disableGutters sx={{ maxWidth: "980px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 4.5 } }}>
         {/* back to dashboard */}
         <Button
-          onClick={() => router.push(isClient ? "/dashboard/client?tab=custom-orders" : "/dashboard/freelancer?tab=custom-requests")}
+          onClick={() => router.push(isClient ? "/dashboard/client?tab=orders" : "/dashboard/freelancer?tab=orders")}
           startIcon={<ChevronLeft sx={{ fontSize: 16 }} />}
           sx={{ mb: 2, textTransform: "none", fontSize: 13, fontWeight: 500, color: tokens.text2, p: 0, minWidth: 0, "&:hover": { color: tokens.text, bgcolor: "transparent" } }}>
-          {isClient ? "Back to custom orders" : "Back to requests"}
+          Back to orders
         </Button>
 
         {/* header */}

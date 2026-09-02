@@ -140,7 +140,7 @@ export default function RequestCustomOrderDialog({ open, onClose, serviceId, fre
           <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5 }}>
             {responds ? `They typically respond ${responds}. ` : ""}You&apos;ll get a notification when a custom offer arrives — nothing is charged until you accept and pay.
           </Typography>
-          <Button fullWidth sx={primaryBtn} onClick={() => { handleClose(); router.push("/dashboard/client?tab=custom-orders"); }}>
+          <Button fullWidth sx={primaryBtn} onClick={() => { handleClose(); router.push("/dashboard/client?tab=orders"); }}>
             View my requests
           </Button>
         </Box>

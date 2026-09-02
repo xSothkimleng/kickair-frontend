@@ -11,17 +11,15 @@ import OrdersContent from "./OrdersContent";
 import FinanceContent from "./FinanceContent";
 import LevelContent from "./LevelContent";
 import ProposalsContent from "./ProposalsContent";
-import CustomRequestsInbox from "@/components/customOrders/CustomRequestsInbox";
 import KycBanner from "@/components/dashboard/KycBanner";
 
-export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "level" | "proposals" | "custom-requests";
+export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "level" | "proposals";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard",  label: "Dashboard" },
   { value: "profile",    label: "Profile" },
   { value: "services",   label: "My Services" },
   { value: "orders",     label: "Orders" },
-  { value: "custom-requests", label: "Custom Requests" },
   { value: "finance",    label: "Finance" },
   { value: "level",      label: "Level" },
   { value: "proposals",  label: "Proposals" },
@@ -35,7 +33,9 @@ export default function FreelancerSpacePage() {
 
   useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get("tab");
-    if (tab && VALID_TABS.includes(tab)) setActiveTab(tab as Tab);
+    // Custom requests merged into Orders — honor old links.
+    if (tab === "custom-requests") setActiveTab("orders");
+    else if (tab && VALID_TABS.includes(tab)) setActiveTab(tab as Tab);
   }, []);
 
   const handleTabChange = (tab: Tab) => {
@@ -54,7 +54,6 @@ export default function FreelancerSpacePage() {
         {activeTab === "profile"    && <ProfileContent />}
         {activeTab === "services"   && <ServicesContent />}
         {activeTab === "orders"     && <OrdersContent />}
-        {activeTab === "custom-requests" && <CustomRequestsInbox />}
         {activeTab === "finance"    && <FinanceContent />}
         {activeTab === "level"      && <LevelContent />}
         {activeTab === "proposals"  && <ProposalsContent />}

@@ -9,16 +9,14 @@ import ProfileContent from "./ProfileContent";
 import PostProjectContent from "./PostServiceContent";
 import FinanceContent from "./FinanceContent";
 import OrdersContent from "./OrdersContent";
-import CustomOrdersContent from "./CustomOrdersContent";
 import KycBanner from "@/components/dashboard/KycBanner";
 
-export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance" | "custom-orders";
+export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance";
 
 const tabs: { value: string; label: string }[] = [
   { value: "dashboard", label: "Dashboard" },
   { value: "profile",   label: "Profile" },
   { value: "orders",    label: "Orders" },
-  { value: "custom-orders", label: "Custom Orders" },
   { value: "service",   label: "Jobs" },
   { value: "finance",   label: "Finance" },
 ];
@@ -31,7 +29,9 @@ export default function ClientSpacePage() {
 
   useEffect(() => {
     const tab = new URLSearchParams(window.location.search).get("tab");
-    if (tab && VALID_TABS.includes(tab)) setActiveTab(tab as Tab);
+    // Custom orders merged into Orders — honor old links.
+    if (tab === "custom-orders") setActiveTab("orders");
+    else if (tab && VALID_TABS.includes(tab)) setActiveTab(tab as Tab);
   }, []);
 
   const handleTabChange = (tab: Tab) => {
@@ -49,7 +49,6 @@ export default function ClientSpacePage() {
         {activeTab === "dashboard" && <DashboardContent onTabChange={handleTabChange} />}
         {activeTab === "profile"   && <ProfileContent />}
         {activeTab === "orders"    && <OrdersContent />}
-        {activeTab === "custom-orders" && <CustomOrdersContent />}
         {activeTab === "service"   && <PostProjectContent />}
         {activeTab === "finance"   && <FinanceContent />}
       </Container>

@@ -32,10 +32,19 @@ type Filter = "all" | "new" | "offered" | "declined";
 
 const isNew = (r: CustomOrder) => r.status === "pending" && !r.freelancer_read_at;
 
-export default function CustomRequestsInbox() {
+/**
+ * Incoming custom requests. `embedded` renders it as the "Requests & offers"
+ * section inside the Orders tab: negotiation-phase items only — accepted offers
+ * on the unified order flow live in the orders list itself (legacy milestone
+ * orders stay here so their Workspace remains reachable).
+ */
+export default function CustomRequestsInbox({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
   const invalidate = useCoInvalidate();
-  const { data: requests = [], isLoading } = useIncomingCustomOrders();
+  const { data: allRequests = [], isLoading } = useIncomingCustomOrders();
+  const requests = embedded
+    ? allRequests.filter((r: CustomOrder) => !(r.status === "accepted" && r.flow === "order"))
+    : allRequests;
   const [filter, setFilter] = useState<Filter>("all");
   const [selId, setSelId] = useState<number | null>(null);
   const [composing, setComposing] = useState(false);
@@ -199,11 +208,17 @@ export default function CustomRequestsInbox() {
   );
 
   return (
-    <Box>
-      <Box sx={{ mb: { xs: 2.5, sm: 3.5 }, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
+    <Box sx={embedded ? { mb: 4 } : undefined}>
+      <Box sx={{ mb: embedded ? 1.5 : { xs: 2.5, sm: 3.5 }, display: "flex", alignItems: "flex-end", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap" }}>
         <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1.5, flexWrap: "wrap" }}>
-          <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom requests</Typography>
-          <Typography sx={{ fontSize: 14, color: tokens.text2, mb: 0.5 }}>
+          {embedded ? (
+            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>
+              Requests &amp; offers
+            </Typography>
+          ) : (
+            <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom requests</Typography>
+          )}
+          <Typography sx={{ fontSize: embedded ? 12 : 14, color: tokens.text2, mb: 0.5 }}>
             {isLoading ? "Loading…" : `${newCount} new · ${requests.length} total`}
           </Typography>
         </Box>
@@ -218,7 +233,7 @@ export default function CustomRequestsInbox() {
       <DirectOfferDialog open={proposing} onClose={() => setProposing(false)} />
 
       {!isLoading && requests.length === 0 ? (
-        <EmptyState onSettings={() => router.push("/dashboard/freelancer?tab=services")} />
+        embedded ? null : <EmptyState onSettings={() => router.push("/dashboard/freelancer?tab=services")} />
       ) : (
         <Box sx={{ display: "flex", gap: 3, alignItems: "flex-start", flexDirection: { xs: "column", md: "row" } }}>
           {/* mobile: show detail when selected, else list */}

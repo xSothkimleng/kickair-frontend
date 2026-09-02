@@ -164,6 +164,8 @@ export interface Order {
   client_profile_id: number;
   pricing_option_id: number | null;  // null for job-based orders
   proposal_id: number | null;        // null for service-based orders
+  custom_order_id?: number | null;   // set for orders born from an accepted custom offer
+  custom_order?: { id: number; delivery_days: number | null; revisions: number | null; scope: string | null } | null;
   price: string | null;              // locked at creation time
   status: OrderStatus;
   delivery_note: string | null;

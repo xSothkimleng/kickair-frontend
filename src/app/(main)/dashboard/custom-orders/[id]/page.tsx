@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Box, Container, Typography, Button, CircularProgress, Avatar } from "@mui/material";
 import { ChevronLeft, AccessTime } from "@mui/icons-material";
@@ -22,7 +23,17 @@ export default function CustomOrderDetailPage() {
   const id = Number(params.id);
   const { data: order, isLoading, error, refetch } = useCustomOrder(id);
 
-  if (isLoading) {
+  // Unified flow: once accepted, the work IS a regular order — send each party
+  // to the standard order page. The milestone Workspace only serves legacy orders.
+  const unifiedOrderId = order?.status === "accepted" && order.flow === "order" ? order.order?.id : null;
+  const role = order?.viewer_role ?? "client";
+  useEffect(() => {
+    if (unifiedOrderId) {
+      router.replace(role === "freelancer" ? `/dashboard/freelancer/orders/${unifiedOrderId}` : `/dashboard/orders/${unifiedOrderId}`);
+    }
+  }, [unifiedOrderId, role, router]);
+
+  if (isLoading || unifiedOrderId) {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas, display: "grid", placeItems: "center" }}>
         <CircularProgress sx={{ color: tokens.text }} />
@@ -39,9 +50,7 @@ export default function CustomOrderDetailPage() {
     );
   }
 
-  const role = order.viewer_role ?? "client";
-
-  // Accepted → the live milestone workspace (role-aware)
+  // Accepted (legacy milestone flow) → the live milestone workspace (role-aware)
   if (order.status === "accepted") {
     return <Workspace order={order} role={role} />;
   }

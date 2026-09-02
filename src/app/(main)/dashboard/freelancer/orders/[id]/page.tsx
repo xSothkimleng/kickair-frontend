@@ -414,12 +414,17 @@ export default function FreelancerOrderDetailPage() {
     );
   }
 
-  const isJobBased = !order.pricing_option_id;
+  const isCustom = !!order.custom_order_id;
+  const isJobBased = !order.pricing_option_id && !isCustom;
   const service = order.service || order.pricing_option?.service;
   const client = order.client_profile;
   const pricingOption = order.pricing_option;
-  const deliveryDays = isJobBased ? order.proposal?.timeline_days : parseInt(String(pricingOption?.delivery_time ?? ""));
-  const revisions = Number(pricingOption?.revisions ?? 0);
+  const deliveryDays = isCustom
+    ? order.custom_order?.delivery_days ?? undefined
+    : isJobBased
+      ? order.proposal?.timeline_days
+      : parseInt(String(pricingOption?.delivery_time ?? ""));
+  const revisions = Number((isCustom ? order.custom_order?.revisions : pricingOption?.revisions) ?? 0);
 
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC" }}>
@@ -487,7 +492,7 @@ export default function FreelancerOrderDetailPage() {
           <Box sx={CARD}>
             <Typography sx={SEC_LABEL}>Package</Typography>
             <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em", mb: 0.5 }}>
-              {isJobBased ? "Job Contract" : (pricingOption?.title ?? "Standard")}
+              {isCustom ? "Custom order" : isJobBased ? "Job Contract" : (pricingOption?.title ?? "Standard")}
             </Typography>
             {pricingOption?.description && (
               <Typography sx={{ fontSize: 13, color: "#64748B", mb: 2.25 }}>{pricingOption.description}</Typography>

@@ -63,6 +63,8 @@ export interface CustomOrderOffer {
 export interface CustomOrder {
   id: number;
   status: CustomOrderStatus;
+  /** 'order' — accepted offers run the regular order lifecycle; 'milestone' — legacy Workspace flow. */
+  flow: "milestone" | "order";
   viewer_role: "client" | "freelancer" | null;
   budget: number;
   description: string;

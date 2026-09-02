@@ -9,6 +9,7 @@ import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { Order, OrderStatus, FreelancerOrdersResponse } from "@/types/order";
 import { DatePicker } from "@/components/ui/inputs";
+import CustomRequestsInbox from "@/components/customOrders/CustomRequestsInbox";
 
 const toYmd = (d: Date | null) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : "");
 
@@ -146,6 +147,9 @@ export default function OrdersContent() {
 
   return (
     <Box>
+      {/* Negotiation-phase custom requests & offers live at the top of Orders */}
+      <CustomRequestsInbox embedded />
+
       <Box mb={3}>
         <Typography variant="h5" fontWeight={600} mb={0.5}>
           Orders
@@ -209,12 +213,15 @@ export default function OrdersContent() {
           {filteredOrders.map(order => {
             const client = order.client_profile;
             const isLoading = actionLoading === order.id;
-            const isJobBased = !order.pricing_option_id;
+            const isCustom = !!order.custom_order_id;
+            const isJobBased = !order.pricing_option_id && !isCustom;
             const orderTitle = order.service?.title ?? order.proposal?.job_post?.title ?? "Order";
             const orderPrice = order.pricing_option?.price ?? order.price ?? "0";
-            const deliveryLabel = isJobBased
-              ? `${order.proposal?.timeline_days ?? "N/A"} days (timeline)`
-              : `${order.pricing_option?.delivery_time ?? "N/A"} days`;
+            const deliveryLabel = isCustom
+              ? "Custom scope"
+              : isJobBased
+                ? `${order.proposal?.timeline_days ?? "N/A"} days (timeline)`
+                : `${order.pricing_option?.delivery_time ?? "N/A"} days`;
 
             return (
               <Card
@@ -238,9 +245,12 @@ export default function OrdersContent() {
                         sx={{ width: 50, height: 50 }}
                       />
                       <Box flex={1}>
-                        <Typography variant="body1" fontWeight={600} mb={0.5}>
-                          {orderTitle}
-                        </Typography>
+                        <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
+                          <Typography variant="body1" fontWeight={600}>
+                            {orderTitle}
+                          </Typography>
+                          {isCustom && <Chip label="Custom" size="small" sx={{ height: 20, fontSize: 11, fontWeight: 600, bgcolor: "rgba(0,0,0,0.06)" }} />}
+                        </Stack>
                         <Typography variant="body2" color="text.secondary" mb={1}>
                           Client: {client?.user?.name || "Unknown"}
                         </Typography>

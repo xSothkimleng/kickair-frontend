@@ -3,18 +3,20 @@
 Context for continuing work on KickAir, a Fiverr-like freelance marketplace. Read this first, then verify the current git state on both repos before starting anything new.
 
 ## Repos & stack
-- **Backend:** `kickair-api` — Laravel 12 + PostgreSQL + Sanctum
-- **Frontend:** `kickair-frontend` — Next.js 16 (App Router) + MUI v6 (sx props only, no Tailwind)
+- **Backend:** `kickair-api` — Laravel 12 + PostgreSQL + Sanctum (local Postgres runs via **DBngin**, start it from the app; db `kickair`, user `postgres`)
+- **Frontend:** `kickair-frontend` — Next.js 16 (App Router) + MUI (sx props; a Panda CSS migration was started earlier and parked)
 - The **admin panel lives inside the frontend** under the `(admin)` route group
 - Both repos push directly to `main` (GitHub: `xSothkimleng/kickair-frontend` and `/kickair-api`)
-- **Payments are mocked** (no real gateway)
+- **Payments are mocked** (no real gateway); seller-only 20% commission (`KICKAIR_COMMISSION_RATE`, 0 in tests via phpunit.xml)
+- **Production:** frontend on Vercel, API on Railway (start.sh migrates + seeds-if-empty on deploy); uploads live on **Cloudflare R2**
 
 ## Working preferences (important)
 - Commits: clean messages, **no `Co-Authored-By: Claude` lines**
 - Push directly to `main`, and **only when explicitly asked**
-- Verify before declaring done: `npx tsc --noEmit` (frontend) and `php artisan route:list` (backend parse check)
+- Verify before declaring done: `npx tsc --noEmit` (frontend) and `./vendor/bin/pest` (backend; 391 tests, all green at handoff)
 - **Postgres gotcha:** enums are CHECK constraints — alter them with raw
   `ALTER TABLE ... DROP CONSTRAINT / ADD CONSTRAINT ... CHECK (...)`, never MySQL `MODIFY`
+- **Client feedback loop:** notes from testing sessions land as files in `../kickair-feedback/`; the `/feedback` skill (in `../.claude/skills/`) triages them into a reviewable todo page saved under `kickair-feedback/rounds/` (gitignored). Triage first, execution only after review.
 
 ## Seeded test logins (all password: `password`)
 | Email | Role |
@@ -26,26 +28,25 @@ Context for continuing work on KickAir, a Fiverr-like freelance marketplace. Rea
 | charlie@example.com | Client |
 | admin@kickair.com | Admin |
 
-## Status: 21 of 23 tasks done (all committed & pushed)
-Last commits at handoff: frontend `ff50eaa`, backend `0408806`.
+Email sign-in is **case-insensitive** (stored lowercase; model mutator + request trait).
 
-### Done — key features and where they live
-- **Service & job approval flows** — statuses: `draft` / `pending_review` / `active`(jobs: `open`) / `rejected`. New & edited services/jobs go to `pending_review`; admins approve/reject in the **Marketplace page** (`AdminServiceController` / `AdminJobPostController`). Public listings filter to active/open only. Rejection reasons supported.
-- **Draft mode for services** — `save_as_draft` flag → `status='draft'`, relaxed validation, private (never public, no admin notify). Publishing runs full validation → `pending_review`. Pricing options sync on draft edits. `category_id` is nullable for drafts.
-- **Local-storage form recovery** — `useFormRecovery` hook (`src/hooks/useFormRecovery.ts`) auto-saves the service form; shows a Restore/Discard banner on return.
-- **Order timeline** — `order_events` table + `OrderEvent::log()` called across the order lifecycle and disputes; `GET /api/orders/{id}/timeline`; rendered by `OrderTimeline.tsx` on both order detail pages.
-- **Real-time notifications** — `NotificationCreated` broadcast (`ShouldBroadcastNow`) fired by `DatabaseNotificationObserver` on private channel `user.{id}`. Pusher keys are in both `.env` files; Echo client in `src/lib/echo.ts`; `GlobalNotificationToast` mounted in both main + admin layouts; `AdminNotificationBell` in admin. **Verified working** via a live Pusher subscriber test.
-- **Clickable notifications** → route to the relevant page; viewed-state persists (mark-all-read on bell open).
-- **Order detail pages** (`/dashboard/orders/[id]` and `/dashboard/freelancer/orders/[id]`) — full pages, not modals.
-- **Form UX** — inline errors + red asterisks on the service form and account settings.
-- **Misc fixes** — withdrawal/top-up dialogs made consistent; users can't buy their own service (admin can); fixed pricing options disappearing on service edit; admin fake data replaced with real APIs / empty states; admin menu reordered; dashboard tabs persist via `?tab=`; Messages/Notifications tabs removed from dashboards (bell-only).
+## Status after client feedback round 3 (notes: 8.25.2026.pdf — 25 of 26 actionable done, 9 parked)
+Full per-task log with outcomes: `kickair-feedback/rounds/8.25.2026-todo.html` (also published as a Claude artifact).
 
-### Left — deliberately parked
-- **#14** — "User can create a new item from an input field" (e.g. add a custom tag/expertise inline). Not started.
-- **#16** — Multiple categories for service creation. Not started.
+### Round 3 highlights — where things live
+- **Custom orders = single payment** — milestone UI removed from OfferComposer / DirectOfferDialog / ReviewOffer; fee-deduction card in the composer sidebar.
+- **Custom orders merged into orders (unified flow)** — a custom order is only the *negotiation* (request → offer → accept). Accepting a single-payment offer sets `custom_orders.flow='order'` and the created Order runs the **regular lifecycle**: deliver/approve/revision/dispute/timeline/review (review lands on the anchored service). Legacy accepted milestone orders keep `flow='milestone'` + the Workspace; milestone endpoints reject order-flow orders. The Custom Orders / Custom Requests **tabs are gone** — a "Requests & offers" strip (embedded `CustomOrdersContent` / `CustomRequestsInbox`) tops each Orders tab; old `?tab=` links redirect. Order model has three-origin accessors (`freelancer`, `service`, `display_title`) used across controllers/notifications.
+- **Freelancer leveling** — Bronze→Diamond thresholds existed; now profile-completion steps award **one-time XP** (12 steps, 135 total, `ProfileXpService` + `profile_xp_awards` column, synced on `/freelancer-dashboard/level`). "Your level" dialog (`LevelDialog`) opens from the profile-strength card + level badge; badge also on the service detail page. Fixed orders double-awarding XP/completed-count (observer is the single source now).
+- **Media rules** — publishing a service **requires ≥1 image** (server-enforced on create/publish/last-image-delete; drafts exempt); `feature_image_id` must be an image. `serviceCoverUrl()` (lib/serviceCover.ts) picks card covers (feature image, else first image-type media — never a PDF). Detail page gallery plays **videos**; PDFs listed in a **Documents** card.
+- **Auth/UX fixes** — post-verification auto-redirect to Explore Services; PHP upload caps raised to 52M/60M (start.sh + local php.ini) — the "portfolio can't upload" bug; localStorage (form recovery, client/freelancer mode) scoped per account; draft saves never blocked (incomplete pricing/FAQ rows dropped, tier rule skips drafts); dialogs restyled (titles in body, no DialogTitle bars — keep this pattern for new dialogs); admin user table sorts server-side; admin about fields render rich text; mobile filter collapse on Explore Services.
+
+### Open items
+- **#22 (last open decision):** "add more detail on custom order card" — context changed by the merge; the card in question is now the Requests & offers strip card. Ask Kimleng which details.
+- **Parked by client (9):** order-detail file collection removal, "feedback:" in order detail, dispute-flow items (#29, #31–34 — now automatically applicable to custom orders thanks to the unified flow), IAM in admin dashboard.
+- Pre-existing lint debt: a few react-compiler errors in `Workspace.tsx` (static-components) and setState-in-effect in dashboard page.tsx files — untouched, not from this work.
 
 ## Design workflow note
-Some pages were built from **Claude Design** handoff bundles (a gzipped tar fetched from a design URL, extracted, then implemented to match pixel-for-pixel). **Find Freelancers** and **Order Detail** came from those bundles.
+Some pages were built from **Claude Design** handoff bundles. **Find Freelancers** and **Order Detail** came from those bundles.
 
 ---
-At handoff the working tree was clean on both repos. Confirm git state before starting.
+At handoff both repos are clean and pushed. Confirm git state before starting.

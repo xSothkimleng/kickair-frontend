@@ -28,22 +28,39 @@ function chipFor(o: CustomOrder): { label: string; tone: "neutral" | "pending" |
   return STATUS_CHIP[o.status] ?? STATUS_CHIP.pending;
 }
 
-export default function CustomOrdersContent() {
+/**
+ * Custom-order list. `embedded` renders it as the "Requests & offers" strip
+ * inside the Orders tab: negotiation-phase items only — accepted offers on the
+ * unified order flow live in the orders list itself (legacy milestone-flow
+ * orders stay here so their Workspace remains reachable).
+ */
+export default function CustomOrdersContent({ embedded = false }: { embedded?: boolean }) {
   const router = useRouter();
-  const { data: orders = [], isLoading } = useMyCustomOrders();
+  const { data: allOrders = [], isLoading } = useMyCustomOrders();
+  const orders = embedded
+    ? allOrders.filter((o: CustomOrder) => !(o.status === "accepted" && o.flow === "order"))
+    : allOrders;
+
+  if (embedded && !isLoading && orders.length === 0) return null;
 
   return (
-    <Box>
-      <Box sx={{ mb: { xs: 2.5, sm: 3.5 } }}>
-        <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom orders</Typography>
-        <Typography sx={{ fontSize: 14, color: tokens.text2 }}>Negotiated, off-menu work with a one-time payment.</Typography>
-      </Box>
+    <Box sx={embedded ? { mb: 3.5 } : undefined}>
+      {embedded ? (
+        <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, mb: 1.25 }}>
+          Requests &amp; offers
+        </Typography>
+      ) : (
+        <Box sx={{ mb: { xs: 2.5, sm: 3.5 } }}>
+          <Typography sx={{ fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>Custom orders</Typography>
+          <Typography sx={{ fontSize: 14, color: tokens.text2 }}>Negotiated, off-menu work with a one-time payment.</Typography>
+        </Box>
+      )}
 
       {isLoading ? (
         <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
           {[0, 1, 2].map((i) => <Skeleton key={i} variant="rounded" height={92} sx={{ borderRadius: "16px" }} />)}
         </Box>
-      ) : orders.length === 0 ? (
+      ) : orders.length === 0 && !embedded ? (
         <Box sx={{ ...coCard, p: { xs: 5, sm: 8 }, textAlign: "center" }}>
           <Box sx={{ maxWidth: 360, mx: "auto", display: "flex", flexDirection: "column", alignItems: "center", gap: 2 }}>
             <Box sx={{ width: 60, height: 60, borderRadius: "50%", bgcolor: tokens.surface2, border: `1px solid ${tokens.border}`, display: "grid", placeItems: "center" }}>
