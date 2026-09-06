@@ -1,8 +1,9 @@
 "use client";
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Avatar, Box, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import { Avatar, Box, Button, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import BalanceOutlinedIcon from "@mui/icons-material/BalanceOutlined";
+import ErrorOutlineRoundedIcon from "@mui/icons-material/ErrorOutlineRounded";
 import { api } from "@/lib/api";
 import { AdminDispute } from "@/types/order";
 import { registerAdminRefresh } from "@/components/layout/GlobalNotificationToast";
@@ -22,6 +23,7 @@ function outcomeLabel(outcome: string | null) {
     full_freelancer: "Full payment to freelancer",
     partial: "Partial split",
     full_client: "Full refund to client",
+    continue: "Continued with admin feedback",
   };
   return labels[outcome] ?? outcome;
 }
@@ -46,15 +48,19 @@ export default function DisputeReviewSection() {
   const router = useRouter();
   const [disputes, setDisputes] = useState<AdminDispute[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("open");
 
   const fetchDisputes = useCallback(async () => {
     setLoading(true);
+    setError(null);
     try {
       const res = await api.getAdminDisputes(1, statusFilter === "all" ? undefined : statusFilter);
       setDisputes(res.data);
-    } catch {
+    } catch (err) {
+      // Surface the failure — an empty queue and a broken request must not look the same.
       setDisputes([]);
+      setError(err instanceof Error && err.message ? err.message : "The disputes request failed.");
     } finally {
       setLoading(false);
     }
@@ -72,7 +78,7 @@ export default function DisputeReviewSection() {
       <SectionHead
         icon={<BalanceOutlinedIcon sx={{ fontSize: 21 }} />}
         title="Dispute review"
-        count={loading ? null : statusFilter === "resolved" ? null : openCount}
+        count={loading || error ? null : statusFilter === "resolved" ? null : openCount}
         desc="Orders where a client and freelancer disagree. Review both sides and the evidence, then decide how escrowed funds are released."
       />
 
@@ -90,6 +96,13 @@ export default function DisputeReviewSection() {
                 <Skeleton variant="text" width="28%" /><Skeleton variant="text" width="30%" /><Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: "999px" }} /><Skeleton variant="text" width={80} />
               </Box>
             ))}
+          </Box>
+        ) : error ? (
+          <Box sx={{ pb: 3 }}>
+            <AdminEmpty icon={<ErrorOutlineRoundedIcon sx={{ fontSize: 28, color: tokens.error }} />} title="Couldn’t load disputes" body={error} />
+            <Box sx={{ display: "flex", justifyContent: "center", mt: -1.5 }}>
+              <Button onClick={fetchDisputes} sx={{ textTransform: "none", fontWeight: 600, fontSize: 13, borderRadius: "999px", px: 2, color: tokens.text, border: `1px solid ${tokens.border}` }}>Try again</Button>
+            </Box>
           </Box>
         ) : disputes.length === 0 ? (
           <AdminEmpty icon={<BalanceOutlinedIcon sx={{ fontSize: 28 }} />} title="No disputes here" body="Every dispute in this filter has been handled. New disputes raised on orders will appear here for review." />
@@ -115,11 +128,11 @@ export default function DisputeReviewSection() {
                         <Typography sx={{ fontSize: 14, fontWeight: 500, letterSpacing: "-0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 260 }}>
                           #{d.order.id} · {d.order.title}
                         </Typography>
-                        <Typography sx={{ fontSize: 11.5, fontFamily: tokens.mono, color: tokens.text3 }}>${Number(d.order.price).toLocaleString()} in escrow</Typography>
+                        <Typography sx={{ fontSize: 11.5, fontFamily: tokens.mono, color: tokens.text3 }}>Dispute #{d.sequence} · ${Number(d.order.price).toLocaleString()} in escrow</Typography>
                       </TableCell>
                       <TableCell><PartyVs a={d.client} b={d.freelancer} /></TableCell>
                       <TableCell>
-                        <StatusPill tone={open ? "pending" : "success"} label={open ? "Open" : "Resolved"} />
+                        <StatusPill tone={open ? "pending" : d.outcome === "continue" ? "info" : "success"} label={open ? "Open" : d.outcome === "continue" ? "Continued" : "Resolved"} />
                         {outcome && <Typography sx={{ fontSize: 10.5, color: tokens.text3, mt: 0.5 }}>{outcome}</Typography>}
                       </TableCell>
                       <TableCell><Typography sx={{ fontSize: 12.5, color: tokens.text2 }}>{formatDate(d.opened_at)}</Typography></TableCell>

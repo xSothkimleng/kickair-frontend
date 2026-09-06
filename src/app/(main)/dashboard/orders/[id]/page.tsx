@@ -180,37 +180,11 @@ function FileRow({ file, orderId }: { file: UploadedFile; orderId?: number }) {
   );
 }
 
-type DeliveryHistoryEntry = { note: string | null; attachments: UploadedFile[]; submitted_at: string };
-
-function PreviousSubmissions({ history, orderId }: { history?: DeliveryHistoryEntry[]; orderId?: number }) {
-  if (!history || history.length <= 1) return null;
-  const prior = history.slice(0, -1).reverse(); // everything before the current delivery, newest first
-  return (
-    <Box sx={{ mt: 2.5, pt: 2, borderTop: "1px solid #F1F5F9" }}>
-      <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", letterSpacing: "0.06em", textTransform: "uppercase", mb: 1.25 }}>
-        Previous submissions ({prior.length})
-      </Typography>
-      <Stack spacing={1.5}>
-        {prior.map((sub, i) => (
-          <Box key={i} sx={{ p: "12px 14px", bgcolor: "#F8FAFC", border: "1px solid #F1F5F9", borderRadius: "8px" }}>
-            <Typography sx={{ fontSize: 11, color: "#94A3B8", mb: (sub.note || sub.attachments.length) ? 0.75 : 0 }}>
-              {new Date(sub.submitted_at).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" })}
-            </Typography>
-            {sub.note && <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mb: sub.attachments.length ? 1 : 0 }}>{sub.note}</Typography>}
-            {sub.attachments.length > 0 && (
-              <Stack spacing={1}>{sub.attachments.map((f, j) => <FileRow key={j} file={f} orderId={orderId} />)}</Stack>
-            )}
-          </Box>
-        ))}
-      </Stack>
-    </Box>
-  );
-}
-
 const OUTCOME_LABEL: Record<string, string> = {
   full_freelancer: "Resolved in favor of the freelancer",
   full_client: "Resolved in favor of the client — refunded",
   partial: "Partial resolution — split between both parties",
+  continue: "Order continues with admin feedback",
 };
 
 function EvidenceParty({ label, files, statement, orderId }: { label: string; files: EvidenceFile[] | null; statement: string | null; orderId?: number }) {
@@ -244,7 +218,7 @@ function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number
         {resolved ? "This dispute has been resolved by an admin." : "This order is under dispute. An admin will review it."}
       </Box>
 
-      <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Dispute reason</Typography>
+      <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Dispute #{dispute.sequence} · reason</Typography>
       <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{dispute.reason}</Typography>
 
       {resolved && (
@@ -256,7 +230,7 @@ function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number
           </Typography>
           {dispute.admin_note && (
             <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
-              <strong>Admin note:</strong> {dispute.admin_note}
+              <strong>Admin feedback:</strong> {dispute.admin_note}
             </Typography>
           )}
         </Box>
@@ -538,28 +512,6 @@ export default function ClientOrderDetailPage() {
 
           {/* ── Section 5: Status card ── */}
 
-          {/* Delivered */}
-          {order.status === "delivered" && (
-            <Box sx={CARD}>
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25, p: "12px 14px", bgcolor: "#EFF6FF", color: "#1D4ED8", border: "1px solid rgba(37,99,235,0.18)", borderRadius: "8px", mb: 2.25, fontSize: 13, fontWeight: 500 }}>
-                <CheckIcon sx={{ fontSize: 16, mt: "1px", flexShrink: 0 }} />
-                Work has been delivered — review and take action.
-              </Box>
-              {order.delivery_note && (
-                <>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Delivery note</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{order.delivery_note}</Typography>
-                </>
-              )}
-              {order.delivery_attachments?.length > 0 && (
-                <Stack spacing={1} mt={1.75}>
-                  {order.delivery_attachments.map((f, i) => <FileRow key={i} file={f} orderId={orderId} />)}
-                </Stack>
-              )}
-              <PreviousSubmissions history={order.delivery_history} orderId={orderId} />
-            </Box>
-          )}
-
           {/* Revision requested */}
           {order.status === "revision_requested" && (
             <Box sx={CARD}>
@@ -577,7 +529,11 @@ export default function ClientOrderDetailPage() {
           )}
 
           {/* Dispute (open or resolved) */}
-          {order.dispute && <DisputeBlock dispute={order.dispute} orderId={order.id} />}
+          {/* Open dispute, or the one that ended the order. A "continue" resolution
+              lives on in the order record instead, so the card doesn't linger. */}
+          {order.dispute && (order.dispute.status === "open" || order.dispute.outcome !== "continue") && (
+            <DisputeBlock dispute={order.dispute} orderId={order.id} />
+          )}
 
           {/* Completed */}
           {order.status === "completed" && (

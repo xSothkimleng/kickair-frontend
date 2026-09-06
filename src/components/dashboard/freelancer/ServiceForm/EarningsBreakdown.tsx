@@ -1,11 +1,11 @@
-import { Box, Paper, Typography } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import { ServiceFormData } from "../types";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 /**
- * The transparent price breakdown shown before the freelancer agrees to the
- * Terms: for each enabled tier — what the client pays, KickAir's commission,
- * and what actually lands in the freelancer's wallet.
+ * The transparent price breakdown at the foot of the Pricing Options card:
+ * for each enabled tier — what the client pays, KickAir's commission, and
+ * what actually lands in the freelancer's wallet.
  */
 export default function EarningsBreakdown({ pricing }: { pricing: ServiceFormData["pricing"] }) {
   const rate = useCommissionRate();
@@ -17,9 +17,9 @@ export default function EarningsBreakdown({ pricing }: { pricing: ServiceFormDat
   if (rate == null || tiers.length === 0) return null;
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 0.5 }}>Your earnings per order</Typography>
-      <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 2.5 }}>
+    <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid rgba(0, 0, 0, 0.08)" }}>
+      <Typography sx={{ fontSize: 14, fontWeight: 600, color: "black", mb: 0.5 }}>Your earnings per order</Typography>
+      <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 2 }}>
         Clients always pay your exact price — KickAir&apos;s {Math.round(rate * 100)}% commission comes out of your side.
       </Typography>
 
@@ -49,6 +49,6 @@ export default function EarningsBreakdown({ pricing }: { pricing: ServiceFormDat
           );
         })}
       </Box>
-    </Paper>
+    </Box>
   );
 }

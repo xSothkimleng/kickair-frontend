@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Box, Container } from "@mui/material";
 import DashboardHeader from "@/components/layout/dashboard/DashboardHeader";
 import DashboardTabs from "@/components/layout/dashboard/DashboardTabs";
@@ -23,16 +23,23 @@ const tabs: { value: string; label: string }[] = [
 
 const VALID_TABS = tabs.map(t => t.value);
 
-export default function ClientSpacePage() {
-  const router = useRouter();
-  const [activeTab, setActiveTab] = useState<Tab>("dashboard");
+// Custom orders merged into Orders — honor old links.
+const resolveTab = (raw: string | null): Tab => {
+  if (raw === "custom-orders") return "orders";
+  return raw && VALID_TABS.includes(raw) ? (raw as Tab) : "dashboard";
+};
 
+function ClientSpace() {
+  const router = useRouter();
+  const tabParam = useSearchParams().get("tab");
+  const [activeTab, setActiveTab] = useState<Tab>(() => resolveTab(tabParam));
+
+  // Follow the URL after mount too: in-app links that only change `?tab=`
+  // (notification "View", dashboard shortcuts) must switch tabs while this
+  // page is already on screen.
   useEffect(() => {
-    const tab = new URLSearchParams(window.location.search).get("tab");
-    // Custom orders merged into Orders — honor old links.
-    if (tab === "custom-orders") setActiveTab("orders");
-    else if (tab && VALID_TABS.includes(tab)) setActiveTab(tab as Tab);
-  }, []);
+    setActiveTab(resolveTab(tabParam));
+  }, [tabParam]);
 
   const handleTabChange = (tab: Tab) => {
     setActiveTab(tab);
@@ -53,5 +60,13 @@ export default function ClientSpacePage() {
         {activeTab === "finance"   && <FinanceContent />}
       </Container>
     </Box>
+  );
+}
+
+export default function ClientSpacePage() {
+  return (
+    <Suspense fallback={<Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }} />}>
+      <ClientSpace />
+    </Suspense>
   );
 }

@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
   Box, Paper, Typography, Stack, Button, Chip, Avatar, CircularProgress, Alert,
-  RadioGroup, FormControlLabel, Radio, TextField, Divider, InputAdornment,
+  RadioGroup, FormControlLabel, Radio, TextField, InputAdornment,
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import GavelIcon from "@mui/icons-material/Gavel";
@@ -14,16 +14,29 @@ import SendIcon from "@mui/icons-material/Send";
 import { api } from "@/lib/api";
 import { AdminDispute, EvidenceFile } from "@/types/order";
 import { Message } from "@/types/message";
-import OrderTimeline from "@/components/dashboard/OrderTimeline";
-import DeliverablesReference from "@/components/dashboard/DeliverablesReference";
+import OrderRecord from "@/components/dashboard/OrderRecord";
 import { getEcho } from "@/lib/echo";
 import { useAuth } from "@/components/context/AuthContext";
 
 const OUTCOMES = [
-  { value: "full_freelancer", label: "Release full payment to freelancer" },
-  { value: "full_client", label: "Refund the client in full" },
-  { value: "partial", label: "Split — partial amount to freelancer" },
+  { value: "full_freelancer", label: "Release full payment to freelancer", short: "Released to freelancer" },
+  { value: "full_client", label: "Refund the client in full", short: "Refunded to client" },
+  { value: "partial", label: "Split — partial amount to freelancer", short: "Partial split" },
+  { value: "continue", label: "Continue the order with admin feedback", short: "Continued with admin feedback" },
 ];
+
+const fmtDateTime = (iso: string) => new Date(iso).toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric", hour: "numeric", minute: "2-digit" });
+
+const money = (v: string | number | null | undefined) => (v == null || v === "" ? "—" : `$${Number(v).toFixed(2)}`);
+
+function AgreementStat({ label, value, strong = false }: { label: string; value: string; strong?: boolean }) {
+  return (
+    <Box sx={{ bgcolor: "#F8FAFC", border: "1px solid #F1F5F9", borderRadius: "10px", p: "10px 12px", minWidth: 0 }}>
+      <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#64748B", mb: 0.25 }}>{label}</Typography>
+      <Typography sx={{ fontSize: 14, fontWeight: strong ? 700 : 600, color: "#0F172A" }}>{value}</Typography>
+    </Box>
+  );
+}
 
 function EvidenceFiles({ files }: { files: EvidenceFile[] | null }) {
   if (!files?.length) return null;
@@ -177,10 +190,10 @@ export default function AdminDisputeDetailPage() {
       </Button>
       <Stack direction="row" alignItems="center" gap={1.5} mb={0.5} flexWrap="wrap">
         <GavelIcon sx={{ color: resolved ? "success.main" : "error.main" }} />
-        <Typography variant="h5" fontWeight={700}>Dispute #{dispute.id}</Typography>
-        <Chip label={resolved ? "Resolved" : "Open"} size="small" color={resolved ? "success" : "error"} />
+        <Typography variant="h5" fontWeight={700}>Dispute #{dispute.sequence} on order #{dispute.order.id}</Typography>
+        <Chip label={!resolved ? "Open" : dispute.outcome === "continue" ? "Continued" : "Resolved"} size="small" color={!resolved ? "error" : dispute.outcome === "continue" ? "info" : "success"} />
       </Stack>
-      <Typography color="text.secondary" mb={3}>Order #{dispute.order.id} · {dispute.order.title} · ${dispute.order.price}</Typography>
+      <Typography color="text.secondary" mb={3}>{dispute.order.title} · ${dispute.order.price}{dispute.earlier_disputes?.length ? ` · ${dispute.earlier_disputes.length} earlier dispute${dispute.earlier_disputes.length === 1 ? "" : "s"} on this order` : ""}</Typography>
 
       <Box sx={{ display: "flex", gap: 3, flexDirection: { xs: "column", lg: "row" } }}>
         {/* Left: details */}
@@ -199,9 +212,76 @@ export default function AdminDisputeDetailPage() {
             ))}
           </Stack>
 
+          {/* Custom-origin orders: what the client asked for and the offer both sides agreed to */}
+          {dispute.order.custom_order && (() => {
+            const co = dispute.order.custom_order;
+            return (
+              <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+                <Typography fontWeight={700} fontSize={14} mb={0.5}>Agreed custom offer</Typography>
+                <Typography variant="caption" color="text.secondary">
+                  The client&apos;s original request and the freelancer&apos;s offer that was accepted to create this order.
+                </Typography>
+
+                <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", letterSpacing: "0.06em", textTransform: "uppercase", mt: 2.25, mb: 1 }}>Client requested</Typography>
+                {co.description && (
+                  <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6, whiteSpace: "pre-wrap", mb: 1.25 }}>{co.description}</Typography>
+                )}
+                {co.attachments.length > 0 && (
+                  <Stack direction="row" gap={0.75} flexWrap="wrap" mb={1.25}>
+                    {co.attachments.map(name => <Chip key={name} label={name} size="small" variant="outlined" icon={<InsertDriveFileIcon sx={{ fontSize: 14 }} />} />)}
+                  </Stack>
+                )}
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
+                  <AgreementStat label="Requested budget" value={money(co.budget)} />
+                  <AgreementStat label="Requested timeline" value={co.desired_timeline_days ? `${co.desired_timeline_days} days` : "—"} />
+                </Box>
+
+                <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", letterSpacing: "0.06em", textTransform: "uppercase", mt: 2.25, mb: 1 }}>Freelancer offered · accepted by client</Typography>
+                {co.scope && (
+                  <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6, whiteSpace: "pre-wrap", mb: 1.25 }}>{co.scope}</Typography>
+                )}
+                <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" }, gap: 1.5 }}>
+                  <AgreementStat label="Agreed price" value={money(co.total ?? dispute.order.price)} strong />
+                  <AgreementStat label="Delivery" value={co.delivery_days ? `${co.delivery_days} days` : "—"} />
+                  <AgreementStat label="Revisions" value={co.revisions != null ? String(co.revisions) : "—"} />
+                </Box>
+                {co.offer_note && (
+                  <>
+                    <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mt: 1.5, mb: 0.5 }}>Note to client</Typography>
+                    <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6, whiteSpace: "pre-wrap" }}>{co.offer_note}</Typography>
+                  </>
+                )}
+              </Paper>
+            );
+          })()}
+
+          {/* Earlier disputes on this order — what was already raised and how it was handled */}
+          {!!dispute.earlier_disputes?.length && (
+            <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
+              <Typography fontWeight={700} fontSize={14} mb={0.5}>Earlier disputes on this order</Typography>
+              <Typography variant="caption" color="text.secondary">Read these first — the parties have been here before.</Typography>
+              <Stack spacing={1.5} mt={2}>
+                {dispute.earlier_disputes.map(d => (
+                  <Box key={d.id} sx={{ p: "12px 14px", bgcolor: "#F8FAFC", border: "1px solid #F1F5F9", borderRadius: "10px" }}>
+                    <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap" mb={0.5}>
+                      <Typography sx={{ fontSize: 13, fontWeight: 700 }}>Dispute #{d.sequence}</Typography>
+                      <Chip size="small" label={OUTCOMES.find(o => o.value === d.outcome)?.short ?? (d.status === "open" ? "Open" : "Resolved")} sx={{ height: 20, fontSize: 11 }} />
+                      <Typography sx={{ fontSize: 11.5, color: "#94A3B8" }}>{fmtDateTime(d.opened_at)}{d.resolved_at ? ` → resolved ${fmtDateTime(d.resolved_at)}` : ""}</Typography>
+                      <Button size="small" onClick={() => router.push(`/admin/disputes/${d.id}`)} sx={{ ml: "auto", textTransform: "none", fontSize: 12 }}>View</Button>
+                    </Stack>
+                    <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{d.reason}</Typography>
+                    {d.admin_note && (
+                      <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mt: 0.75 }}><strong>Admin feedback:</strong> {d.admin_note}</Typography>
+                    )}
+                  </Box>
+                ))}
+              </Stack>
+            </Paper>
+          )}
+
           {/* Reason */}
           <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-            <Typography fontWeight={700} fontSize={14} mb={1}>Dispute reason</Typography>
+            <Typography fontWeight={700} fontSize={14} mb={1}>Dispute #{dispute.sequence} · reason</Typography>
             <Typography variant="body2" sx={{ lineHeight: 1.6 }}>{dispute.reason}</Typography>
           </Paper>
 
@@ -211,17 +291,18 @@ export default function AdminDisputeDetailPage() {
             <PartyEvidence title="Freelancer's evidence" name={dispute.freelancer.name} statement={dispute.freelancer_statement} files={dispute.freelancer_evidence} />
           </Stack>
 
-          {/* Delivered work & revision requests — persistent record for judging the dispute */}
-          <DeliverablesReference
+          {/* Order record — the same unified timeline (events, deliveries, revisions)
+              both parties see on their order pages, for judging the dispute */}
+          <OrderRecord
             orderId={dispute.order.id}
+            createdAt={dispute.order.created_at}
             deliveryHistory={dispute.order.delivery_history}
             revisionHistory={dispute.order.revision_history}
+            preEvents={dispute.order.custom_order ? [
+              ...(dispute.order.custom_order.requested_at ? [{ id: -101, event_type: "request_sent", description: "The client opened a custom request.", actor_role: "client" as const, created_at: dispute.order.custom_order.requested_at }] : []),
+              ...(dispute.order.custom_order.offered_at ? [{ id: -102, event_type: "offer_sent", description: "The freelancer sent a custom offer.", actor_role: "freelancer" as const, created_at: dispute.order.custom_order.offered_at }] : []),
+            ] : undefined}
           />
-
-          {/* Timeline */}
-          <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
-            <OrderTimeline orderId={dispute.order.id} />
-          </Paper>
 
           {/* Resolve / outcome */}
           <Paper variant="outlined" sx={{ p: 2.5, borderRadius: 2 }}>
@@ -229,14 +310,17 @@ export default function AdminDisputeDetailPage() {
               <>
                 <Typography fontWeight={700} fontSize={14} mb={1}>Resolution</Typography>
                 <Chip
-                  label={OUTCOMES.find(o => o.value === dispute.outcome)?.label ?? "Resolved"}
-                  color="success" size="small" sx={{ mb: 1 }}
+                  label={OUTCOMES.find(o => o.value === dispute.outcome)?.short ?? "Resolved"}
+                  color={dispute.outcome === "continue" ? "info" : "success"} size="small" sx={{ mb: 1 }}
                 />
                 {dispute.outcome === "partial" && dispute.partial_freelancer_amount && (
                   <Typography variant="body2" mb={1}>Freelancer received: <strong>${dispute.partial_freelancer_amount}</strong></Typography>
                 )}
+                {dispute.outcome === "continue" && (
+                  <Typography variant="body2" mb={1}>No funds moved. The order went back to in progress so the freelancer can deliver again.</Typography>
+                )}
                 {dispute.admin_note && (
-                  <Typography variant="body2" color="text.secondary"><strong>Admin note:</strong> {dispute.admin_note}</Typography>
+                  <Typography variant="body2" color="text.secondary"><strong>Admin feedback:</strong> {dispute.admin_note}</Typography>
                 )}
               </>
             ) : (
@@ -248,6 +332,11 @@ export default function AdminDisputeDetailPage() {
                     <FormControlLabel key={o.value} value={o.value} control={<Radio size="small" />} label={<Typography variant="body2">{o.label}</Typography>} />
                   ))}
                 </RadioGroup>
+                {outcome === "continue" && (
+                  <Alert severity="info" sx={{ mt: 1, fontSize: 13 }}>
+                    No money moves. The order goes back to in progress: the freelancer can submit a new delivery and the client waits for it. Your feedback appears in the order record for both parties, and either party may dispute again later.
+                  </Alert>
+                )}
                 {outcome === "partial" && (
                   <TextField
                     type="number" size="small" label="Amount to freelancer" value={partialAmount}
@@ -257,13 +346,13 @@ export default function AdminDisputeDetailPage() {
                   />
                 )}
                 <TextField
-                  fullWidth multiline minRows={3} label="Admin note (required)" value={adminNote}
+                  fullWidth multiline minRows={3} label={outcome === "continue" ? "Admin feedback (required)" : "Admin note (required)"} value={adminNote}
                   onChange={e => setAdminNote(e.target.value)} sx={{ mt: 1.5 }}
                   slotProps={{ htmlInput: { maxLength: 2000 } }}
                 />
                 <Box sx={{ display: "flex", justifyContent: "flex-end", mt: 2 }}>
-                  <Button variant="contained" color="error" onClick={handleResolve} disabled={resolving} sx={{ textTransform: "none" }}>
-                    {resolving ? <CircularProgress size={18} color="inherit" /> : "Resolve dispute"}
+                  <Button variant="contained" color={outcome === "continue" ? "primary" : "error"} onClick={handleResolve} disabled={resolving} sx={{ textTransform: "none" }}>
+                    {resolving ? <CircularProgress size={18} color="inherit" /> : outcome === "continue" ? "Send feedback & continue order" : "Resolve dispute"}
                   </Button>
                 </Box>
               </>

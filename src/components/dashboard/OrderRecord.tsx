@@ -6,6 +6,7 @@ import {
   AddShoppingCart, CheckCircle, Replay, LocalShipping, Gavel,
   AttachFile, Cancel, RadioButtonChecked, InsertDriveFile as FileIcon,
   Image as ImageIcon, Download as DownloadIcon,
+  RequestQuoteOutlined, LocalOfferOutlined,
 } from "@mui/icons-material";
 import { api } from "@/lib/api";
 import { OrderTimelineEvent } from "@/types/order";
@@ -16,6 +17,8 @@ type DeliveryEntry = { note: string | null; attachments: Attachment[]; submitted
 type RevisionEntry = { note: string | null; requested_at: string };
 
 const EVENT_STYLE: Record<string, { icon: React.ReactNode; color: string }> = {
+  request_sent:       { icon: <RequestQuoteOutlined sx={{ fontSize: 13 }} />, color: "#64748B" },
+  offer_sent:         { icon: <LocalOfferOutlined sx={{ fontSize: 13 }} />, color: "#7C3AED" },
   order_placed:       { icon: <AddShoppingCart sx={{ fontSize: 13 }} />, color: "#0F172A" },
   order_accepted:     { icon: <CheckCircle sx={{ fontSize: 13 }} />,     color: "#2563EB" },
   work_delivered:     { icon: <LocalShipping sx={{ fontSize: 13 }} />,   color: "#16A34A" },
@@ -24,6 +27,7 @@ const EVENT_STYLE: Record<string, { icon: React.ReactNode; color: string }> = {
   order_completed:    { icon: <CheckCircle sx={{ fontSize: 13 }} />,     color: "#16A34A" },
   order_cancelled:    { icon: <Cancel sx={{ fontSize: 13 }} />,          color: "#94A3B8" },
   dispute_opened:     { icon: <Gavel sx={{ fontSize: 13 }} />,           color: "#DC2626" },
+  dispute_feedback:   { icon: <Gavel sx={{ fontSize: 13 }} />,           color: "#2563EB" },
   dispute_resolved:   { icon: <Gavel sx={{ fontSize: 13 }} />,           color: "#16A34A" },
   evidence_submitted: { icon: <AttachFile sx={{ fontSize: 13 }} />,      color: "#64748B" },
 };
@@ -79,11 +83,14 @@ export default function OrderRecord({
   createdAt,
   deliveryHistory,
   revisionHistory,
+  preEvents,
 }: {
   orderId: number;
   createdAt?: string;
   deliveryHistory?: DeliveryEntry[];
   revisionHistory?: RevisionEntry[];
+  /** Events that predate the order itself (e.g. a custom request/offer), merged into the timeline. */
+  preEvents?: OrderTimelineEvent[];
 }) {
   const [events, setEvents] = useState<OrderTimelineEvent[]>([]);
   const [loading, setLoading] = useState(true);
@@ -102,14 +109,18 @@ export default function OrderRecord({
 
   // The event log is the spine; deliveries/revisions attach to their k-th
   // matching event (both lists are append-only, so positional matching holds).
-  const baseEvents: OrderTimelineEvent[] = events.length
-    ? events
-    : createdAt
-      ? [{ id: -1, event_type: "order_placed", description: "Order was placed.", actor_role: "client", created_at: createdAt }]
-      : [];
+  const baseEvents: OrderTimelineEvent[] = [
+    ...(preEvents ?? []),
+    ...(events.length
+      ? events
+      : createdAt
+        ? [{ id: -1, event_type: "order_placed", description: "Order was placed.", actor_role: "client" as const, created_at: createdAt }]
+        : []),
+  ];
 
   let dIdx = 0;
   let rIdx = 0;
+  let disputeNo = 0; // disputes are numbered per order in the order they were opened
   const rows: RecordRow[] = baseEvents.map((e) => {
     const row: RecordRow = {
       key: `ev-${e.id}`,
@@ -119,6 +130,14 @@ export default function OrderRecord({
       description: e.description,
       actor: e.actor_role,
     };
+    if (e.event_type === "dispute_opened") disputeNo += 1;
+    // An admin "continue" decision: titled by the dispute it answers, with the
+    // feedback shown as a note. Only a true ending produces a "Dispute Resolved" row.
+    if (e.event_type === "dispute_feedback") {
+      row.title = `Dispute #${Math.max(disputeNo, 1)}`;
+      row.description = "Admin feedback";
+      row.note = e.description.replace(/^Admin feedback:\s*/i, "");
+    }
     if (e.event_type === "work_delivered" || e.event_type === "work_resubmitted") {
       const d = deliveries[dIdx];
       dIdx += 1;

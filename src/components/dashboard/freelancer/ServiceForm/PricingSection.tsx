@@ -1,6 +1,7 @@
 import { Box, Paper, Typography, Grid } from "@mui/material";
 import { ServiceFormData } from "../types";
 import PricingTierCard from "./PricingTierCard";
+import EarningsBreakdown from "./EarningsBreakdown";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 interface PricingSectionProps {
@@ -67,6 +68,9 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
           new orders use the updated pricing.
         </Typography>
       </Box>
+
+      {/* What the freelancer nets per tier — lives at the foot of the pricing card */}
+      <EarningsBreakdown pricing={formData.pricing} />
     </Paper>
   );
 }

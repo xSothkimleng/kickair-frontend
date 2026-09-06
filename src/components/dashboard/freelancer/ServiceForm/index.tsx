@@ -11,7 +11,6 @@ import { useAuth } from "@/components/context/AuthContext";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
 import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
-import EarningsBreakdown from "./EarningsBreakdown";
 import MediaGallerySection from "./MediaGallerySection";
 import FAQsSection from "./FAQsSection";
 import CustomOrdersSection from "./CustomOrdersSection";
@@ -458,9 +457,6 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
 
       {/* TODO: After implementing Message feature */}
       {/* <RequirementsSection formData={formData} onFormDataChange={setFormData} /> */}
-
-      {/* Price breakdown — what the freelancer nets per tier, shown BEFORE the T&C */}
-      <EarningsBreakdown pricing={formData.pricing} />
 
       {/* Terms & Actions */}
       <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>

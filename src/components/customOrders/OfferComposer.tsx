@@ -83,7 +83,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
   };
 
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0,1fr) 340px" }, gap: 3, alignItems: "start" }}>
+    <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3, alignItems: "start" }}>
       {/* ── Builder ── */}
       <Box sx={{ ...coCard, p: { xs: 2.25, md: 3 } }}>
         <Typography sx={labelSx}>Scope of work</Typography>
@@ -115,8 +115,8 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
         </Box>
       </Box>
 
-      {/* ── Summary sidebar ── */}
-      <Box sx={{ ...coCard, p: { xs: 2.25, md: 3 }, position: { md: "sticky" }, top: 24 }}>
+      {/* ── Summary — stacked full-width below the builder ── */}
+      <Box sx={{ ...coCard, p: { xs: 2.25, md: 3 } }}>
         <Typography sx={coLabel}>Offer summary</Typography>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, my: 1.75 }}>
           <Avatar sx={{ width: 36, height: 36, bgcolor: tokens.text, fontSize: 13, fontWeight: 600 }}>{initials(clientName)}</Avatar>

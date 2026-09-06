@@ -15,13 +15,18 @@ export interface EvidenceFile {
   file_type: "image" | "pdf";
 }
 
+/** How an admin closed a dispute. `continue` returns the order to the parties with feedback; the others end it. */
+export type DisputeOutcome = "full_freelancer" | "partial" | "full_client" | "continue";
+
 export interface Dispute {
   id: number;
   order_id: number;
+  /** Per-order number: disputes stack after a "continue" resolution (#1, #2, …). */
+  sequence: number;
   opened_by_user_id: number;
   reason: string;
   status: "open" | "resolved";
-  outcome: "full_freelancer" | "partial" | "full_client" | null;
+  outcome: DisputeOutcome | null;
   partial_freelancer_amount: string | null;
   client_evidence: EvidenceFile[] | null;
   freelancer_evidence: EvidenceFile[] | null;
@@ -34,8 +39,9 @@ export interface Dispute {
 
 export interface AdminDispute {
   id: number;
+  sequence: number;
   status: "open" | "resolved";
-  outcome: "full_freelancer" | "partial" | "full_client" | null;
+  outcome: DisputeOutcome | null;
   reason: string;
   client_evidence: EvidenceFile[] | null;
   freelancer_evidence: EvidenceFile[] | null;
@@ -50,8 +56,24 @@ export interface AdminDispute {
     price: string;
     title: string;
     conversation_id: number | null;
+    created_at?: string;
     delivery_history?: Array<{ note: string | null; attachments: Array<{ url: string; file_name: string; file_type: string }>; submitted_at: string }>;
     revision_history?: Array<{ note: string | null; requested_at: string }>;
+    /** Present for orders born from an accepted custom offer: the client's request + the accepted offer terms. */
+    custom_order?: {
+      id: number;
+      description: string | null;
+      budget: string | number | null;
+      desired_timeline_days: number | null;
+      attachments: string[];
+      scope: string | null;
+      total: string | number | null;
+      delivery_days: number | null;
+      revisions: number | null;
+      offer_note: string | null;
+      requested_at: string | null;
+      offered_at: string | null;
+    } | null;
   };
   client: {
     id: number;
@@ -65,6 +87,17 @@ export interface AdminDispute {
     email: string;
     avatar_url: string | null;
   };
+  /** Prior disputes on the same order, oldest first. */
+  earlier_disputes?: Array<{
+    id: number;
+    sequence: number;
+    status: "open" | "resolved";
+    outcome: DisputeOutcome | null;
+    reason: string;
+    admin_note: string | null;
+    opened_at: string;
+    resolved_at: string | null;
+  }>;
 }
 
 export interface Review {
@@ -165,7 +198,19 @@ export interface Order {
   pricing_option_id: number | null;  // null for job-based orders
   proposal_id: number | null;        // null for service-based orders
   custom_order_id?: number | null;   // set for orders born from an accepted custom offer
-  custom_order?: { id: number; delivery_days: number | null; revisions: number | null; scope: string | null } | null;
+  custom_order?: {
+    id: number;
+    delivery_days: number | null;
+    revisions: number | null;
+    scope: string | null;
+    description?: string | null;
+    budget?: string | number | null;
+    desired_timeline_days?: number | null;
+    attachments?: string[];
+    offer_note?: string | null;
+    requested_at?: string | null;
+    offered_at?: string | null;
+  } | null;
   price: string | null;              // locked at creation time
   status: OrderStatus;
   delivery_note: string | null;

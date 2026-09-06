@@ -1,13 +1,15 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Box, Container, Typography, Button, CircularProgress, Avatar } from "@mui/material";
-import { ChevronLeft, AccessTime } from "@mui/icons-material";
+import { ChevronLeft, AccessTime, ArrowForward } from "@mui/icons-material";
 import { tokens } from "@/theme";
-import { useCustomOrder } from "@/components/customOrders/hooks";
-import { Money, coCard, coLabel, initials } from "@/components/customOrders/kit";
+import { api } from "@/lib/api";
+import { useCustomOrder, useCoInvalidate } from "@/components/customOrders/hooks";
+import { Money, coCard, coLabel, initials, AttachChip } from "@/components/customOrders/kit";
 import ReviewOffer from "@/components/customOrders/ReviewOffer";
+import OfferComposer from "@/components/customOrders/OfferComposer";
 import Workspace from "@/components/customOrders/Workspace";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -22,6 +24,14 @@ export default function CustomOrderDetailPage() {
   const router = useRouter();
   const id = Number(params.id);
   const { data: order, isLoading, error, refetch } = useCustomOrder(id);
+  const invalidate = useCoInvalidate();
+  const [composing, setComposing] = useState(false);
+  const [declining, setDeclining] = useState(false);
+
+  // "Make an offer" in the orders list deep-links straight into the composer.
+  useEffect(() => {
+    if (new URLSearchParams(window.location.search).get("compose") === "1") setComposing(true);
+  }, []);
 
   // Unified flow: once accepted, the work IS a regular order — send each party
   // to the standard order page. The milestone Workspace only serves legacy orders.
@@ -55,12 +65,76 @@ export default function CustomOrderDetailPage() {
     return <Workspace order={order} role={role} />;
   }
 
+  // Pending + freelancer → the full request detail: brief, budget/timeline,
+  // attachments, and the Decline / Make an offer actions (composer inline).
+  if (order.status === "pending" && role === "freelancer") {
+    const handleDecline = async () => {
+      setDeclining(true);
+      try {
+        await api.declineCustomOrder(order.id);
+        await invalidate();
+        await refetch();
+      } finally {
+        setDeclining(false);
+      }
+    };
+
+    return (
+      <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
+        <Container disableGutters sx={{ maxWidth: "720px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 5 } }}>
+          <BackBtn onClick={() => router.push("/dashboard/freelancer?tab=orders")} label="Back to orders" />
+          <Header order={order} />
+
+          {composing ? (
+            <OfferComposer order={order} onSent={() => setComposing(false)} onCancel={() => setComposing(false)} />
+          ) : (
+            <Box sx={{ ...coCard, p: { xs: 2.5, md: 3.5 } }}>
+              <Box sx={{ display: "flex", border: `1px solid ${tokens.border}`, borderRadius: "12px", overflow: "hidden", mb: 2.5 }}>
+                <Box sx={{ flex: 1, p: "14px 18px" }}>
+                  <Typography sx={coLabel}>Budget</Typography>
+                  <Money value={order.budget} size={20} weight={600} />
+                </Box>
+                <Box sx={{ width: "1px", bgcolor: tokens.border }} />
+                <Box sx={{ flex: 1, p: "14px 18px" }}>
+                  <Typography sx={coLabel}>Timeline</Typography>
+                  <Box component="span" sx={{ fontFamily: tokens.mono, fontSize: 20, fontWeight: 600 }}>{order.desired_timeline_days ?? "—"} days</Box>
+                </Box>
+              </Box>
+
+              <Typography sx={coLabel}>The brief</Typography>
+              <Typography sx={{ fontSize: 14, lineHeight: 1.55, my: 1, mb: 2.5 }}>{order.description}</Typography>
+
+              {order.attachments.length > 0 && (
+                <Box sx={{ mb: 2.5 }}>
+                  <Typography sx={{ ...coLabel, mb: 1 }}>Attachments</Typography>
+                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                    {order.attachments.map((a) => <AttachChip key={a} name={a} />)}
+                  </Box>
+                </Box>
+              )}
+
+              <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5 }}>
+                <Button onClick={handleDecline} disabled={declining} sx={{ textTransform: "none", fontWeight: 600, color: tokens.text2, borderRadius: "999px" }}>
+                  {declining ? <CircularProgress size={16} /> : "Decline"}
+                </Button>
+                <Button onClick={() => setComposing(true)} endIcon={<ArrowForward />}
+                  sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", px: 2.5, height: 42, "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }}>
+                  Make an offer
+                </Button>
+              </Box>
+            </Box>
+          )}
+        </Container>
+      </Box>
+    );
+  }
+
   // Offered → client reviews + accepts; freelancer sees a read-only summary
   if (order.status === "offered" && role === "client") {
     return (
       <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
         <Container disableGutters sx={{ maxWidth: "1080px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 5 } }}>
-          <BackBtn onClick={() => router.push("/dashboard/client?tab=custom-orders")} label="Back to custom orders" />
+          <BackBtn onClick={() => router.push("/dashboard/client?tab=orders")} label="Back to orders" />
           <Header order={order} />
           <ReviewOffer order={order} onChanged={() => refetch()} />
         </Container>
@@ -72,8 +146,7 @@ export default function CustomOrderDetailPage() {
   return (
     <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
       <Container disableGutters sx={{ maxWidth: "720px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 5 } }}>
-        <BackBtn onClick={() => router.push(role === "freelancer" ? "/dashboard/freelancer?tab=custom-requests" : "/dashboard/client?tab=custom-orders")}
-          label={role === "freelancer" ? "Back to requests" : "Back to custom orders"} />
+        <BackBtn onClick={() => router.push(role === "freelancer" ? "/dashboard/freelancer?tab=orders" : "/dashboard/client?tab=orders")} label="Back to orders" />
         <Header order={order} />
 
         {order.status === "offered" && role === "freelancer" ? (

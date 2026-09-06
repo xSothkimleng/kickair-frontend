@@ -122,9 +122,12 @@ export function getNotificationRoute(n: Notification): string | null {
   if (type === "admin_kyc_pending") return `/admin/trust`;
   // Custom orders & milestones
   const customOrderId = data?.custom_order_id;
-  if (type === "custom_order_requested") return `/dashboard/freelancer?tab=orders`;
-  if (type === "custom_order_withdrawn") return `/dashboard/freelancer?tab=orders`;
-  if (type === "custom_order_declined") return `/dashboard/client?tab=orders`;
+  // A new request / decline / withdrawal opens the custom order itself; without
+  // an id fall back to the Orders tab, where requests & offers now live.
+  if (type === "custom_order_requested" || type === "custom_order_withdrawn" || type === "custom_order_declined") {
+    if (customOrderId) return `/dashboard/custom-orders/${customOrderId}`;
+    return role === "client" ? `/dashboard/client?tab=orders` : `/dashboard/freelancer?tab=orders`;
+  }
   if (customOrderId && (
     type === "custom_order_offered" || type === "custom_order_accepted" || type === "custom_order_ended" ||
     type === "milestone_funded" || type === "milestone_submitted" ||
