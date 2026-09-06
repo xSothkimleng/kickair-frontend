@@ -36,6 +36,15 @@ Admin endpoints return `{ data: [...], meta: { current_page, last_page, total } 
 **Status handling**
 When adding new order statuses, update both the `getStatusColor` and `getStatusLabel` maps in every component that renders a status chip — currently `OrderDetailModal`, `FreelancerOrderDetailModal`, `client/OrdersContent`, `freelancer/OrdersContent`.
 
+**Order history = the Order Record**
+`components/dashboard/OrderRecord.tsx` is the single history surface (lifecycle events + numbered deliveries/revisions with files + dispute rows). It's shared by the client and freelancer order pages and the admin dispute page. Don't add parallel history cards (a delivered-work card, a separate timeline, …) — add an event type / row style to the record instead. New `event_type`s need an `EVENT_STYLE` entry there.
+
+**Dashboard tabs & deep links**
+`dashboard/client/page.tsx` and `dashboard/freelancer/page.tsx` derive the tab from `?tab=` via `useSearchParams` (Suspense-wrapped) and keep following it after mount, so `router.push("/dashboard/freelancer?tab=orders")` from a notification switches tabs even when the dashboard is already open. Legacy `custom-orders` / `custom-requests` tab values map to `orders`.
+
+**Unified orders list**
+Both `OrdersContent` files interleave regular orders with negotiation-phase custom orders (`useMyCustomOrders` / `useIncomingCustomOrders`, excluding accepted order-flow ones) in one date-sorted list with a "requests" filter chip. Custom-order detail lives at `/dashboard/custom-orders/[id]` (accepted order-flow ones redirect to the regular order page).
+
 ---
 
 ## Order Flow (as of 2026-04-21)
@@ -43,7 +52,8 @@ When adding new order statuses, update both the `getStatusColor` and `getStatusL
 ### Status values
 `pending` → `active` → `delivered` → `completed`
 `delivered` → `revision_requested` → `delivered` (loop)
-`active` / `delivered` → `disputed` → `completed`
+`active` / `delivered` / `revision_requested` → `disputed` → `completed` (admin refund / release / partial)
+`disputed` → `active` (admin "Continue with admin feedback" — no money moves; disputes stack and are numbered per order, only one open at a time)
 `pending` / `active` → `cancelled`
 
 ### Client actions per status

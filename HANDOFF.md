@@ -13,7 +13,7 @@ Context for continuing work on KickAir, a Fiverr-like freelance marketplace. Rea
 ## Working preferences (important)
 - Commits: clean messages, **no `Co-Authored-By: Claude` lines**
 - Push directly to `main`, and **only when explicitly asked**
-- Verify before declaring done: `npx tsc --noEmit` (frontend) and `./vendor/bin/pest` (backend; 391 tests, all green at handoff)
+- Verify before declaring done: `npx tsc --noEmit` (frontend) and `./vendor/bin/pest` (backend; 396 tests, all green at handoff)
 - **Postgres gotcha:** enums are CHECK constraints — alter them with raw
   `ALTER TABLE ... DROP CONSTRAINT / ADD CONSTRAINT ... CHECK (...)`, never MySQL `MODIFY`
 - **Client feedback loop:** notes from testing sessions land as files in `../kickair-feedback/`; the `/feedback` skill (in `../.claude/skills/`) triages them into a reviewable todo page saved under `kickair-feedback/rounds/` (gitignored). Triage first, execution only after review.
@@ -41,9 +41,29 @@ Full per-task log with outcomes: `kickair-feedback/rounds/8.25.2026-todo.html` (
 - **Auth/UX fixes** — post-verification auto-redirect to Explore Services; PHP upload caps raised to 52M/60M (start.sh + local php.ini) — the "portfolio can't upload" bug; localStorage (form recovery, client/freelancer mode) scoped per account; draft saves never blocked (incomplete pricing/FAQ rows dropped, tier rule skips drafts); dialogs restyled (titles in body, no DialogTitle bars — keep this pattern for new dialogs); admin user table sorts server-side; admin about fields render rich text; mobile filter collapse on Explore Services.
 
 ### Open items
-- **#22 (last open decision):** "add more detail on custom order card" — context changed by the merge; the card in question is now the Requests & offers strip card. Ask Kimleng which details.
+- **#22 (last open decision):** "add more detail on custom order card" — context changed twice; the card in question is now the **request row in the unified Orders list** (see the 2026-09-06 status below). Ask Kimleng which details.
 - **Parked by client (9):** order-detail file collection removal, "feedback:" in order detail, dispute-flow items (#29, #31–34 — now automatically applicable to custom orders thanks to the unified flow), IAM in admin dashboard.
 - Pre-existing lint debt: a few react-compiler errors in `Workspace.tsx` (static-components) and setState-in-effect in dashboard page.tsx files — untouched, not from this work.
+
+## Status after the 2026-09-06 session (Kimleng's post-round-3 requests) — committed & pushed
+Frontend `4be37d8`, API `a47c431`. Both trees clean.
+
+### What changed — where things live
+- **Unified Orders list on both spaces** — negotiation-phase custom orders are rows in `client/OrdersContent` and `freelancer/OrdersContent` ("requests" filter chip with an "N new" badge; client gets Review offer / Withdraw, freelancer gets Make an offer / Decline). `CustomOrdersContent` and `CustomRequestsInbox` are deleted. The freelancer's pending-request detail (inline `OfferComposer`, `?compose=1` deep link) lives in `dashboard/custom-orders/[id]/page.tsx`; the composer is stacked (form above summary, full width).
+- **Order Record is the single order history** — `components/dashboard/OrderRecord.tsx` (events + numbered deliveries/revisions + files) is used by the client, freelancer **and admin dispute** pages. The delivered-work card on order detail, `OrderTimeline` and `DeliverablesReference` are gone. Kimleng's rule: don't add parallel history cards — put history in the record.
+- **Notifications** — `getNotificationRoute` sends custom-order request/decline/withdraw to `/dashboard/custom-orders/{id}`. Both dashboard `page.tsx` files read `?tab=` via `useSearchParams` (Suspense-wrapped) and follow changes after mount, so tab-only links work while the dashboard is already open.
+- **Service form** — `EarningsBreakdown` renders at the foot of `PricingSection`, inside the Pricing Options card.
+- **Admin dispute page** — Order Record; "Agreed custom offer" card for custom-origin orders (brief, budget, timeline, scope, price, delivery, revisions, note); "Earlier disputes on this order"; Trust & Safety shows an error state instead of a fake-empty queue. `AdminDisputeResource` uses the Order origin accessors — custom-origin orders used to 500 the whole queue. `OrderCancellationService` had the same two-origin bug, fixed.
+
+### Dispute model (agreed with Kimleng 2026-09-06)
+- Disputes **stack** per order and are **numbered** (`disputes.sequence` → "Dispute #1, #2, …"); only **one open at a time** (so #2 can never be resolved before #1). `Order::dispute()` = latest (`latestOfMany`), `Order::disputes()` = history, `Order::disputeSummaryLabel()` = "Disputes #1, #2 and #3".
+- Four outcomes. `full_freelancer` / `full_client` / `partial` end the order. **`continue`** ("Continue with admin feedback") is a *real* resolution: no money moves, the order goes back to **`active`** (freelancer sees Submit Delivery, client sees the waiting view), and either party may dispute again.
+- **Order record rows:** `dispute_opened` ("Dispute #n was opened by the … Reason: …"); one `dispute_feedback` row per continue, rendered as **"Dispute #n"** with "Admin feedback: …" (the frontend derives n by counting opened rows); and exactly **one** `dispute_resolved` summary when the matter actually ends — written by an admin money outcome ("Disputes #1 and #2 resolved — the client was refunded in full. Admin feedback: …") or by client approval in `OrderController::approve` ("… — the client accepted the work."). Earlier rows are never rewritten.
+- Admin UI: continue-outcome disputes show a blue **Continued** pill (list + detail) and sit under the Resolved filter.
+- Migration `2026_09_06_100000_allow_stacked_disputes` drops the one-per-order unique, adds `sequence`, extends the `outcome` CHECK. **Rollback fails on any DB that already holds a `continue` outcome** (the old constraint rejects it) — expected for an enum extension.
+
+### Open items (unchanged)
+- **#22** — which extra fields on the request row. Client's 9 parked items. Lint debt.
 
 ## Design workflow note
 Some pages were built from **Claude Design** handoff bundles. **Find Freelancers** and **Order Detail** came from those bundles.
