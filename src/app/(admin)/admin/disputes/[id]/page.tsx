@@ -1,6 +1,8 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { qk } from "@/lib/queryKeys";
 import { useParams, useRouter } from "next/navigation";
 import {
   Box, Paper, Typography, Stack, Button, Chip, Avatar, CircularProgress, Alert,
@@ -12,7 +14,7 @@ import InsertDriveFileIcon from "@mui/icons-material/InsertDriveFile";
 import ImageIcon from "@mui/icons-material/Image";
 import SendIcon from "@mui/icons-material/Send";
 import { api } from "@/lib/api";
-import { AdminDispute, EvidenceFile } from "@/types/order";
+import { EvidenceFile } from "@/types/order";
 import { Message } from "@/types/message";
 import OrderRecord from "@/components/dashboard/OrderRecord";
 import { getEcho } from "@/lib/echo";
@@ -77,9 +79,21 @@ export default function AdminDisputeDetailPage() {
   const { user } = useAuth();
   const disputeId = Number(params.id);
 
-  const [dispute, setDispute] = useState<AdminDispute | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // The dispute lives in React Query under the disputes prefix, so a realtime admin alert
+  // (a party opened a dispute) or our own resolve refetches it — no reload needed.
+  const queryClient = useQueryClient();
+  const { data: dispute = null, isLoading: loading, error: queryError } = useQuery({
+    queryKey: qk.disputes.adminDetail(disputeId),
+    queryFn: () => api.getAdminDispute(disputeId),
+    enabled: Number.isFinite(disputeId),
+  });
+  const error = queryError ? "Failed to load dispute." : null;
+
+  // After an admin action, refresh the dispute and the order record (its timeline lives under orders).
+  const refresh = async () => {
+    await queryClient.invalidateQueries({ queryKey: qk.disputes.all() });
+    queryClient.invalidateQueries({ queryKey: qk.orders.all() });
+  };
 
   // Resolve form
   const [outcome, setOutcome] = useState("");
@@ -94,28 +108,22 @@ export default function AdminDisputeDetailPage() {
   const [sending, setSending] = useState(false);
   const chatEndRef = useRef<HTMLDivElement>(null);
 
-  const fetchDispute = useCallback(async () => {
-    try {
-      const d = await api.getAdminDispute(disputeId);
-      setDispute(d);
-      if (d.order.conversation_id) {
-        const res = await api.getConversationMessages(d.order.conversation_id);
-        setMessages(res.data ?? []);
-      }
-    } catch {
-      setError("Failed to load dispute.");
-    } finally {
-      setLoading(false);
-    }
-  }, [disputeId]);
-
-  useEffect(() => { fetchDispute(); }, [fetchDispute]);
   useEffect(() => { chatEndRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+
+  // Initial chat history, once we know the order's conversation.
+  const conversationId = dispute?.order.conversation_id ?? null;
+  useEffect(() => {
+    if (!conversationId) return;
+    let active = true;
+    api.getConversationMessages(conversationId)
+      .then((res) => { if (active) setMessages(res.data ?? []); })
+      .catch(() => { /* chat stays empty; realtime still appends new messages */ });
+    return () => { active = false; };
+  }, [conversationId]);
 
   // Real-time: subscribe to the order's conversation so the admin sees client/freelancer
   // replies live (their messages broadcast on conversation.{id}). Our own sends use
   // ->toOthers() server-side, so we won't get echoes of our own messages.
-  const conversationId = dispute?.order.conversation_id ?? null;
   useEffect(() => {
     if (!conversationId) return;
     let echo: ReturnType<typeof getEcho>;
@@ -145,7 +153,7 @@ export default function AdminDisputeDetailPage() {
         admin_note: adminNote.trim(),
         ...(outcome === "partial" ? { partial_freelancer_amount: Number(partialAmount) } : {}),
       });
-      await fetchDispute();
+      await refresh();
     } catch {
       setResolveError("Failed to resolve. Please try again.");
     } finally {

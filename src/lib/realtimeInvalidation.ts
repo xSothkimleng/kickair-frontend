@@ -37,6 +37,14 @@ export function invalidateForNotification(queryClient: QueryClient, type?: strin
     return;
   }
 
+  if (type.startsWith("admin_dispute")) {
+    // Admin alerts about a dispute (a party opened one): refresh the dispute queue/detail
+    // and the order record the admin may be reading.
+    queryClient.invalidateQueries({ queryKey: qk.disputes.all() });
+    queryClient.invalidateQueries({ queryKey: qk.orders.all() });
+    return;
+  }
+
   if (type.startsWith("proposal")) {
     queryClient.invalidateQueries({ queryKey: qk.proposals.all() });
     queryClient.invalidateQueries({ queryKey: qk.orders.all() });

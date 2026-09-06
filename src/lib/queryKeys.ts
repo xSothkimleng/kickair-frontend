@@ -45,6 +45,7 @@ export const qk = {
   },
   disputes: {
     all: () => ["disputes"] as const,
+    adminDetail: (id: number | string) => ["disputes", "admin-detail", String(id)] as const,
   },
   customOrders: {
     all: () => ["custom-orders"] as const,

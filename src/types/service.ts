@@ -57,7 +57,7 @@ export interface ServiceReview {
   rating: number;
   comment: string | null;
   created_at: string;
-  pricing_option: Pick<PricingOption, "id" | "title">;
+  pricing_option: Pick<PricingOption, "id" | "title"> | null; // null when the review came from a custom order
   client_profile: ServiceReviewClientProfile;
 }
 

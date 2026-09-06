@@ -508,7 +508,16 @@ export default function ClientOrderDetailPage() {
           </Box>
 
           {/* ── Section 4: Order record — events, deliveries & revisions in one timeline ── */}
-          <OrderRecord orderId={orderId} createdAt={order.created_at} deliveryHistory={order.delivery_history} revisionHistory={order.revision_history} />
+          <OrderRecord
+            orderId={orderId}
+            createdAt={order.created_at}
+            deliveryHistory={order.delivery_history}
+            revisionHistory={order.revision_history}
+            preEvents={isCustom && order.custom_order ? [
+              ...(order.custom_order.requested_at ? [{ id: -101, event_type: "request_sent", description: "You sent a custom request to the freelancer.", actor_role: "client" as const, created_at: order.custom_order.requested_at }] : []),
+              ...(order.custom_order.offered_at ? [{ id: -102, event_type: "offer_sent", description: "The freelancer sent you a custom offer.", actor_role: "freelancer" as const, created_at: order.custom_order.offered_at }] : []),
+            ] : undefined}
+          />
 
           {/* ── Section 5: Status card ── */}
 

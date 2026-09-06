@@ -602,17 +602,17 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                         {idx > 0 && <Divider sx={{ mb: 3 }} />}
                         <Box sx={{ display: "flex", gap: 2 }}>
                           <Avatar
-                            src={review.client_profile.user.avatar_url ?? undefined}
-                            alt={review.client_profile.user.name}
+                            src={review.client_profile?.user?.avatar_url ?? undefined}
+                            alt={review.client_profile?.user?.name ?? "Client"}
                             sx={{ width: 40, height: 40 }}>
-                            {review.client_profile.user.name.charAt(0)}
+                            {(review.client_profile?.user?.name ?? "C").charAt(0)}
                           </Avatar>
                           <Box sx={{ flex: 1 }}>
                             <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 0.5 }}>
                               <Box>
-                                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{review.client_profile.user.name}</Typography>
+                                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{review.client_profile?.user?.name ?? "Client"}</Typography>
                                 <Typography variant='caption' color='text.secondary'>
-                                  {review.pricing_option.title} package
+                                  {review.pricing_option ? `${review.pricing_option.title} package` : "Custom order"}
                                 </Typography>
                               </Box>
                               <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.25 }}>

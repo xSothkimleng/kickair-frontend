@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { qk } from "@/lib/queryKeys";
 import { Box, Paper, Typography, Stack, Chip, CircularProgress } from "@mui/material";
 import {
   AddShoppingCart, CheckCircle, Replay, LocalShipping, Gavel,
@@ -92,17 +94,14 @@ export default function OrderRecord({
   /** Events that predate the order itself (e.g. a custom request/offer), merged into the timeline. */
   preEvents?: OrderTimelineEvent[];
 }) {
-  const [events, setEvents] = useState<OrderTimelineEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let active = true;
-    api.getOrderTimeline(orderId)
-      .then((res) => { if (active) setEvents(res.data ?? []); })
-      .catch(() => { if (active) setEvents([]); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, [orderId]);
+  // The event log lives in React Query under the orders prefix, so every
+  // `invalidateQueries({ queryKey: qk.orders.all() })` — after a party acts on the
+  // page, or when a realtime notification lands — refetches it without a reload.
+  const { data: events = [], isLoading: loading } = useQuery({
+    queryKey: qk.orders.timeline(orderId),
+    queryFn: async () => (await api.getOrderTimeline(orderId)).data ?? [],
+    enabled: Number.isFinite(orderId),
+  });
 
   const deliveries = deliveryHistory ?? [];
   const revisions = revisionHistory ?? [];
