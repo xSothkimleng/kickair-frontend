@@ -87,6 +87,13 @@ export interface AdminDispute {
     email: string;
     avatar_url: string | null;
   };
+  /** The order's newest dispute when it isn't this one (the parties came back after this was resolved). */
+  newer_dispute?: {
+    id: number;
+    sequence: number;
+    status: "open" | "resolved";
+    opened_at: string;
+  } | null;
   /** Prior disputes on the same order, oldest first. */
   earlier_disputes?: Array<{
     id: number;

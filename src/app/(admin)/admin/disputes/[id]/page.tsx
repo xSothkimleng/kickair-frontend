@@ -203,6 +203,25 @@ export default function AdminDisputeDetailPage() {
       </Stack>
       <Typography color="text.secondary" mb={3}>{dispute.order.title} · ${dispute.order.price}{dispute.earlier_disputes?.length ? ` · ${dispute.earlier_disputes.length} earlier dispute${dispute.earlier_disputes.length === 1 ? "" : "s"} on this order` : ""}</Typography>
 
+      {/* The parties came back after this dispute was resolved: point the admin at the
+          newest one (it arrives live via the admin_dispute_opened alert). Disputes are
+          separate records, so this page keeps showing the resolved one on its own. */}
+      {dispute.newer_dispute && (
+        <Alert
+          severity={dispute.newer_dispute.status === "open" ? "warning" : "info"}
+          sx={{ mb: 3, alignItems: "center" }}
+          action={
+            <Button color="inherit" size="small" onClick={() => router.push(`/admin/disputes/${dispute.newer_dispute!.id}`)} sx={{ textTransform: "none", fontWeight: 600 }}>
+              View dispute #{dispute.newer_dispute.sequence}
+            </Button>
+          }
+        >
+          {dispute.newer_dispute.status === "open"
+            ? `Dispute #${dispute.newer_dispute.sequence} was opened on this order on ${fmtDateTime(dispute.newer_dispute.opened_at)} and is waiting for a decision.`
+            : `This order has a later dispute (#${dispute.newer_dispute.sequence}, opened ${fmtDateTime(dispute.newer_dispute.opened_at)}), already resolved.`}
+        </Alert>
+      )}
+
       <Box sx={{ display: "flex", gap: 3, flexDirection: { xs: "column", lg: "row" } }}>
         {/* Left: details */}
         <Box sx={{ flex: 2, minWidth: 0, display: "flex", flexDirection: "column", gap: 3 }}>

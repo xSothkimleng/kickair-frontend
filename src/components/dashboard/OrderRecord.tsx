@@ -34,6 +34,8 @@ const EVENT_STYLE: Record<string, { icon: React.ReactNode; color: string }> = {
   evidence_submitted: { icon: <AttachFile sx={{ fontSize: 13 }} />,      color: "#64748B" },
 };
 const FALLBACK_STYLE = { icon: <RadioButtonChecked sx={{ fontSize: 13 }} />, color: "#64748B" };
+/** Event types that open an order's story; a log without one gets a synthetic first row. */
+const START_EVENTS = new Set(["order_placed", "order_accepted", "custom_order_accepted"]);
 
 const titleFor = (t: string) => t.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
@@ -106,16 +108,17 @@ export default function OrderRecord({
   const deliveries = deliveryHistory ?? [];
   const revisions = revisionHistory ?? [];
 
+  // Orders created before their flow logged a first event (older job orders) have
+  // a log that starts at the first delivery; give them a starting row from the
+  // order's own creation date so the record never opens mid-story.
+  const hasStart = events.some((e) => START_EVENTS.has(e.event_type));
+  const startRow: OrderTimelineEvent[] = !hasStart && createdAt
+    ? [{ id: -1, event_type: "order_placed", description: "Order was placed.", actor_role: "client" as const, created_at: createdAt }]
+    : [];
+
   // The event log is the spine; deliveries/revisions attach to their k-th
   // matching event (both lists are append-only, so positional matching holds).
-  const baseEvents: OrderTimelineEvent[] = [
-    ...(preEvents ?? []),
-    ...(events.length
-      ? events
-      : createdAt
-        ? [{ id: -1, event_type: "order_placed", description: "Order was placed.", actor_role: "client" as const, created_at: createdAt }]
-        : []),
-  ];
+  const baseEvents: OrderTimelineEvent[] = [...(preEvents ?? []), ...startRow, ...events];
 
   let dIdx = 0;
   let rIdx = 0;
