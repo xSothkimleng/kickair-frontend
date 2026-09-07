@@ -51,6 +51,8 @@ export interface AdminDispute {
   partial_freelancer_amount: string | null;
   resolved_at: string | null;
   opened_at: string;
+  /** Which party raised it. */
+  opened_by: "client" | "freelancer";
   order: {
     id: number;
     price: string;

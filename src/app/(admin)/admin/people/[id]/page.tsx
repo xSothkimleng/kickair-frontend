@@ -1,5 +1,5 @@
-import DisputeDetailPage from "@/components/admin/DisputeDetailPage";
+import PersonDetailPage from "@/components/admin/PersonDetailPage";
 export default async function Page({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  return <DisputeDetailPage id={Number(id)} />;
+  return <PersonDetailPage id={Number(id)} />;
 }

@@ -756,11 +756,11 @@ class ApiClient {
 
   // ── KYC (admin) ──────────────────────────────────────────────────────────
 
-  async getAdminKyc(page = 1, status?: string): Promise<{ data: AdminKycSubmission[]; meta: { current_page: number; last_page: number; total: number } }> {
+  async getAdminKyc(page = 1, status?: string): Promise<{ data: AdminKycSubmission[]; meta: PageMeta }> {
     const params = new URLSearchParams({ page: String(page) });
     if (status) params.set("status", status);
     const response = await this.get(`/api/admin/kyc?${params}`);
-    return response;
+    return response.data;
   }
 
   async approveKyc(kycId: number): Promise<AdminKycSubmission> {
@@ -837,7 +837,7 @@ class ApiClient {
 
   // ── Admin Disputes ────────────────────────────────────────────────────────
 
-  async getAdminDisputes(page = 1, status?: string): Promise<{ data: AdminDispute[]; meta: { current_page: number; last_page: number; total: number } }> {
+  async getAdminDisputes(page = 1, status?: string): Promise<{ data: AdminDispute[]; meta: PageMeta }> {
     const params = new URLSearchParams({ page: String(page) });
     if (status) params.set("status", status);
     const response = await this.get(`/api/admin/disputes?${params}`);
@@ -918,10 +918,11 @@ class ApiClient {
   }
 
   // ── Admin: Service moderation ──────────────────────────────────────────────
-  async getAdminServices(status?: string): Promise<Service[]> {
-    const q = status ? `?status=${status}` : "";
-    const res = await this.get(`/api/admin/services${q}`);
-    return res.data?.data ?? res.data ?? [];
+  async getAdminServices(status?: string, page = 1): Promise<{ data: Service[]; meta: PageMeta }> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set("status", status);
+    const res = await this.get(`/api/admin/services?${params}`);
+    return res.data;
   }
   async approveService(id: number): Promise<void> { await this.post(`/api/admin/services/${id}/approve`, {}); }
   async rejectService(id: number, reason?: string): Promise<void> { await this.post(`/api/admin/services/${id}/reject`, { reason }); }
@@ -929,10 +930,11 @@ class ApiClient {
   async enableService(id: number): Promise<void> { await this.post(`/api/admin/services/${id}/enable`, {}); }
 
   // ── Admin: Job post moderation ─────────────────────────────────────────────
-  async getAdminJobPosts(status?: string): Promise<JobPost[]> {
-    const q = status ? `?status=${status}` : "";
-    const res = await this.get(`/api/admin/job-posts${q}`);
-    return res.data?.data ?? res.data ?? [];
+  async getAdminJobPosts(status?: string, page = 1): Promise<{ data: JobPost[]; meta: PageMeta }> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (status) params.set("status", status);
+    const res = await this.get(`/api/admin/job-posts?${params}`);
+    return res.data;
   }
   async approveJobPost(id: number): Promise<void> { await this.post(`/api/admin/job-posts/${id}/approve`, {}); }
   async rejectJobPost(id: number, reason?: string): Promise<void> { await this.post(`/api/admin/job-posts/${id}/reject`, { reason }); }
@@ -953,14 +955,16 @@ class ApiClient {
     search?: string;
     role?: string;
     kyc?: string;
+    status?: string;
     sort?: string;
     dir?: "asc" | "desc";
-  } = {}): Promise<{ data: AdminUser[]; meta: { current_page: number; last_page: number; per_page: number; total: number } }> {
+  } = {}): Promise<{ data: AdminUser[]; meta: PageMeta }> {
     const query = new URLSearchParams();
     if (params.page) query.set("page", String(params.page));
     if (params.search) query.set("search", params.search);
     if (params.role) query.set("role", params.role);
     if (params.kyc) query.set("kyc", params.kyc);
+    if (params.status) query.set("status", params.status);
     if (params.sort) query.set("sort", params.sort);
     if (params.dir) query.set("dir", params.dir);
     const res = await this.get(`/api/admin/users?${query}`);
@@ -1116,6 +1120,14 @@ class ApiClient {
   }
 }
 
+/** Laravel paginator meta, as every paginated admin list returns it. */
+export interface PageMeta {
+  current_page: number;
+  last_page: number;
+  per_page: number;
+  total: number;
+}
+
 export interface AdminDashboardStats {
   users: {
     total: number;
@@ -1135,9 +1147,20 @@ export interface AdminDashboardStats {
   withdrawals: {
     pending_count: number;
     pending_amount: string;
+    oldest_at: string | null;
   };
   kyc: {
     pending_count: number;
+    oldest_at: string | null;
+  };
+  disputes: {
+    open_count: number;
+    oldest_at: string | null;
+  };
+  listings: {
+    pending_services: number;
+    pending_jobs: number;
+    oldest_at: string | null;
   };
 }
 
@@ -1153,6 +1176,8 @@ export interface AdminUser {
   is_verified_id: boolean;
   email_verified_at: string | null;
   kyc_status: string | null;
+  suspended_at: string | null;
+  banned_at: string | null;
   freelancer_rating: string | null;
   completed_orders: number | null;
   created_at: string;
@@ -1277,6 +1302,8 @@ export interface AdminCategory {
   parent_id: number | null;
   category_name: string;
   is_active: boolean;
+  /** Live + pending services filed under this category (admin list only). */
+  services_count?: number;
   created_at: string;
   updated_at: string;
 }
@@ -1284,6 +1311,8 @@ export interface AdminCategory {
 export interface AdminSkill {
   id: number;
   expertise_name: string;
+  /** Freelancers who picked this skill (admin list only). */
+  freelancer_profiles_count?: number;
   created_at: string;
   updated_at: string;
 }

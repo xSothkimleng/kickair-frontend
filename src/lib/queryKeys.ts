@@ -47,6 +47,23 @@ export const qk = {
     all: () => ["disputes"] as const,
     adminDetail: (id: number | string) => ["disputes", "admin-detail", String(id)] as const,
   },
+  // Admin console work-queues and reference data. Everything lives under one prefix so a
+  // realtime admin alert (or any admin action) can refresh the whole console at once.
+  admin: {
+    all: () => ["admin"] as const,
+    stats: () => ["admin", "stats"] as const,
+    financeStats: () => ["admin", "finance-stats"] as const,
+    kyc: (params?: Record<string, unknown>) => ["admin", "kyc", params ?? {}] as const,
+    disputes: (params?: Record<string, unknown>) => ["admin", "disputes", params ?? {}] as const,
+    services: (params?: Record<string, unknown>) => ["admin", "services", params ?? {}] as const,
+    jobs: (params?: Record<string, unknown>) => ["admin", "jobs", params ?? {}] as const,
+    withdrawals: (params?: Record<string, unknown>) => ["admin", "withdrawals", params ?? {}] as const,
+    transactions: (params?: Record<string, unknown>) => ["admin", "transactions", params ?? {}] as const,
+    users: (params?: Record<string, unknown>) => ["admin", "users", params ?? {}] as const,
+    user: (id: number | string) => ["admin", "user", String(id)] as const,
+    categories: () => ["admin", "categories"] as const,
+    skills: () => ["admin", "skills"] as const,
+  },
   customOrders: {
     all: () => ["custom-orders"] as const,
     mine: () => ["custom-orders", "mine"] as const,

@@ -2,7 +2,7 @@
 
 ## Stack
 - **Framework**: Next.js 16.1.1 (App Router, `app/` directory), React 19.2.3, React Compiler enabled (`babel-plugin-react-compiler`)
-- **UI**: Material UI (MUI) v7.3.6 (`@mui/material`, `@mui/icons-material`, `@mui/material-nextjs` v16-appRouter, `@mui/x-charts` v8) on Emotion — no Tailwind; nearly all styling via inline `sx` props (~4,800 sites across ~170 components), a handful via `styled()`. Design tokens live as plain JS objects in `src/theme.ts` (`tokens`, payment surfaces) and `src/components/ui/inputs/tokens.ts` (`tokens`, form fields) — read inside `sx`, NOT wired into the MUI palette. Custom input system in `src/components/ui/inputs/` wraps MUI fields; shared "kits" (`profileKit.tsx`, `admin/adminKit.tsx`, `customOrders/kit.tsx`, `dashboard/ManagementCard.tsx`) concentrate repeated patterns.
+- **UI**: Material UI (MUI) v7.3.6 (`@mui/material`, `@mui/icons-material`, `@mui/material-nextjs` v16-appRouter, `@mui/x-charts` v8) on Emotion — no Tailwind; nearly all styling via inline `sx` props (~4,800 sites across ~170 components), a handful via `styled()`. Design tokens live as plain JS objects in `src/theme.ts` (`tokens`, payment surfaces) and `src/components/ui/inputs/tokens.ts` (`tokens`, form fields) — read inside `sx`, NOT wired into the MUI palette. Custom input system in `src/components/ui/inputs/` wraps MUI fields; shared "kits" (`profileKit.tsx`, `customOrders/kit.tsx`, `dashboard/ManagementCard.tsx`) concentrate repeated patterns. **Exception: the admin console** (`src/components/admin/`, routes under `/admin`) is built with **Panda CSS** (`styled-system/css`) on its own `--td-*` tokens in `admin/ui.tsx` — new admin UI uses those primitives (`Panel`, `Pill`, `Btn`, `Drawer`, `Modal`, `Segmented`, `Pager`…), not MUI. The shared `dashboard/OrderRecord.tsx` (MUI) is embedded as-is on the admin dispute page.
 - **Auth**: `AuthContext` (`src/components/context/AuthContext.tsx`) — `useAuth()` hook; tokens stored in localStorage
 - **API client**: `src/lib/api.ts` — singleton `api` instance of the `ApiClient` class; all HTTP calls go through `api.get/post/put/patch/delete`
 - **Types**: `src/types/` — domain types used across the app
@@ -14,10 +14,8 @@ src/
     client/          — client-side dashboard pages & content components
     freelancer/      — freelancer-side dashboard pages & content components
   components/
-    admin/           — admin panel components
-      dashboard/     — admin dashboard
-      trust/         — Trust & Safety page (KYC, disputes)
-      users/         — User Management
+    admin/           — admin console (Panda CSS): Shell.tsx (sidebar/topbar/guard/realtime), one *Page.tsx per /admin route,
+                       ui.tsx (tokens + primitives), queries.ts (React Query hooks, qk.admin.*), notify.ts, toast.tsx, format.ts, labels.ts
     context/         — React context providers (AuthContext)
     dashboard/       — shared order modals (OrderDetailModal, FreelancerOrderDetailModal)
   lib/
@@ -31,7 +29,10 @@ src/
 All calls go through the `api` singleton. Always add new methods to the `ApiClient` class in `api.ts` rather than calling `api.get/post` inline in components.
 
 **Admin pagination**
-Admin endpoints return `{ data: [...], meta: { current_page, last_page, total } }`. Use `->response()->getData(true)` on the backend to preserve this structure.
+Admin list endpoints return `{ data: [...], meta: { current_page, last_page, per_page, total } }` (`PageMeta` in `api.ts`). Use `->response()->getData(true)` on the backend to preserve this structure. The console renders it with `<Pager meta onPage />`.
+
+**Admin data & realtime**
+Admin pages fetch through the hooks in `components/admin/queries.ts`; every key lives under `qk.admin.*` so `registerAdminRefresh` (fed by `GlobalNotificationToast`) and `useAdminAction` can refresh the whole console with one `invalidateQueries(qk.admin.all())`. Admin notifications are routed by type in `components/admin/notify.ts`, never by the stored `data.link`.
 
 **Status handling**
 When adding new order statuses, update both the `getStatusColor` and `getStatusLabel` maps in every component that renders a status chip — currently `OrderDetailModal`, `FreelancerOrderDetailModal`, `client/OrdersContent`, `freelancer/OrdersContent`.
@@ -96,10 +97,10 @@ Both `OrdersContent` files interleave regular orders with negotiation-phase cust
 - **`src/components/dashboard/OrderDetailModal.tsx`** — Approve, Request Revision, evidence, dispute form; all new statuses
 - **`src/app/(main)/dashboard/client/OrdersContent.tsx`** — New status filters; `onOrderUpdate` wired to modal
 - **`src/app/(main)/dashboard/freelancer/OrdersContent.tsx`** — New status filters; Deliver / Resubmit inline buttons
-- **`src/components/admin/trust/TrustSafetyPage.tsx`** — Dispute section added above KYC
+- Admin dispute review — now `src/components/admin/DisputesPage.tsx` + `DisputeDetailPage.tsx` (the console replaced the old `admin/trust/*` files on 2026-09-07)
 
 ### Components added
-- **`src/components/admin/trust/DisputeReviewSection.tsx`** — Paginated dispute table with expandable evidence rows and resolve dialog (outcome radio, partial amount, admin note)
+- (superseded) the old `DisputeReviewSection` table — see `DisputeDetailPage.tsx` for evidence, order record, chat and the resolve panel
 
 ### Finance tab (`src/app/(main)/dashboard/freelancer/FinanceContent.tsx`)
 - "Pending Payments" renamed to "In Escrow" throughout

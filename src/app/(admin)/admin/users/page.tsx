@@ -1,5 +1,0 @@
-import UserManagementPage from "@/components/admin/users/UserManagementPage";
-
-export default function UsersPage() {
-  return <UserManagementPage />;
-}

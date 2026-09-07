@@ -117,9 +117,11 @@ export function getNotificationRoute(n: Notification): string | null {
   if (type === "proposal_rejected") return `/dashboard/freelancer?tab=proposals`;
   if (type === "service_approved" || type === "service_rejected" || type === "service_disabled") return `/dashboard/freelancer?tab=services`;
   if (type === "job_approved" || type === "job_rejected") return `/dashboard/client?tab=service`;
-  // Admin queue
-  if (type === "admin_service_pending" || type === "admin_job_pending" || type === "admin_dispute_opened") return `/admin/marketplace`;
-  if (type === "admin_kyc_pending") return `/admin/trust`;
+  // Admin console queues
+  if (type === "admin_service_pending") return `/admin/listings`;
+  if (type === "admin_job_pending") return `/admin/listings?kind=job`;
+  if (type === "admin_dispute_opened") return data?.dispute_id ? `/admin/disputes/${data.dispute_id}` : `/admin/disputes`;
+  if (type === "admin_kyc_pending") return `/admin/verifications`;
   // Custom orders & milestones
   const customOrderId = data?.custom_order_id;
   // A new request / decline / withdrawal opens the custom order itself; without

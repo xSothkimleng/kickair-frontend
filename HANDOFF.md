@@ -5,7 +5,7 @@ Context for continuing work on KickAir, a Fiverr-like freelance marketplace. Rea
 ## Repos & stack
 - **Backend:** `kickair-api` — Laravel 12 + PostgreSQL + Sanctum (local Postgres runs via **DBngin**, start it from the app; db `kickair`, user `postgres`)
 - **Frontend:** `kickair-frontend` — Next.js 16 (App Router) + MUI (sx props; a Panda CSS migration was started earlier and parked)
-- The **admin panel lives inside the frontend** under the `(admin)` route group
+- The **admin console lives inside the frontend** under the `(admin)` route group (`/admin/...`), built with **Panda CSS** (`src/components/admin/`); the user-facing site is still MUI
 - Both repos push directly to `main` (GitHub: `xSothkimleng/kickair-frontend` and `/kickair-api`)
 - **Payments are mocked** (no real gateway); seller-only 20% commission (`KICKAIR_COMMISSION_RATE`, 0 in tests via phpunit.xml)
 - **Production:** frontend on Vercel, API on Railway (start.sh migrates + seeds-if-empty on deploy); uploads live on **Cloudflare R2**
@@ -65,7 +65,7 @@ Frontend `4be37d8`, API `a47c431`. Both trees clean.
 ### Open items (unchanged)
 - **#22** — which extra fields on the request row. Client's 9 parked items. Lint debt.
 
-## Status after the 2026-09-07 session (Telegram Gateway hardening) — committed locally, NOT pushed
+## Status after the 2026-09-07 session (Telegram Gateway hardening) — committed & pushed
 API commit only; frontend untouched apart from this note.
 
 ### Decision: keep Telegram Gateway for phone OTP
@@ -86,8 +86,23 @@ API commit only; frontend untouched apart from this note.
 - `login/email` and `login/phone` have **no throttle at all** — credential stuffing is open. Not touched this session; top of the security list.
 - Optional: Gateway `checkSendAbility` pre-check to bounce non-Telegram numbers to email before the OTP step (it moves the fee, doesn't add one). Sign-up copy still says "we'll text you a code".
 
+## Status after the 2026-09-07 session, part 2 (admin console replaced) — committed & pushed
+Kimleng approved the `/temp-dash` mock-up (white canvas, clean sidebar) and asked for it to become the real admin panel. Shipped in one frontend commit and one API commit the same evening (the two must deploy together — the console depends on the new endpoint shapes). `@mui/x-charts` was removed in the same commit; it had no users left. MUI itself still styles the whole user-facing site (141 files), so it stays until the site is migrated to Panda.
+
+### What changed — where things live
+- **Frontend** — the old MUI admin (`components/admin/{dashboard,trust,users,marketplace,payments,config,analytics,monitoring}`, `AdminSidebar`, `adminKit`, `AdminNotificationBell`) is **deleted**. The console is now `src/components/admin/` (Panda CSS, `--td-*` tokens in `ui.tsx`): `Shell.tsx` (sidebar with live queue counts, people search, bell, admin-only guard, realtime bridge), one `*Page.tsx` per route, `queries.ts` (React Query hooks under the `qk.admin.*` prefix + `useAdminAction`), `notify.ts` (admin notification → route), `toast.tsx`, `format.ts`, `labels.ts`. Routes: `/admin` overview, `/admin/verifications`, `/admin/disputes[/:id]`, `/admin/listings` (`?kind=job`), `/admin/finance`, `/admin/people[/:id]` (`?q=` from the topbar search), `/admin/catalog`, `/admin/inbox`, `/admin/login`. `next.config.ts` redirects the old paths (`/admin/trust`, `/users`, `/marketplace`, `/payments`, `/notifications`, `/config`, `/analytics`, `/monitoring`, `/temp-dash/*`).
+- **Realtime** — `GlobalNotificationToast` is still mounted in the shell; `registerAdminRefresh` / `registerBellRefresh` now invalidate `qk.admin.all()` + notification queries, so every queue and badge refreshes on an admin alert. The dispute page keeps `qk.disputes.adminDetail(id)` and embeds the shared MUI `OrderRecord` (single-history rule).
+- **Dropped on purpose** (stubs with no backend): Analytics, Monitoring/audit log, revenue charts, financial reports, hiring & reviews tabs, and the Config page's General/Pricing/CMS/Localization tabs. Categories & Skills survive as Catalog. The user's "Activity" tab from the mock-up (per-user transactions, listings, disputes) has no per-user endpoints, so the People detail page shows the activity counters the detail endpoint already returns instead.
+- **API** — `GET /admin/dashboard/stats` adds `disputes.open_count`, `listings.pending_services/pending_jobs` and `oldest_at` per queue (sidebar badges + overview cards). `GET /admin/users` accepts `status=active|suspended|banned` and `AdminUserResource` exposes `suspended_at`/`banned_at`. `AdminDisputeResource` exposes `opened_by`. Category list carries `services_count`, skills carry `freelancer_profiles_count` (delete is blocked in the UI while in use — category delete **cascades to services** at the DB level). `GET /admin/services`, `/admin/job-posts`, `/admin/kyc` now return `{ data, meta }` like the other admin lists (`api.ts` signatures updated; `KycTest` assertions moved to `data.data`). Admin notification `link`s point at the new routes; the frontend ignores stored links anyway (`notify.ts` routes by type, so older notifications still land in the right queue).
+- Verified: `tsc` clean, eslint clean on the console, pest 400 green, every route rendered against the local API via headless Chrome.
+
+### Known gaps / follow-ups
+- Dispute chat: `Message` files render as a link; no upload from the admin side (same as before).
+- Verification drawer shows the document images + account details; there is no legal-name / DOB / document-number capture in KYC, so the mock-up's "name match" check has no data behind it.
+- `ago()` in the console floors days (a 45-hour-old item is "1d ago" under the "Yesterday" header); the queue "waiting" labels round.
+
 ## Design workflow note
 Some pages were built from **Claude Design** handoff bundles. **Find Freelancers** and **Order Detail** came from those bundles.
 
 ---
-At handoff: the API has the 2026-09-07 Telegram Gateway commit **local only** (push pending). The frontend carries the untracked `/temp-dash` admin mock-up (`src/app/(temp-dash)/`, `src/components/temp-dash/`, built 2026-09-06 for client review) — not committed, not part of the app. Confirm git state before starting.
+At handoff: both repos are committed and pushed to `main` (Telegram Gateway hardening, the admin console replacement and its API changes). Confirm git state before starting.
