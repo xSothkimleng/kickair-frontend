@@ -65,8 +65,29 @@ Frontend `4be37d8`, API `a47c431`. Both trees clean.
 ### Open items (unchanged)
 - **#22** — which extra fields on the request row. Client's 9 parked items. Lint debt.
 
+## Status after the 2026-09-07 session (Telegram Gateway hardening) — committed locally, NOT pushed
+API commit only; frontend untouched apart from this note.
+
+### Decision: keep Telegram Gateway for phone OTP
+- A free **bot + `request_contact`** flow was designed (user opens a bot, shares contact, Telegram vouches for the number via `contact.user_id === from.id`). Kimleng chose to stay on Gateway: codes come from the official verified **Telegram** account, the user never leaves the app, zero webhook infra. Revisit the bot plan only if Gateway pricing changes.
+- Gateway is $0.01 per **delivered** code with a **$100 minimum top-up via Fragment/TON**, non-refundable. **Codes to your own number are free** — that is how dev/testing works today. Kimleng will fund at launch and **rotate the token afterwards** (only `.env` / prod env hold it; nothing else references the value).
+- Dashboard: https://gateway.telegram.org — not my.telegram.org, not BotFather. The `gatewayapi.telegram.org` host in `TelegramGatewayService` is the machine endpoint only.
+- After funding it just works for any Telegram-registered E.164 number — no approval, no allowlist. Non-Telegram numbers fail at send with no charge (already surfaced as a 422).
+
+### What changed — where things live
+- `routes/api.php` — `send-otp`, `register/phone`, `phone/update` use the named **`phone-code`** limiter (`AppServiceProvider::boot`): **5/min per phone number + 30/min per IP**. Bare `throttle:5,1` keys on IP only and shares one bucket across every route that uses it, so two resends plus two typos would have locked the user out — and everyone behind the same carrier NAT with them.
+- `TelegramGatewayService::send()` passes `ttl` (900s, fed from `PhoneVerificationManager::TTL_SECONDS` through the new `PhoneVerificationChannel::send(string $phone, int $ttlSeconds)` signature). Telegram refunds codes it cannot deliver inside the ttl and deletes them from the chat on expiry.
+- `.env.example` / `.env` — `TELEGRAM_GATEWAY_TOKEN` documented (was missing entirely; local `.env` holds Kimleng's dev token, gitignored).
+- Tests: ttl assertion, send-otp throttle, register/update throttle, per-phone isolation. Suite: 400 passing.
+
+### Deferred — for Kimleng's later "optimize / refactor / security" pass (after the whole project is signed off)
+- Throttled users see Laravel's default "Too Many Attempts." in the sign-up / settings error box — friendlier copy wanted.
+- `forgot-password`, `reset-password`, `email/resend-link` still share one bare per-IP `throttle:5,1` bucket — same gotcha, pre-existing; give them a named limiter.
+- `login/email` and `login/phone` have **no throttle at all** — credential stuffing is open. Not touched this session; top of the security list.
+- Optional: Gateway `checkSendAbility` pre-check to bounce non-Telegram numbers to email before the OTP step (it moves the fee, doesn't add one). Sign-up copy still says "we'll text you a code".
+
 ## Design workflow note
 Some pages were built from **Claude Design** handoff bundles. **Find Freelancers** and **Order Detail** came from those bundles.
 
 ---
-At handoff both repos are clean and pushed. Confirm git state before starting.
+At handoff: the API has the 2026-09-07 Telegram Gateway commit **local only** (push pending). The frontend carries the untracked `/temp-dash` admin mock-up (`src/app/(temp-dash)/`, `src/components/temp-dash/`, built 2026-09-06 for client review) — not committed, not part of the app. Confirm git state before starting.
