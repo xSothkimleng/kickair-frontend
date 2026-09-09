@@ -1,10 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, Popover, IconButton } from "@mui/material";
-import { CalendarTodayOutlined, ChevronLeft, ChevronRight, KeyboardArrowDown, ArrowDropDown } from "@mui/icons-material";
+import { Popover } from "@ark-ui/react";
+import { Calendar, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
 import { FieldShell } from "./FieldShell";
-import { FieldBaseProps, tokens, FOCUS_RING } from "./tokens";
+import { fieldAdornment, fieldIndicator, fieldPopup, fieldPositioner, fieldRoot, fieldTrigger, fieldTriggerText } from "./field";
+import { FieldBaseProps } from "./tokens";
 
 export interface DatePickerProps extends Omit<FieldBaseProps, "size"> {
   value?: Date | null;
@@ -25,24 +27,88 @@ const formatDate = (d: Date) => `${MONTHS[d.getMonth()]} ${d.getDate()}, ${d.get
 
 type Pane = "days" | "months" | "years";
 
+const panel = css({ w: "280px", p: "14px" });
+const headerRow = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "8px" });
+
+const navBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  w: "28px",
+  h: "28px",
+  p: 0,
+  border: "none",
+  borderRadius: "pill",
+  bg: "transparent",
+  color: "body",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  _hover: { bg: "fill" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { display: "block" },
+});
+
+const headerBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "2px",
+  px: "8px",
+  py: "4px",
+  border: "none",
+  borderRadius: "8px",
+  bg: "transparent",
+  fontFamily: "inherit",
+  fontSize: "14px",
+  fontWeight: 600,
+  color: "heading",
+  cursor: "pointer",
+  _hover: { bg: "fill" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { display: "block", color: "muted", transition: "transform .15s" },
+  "&[data-open] svg": { transform: "rotate(180deg)" },
+});
+
+const grid3 = css({ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "4px" });
+const grid7 = css({ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px", justifyItems: "center" });
+const dowCell = css({ textAlign: "center", fontSize: "11px", fontWeight: 600, color: "muted", py: "4px", w: "100%" });
+
+const cell = cva({
+  base: {
+    h: "34px",
+    p: 0,
+    border: "none",
+    borderRadius: "8px",
+    bg: "transparent",
+    fontFamily: "inherit",
+    fontSize: "13.5px",
+    fontWeight: 400,
+    color: "body",
+    cursor: "pointer",
+    transition: "background-color .12s",
+    _hover: { bg: "fill" },
+    _focusVisible: { outline: "none", boxShadow: "focusRing" },
+    _disabled: { color: "placeholder", cursor: "not-allowed", _hover: { bg: "transparent" } },
+  },
+  variants: {
+    shape: { day: { w: "34px" }, wide: { w: "100%" } },
+    selected: { true: { bg: "accent", color: "white", fontWeight: 500, _hover: { bg: "accent" } } },
+    today: { true: { boxShadow: "inset 0 0 0 1px token(colors.borderStrong)" } },
+  },
+  defaultVariants: { shape: "wide" },
+});
+
 export default function DatePicker({
   label, helper, error, required, fullWidth = true, disabled, value = null, onChange, placeholder = "Select a date…", id, minDate, maxDate,
 }: DatePickerProps) {
   // Guard against an Invalid Date being passed in (e.g. a mis-parsed value) — using it
   // would make the calendar build an array of NaN length and crash the whole page.
   const safeValue = value && !Number.isNaN(value.getTime()) ? value : null;
-  const [anchor, setAnchor] = useState<HTMLElement | null>(null);
+  const [open, setOpen] = useState(false);
   const [pane, setPane] = useState<Pane>("days");
   const [view, setView] = useState(() => {
     const base = safeValue ?? new Date();
     return new Date(base.getFullYear(), base.getMonth(), 1);
   });
-  const open = Boolean(anchor);
-
-  const openPopover = (el: HTMLElement) => {
-    setPane("days");
-    setAnchor(el);
-  };
 
   const year = view.getFullYear();
   const month = view.getMonth();
@@ -57,7 +123,7 @@ export default function DatePicker({
     const date = new Date(year, month, d);
     return (min != null && date < min) || (max != null && date > max);
   };
-  const pick = (d: number) => { onChange?.(new Date(year, month, d)); setAnchor(null); };
+  const pick = (d: number) => { onChange?.(new Date(year, month, d)); setOpen(false); };
 
   // Years pane shows a stable 12-year page (e.g. 2016–2027); arrows jump a page.
   const yearPageStart = year - (year % 12);
@@ -67,127 +133,100 @@ export default function DatePicker({
   const onPrev = () => (pane === "years" ? setView(new Date(year - 12, month, 1)) : setView(new Date(year, month - 1, 1)));
   const onNext = () => (pane === "years" ? setView(new Date(year + 12, month, 1)) : setView(new Date(year, month + 1, 1)));
 
-  const gridButtonSx = (selected: boolean) => ({
-    height: 34,
-    border: "none",
-    borderRadius: "8px",
-    fontFamily: "inherit",
-    cursor: "pointer",
-    background: selected ? tokens.accent : "transparent",
-    color: selected ? "#fff" : tokens.body,
-    fontSize: 13.5,
-    fontWeight: selected ? 500 : 400,
-    "&:hover": { background: selected ? tokens.accent : tokens.fill },
-  });
-
   return (
     <FieldShell label={label} required={required} helper={helper} error={error} htmlFor={id} fullWidth={fullWidth}>
-      <Box
-        id={id}
-        role="button"
-        tabIndex={disabled ? -1 : 0}
-        onClick={(e) => !disabled && openPopover(e.currentTarget)}
-        onKeyDown={(e) => { if (!disabled && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); openPopover(e.currentTarget); } }}
-        sx={{
-          display: "flex", alignItems: "center", gap: 1, height: 46, px: 1.75, borderRadius: "10px",
-          cursor: disabled ? "not-allowed" : "pointer",
-          backgroundColor: disabled ? tokens.fill : "#fff",
-          border: `1px solid ${error ? tokens.error : tokens.border}`,
-          transition: "border-color .15s, box-shadow .15s",
-          "&:hover": { borderColor: disabled ? tokens.border : tokens.borderStrong },
-          ...(open ? { borderColor: tokens.accent, boxShadow: FOCUS_RING } : {}),
-        }}>
-        <Box sx={{ display: "flex", color: tokens.muted }}><CalendarTodayOutlined sx={{ fontSize: 18 }} /></Box>
-        <Typography sx={{ flex: 1, fontSize: 15, color: safeValue ? tokens.heading : tokens.placeholder }}>
-          {safeValue ? formatDate(safeValue) : placeholder}
-        </Typography>
-        <Box sx={{ display: "flex", color: tokens.muted }}><KeyboardArrowDown sx={{ fontSize: 20 }} /></Box>
-      </Box>
-
-      <Popover
+      <Popover.Root
         open={open}
-        anchorEl={anchor}
-        onClose={() => setAnchor(null)}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        slotProps={{ paper: { sx: { mt: 1, borderRadius: "12px", border: `1px solid ${tokens.border}`, boxShadow: "0 12px 32px rgba(15,23,42,0.14)", p: 1.75, width: 280 } } }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1 }}>
-          <IconButton size="small" onClick={onPrev} aria-label={pane === "years" ? "Previous years" : "Previous month"}><ChevronLeft fontSize="small" /></IconButton>
-          {/* Clickable header: days → years → (pick year) → months → (pick month) → days */}
-          <Box
-            component="button"
-            onClick={() => setPane(pane === "days" ? "years" : "days")}
-            aria-label="Choose month and year"
-            sx={{
-              display: "flex", alignItems: "center", gap: 0.25, border: "none", background: "transparent",
-              fontFamily: "inherit", fontSize: 14, fontWeight: 600, color: tokens.heading, cursor: "pointer",
-              borderRadius: "8px", px: 1, py: 0.5, "&:hover": { background: tokens.fill },
-            }}>
-            {headerLabel}
-            <ArrowDropDown sx={{ fontSize: 18, color: tokens.muted, transform: pane === "days" ? "none" : "rotate(180deg)" }} />
-          </Box>
-          <IconButton size="small" onClick={onNext} aria-label={pane === "years" ? "Next years" : "Next month"}><ChevronRight fontSize="small" /></IconButton>
-        </Box>
+        onOpenChange={(d) => { if (d.open) setPane("days"); setOpen(d.open); }}
+        ids={id ? { trigger: id } : undefined}
+        positioning={{ placement: "bottom-start", strategy: "fixed", gutter: 6 }}
+        portalled={false}
+        lazyMount
+        unmountOnExit>
+        <Popover.Trigger
+          className={cx(fieldRoot({ size: "md" }), fieldTrigger)}
+          disabled={disabled}
+          data-invalid={error ? "" : undefined}
+          data-disabled={disabled ? "" : undefined}>
+          <span className={fieldAdornment}><Calendar size={18} /></span>
+          <span className={fieldTriggerText} data-placeholder={safeValue ? undefined : ""}>
+            {safeValue ? formatDate(safeValue) : placeholder}
+          </span>
+          <Popover.Indicator className={fieldIndicator}><ChevronDown size={18} /></Popover.Indicator>
+        </Popover.Trigger>
 
-        {pane === "years" && (
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0.5 }}>
-            {yearCells.map((y) => (
-              <Box
-                key={y}
-                component="button"
-                onClick={() => { setView(new Date(y, month, 1)); setPane("months"); }}
-                sx={gridButtonSx(y === (safeValue?.getFullYear() ?? year))}>
-                {y}
-              </Box>
-            ))}
-          </Box>
-        )}
+        <Popover.Positioner className={fieldPositioner}>
+          <Popover.Content className={cx(fieldPopup, panel)}>
+            <div className={headerRow}>
+              <button type="button" className={navBtn} onClick={onPrev} aria-label={pane === "years" ? "Previous years" : "Previous month"}><ChevronLeft size={16} /></button>
+              {/* Clickable header: days → years → (pick year) → months → (pick month) → days */}
+              <button
+                type="button"
+                className={headerBtn}
+                data-open={pane === "days" ? undefined : ""}
+                onClick={() => setPane(pane === "days" ? "years" : "days")}
+                aria-label="Choose month and year">
+                {headerLabel}
+                <ChevronDown size={14} />
+              </button>
+              <button type="button" className={navBtn} onClick={onNext} aria-label={pane === "years" ? "Next years" : "Next month"}><ChevronRight size={16} /></button>
+            </div>
 
-        {pane === "months" && (
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 0.5 }}>
-            {MONTHS.map((m, i) => (
-              <Box
-                key={m}
-                component="button"
-                onClick={() => { setView(new Date(year, i, 1)); setPane("days"); }}
-                sx={gridButtonSx(i === month)}>
-                {m.slice(0, 3)}
-              </Box>
-            ))}
-          </Box>
-        )}
+            {pane === "years" && (
+              <div className={grid3}>
+                {yearCells.map((y) => (
+                  <button
+                    key={y}
+                    type="button"
+                    className={cell({ selected: y === (safeValue?.getFullYear() ?? year) })}
+                    onClick={() => { setView(new Date(y, month, 1)); setPane("months"); }}>
+                    {y}
+                  </button>
+                ))}
+              </div>
+            )}
 
-        {pane === "days" && (
-          <>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25, mb: 0.5 }}>
-              {DOW.map((d, i) => <Box key={i} sx={{ textAlign: "center", fontSize: 11, fontWeight: 600, color: tokens.muted, py: 0.5 }}>{d}</Box>)}
-            </Box>
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: 0.25, justifyItems: "center" }}>
-              {cells.map((d, i) => d === null ? <Box key={i} /> : (() => {
-                const date = new Date(year, month, d);
-                const selected = sameDay(safeValue, date);
-                return (
-                  <Box
-                    key={i}
-                    component="button"
-                    disabled={isDisabled(d)}
-                    onClick={() => pick(d)}
-                    sx={{
-                      width: 34, height: 34, border: "none", borderRadius: "8px", fontFamily: "inherit",
-                      cursor: isDisabled(d) ? "not-allowed" : "pointer",
-                      background: selected ? tokens.accent : "transparent",
-                      color: isDisabled(d) ? tokens.placeholder : selected ? "#fff" : tokens.body,
-                      fontSize: 13.5, fontWeight: selected ? 500 : 400,
-                      boxShadow: sameDay(today, date) && !selected ? `inset 0 0 0 1px ${tokens.borderStrong}` : "none",
-                      "&:hover:not(:disabled)": { background: selected ? tokens.accent : tokens.fill },
-                    }}>
-                    {d}
-                  </Box>
-                );
-              })())}
-            </Box>
-          </>
-        )}
-      </Popover>
+            {pane === "months" && (
+              <div className={grid3}>
+                {MONTHS.map((m, i) => (
+                  <button
+                    key={m}
+                    type="button"
+                    className={cell({ selected: i === month })}
+                    onClick={() => { setView(new Date(year, i, 1)); setPane("days"); }}>
+                    {m.slice(0, 3)}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {pane === "days" && (
+              <>
+                <div className={cx(grid7, css({ mb: "4px" }))}>
+                  {DOW.map((d, i) => <div key={i} className={dowCell}>{d}</div>)}
+                </div>
+                <div className={grid7}>
+                  {cells.map((d, i) => {
+                    if (d === null) return <div key={i} />;
+                    const date = new Date(year, month, d);
+                    const selected = sameDay(safeValue, date);
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        disabled={isDisabled(d)}
+                        onClick={() => pick(d)}
+                        className={cell({ shape: "day", selected, today: sameDay(today, date) && !selected })}>
+                        {d}
+                      </button>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </Popover.Content>
+        </Popover.Positioner>
+      </Popover.Root>
     </FieldShell>
   );
 }

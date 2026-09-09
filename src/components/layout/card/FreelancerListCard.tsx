@@ -1,22 +1,19 @@
 "use client";
 
 import Link from "next/link";
-import { Box, Stack, Typography, Avatar, Button } from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
-import PlaceOutlinedIcon from "@mui/icons-material/PlaceOutlined";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import { ArrowRight, MapPin, Star } from "lucide-react";
+import { css, cx } from "styled-system/css";
 import { FreelancerProfile } from "@/types/user";
+import * as k from "./freelancerCardKit";
 
 const MAX_VISIBLE_SKILLS = 4;
 
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((p) => p[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-}
+const card = css({ gap: "16px", p: "16px" });
+const topRow = css({ display: "flex", alignItems: "center", gap: "12px", mb: "4px" });
+const tagline = css({ fontSize: "13px", color: "ink2", lineHeight: 1.4, mb: "8px", lineClamp: 1 });
+const metaRow = css({ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" });
+const skillsRow = css({ display: "flex", alignItems: "center", gap: "6px", flexWrap: "nowrap", overflow: "hidden" });
+const skillChip = css({ h: "22px", px: "8px", fontSize: "11px" });
 
 interface FreelancerListCardProps {
   profile: FreelancerProfile;
@@ -25,186 +22,77 @@ interface FreelancerListCardProps {
 export function FreelancerListCard({ profile }: FreelancerListCardProps) {
   const name = profile.user?.name || "Unknown";
   const avatarUrl = profile.user?.avatar_url || "";
-  const tagline = profile.tagline || "";
   const rating = profile.rating_average ? parseFloat(profile.rating_average) : 0;
   const hasReviews = profile.rating_count > 0;
-  const skills = profile.expertises?.map((e) => e.expertise_name) ?? [];
-  const visibleSkills = skills.slice(0, MAX_VISIBLE_SKILLS);
-  const overflow = skills.length - visibleSkills.length;
+  const allSkills = profile.expertises?.map((e) => e.expertise_name) ?? [];
+  const visibleSkills = allSkills.slice(0, MAX_VISIBLE_SKILLS);
+  const overflow = allSkills.length - visibleSkills.length;
 
   return (
-    <Link href={`/find-freelancer/${profile.id}`} style={{ textDecoration: "none" }}>
-      <Box
-        sx={{
-          display: "flex",
-          gap: 2,
-          p: 2,
-          bgcolor: "white",
-          border: "1px solid #E2E8F0",
-          borderRadius: "10px",
-          transition: "border-color 0.15s, box-shadow 0.15s",
-          "&:hover": {
-            borderColor: "#CBD5E1",
-            boxShadow: "0 1px 3px rgba(15,23,42,0.06), 0 1px 2px rgba(15,23,42,0.04)",
-          },
-          "&:hover .view-btn": {
-            backgroundColor: "#0F172A",
-            color: "#FFFFFF",
-            borderColor: "#0F172A",
-          },
-          "&:hover .view-btn .MuiSvgIcon-root": { transform: "translateX(2px)" },
-        }}
-      >
+    <Link href={`/find-freelancer/${profile.id}`} className={css({ textDecoration: "none" })}>
+      <div className={cx(k.shell, card)}>
         {/* Avatar */}
-        <Box sx={{ flexShrink: 0, pt: 0.25 }}>
-          <Avatar
-            src={avatarUrl}
-            sx={{
-              width: 52,
-              height: 52,
-              background: avatarUrl ? undefined : "linear-gradient(135deg, #1E293B, #0F172A)",
-              color: "#FFF",
-              fontSize: 17,
-              fontWeight: 600,
-              letterSpacing: "-0.02em",
-            }}
-          >
-            {initials(name)}
-          </Avatar>
-        </Box>
+        <div className={css({ flexShrink: 0, pt: "2px" })}>
+          {avatarUrl
+            // eslint-disable-next-line @next/next/no-img-element -- remote avatar
+            ? <img src={avatarUrl} alt="" className={k.avatarImg} />
+            : <span className={k.avatarFallback}>{k.initials(name)}</span>}
+        </div>
 
         {/* Main content */}
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          {/* Top row: name + location */}
-          <Stack direction="row" alignItems="center" spacing={1.5} sx={{ mb: 0.5 }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>
-              {name}
-            </Typography>
+        <div className={css({ flex: 1, minW: 0 })}>
+          <div className={topRow}>
+            <span className={k.name}>{name}</span>
             {profile.location && (
-              <Stack direction="row" alignItems="center" spacing={0.5}>
-                <PlaceOutlinedIcon sx={{ fontSize: 13, color: "text.disabled" }} />
-                <Typography sx={{ fontSize: 12, color: "text.disabled" }}>{profile.location}</Typography>
-              </Stack>
+              <span className={cx(k.row, css({ gap: "4px", color: "ink3" }))}>
+                <MapPin size={13} />
+                <span className={k.muted}>{profile.location}</span>
+              </span>
             )}
-          </Stack>
+          </div>
 
-          {/* Tagline */}
-          {tagline && (
-            <Typography
-              sx={{
-                fontSize: 13,
-                color: "text.secondary",
-                lineHeight: 1.4,
-                mb: 1,
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 1,
-                WebkitBoxOrient: "vertical",
-              }}
-            >
-              {tagline}
-            </Typography>
-          )}
+          {profile.tagline && <div className={tagline}>{profile.tagline}</div>}
 
-          {/* Rating + skills row */}
-          <Stack direction="row" alignItems="center" spacing={1.5} flexWrap="wrap">
-            {/* Rating */}
+          <div className={metaRow}>
             {hasReviews ? (
-              <Stack direction="row" alignItems="center" spacing={0.5}>
-                <StarIcon sx={{ fontSize: 13, color: "#F59E0B" }} />
-                <Typography sx={{ fontSize: 12, fontWeight: 600, color: "text.primary" }}>
-                  {rating.toFixed(1)}
-                </Typography>
-                <Typography sx={{ fontSize: 12, color: "text.disabled" }}>
-                  ({profile.rating_count})
-                </Typography>
-                <Box sx={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "#CBD5E1", mx: 0.25 }} />
-                <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                  {profile.completed_orders_count}{" "}
-                  {profile.completed_orders_count === 1 ? "order" : "orders"}
-                </Typography>
-              </Stack>
+              <span className={cx(k.row, css({ gap: "4px" }))}>
+                <span className={k.starRow}>
+                  <Star size={13} fill="currentColor" strokeWidth={0} />
+                  <span className={k.ratingValue}>{rating.toFixed(1)}</span>
+                </span>
+                <span className={k.muted}>({profile.rating_count})</span>
+                <span className={cx(k.dot, css({ mx: "2px" }))} />
+                <span className={k.secondary}>
+                  {profile.completed_orders_count} {profile.completed_orders_count === 1 ? "order" : "orders"}
+                </span>
+              </span>
             ) : (
-              <Stack direction="row" alignItems="center" spacing={0.75}>
-                <Box
-                  sx={{
-                    display: "inline-flex",
-                    alignItems: "center",
-                    height: 18,
-                    px: 0.875,
-                    backgroundColor: "#F1F5F9",
-                    color: "text.secondary",
-                    borderRadius: "999px",
-                    fontSize: 11,
-                    fontWeight: 600,
-                  }}
-                >
-                  New
-                </Box>
-                <Typography sx={{ fontSize: 12, color: "text.disabled" }}>No reviews yet</Typography>
-              </Stack>
+              <span className={cx(k.row, css({ gap: "6px" }))}>
+                <span className={k.newPill}>New</span>
+                <span className={k.muted}>No reviews yet</span>
+              </span>
             )}
 
-            {/* Skills */}
             {visibleSkills.length > 0 && (
               <>
-                <Box sx={{ width: 3, height: 3, borderRadius: "50%", backgroundColor: "#CBD5E1", flexShrink: 0 }} />
-                <Stack direction="row" alignItems="center" spacing={0.75} sx={{ flexWrap: "nowrap", overflow: "hidden" }}>
-                  {visibleSkills.map((s) => (
-                    <Box
-                      key={s}
-                      sx={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        height: 22,
-                        px: 1,
-                        backgroundColor: "#F1F5F9",
-                        color: "#334155",
-                        borderRadius: "6px",
-                        fontSize: 11,
-                        fontWeight: 500,
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {s}
-                    </Box>
-                  ))}
-                  {overflow > 0 && (
-                    <Typography sx={{ fontSize: 12, color: "text.disabled", fontWeight: 500 }}>
-                      +{overflow}
-                    </Typography>
-                  )}
-                </Stack>
+                <span className={k.dot} />
+                <span className={skillsRow}>
+                  {visibleSkills.map((s) => <span key={s} className={cx(k.skill, skillChip)}>{s}</span>)}
+                  {overflow > 0 && <span className={cx(k.muted, css({ fontWeight: 500 }))}>+{overflow}</span>}
+                </span>
               </>
             )}
-          </Stack>
-        </Box>
+          </div>
+        </div>
 
         {/* Right: View profile button */}
-        <Box sx={{ flexShrink: 0, display: "flex", alignItems: "center" }}>
-          <Button
-            className="view-btn"
-            variant="outlined"
-            endIcon={<ArrowForwardIcon sx={{ fontSize: 14, transition: "transform 0.15s" }} />}
-            sx={{
-              height: 38,
-              px: 2,
-              textTransform: "none",
-              fontSize: 13,
-              fontWeight: 600,
-              letterSpacing: "-0.005em",
-              borderRadius: "8px",
-              color: "#0F172A",
-              borderColor: "#E2E8F0",
-              backgroundColor: "#FFFFFF",
-              whiteSpace: "nowrap",
-              transition: "background-color 0.12s, border-color 0.12s, color 0.12s",
-            }}
-          >
+        <div className={css({ flexShrink: 0, display: "flex", alignItems: "center" })}>
+          <span className={cx("view-btn", k.viewBtn)}>
             View profile
-          </Button>
-        </Box>
-      </Box>
+            <ArrowRight size={14} />
+          </span>
+        </div>
+      </div>
     </Link>
   );
 }

@@ -1,11 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Button, Tooltip, CircularProgress } from "@mui/material";
-import NotificationsActiveIcon from "@mui/icons-material/NotificationsActive";
-import NotificationsOffIcon from "@mui/icons-material/NotificationsOff";
-import NotificationAddIcon from "@mui/icons-material/NotificationAdd";
+import { BellOff, BellPlus, BellRing } from "lucide-react";
+import { css } from "styled-system/css";
+import { Button, Spinner, Tooltip } from "@/components/ds";
 import { isSupported, getPermission, isSubscribed, subscribe, unsubscribe } from "@/lib/webPush";
+
+// span so the tooltip works on a disabled button
+const disabledWrapCss = css({ display: "inline-flex" });
 
 /**
  * Self-contained enable/disable button for browser (Chrome) push notifications.
@@ -30,17 +32,10 @@ export default function PushToggle() {
 
   if (denied) {
     return (
-      <Tooltip title="Notifications are blocked for this site. Click the lock icon next to the address bar and allow Notifications, then reload.">
-        {/* span so the tooltip works on a disabled button */}
-        <span>
-          <Button
-            size="small"
-            variant="outlined"
-            color="inherit"
-            disabled
-            startIcon={<NotificationsOffIcon sx={{ fontSize: 16 }} />}
-            sx={{ textTransform: "none", fontSize: 13, borderRadius: "8px" }}
-          >
+      <Tooltip content='Notifications are blocked for this site. Click the lock icon next to the address bar and allow Notifications, then reload.'>
+        <span className={disabledWrapCss}>
+          <Button size='sm' variant='outline' disabled>
+            <BellOff size={16} />
             Browser notifications blocked
           </Button>
         </span>
@@ -68,29 +63,13 @@ export default function PushToggle() {
 
   return (
     <Tooltip
-      title={
+      content={
         enabled
           ? "You'll get native browser notifications even when this tab is in the background. Click to turn off."
           : "Get native browser notifications from KickAir, even when this tab is in the background."
-      }
-    >
-      <Button
-        size="small"
-        variant={enabled ? "outlined" : "contained"}
-        onClick={handleClick}
-        disabled={busy}
-        disableElevation
-        startIcon={
-          busy ? (
-            <CircularProgress size={14} color="inherit" />
-          ) : enabled ? (
-            <NotificationsActiveIcon sx={{ fontSize: 16 }} />
-          ) : (
-            <NotificationAddIcon sx={{ fontSize: 16 }} />
-          )
-        }
-        sx={{ textTransform: "none", fontSize: 13, borderRadius: "8px", whiteSpace: "nowrap" }}
-      >
+      }>
+      <Button size='sm' variant={enabled ? "outline" : "solid"} onClick={handleClick} disabled={busy}>
+        {busy ? <Spinner size={14} /> : enabled ? <BellRing size={16} /> : <BellPlus size={16} />}
         {enabled ? "Browser notifications on" : "Enable browser notifications"}
       </Button>
     </Tooltip>

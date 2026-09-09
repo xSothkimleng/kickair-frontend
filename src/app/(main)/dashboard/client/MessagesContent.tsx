@@ -1,18 +1,95 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import {
-  Box,
-  Typography,
-  Card,
-  Avatar,
-  Badge,
-  Button,
-  CircularProgress,
-  Stack,
-} from "@mui/material";
-import { ArrowForward } from "@mui/icons-material";
+import { ArrowRight } from "lucide-react";
+import { css } from "styled-system/css";
+import { Avatar, Spinner } from "@/components/ds";
 import { useConversations } from "@/hooks/useConversations";
+
+const headerRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "24px" });
+const titleCss = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.334, color: "ink" });
+const subtitleCss = css({ fontSize: "14px", lineHeight: 1.43, color: "ink2" });
+// Text button, ported from MUI's default text-button metrics (36.5px tall, 4px radius).
+const textBtnRaw = css.raw({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  minW: "64px",
+  px: "8px",
+  py: "6px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "accent",
+  fontFamily: "inherit",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "accentFill" },
+});
+const viewAllCss = css(textBtnRaw, { gap: "8px", fontSize: "14px", "& svg": { mr: "-4px" } });
+const viewMoreCss = css(textBtnRaw, { fontSize: "13px" });
+// MUI <Card> = Paper elevation 1 + overflow hidden.
+const cardCss = css({
+  bg: "surface",
+  borderRadius: "cardSm",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  overflow: "hidden",
+  boxShadow: "0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)",
+});
+const loadingCss = css({ display: "flex", justifyContent: "center", py: "48px", color: "accent" });
+const stateCss = css({ p: "32px", textAlign: "center" });
+const errorTextCss = css({ fontSize: "16px", lineHeight: 1.5, color: "error" });
+const emptyTextCss = css({ fontSize: "16px", lineHeight: 1.5, color: "ink2" });
+const rowRaw = css.raw({ p: "16px", cursor: "pointer", transition: "background-color 0.2s", _hover: { bg: "rgba(0,0,0,0.02)" } });
+const rowCss = css(rowRaw, { borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)" });
+const rowLastCss = css(rowRaw);
+const rowInnerCss = css({ display: "flex", alignItems: "center", gap: "16px" });
+const colCss = css({ flex: 1, minW: 0 });
+const nameRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "4px" });
+const nameRaw = css.raw({
+  flex: 1,
+  fontSize: "14px",
+  lineHeight: 1.43,
+  color: "ink",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+const nameUnreadCss = css(nameRaw, { fontWeight: 700 });
+const nameReadCss = css(nameRaw, { fontWeight: 600 });
+const unreadPillCss = css({
+  w: "20px",
+  h: "20px",
+  borderRadius: "50%",
+  bg: "#9333ea",
+  color: "#fff",
+  fontSize: "10px",
+  fontWeight: 600,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  ml: "8px",
+});
+const captionRaw = css.raw({ fontSize: "12px", lineHeight: 1.66, letterSpacing: "0.03333em" });
+const orderTitleCss = css(captionRaw, {
+  display: "block",
+  color: "ink2",
+  mb: "4px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+const latestRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
+const latestRaw = css.raw(captionRaw, { flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const latestUnreadCss = css(latestRaw, { color: "ink", fontWeight: 500 });
+const latestReadCss = css(latestRaw, { color: "ink2", fontWeight: 400 });
+const timeCss = css(captionRaw, { color: "ink3", ml: "8px" });
+const footerCss = css({ p: "16px", textAlign: "center", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0,0,0,0.08)" });
 
 function formatTimestamp(dateString: string): string {
   const date = new Date(dateString);
@@ -46,183 +123,90 @@ export default function MessagesContent() {
   const totalUnread = conversations.reduce((sum, c) => sum + c.unread_count, 0);
 
   return (
-    <Box>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" mb={3}>
-        <Box>
-          <Typography variant="h5" fontWeight={600}>
-            Messages
-          </Typography>
+    <div>
+      <div className={headerRowCss}>
+        <div>
+          <h5 className={titleCss}>Messages</h5>
           {totalUnread > 0 && (
-            <Typography variant="body2" color="text.secondary">
+            <p className={subtitleCss}>
               {totalUnread} unread message{totalUnread !== 1 ? "s" : ""}
-            </Typography>
+            </p>
           )}
-        </Box>
-        <Button
-          variant="text"
-          endIcon={<ArrowForward />}
-          onClick={handleViewAll}
-          sx={{
-            textTransform: "none",
-            color: "#0071e3",
-            "&:hover": { bgcolor: "rgba(0, 113, 227, 0.05)" },
-          }}
-        >
+        </div>
+        <button type="button" onClick={handleViewAll} className={viewAllCss}>
           View All
-        </Button>
-      </Stack>
+          <ArrowRight size={20} />
+        </button>
+      </div>
 
-      <Card
-        sx={{
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "rgba(0,0,0,0.08)",
-        }}
-      >
+      <div className={cardCss}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}>
-            <CircularProgress size={32} />
-          </Box>
+          <div className={loadingCss}>
+            <Spinner size={32} />
+          </div>
         ) : error ? (
-          <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography color="error">{error}</Typography>
-          </Box>
+          <div className={stateCss}>
+            <p className={errorTextCss}>{error}</p>
+          </div>
         ) : previewConversations.length === 0 ? (
-          <Box sx={{ p: 4, textAlign: "center" }}>
-            <Typography color="text.secondary">No conversations yet</Typography>
-          </Box>
+          <div className={stateCss}>
+            <p className={emptyTextCss}>No conversations yet</p>
+          </div>
         ) : (
           previewConversations.map((conversation, index) => (
-            <Box
+            <div
               key={conversation.id}
+              role="button"
+              tabIndex={0}
               onClick={() => handleConversationClick(conversation.id)}
-              sx={{
-                p: 2,
-                cursor: "pointer",
-                borderBottom:
-                  index < previewConversations.length - 1
-                    ? "1px solid rgba(0,0,0,0.08)"
-                    : "none",
-                "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                transition: "background-color 0.2s",
-              }}
+              className={index < previewConversations.length - 1 ? rowCss : rowLastCss}
             >
-              <Stack direction="row" spacing={2} alignItems="center">
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                  variant="dot"
-                  sx={{
-                    "& .MuiBadge-badge": {
-                      bgcolor: "transparent",
-                      border: "none",
-                    },
-                  }}
-                >
-                  <Avatar
-                    src={conversation.other_participant.avatar_url || undefined}
-                    alt={conversation.other_participant.name}
-                    sx={{ width: 48, height: 48 }}
-                  />
-                </Badge>
+              <div className={rowInnerCss}>
+                <Avatar
+                  src={conversation.other_participant.avatar_url || undefined}
+                  name={conversation.other_participant.name}
+                  px={48}
+                />
 
-                <Box flex={1} minWidth={0}>
-                  <Stack
-                    direction="row"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mb={0.5}
-                  >
-                    <Typography
-                      variant="body2"
-                      fontWeight={conversation.unread_count > 0 ? 700 : 600}
-                      noWrap
-                      sx={{ flex: 1 }}
-                    >
+                <div className={colCss}>
+                  <div className={nameRowCss}>
+                    <p className={conversation.unread_count > 0 ? nameUnreadCss : nameReadCss}>
                       {conversation.other_participant.name}
-                    </Typography>
+                    </p>
                     {conversation.unread_count > 0 && (
-                      <Box
-                        sx={{
-                          width: 20,
-                          height: 20,
-                          borderRadius: "50%",
-                          bgcolor: "#9333ea",
-                          color: "white",
-                          fontSize: 10,
-                          fontWeight: 600,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          ml: 1,
-                        }}
-                      >
-                        {conversation.unread_count}
-                      </Box>
+                      <div className={unreadPillCss}>{conversation.unread_count}</div>
                     )}
-                  </Stack>
+                  </div>
 
                   {conversation.order?.title && (
-                    <Typography
-                      variant="caption"
-                      color="text.secondary"
-                      display="block"
-                      noWrap
-                      mb={0.5}
-                    >
-                      {conversation.order.title}
-                    </Typography>
+                    <span className={orderTitleCss}>{conversation.order.title}</span>
                   )}
 
                   {conversation.latest_message && (
-                    <Stack direction="row" justifyContent="space-between" alignItems="center">
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          color: conversation.unread_count > 0 ? "black" : "text.secondary",
-                          fontWeight: conversation.unread_count > 0 ? 500 : 400,
-                          flex: 1,
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                        }}
-                      >
+                    <div className={latestRowCss}>
+                      <span className={conversation.unread_count > 0 ? latestUnreadCss : latestReadCss}>
                         {conversation.latest_message.body}
-                      </Typography>
-                      <Typography variant="caption" color="text.disabled" sx={{ ml: 1 }}>
+                      </span>
+                      <span className={timeCss}>
                         {formatTimestamp(conversation.latest_message.created_at)}
-                      </Typography>
-                    </Stack>
+                      </span>
+                    </div>
                   )}
-                </Box>
-              </Stack>
-            </Box>
+                </div>
+              </div>
+            </div>
           ))
         )}
 
         {conversations.length > 4 && (
-          <Box
-            sx={{
-              p: 2,
-              textAlign: "center",
-              borderTop: "1px solid rgba(0,0,0,0.08)",
-            }}
-          >
-            <Button
-              variant="text"
-              onClick={handleViewAll}
-              sx={{
-                textTransform: "none",
-                color: "#0071e3",
-                fontSize: 13,
-              }}
-            >
+          <div className={footerCss}>
+            <button type="button" onClick={handleViewAll} className={viewMoreCss}>
               View {conversations.length - 4} more conversation
               {conversations.length - 4 !== 1 ? "s" : ""}
-            </Button>
-          </Box>
+            </button>
+          </div>
         )}
-      </Card>
-    </Box>
+      </div>
+    </div>
   );
 }

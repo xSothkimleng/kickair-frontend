@@ -1,7 +1,67 @@
 "use client";
 
-import { Box, Typography, Avatar } from "@mui/material";
+import { css, cva } from "styled-system/css";
+import { Avatar } from "@/components/ds";
 import { Message } from "@/types/message";
+
+const rowCss = cva({
+  base: { display: "flex", mb: "12px" },
+  variants: {
+    mine: {
+      true: { justifyContent: "flex-end" },
+      false: { justifyContent: "flex-start" },
+    },
+  },
+});
+
+const groupCss = cva({
+  base: { display: "flex", alignItems: "flex-end", gap: "8px", maxW: "70%" },
+  variants: {
+    mine: {
+      true: { flexDirection: "row-reverse" },
+      false: { flexDirection: "row" },
+    },
+  },
+});
+
+const stackCss = cva({
+  base: { display: "flex", flexDirection: "column" },
+  variants: {
+    mine: {
+      true: { alignItems: "flex-end" },
+      false: { alignItems: "flex-start" },
+    },
+  },
+});
+
+const bubbleCss = cva({
+  base: { px: "16px", py: "12px", borderRadius: "16px" },
+  variants: {
+    mine: {
+      true: {
+        bg: "accent",
+        color: "white",
+        borderBottomRightRadius: "4px",
+        borderBottomLeftRadius: "16px",
+      },
+      false: {
+        bg: "rgba(0, 0, 0, 0.05)",
+        color: "ink",
+        borderBottomRightRadius: "16px",
+        borderBottomLeftRadius: "4px",
+      },
+    },
+  },
+});
+
+const fileWrapCss = css({ mb: "8px" });
+// globals.css's unlayered `a { color: inherit; text-decoration: none }` beats every
+// layered rule, so the old sx `color`/`textDecoration` on this anchor never rendered —
+// the link has always inherited the bubble's colour. Kept as-is rather than "fixed".
+const fileLinkCss = css({ fontSize: "13px" });
+const bodyCss = css({ fontSize: "13px", lineHeight: 1.5, whiteSpace: "pre-wrap" });
+// `mt`/`px` here were dead too: globals.css zeroes margin *and* padding on <p>.
+const timeCss = css({ fontSize: "10px", color: "ink3" });
 
 interface MessageBubbleProps {
   message: Message;
@@ -17,86 +77,35 @@ export default function MessageBubble({ message, showAvatar = true }: MessageBub
   const isMine = message.is_mine;
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: isMine ? "flex-end" : "flex-start",
-        mb: 1.5,
-      }}
-    >
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: isMine ? "row-reverse" : "row",
-          alignItems: "flex-end",
-          gap: 1,
-          maxWidth: "70%",
-        }}
-      >
+    <div className={rowCss({ mine: isMine })}>
+      <div className={groupCss({ mine: isMine })}>
         {showAvatar && !isMine && (
-          <Avatar
-            src={message.sender.avatar_url || undefined}
-            alt={message.sender.name}
-            sx={{ width: 32, height: 32 }}
-          />
+          <Avatar src={message.sender.avatar_url || undefined} name={message.sender.name} size="sm" />
         )}
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: isMine ? "flex-end" : "flex-start",
-          }}
-        >
-          <Box
-            sx={{
-              px: 2,
-              py: 1.5,
-              borderRadius: 4,
-              bgcolor: isMine ? "#0071e3" : "rgba(0, 0, 0, 0.05)",
-              color: isMine ? "white" : "black",
-              borderBottomRightRadius: isMine ? 4 : 16,
-              borderBottomLeftRadius: isMine ? 16 : 4,
-            }}
-          >
+        <div className={stackCss({ mine: isMine })}>
+          <div className={bubbleCss({ mine: isMine })}>
             {message.type === "file" && message.file_url && (
-              <Box sx={{ mb: message.body ? 1 : 0 }}>
-                <Typography
-                  component="a"
+              <div className={message.body ? fileWrapCss : undefined}>
+                <a
                   href={message.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  sx={{
-                    fontSize: 13,
-                    color: isMine ? "rgba(255,255,255,0.9)" : "#0071e3",
-                    textDecoration: "underline",
-                  }}
-                >
+                  className={fileLinkCss}>
                   {message.file_name || "Attachment"}
-                </Typography>
-              </Box>
+                </a>
+              </div>
             )}
 
-            {message.body && (
-              <Typography sx={{ fontSize: 13, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>
-                {message.body}
-              </Typography>
-            )}
-          </Box>
+            {message.body && <p className={bodyCss}>{message.body}</p>}
+          </div>
 
-          <Typography
-            sx={{
-              fontSize: 10,
-              color: "rgba(0, 0, 0, 0.4)",
-              mt: 0.5,
-              px: 0.5,
-            }}
-          >
+          <p className={timeCss}>
             {formatTime(message.created_at)}
             {isMine && message.read_at && " · Read"}
-          </Typography>
-        </Box>
-      </Box>
-    </Box>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

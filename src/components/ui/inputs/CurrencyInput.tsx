@@ -1,8 +1,8 @@
 "use client";
 
-import { TextField, InputAdornment } from "@mui/material";
 import { FieldShell } from "./FieldShell";
-import { fieldSx, FieldBaseProps, tokens } from "./tokens";
+import { fieldAdornment, fieldControl, fieldRoot } from "./field";
+import { FieldBaseProps } from "./tokens";
 
 /**
  * Masks free text into a valid money string: digits + at most one dot +
@@ -42,7 +42,7 @@ export interface CurrencyInputProps extends FieldBaseProps {
   symbol?: string;
   unit?: string;
   autoFocus?: boolean;
-  onBlur?: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
 }
 
 export default function CurrencyInput({
@@ -51,24 +51,23 @@ export default function CurrencyInput({
 }: CurrencyInputProps) {
   return (
     <FieldShell label={label} required={required} helper={helper} error={error} htmlFor={id} fullWidth={fullWidth}>
-      <TextField
-        id={id}
-        name={name}
-        value={value}
-        onChange={(e) => onChange?.(sanitizeMoneyInput(e.target.value))}
-        placeholder={placeholder}
-        disabled={disabled}
-        error={!!error}
-        fullWidth
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        sx={fieldSx(size)}
-        inputProps={{ inputMode: "decimal" }}
-        InputProps={{
-          startAdornment: <InputAdornment position="start" sx={{ color: tokens.muted }}>{symbol}</InputAdornment>,
-          endAdornment: unit ? <InputAdornment position="end" sx={{ color: tokens.muted }}>{unit}</InputAdornment> : undefined,
-        }}
-      />
+      <div className={fieldRoot({ size })} data-invalid={error ? "" : undefined} data-disabled={disabled ? "" : undefined}>
+        <span className={fieldAdornment}>{symbol}</span>
+        <input
+          id={id}
+          name={name}
+          value={value}
+          onChange={(e) => onChange?.(sanitizeMoneyInput(e.target.value))}
+          placeholder={placeholder}
+          disabled={disabled}
+          aria-invalid={error ? true : undefined}
+          autoFocus={autoFocus}
+          onBlur={onBlur}
+          inputMode="decimal"
+          className={fieldControl}
+        />
+        {unit && <span className={fieldAdornment}>{unit}</span>}
+      </div>
     </FieldShell>
   );
 }

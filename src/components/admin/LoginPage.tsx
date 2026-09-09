@@ -8,7 +8,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { Btn, Field, Input, stack, text } from "./ui";
 
 const wrap = css({ minH: "100vh", display: "grid", placeItems: "center", bg: "var(--td-canvas)", fontFamily: "var(--td-font)", px: "24px" });
-const card = css({ w: "100%", maxW: "400px", bg: "var(--td-surface)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line)", borderRadius: "16px", p: "28px", boxShadow: "var(--td-shadow-sm)" });
+const card = css({ w: "100%", boxSizing: "border-box", maxW: "400px", bg: "var(--td-surface)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line)", borderRadius: "16px", p: "28px", boxShadow: "var(--td-shadow-sm)" });
 const mark = css({ w: "40px", h: "40px", borderRadius: "11px", bg: "var(--td-ink)", color: "#fff", display: "grid", placeItems: "center", mb: "18px" });
 const errorBox = css({ display: "flex", gap: "8px", alignItems: "flex-start", p: "10px 12px", borderRadius: "10px", bg: "var(--td-red-soft)", color: "var(--td-red)", fontSize: "13px", "& svg": { flexShrink: 0, mt: "1px" } });
 

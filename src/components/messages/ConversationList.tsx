@@ -1,17 +1,153 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  TextField,
-  Avatar,
-  Badge,
-  InputAdornment,
-  CircularProgress,
-} from "@mui/material";
-import { SearchOutlined } from "@mui/icons-material";
+import { Search } from "lucide-react";
+import { css, cva } from "styled-system/css";
+import { Avatar, Spinner } from "@/components/ds";
 import { Conversation } from "@/types/message";
+
+const rootCss = css({
+  w: "360px",
+  borderRightWidth: "1px",
+  borderRightStyle: "solid",
+  borderRightColor: "hairline",
+  display: "flex",
+  flexDirection: "column",
+  h: "100%",
+});
+
+const searchWrapCss = css({
+  p: "16px",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "hairline",
+});
+
+// The former MUI OutlinedInput: 36px tall, 8px radius, 5 % black fill, no border,
+// 8 % on focus. Written out (rather than layered on `fieldRoot`) so the atomic
+// classes can't fight the kit recipe's border/background.
+const searchFieldCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  w: "100%",
+  h: "36px",
+  px: "14px",
+  boxSizing: "border-box",
+  bg: "rgba(0, 0, 0, 0.05)",
+  borderRadius: "8px",
+  fontSize: "13px",
+  color: "ink",
+  _focusWithin: { bg: "rgba(0, 0, 0, 0.08)" },
+});
+
+const searchIconCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  flexShrink: 0,
+  color: "ink3",
+  "& svg": { display: "block" },
+});
+
+const searchInputCss = css({
+  flex: 1,
+  minW: 0,
+  w: "100%",
+  boxSizing: "border-box",
+  m: 0,
+  p: 0,
+  bg: "transparent",
+  border: "none",
+  outline: "none",
+  boxShadow: "none",
+  appearance: "none",
+  fontFamily: "inherit",
+  fontSize: "inherit",
+  lineHeight: 1.5,
+  color: "inherit",
+  _placeholder: { color: "rgba(0, 0, 0, 0.42)", opacity: 1 },
+  "&::-webkit-search-cancel-button, &::-webkit-search-decoration": { WebkitAppearance: "none", appearance: "none" },
+});
+
+const listCss = css({ flex: 1, overflowY: "auto" });
+const loadingCss = css({ display: "flex", justifyContent: "center", py: "32px" });
+const spinnerCss = css({ color: "accent" });
+const emptyCss = css({ p: "24px", textAlign: "center" });
+const emptyTextCss = css({ fontSize: "13px", color: "rgba(0, 0, 0, 0.5)" });
+
+const rowCss = cva({
+  base: {
+    p: "16px",
+    borderBottomWidth: "1px",
+    borderBottomStyle: "solid",
+    borderBottomColor: "rgba(0, 0, 0, 0.05)",
+    cursor: "pointer",
+    transition: "background-color 0.2s",
+    _hover: { bg: "rgba(0, 0, 0, 0.02)" },
+  },
+  variants: {
+    selected: { true: { bg: "rgba(0, 0, 0, 0.05)" }, false: { bg: "transparent" } },
+  },
+});
+
+const rowInnerCss = css({ display: "flex", alignItems: "start", gap: "12px" });
+
+// MUI <Badge variant="dot" overlap="circular" anchorOrigin={bottom,right}> with a
+// transparent fill and a 2px white ring.
+const avatarWrapCss = css({ position: "relative", display: "inline-flex", verticalAlign: "middle", flexShrink: 0 });
+const avatarDotCss = css({
+  position: "absolute",
+  bottom: "14%",
+  right: "14%",
+  transform: "translate(50%, 50%)",
+  w: "12px",
+  h: "12px",
+  boxSizing: "border-box",
+  borderRadius: "50%",
+  bg: "transparent",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  borderColor: "white",
+});
+
+const bodyColCss = css({ flex: 1, minW: 0 });
+const titleRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "4px" });
+const nameCss = cva({
+  base: { fontSize: "13px", color: "ink", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  variants: { unread: { true: { fontWeight: 700 }, false: { fontWeight: 600 } } },
+});
+const timeCss = css({ fontSize: "11px", color: "ink3", flexShrink: 0 });
+// `mb`/`ml` on these <p>s were already dead under MUI too — globals.css zeroes
+// margin *and* padding on `p` outside any layer — so they are dropped, not ported.
+const orderTitleCss = css({
+  fontSize: "11px",
+  color: "ink2",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+const previewCss = cva({
+  base: { fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  variants: {
+    unread: {
+      true: { color: "ink", fontWeight: 500 },
+      false: { color: "ink2", fontWeight: 400 },
+    },
+  },
+});
+const unreadBadgeCss = css({
+  minW: "20px",
+  h: "20px",
+  bg: "accent",
+  color: "white",
+  fontSize: "10px",
+  borderRadius: "50%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 500,
+  flexShrink: 0,
+});
 
 interface ConversationListProps {
   conversations: Conversation[];
@@ -52,174 +188,78 @@ export default function ConversationList({
   );
 
   return (
-    <Box
-      sx={{
-        width: 360,
-        borderRight: "1px solid rgba(0, 0, 0, 0.08)",
-        display: "flex",
-        flexDirection: "column",
-        height: "100%",
-      }}
-    >
+    <div className={rootCss}>
       {/* Search */}
-      <Box sx={{ p: 2, borderBottom: "1px solid rgba(0, 0, 0, 0.08)" }}>
-        <TextField
-          fullWidth
-          placeholder={`Search ${participantLabel}s...`}
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          size="small"
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchOutlined sx={{ fontSize: 16, color: "rgba(0, 0, 0, 0.4)" }} />
-              </InputAdornment>
-            ),
-          }}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              height: 36,
-              borderRadius: 2,
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              fontSize: 13,
-              "& fieldset": { border: "none" },
-              "&.Mui-focused": { bgcolor: "rgba(0, 0, 0, 0.08)" },
-            },
-          }}
-        />
-      </Box>
+      <div className={searchWrapCss}>
+        <div className={searchFieldCss}>
+          <span className={searchIconCss}>
+            <Search size={16} />
+          </span>
+          <input
+            type="text"
+            placeholder={`Search ${participantLabel}s...`}
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className={searchInputCss}
+          />
+        </div>
+      </div>
 
       {/* Conversations */}
-      <Box sx={{ flex: 1, overflowY: "auto" }}>
+      <div className={listCss}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress size={24} />
-          </Box>
+          <div className={loadingCss}>
+            <Spinner size={24} className={spinnerCss} />
+          </div>
         ) : filteredConversations.length === 0 ? (
-          <Box sx={{ p: 3, textAlign: "center" }}>
-            <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.5)" }}>
+          <div className={emptyCss}>
+            <p className={emptyTextCss}>
               {searchQuery ? "No conversations found" : "No conversations yet"}
-            </Typography>
-          </Box>
+            </p>
+          </div>
         ) : (
           filteredConversations.map((conv) => (
-            <Box
+            <div
               key={conv.id}
               onClick={() => onSelect(conv)}
-              sx={{
-                p: 2,
-                borderBottom: "1px solid rgba(0, 0, 0, 0.05)",
-                cursor: "pointer",
-                bgcolor: selectedId === conv.id ? "rgba(0, 0, 0, 0.05)" : "transparent",
-                "&:hover": { bgcolor: "rgba(0, 0, 0, 0.02)" },
-                transition: "background-color 0.2s",
-              }}
-            >
-              <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
-                <Badge
-                  overlap="circular"
-                  anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                  variant="dot"
-                  sx={{
-                    "& .MuiBadge-badge": {
-                      backgroundColor: "transparent",
-                      width: 12,
-                      height: 12,
-                      borderRadius: "50%",
-                      border: "2px solid white",
-                    },
-                  }}
-                >
+              className={rowCss({ selected: selectedId === conv.id })}>
+              <div className={rowInnerCss}>
+                <span className={avatarWrapCss}>
                   <Avatar
                     src={conv.other_participant.avatar_url || undefined}
-                    alt={conv.other_participant.name}
-                    sx={{ width: 48, height: 48 }}
+                    name={conv.other_participant.name}
+                    px={48}
                   />
-                </Badge>
+                  <span className={avatarDotCss} />
+                </span>
 
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "space-between",
-                      mb: 0.5,
-                    }}
-                  >
-                    <Typography
-                      sx={{
-                        fontSize: 13,
-                        fontWeight: conv.unread_count > 0 ? 700 : 600,
-                        color: "black",
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                <div className={bodyColCss}>
+                  <div className={titleRowCss}>
+                    <p className={nameCss({ unread: conv.unread_count > 0 })}>
                       {conv.other_participant.name}
-                    </Typography>
+                    </p>
                     {conv.latest_message && (
-                      <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)", ml: 1 }}>
-                        {formatTimestamp(conv.latest_message.created_at)}
-                      </Typography>
+                      <p className={timeCss}>{formatTimestamp(conv.latest_message.created_at)}</p>
                     )}
-                  </Box>
+                  </div>
 
-                  {conv.order?.title && (
-                    <Typography
-                      sx={{
-                        fontSize: 11,
-                        color: "rgba(0, 0, 0, 0.6)",
-                        mb: 0.5,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
-                      {conv.order.title}
-                    </Typography>
-                  )}
+                  {conv.order?.title && <p className={orderTitleCss}>{conv.order.title}</p>}
 
                   {conv.latest_message && (
-                    <Typography
-                      sx={{
-                        fontSize: 12,
-                        color: conv.unread_count > 0 ? "black" : "rgba(0, 0, 0, 0.6)",
-                        fontWeight: conv.unread_count > 0 ? 500 : 400,
-                        overflow: "hidden",
-                        textOverflow: "ellipsis",
-                        whiteSpace: "nowrap",
-                      }}
-                    >
+                    <p className={previewCss({ unread: conv.unread_count > 0 })}>
                       {conv.latest_message.body}
-                    </Typography>
+                    </p>
                   )}
-                </Box>
+                </div>
 
                 {conv.unread_count > 0 && (
-                  <Box
-                    sx={{
-                      minWidth: 20,
-                      height: 20,
-                      bgcolor: "#0071e3",
-                      color: "white",
-                      fontSize: 10,
-                      borderRadius: "50%",
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      fontWeight: 500,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {conv.unread_count}
-                  </Box>
+                  <div className={unreadBadgeCss}>{conv.unread_count}</div>
                 )}
-              </Box>
-            </Box>
+              </div>
+            </div>
           ))
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { Dialog } from "@mui/material";
-import { tokens } from "@/theme";
+import { BareModal } from "@/components/ds/BareModal";
 import MockAbaPayWayPopup from "./MockAbaPayWayPopup";
 import PaymentResult, { type PaymentContext } from "./PaymentResult";
 import type { AbaMethod } from "./AbaMethodSelector";
@@ -84,6 +83,10 @@ export function usePaymentProcessing(opts: UsePaymentProcessingOptions) {
 
   const fail = (reason: string) => setState(s => (s ? { ...s, stage: "failure", reason } : s));
 
+  // While "waiting" the old MUI dialog passed `onClose={undefined}` — backdrop
+  // clicks and ESC are inert until the result lands.
+  const dismissable = state != null && state.stage !== "waiting";
+
   const overlay =
     state == null ? null : (
       <>
@@ -97,12 +100,14 @@ export function usePaymentProcessing(opts: UsePaymentProcessingOptions) {
           onCancel={() => fail("Payment cancelled")}
         />
 
-        <Dialog
+        <BareModal
           open={state.stage !== "aba"}
-          onClose={state.stage === "waiting" ? undefined : close}
-          fullWidth
-          maxWidth='xs'
-          PaperProps={{ sx: { borderRadius: `${tokens.radius.card}px`, m: 2 } }}>
+          onOpenChange={o => {
+            if (!o && dismissable) close();
+          }}
+          closeOnInteractOutside={dismissable}
+          closeOnEscape={dismissable}
+          maxW='444px'>
           <PaymentResult
             kind={state.stage === "aba" ? "waiting" : state.stage}
             context={opts.context}
@@ -125,7 +130,7 @@ export function usePaymentProcessing(opts: UsePaymentProcessingOptions) {
               opts.onChooseAnother?.();
             }}
           />
-        </Dialog>
+        </BareModal>
       </>
     );
 

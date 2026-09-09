@@ -1,22 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { Snackbar, Alert, Typography, Box } from "@mui/material";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import ChatBubbleIcon from "@mui/icons-material/ChatBubbleOutline";
+import { useEffect } from "react";
+import { Bell, MessageCircle } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { css } from "styled-system/css";
+import { toast } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { getEcho } from "@/lib/echo";
 import { invalidateForNotification } from "@/lib/realtimeInvalidation";
 import { ensureSubscribed } from "@/lib/webPush";
 import { Notification } from "@/types/notification";
-
-interface Toast {
-  id: string;
-  title: string;
-  body: string;
-  variant?: "notification" | "message";
-}
 
 // Re-export so NotificationBell can trigger a count refresh
 let _refreshBell: (() => void) | null = null;
@@ -42,14 +35,20 @@ export function registerAdminRefresh(fn: (type?: string) => void): () => void {
 }
 export function triggerAdminRefresh(type?: string) { _adminRefreshers.forEach(fn => fn(type)); }
 
+const toastIconCss = css({ color: "accent", mt: "1px", flexShrink: 0 });
+
+/**
+ * Realtime bridge: subscribes to the user's private Echo channel and surfaces new
+ * notifications / chat messages as app toasts (via the ds toaster mounted in the
+ * root layout — 5 s auto-hide) while nudging the bells and cached queries. Renders nothing.
+ */
 export default function GlobalNotificationToast() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
-  const [queue, setQueue] = useState<Toast[]>([]);
-  const current = queue[0] ?? null;
+  const userId = user?.id;
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     // Silent web-push keep-alive: if the user already granted browser-notification
     // permission (and hasn't opted out), refresh the subscription with the API.
@@ -59,13 +58,14 @@ export default function GlobalNotificationToast() {
     let echo: ReturnType<typeof getEcho>;
     try { echo = getEcho(); } catch { return; }
 
-    const channel = echo.private(`user.${user.id}`);
+    const channel = echo.private(`user.${userId}`);
 
     channel.listen(".notification.created", (data: Partial<Notification> & { created_at?: string; role?: string }) => {
-      setQueue(prev => [
-        ...prev,
-        { id: data.id ?? String(Date.now()), title: data.title ?? "New notification", body: data.body ?? "", variant: "notification" },
-      ]);
+      toast.info({
+        title: data.title ?? "New notification",
+        description: data.body ?? "",
+        icon: <Bell size={18} className={toastIconCss} />,
+      });
       // Refresh the bell badge
       triggerBellRefresh();
       // Refresh whatever page data this notification affects (live, no reload).
@@ -80,55 +80,18 @@ export default function GlobalNotificationToast() {
       const msg = data.message;
       const senderName = msg?.sender?.name ?? "Someone";
       const preview = msg?.type === "file" ? "Sent a file" : (msg?.body || "New message");
-      setQueue(prev => [
-        ...prev,
-        { id: `msg-${msg?.id ?? Date.now()}`, title: `New message from ${senderName}`, body: preview, variant: "message" },
-      ]);
+      toast.info({
+        title: `New message from ${senderName}`,
+        description: preview,
+        icon: <MessageCircle size={18} className={toastIconCss} />,
+      });
       triggerMessageRefresh();
     });
 
     return () => {
-      try { echo.leave(`private-user.${user.id}`); } catch {}
+      try { echo.leave(`private-user.${userId}`); } catch {}
     };
-  }, [user?.id, queryClient]);
+  }, [userId, queryClient]);
 
-  const handleClose = () => {
-    setQueue(prev => prev.slice(1));
-  };
-
-  return (
-    <Snackbar
-      open={!!current}
-      autoHideDuration={5000}
-      onClose={handleClose}
-      anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      sx={{ top: { xs: 72, sm: 80 } }}
-    >
-      <Alert
-        icon={current?.variant === "message" ? <ChatBubbleIcon sx={{ fontSize: 18 }} /> : <NotificationsIcon sx={{ fontSize: 18 }} />}
-        severity="info"
-        onClose={handleClose}
-        sx={{
-          minWidth: 280,
-          maxWidth: 380,
-          boxShadow: "0 4px 12px rgba(15,23,42,0.12)",
-          borderRadius: "10px",
-          bgcolor: "#FFFFFF",
-          border: "1px solid #E2E8F0",
-          color: "#0F172A",
-          "& .MuiAlert-icon": { color: "#1976d2" },
-          "& .MuiAlert-message": { width: "100%" },
-        }}
-      >
-        <Box>
-          <Typography sx={{ fontSize: 13, fontWeight: 600, lineHeight: 1.3, mb: 0.25 }}>
-            {current?.title}
-          </Typography>
-          <Typography sx={{ fontSize: 12, color: "#64748B", lineHeight: 1.4 }}>
-            {current?.body}
-          </Typography>
-        </Box>
-      </Alert>
-    </Snackbar>
-  );
+  return null;
 }

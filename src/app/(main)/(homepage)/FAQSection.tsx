@@ -7,6 +7,7 @@ import { Box } from "styled-system/jsx";
 
 const faqTrigger = css({
   w: "full",
+  boxSizing: "border-box",
   display: "flex",
   alignItems: "center",
   justifyContent: "space-between",

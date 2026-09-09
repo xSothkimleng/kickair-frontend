@@ -429,38 +429,40 @@ export default function ProfileContent() {
         </Button>
       </Box>
 
-      {/* Profile strength */}
-      <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: "20px 22px" }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.625 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.125 }}>
-            <AutoAwesomeOutlined sx={{ fontSize: 18, color: tokens.accent }} />
-            <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>Profile strength</Typography>
+      {/* Profile strength — drops away once every task is done */}
+      {strengthPct < 100 && (
+        <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: "20px 22px" }}>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.625 }}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.125 }}>
+              <AutoAwesomeOutlined sx={{ fontSize: 18, color: tokens.accent }} />
+              <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>Profile strength</Typography>
+            </Box>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Button onClick={() => setLevelOpen(true)}
+                sx={{ height: 28, px: 1.5, borderRadius: "999px", textTransform: "none", fontSize: 12, fontWeight: 600, color: tokens.text, bgcolor: "rgba(0,0,0,0.05)", "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
+                View all steps
+              </Button>
+              <Typography sx={{ fontSize: 15, fontWeight: 600, fontFamily: tokens.mono, color: strengthPct === 100 ? tokens.success : tokens.accent }}>{strengthPct}%</Typography>
+            </Box>
           </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Button onClick={() => setLevelOpen(true)}
-              sx={{ height: 28, px: 1.5, borderRadius: "999px", textTransform: "none", fontSize: 12, fontWeight: 600, color: tokens.text, bgcolor: "rgba(0,0,0,0.05)", "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
-              View all steps
-            </Button>
-            <Typography sx={{ fontSize: 15, fontWeight: 600, fontFamily: tokens.mono, color: strengthPct === 100 ? tokens.success : tokens.accent }}>{strengthPct}%</Typography>
-          </Box>
+          <LinearProgress variant="determinate" value={strengthPct} sx={{ height: 8, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.06)", "& .MuiLinearProgress-bar": { borderRadius: "999px", bgcolor: strengthPct === 100 ? tokens.success : tokens.accent } }} />
+          {remainingTasks.length > 0 ? (
+            <Box sx={{ mt: 1.75 }}>
+              <Typography sx={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, mb: 0.5 }}>What&rsquo;s left</Typography>
+              {remainingTasks.slice(0, 3).map((t, i) => (
+                <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.25, py: 1, fontSize: 13 }}>
+                  <Box sx={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${tokens.borderStrong}`, flex: "none" }} />
+                  <Typography sx={{ fontSize: 13, color: tokens.text2 }}>{t.label}</Typography>
+                </Box>
+              ))}
+            </Box>
+          ) : (
+            <Typography sx={{ fontSize: 13, color: tokens.successText, mt: 1.625, display: "flex", alignItems: "center", gap: 0.875 }}>
+              <CheckRounded sx={{ fontSize: 15 }} /> Your profile is complete — nice work.
+            </Typography>
+          )}
         </Box>
-        <LinearProgress variant="determinate" value={strengthPct} sx={{ height: 8, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.06)", "& .MuiLinearProgress-bar": { borderRadius: "999px", bgcolor: strengthPct === 100 ? tokens.success : tokens.accent } }} />
-        {remainingTasks.length > 0 ? (
-          <Box sx={{ mt: 1.75 }}>
-            <Typography sx={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, mb: 0.5 }}>What&rsquo;s left</Typography>
-            {remainingTasks.slice(0, 3).map((t, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1.25, py: 1, fontSize: 13 }}>
-                <Box sx={{ width: 18, height: 18, borderRadius: "50%", border: `1.5px solid ${tokens.borderStrong}`, flex: "none" }} />
-                <Typography sx={{ fontSize: 13, color: tokens.text2 }}>{t.label}</Typography>
-              </Box>
-            ))}
-          </Box>
-        ) : (
-          <Typography sx={{ fontSize: 13, color: tokens.successText, mt: 1.625, display: "flex", alignItems: "center", gap: 0.875 }}>
-            <CheckRounded sx={{ fontSize: 15 }} /> Your profile is complete — nice work.
-          </Typography>
-        )}
-      </Box>
+      )}
 
       <LevelDialog open={levelOpen} onClose={() => setLevelOpen(false)} />
 

@@ -141,6 +141,7 @@ export default function HeroSection() {
                 placeholder="Search for any service..."
                 className={css({
                   w: "full",
+                  boxSizing: "border-box",
                   h: "46px",
                   pl: "10",
                   pr: searchQuery ? "10" : "3.5",

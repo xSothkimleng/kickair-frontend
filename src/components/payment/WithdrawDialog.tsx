@@ -2,19 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Box, Button, CircularProgress, Dialog, IconButton, Typography } from "@mui/material";
-import {
-  Close as CloseIcon,
-  AccountBalance as BankIcon,
-  AccessTime as ClockIcon,
-  ArrowUpward as ArrowUpIcon,
-} from "@mui/icons-material";
+import { ArrowUp, Clock, Landmark, X } from "lucide-react";
+import { css } from "styled-system/css";
+import { Dialog, Spinner, iconButton } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
-import { tokens } from "@/theme";
 import { CurrencyInput, parseMoney } from "@/components/ui/inputs";
 import PaymentOption from "./PaymentOption";
 import StatusChip from "./StatusChip";
+import { pillButton } from "./pill";
 import { fmtUsd } from "./format";
 import Annot from "./Annot";
 
@@ -24,6 +21,110 @@ const DESTINATIONS: { id: Destination; name: string; sub: string }[] = [
   { id: "aba", name: "ABA Bank", sub: "Your registered ABA account" },
   { id: "other", name: "Wing / other bank", sub: "Add transfer details in the note" },
 ];
+
+/* ---- success view ---- */
+const doneBody = css({ p: { base: "28px", sm: "32px" }, textAlign: "center" });
+const spacer22 = css({ h: "22px" });
+const doneIconWrap = css({
+  w: "76px",
+  h: "76px",
+  borderRadius: "50%",
+  bg: "pendingTint",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  mx: "auto",
+});
+// MUI's SvgIcon carried `flex-shrink: 0`; lucide's svg does not.
+const doneIcon = css({ color: "pending", flexShrink: 0 });
+// globals.css's unlayered `p, h1-h6 { margin: 0 }` already suppressed the
+// `mt`/`mb`/`mx` these three carried as MUI Typography, so they stay dropped.
+const doneTitle = css({ fontSize: { base: "24px", sm: "28px" }, fontWeight: 600, letterSpacing: "-0.025em", color: "ink" });
+const doneAmount = css({ fontFamily: "mono", fontSize: "36px", fontWeight: 600, letterSpacing: "-0.03em", color: "ink" });
+const doneCopy = css({ fontSize: "15px", color: "ink2", maxW: "340px" });
+const doneStrong = css({ color: "ink" });
+const doneCard = css({
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "tile",
+  p: "16px",
+  mt: "22px",
+  textAlign: "left",
+});
+const spacer10 = css({ h: "10px" });
+const rowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
+const capCss = css({ fontSize: "12px", fontWeight: 500, letterSpacing: "0.02em", color: "ink2" });
+const rowValue = css({ fontSize: "13px", fontWeight: 600, color: "ink" });
+const backBtn = css(pillButton.raw({ tone: "black", size: "lg", full: true }), { mt: "24px" });
+
+/* ---- form view ---- */
+const headerCss = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  p: "20px 24px",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "hairline",
+});
+const titleCss = css({ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.015em", color: "ink" });
+// Merged into one style object (Panda's `cx` only concatenates — it can't
+// resolve conflicting atomic classes), so these beat the recipe's own colours.
+const closeBtn = css(iconButton.raw({ size: "md", shape: "round", variant: "ghost", tone: "default" }), {
+  color: "ink2",
+  _hover: { bg: "rgba(0,0,0,0.04)", color: "ink" },
+});
+const bodyCss = css({ p: "24px" });
+const availableRow = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  p: "14px 16px",
+  bg: "canvas",
+  borderRadius: "cardSm",
+  mb: "22px",
+});
+const availableLabel = css({ fontSize: "13.5px", color: "ink2" });
+const availableValue = css({ fontFamily: "mono", fontSize: "20px", fontWeight: 600, color: "ink" });
+const fieldLabelCss = css({ display: "block", fontSize: "13px", fontWeight: 500, color: "ink2", mb: "7px" });
+const amountFieldTight = css({ mb: "6px" });
+const amountField = css({ mb: "20px" });
+const overspendText = css({ fontSize: "12px", color: "errorText" });
+const destList = css({ display: "flex", flexDirection: "column", gap: "10px", mb: "20px" });
+const destRow = css({ display: "flex", alignItems: "center", gap: "12px" });
+const destIcon = css({ color: "ink2", flexShrink: 0 });
+const destName = css({ fontSize: "14.5px", fontWeight: 600, color: "ink" });
+const destSub = css({ fontSize: "12px", color: "ink2" });
+const noteArea = css({
+  w: "100%",
+  boxSizing: "border-box",
+  p: "12px 14px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairlineStrong",
+  borderRadius: "input",
+  bg: "surface",
+  fontFamily: "inherit",
+  fontSize: "15px",
+  lineHeight: 1.5,
+  resize: "vertical",
+  outline: "none",
+  _focus: { borderColor: "accent", boxShadow: "0 0 0 3px rgba(0, 113, 227, 0.05)" },
+});
+const hintBox = css({
+  display: "flex",
+  gap: "10px",
+  mt: "18px",
+  p: "12px 14px",
+  bg: "pendingTint",
+  borderRadius: "tile",
+});
+const hintIcon = css({ color: "pendingText", flex: "none" });
+const hintText = css({ fontSize: "12.5px", color: "pendingText", lineHeight: 1.45 });
+const errorText = css({ fontSize: "12.5px", color: "errorText" });
+const submitBtn = css(pillButton.raw({ tone: "black", size: "lg", full: true }), { mt: "18px" });
+const startIcon = css({ ml: "-4px" });
 
 /**
  * Freelancer payout request. Payouts are sent MANUALLY by an admin (no automated
@@ -91,54 +192,56 @@ export default function WithdrawDialog({
   };
 
   return (
-    <Dialog open={open} onClose={submitting ? undefined : onClose} fullWidth maxWidth='xs' PaperProps={{ sx: { borderRadius: `${tokens.radius.card}px` } }}>
+    <BareModal open={open} onOpenChange={o => { if (!o && !submitting) onClose(); }}>
       {submitted ? (
-        <Box sx={{ p: { xs: 3.5, sm: 4 }, textAlign: "center" }}>
+        <div className={doneBody}>
           <Annot>Withdrawal · pending (manual payout)</Annot>
-          <Box sx={{ height: 22 }} />
-          <Box sx={{ width: 76, height: 76, borderRadius: "50%", bgcolor: tokens.pendingTint, display: "flex", alignItems: "center", justifyContent: "center", mx: "auto" }}>
-            <ClockIcon sx={{ fontSize: 35, color: tokens.pending }} />
-          </Box>
-          <Typography sx={{ mt: 2.75, fontSize: { xs: 24, sm: 28 }, fontWeight: 600, letterSpacing: "-0.025em" }}>Withdrawal requested</Typography>
-          <Typography sx={{ fontFamily: tokens.mono, fontSize: 36, fontWeight: 600, letterSpacing: "-0.03em", mt: 1.25, mb: 0.75 }}>{fmtUsd(amt)}</Typography>
-          <Typography sx={{ fontSize: 15, color: tokens.text2, maxWidth: 340, mx: "auto" }}>
+          <div className={spacer22} />
+          <div className={doneIconWrap}>
+            <Clock size={35} className={doneIcon} />
+          </div>
+          <Dialog.Title className={doneTitle}>Withdrawal requested</Dialog.Title>
+          <p className={doneAmount}>{fmtUsd(amt)}</p>
+          <p className={doneCopy}>
             Your request is in review. Our team processes payouts{" "}
-            <Box component='strong' sx={{ color: tokens.text }}>manually within 3 business days</Box> to your selected destination.
-          </Typography>
+            <strong className={doneStrong}>manually within 3 business days</strong> to your selected destination.
+          </p>
 
-          <Box sx={{ border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.tile}px`, p: 2, mt: 2.75, textAlign: "left" }}>
+          <div className={doneCard}>
             <Row label='Destination' value={DESTINATIONS.find(d => d.id === dest)!.name} />
-            <Box sx={{ height: 10 }} />
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <div className={spacer10} />
+            <div className={rowCss}>
               <Cap>Status</Cap>
               <StatusChip status='pending'>Pending review</StatusChip>
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          <Button fullWidth onClick={finish} sx={{ mt: 3, height: 52, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 16, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>
+          <button type='button' onClick={finish} className={backBtn}>
             Back to wallet
-          </Button>
-        </Box>
+          </button>
+        </div>
       ) : (
         <>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: "20px 24px", borderBottom: `1px solid ${tokens.border}` }}>
-            <Box>
+          <div className={headerCss}>
+            <div>
               <Annot>Wallet withdrawal · manual payout</Annot>
-              <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em" }}>Withdraw funds</Typography>
-            </Box>
-            <IconButton onClick={onClose} disabled={submitting} sx={{ color: tokens.text2 }}>
-              <CloseIcon sx={{ fontSize: 20 }} />
-            </IconButton>
-          </Box>
+              <Dialog.Title className={titleCss}>Withdraw funds</Dialog.Title>
+            </div>
+            <Dialog.CloseTrigger asChild>
+              <button type='button' aria-label='Close' disabled={submitting} className={closeBtn}>
+                <X size={20} />
+              </button>
+            </Dialog.CloseTrigger>
+          </div>
 
-          <Box sx={{ p: 3 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: "14px 16px", bgcolor: tokens.canvas, borderRadius: `${tokens.radius.cardSm}px`, mb: 2.75 }}>
-              <Typography sx={{ fontSize: 13.5, color: tokens.text2 }}>Available to withdraw</Typography>
-              <Typography sx={{ fontFamily: tokens.mono, fontSize: 20, fontWeight: 600 }}>{fmtUsd(available)}</Typography>
-            </Box>
+          <div className={bodyCss}>
+            <div className={availableRow}>
+              <p className={availableLabel}>Available to withdraw</p>
+              <p className={availableValue}>{fmtUsd(available)}</p>
+            </div>
 
             <FieldLabel>Amount (USD)</FieldLabel>
-            <Box sx={{ mb: amt > available ? 0.75 : 2.5 }}>
+            <div className={amt > available ? amountFieldTight : amountField}>
               <CurrencyInput
                 placeholder='0.00'
                 value={amount}
@@ -147,93 +250,70 @@ export default function WithdrawDialog({
                   setError(null);
                 }}
               />
-            </Box>
-            {amt > available && <Typography sx={{ fontSize: 12, color: tokens.errorText, mb: 2 }}>Amount exceeds your available balance.</Typography>}
+            </div>
+            {amt > available && <p className={overspendText}>Amount exceeds your available balance.</p>}
 
             <FieldLabel>Payout destination</FieldLabel>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mb: 2.5 }}>
+            <div className={destList}>
               {DESTINATIONS.map(d => (
                 <PaymentOption key={d.id} selected={dest === d.id} onClick={() => setDest(d.id)}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <BankIcon sx={{ fontSize: 20, color: tokens.text2 }} />
-                    <Box>
-                      <Typography sx={{ fontSize: 14.5, fontWeight: 600 }}>{d.name}</Typography>
-                      <Typography sx={{ fontSize: 12, color: tokens.text2 }}>{d.sub}</Typography>
-                    </Box>
-                  </Box>
+                  <div className={destRow}>
+                    <Landmark size={20} className={destIcon} />
+                    <div>
+                      <p className={destName}>{d.name}</p>
+                      <p className={destSub}>{d.sub}</p>
+                    </div>
+                  </div>
                 </PaymentOption>
               ))}
-            </Box>
+            </div>
 
             <FieldLabel>Remarks (optional)</FieldLabel>
-            <Box
-              component='textarea'
+            <textarea
               rows={3}
               placeholder='A note for yourself — stays on this transaction in your history'
               value={note}
-              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNote(e.target.value)}
-              sx={{
-                width: "100%",
-                boxSizing: "border-box",
-                p: "12px 14px",
-                border: `1px solid ${tokens.borderStrong}`,
-                borderRadius: `${tokens.radius.input}px`,
-                bgcolor: tokens.surface,
-                font: "inherit",
-                fontSize: 15,
-                lineHeight: 1.5,
-                resize: "vertical",
-                outline: "none",
-                "&:focus": { borderColor: tokens.accent, boxShadow: `0 0 0 3px ${tokens.accentFill}` },
-              }}
+              onChange={(e) => setNote(e.target.value)}
+              className={noteArea}
             />
 
-            <Box sx={{ display: "flex", gap: 1.25, mt: 2.25, p: "12px 14px", bgcolor: tokens.pendingTint, borderRadius: `${tokens.radius.tile}px` }}>
-              <ClockIcon sx={{ fontSize: 16, color: tokens.pendingText, flex: "none" }} />
-              <Typography sx={{ fontSize: 12.5, color: tokens.pendingText, lineHeight: 1.45 }}>
+            <div className={hintBox}>
+              <Clock size={16} className={hintIcon} />
+              <p className={hintText}>
                 Payouts are reviewed and sent manually by our team within 3 business days. You&apos;ll get a notification when it&apos;s on the way.
-              </Typography>
-            </Box>
+              </p>
+            </div>
 
-            {error && <Typography sx={{ fontSize: 12.5, color: tokens.errorText, mt: 1.5 }}>{error}</Typography>}
+            {error && <p className={errorText}>{error}</p>}
 
-            <Button
-              fullWidth
-              disabled={!valid || submitting}
-              onClick={submit}
-              startIcon={submitting ? undefined : <ArrowUpIcon sx={{ fontSize: 16 }} />}
-              sx={{
-                mt: 2.25,
-                height: 52,
-                borderRadius: "999px",
-                bgcolor: "#000",
-                color: "#fff",
-                textTransform: "none",
-                fontSize: 16,
-                fontWeight: 500,
-                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-                "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.18)", color: "#fff" },
-              }}>
-              {submitting ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : `Request withdrawal of ${fmtUsd(amt)}`}
-            </Button>
-          </Box>
+            <button type='button' disabled={!valid || submitting} onClick={submit} className={submitBtn}>
+              {submitting ? (
+                <Spinner size={20} />
+              ) : (
+                <>
+                  <ArrowUp size={16} className={startIcon} />
+                  {`Request withdrawal of ${fmtUsd(amt)}`}
+                </>
+              )}
+            </button>
+          </div>
         </>
       )}
-    </Dialog>
+    </BareModal>
   );
 }
 
 function FieldLabel({ children }: { children: React.ReactNode }) {
-  return <Typography component='label' sx={{ display: "block", fontSize: 13, fontWeight: 500, color: tokens.text2, mb: "7px" }}>{children}</Typography>;
+  return <label className={fieldLabelCss}>{children}</label>;
 }
 function Cap({ children }: { children: React.ReactNode }) {
-  return <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{children}</Typography>;
+  return <p className={capCss}>{children}</p>;
 }
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+    <div className={rowCss}>
       <Cap>{label}</Cap>
-      <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{value}</Typography>
-    </Box>
+      <p className={rowValue}>{value}</p>
+    </div>
   );
 }

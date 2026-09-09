@@ -53,7 +53,7 @@ export const button = cva({
       md: { h: "44px", paddingX: "5", fontSize: "15px" },
       lg: { h: "52px", paddingX: "7", fontSize: "16px" },
     },
-    full: { true: { width: "full" } },
+    full: { true: { width: "full", boxSizing: "border-box" } },
   },
   defaultVariants: { variant: "solid", size: "md" },
 });

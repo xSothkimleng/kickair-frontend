@@ -90,6 +90,15 @@ export default defineConfig({
           focusRingError: { value: "0 0 0 3px rgba(220,38,38,0.16)" },
         },
       },
+      keyframes: {
+        spin: { to: { transform: "rotate(360deg)" } },
+        fadeIn: { from: { opacity: 0 }, to: { opacity: 1 } },
+        slideInRight: { from: { opacity: 0, transform: "translateX(24px)" }, to: { opacity: 1, transform: "none" } },
+        slideInLeft: { from: { opacity: 0, transform: "translateX(-24px)" }, to: { opacity: 1, transform: "none" } },
+        slideUp: { from: { opacity: 0, transform: "translateY(12px)" }, to: { opacity: 1, transform: "none" } },
+        pop: { from: { opacity: 0, transform: "translateY(8px) scale(.98)" }, to: { opacity: 1, transform: "none" } },
+        pulse: { "0%, 100%": { opacity: 1 }, "50%": { opacity: 0.45 } },
+      },
     },
   },
 

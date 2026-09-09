@@ -2,10 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import InputBase from "@mui/material/InputBase";
-import { tokens } from "@/theme";
+import { css } from "styled-system/css";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
 import { VerifyBody, VerifyButton, VerifyCard, VerifyHeadline, VerifyNotice, VerifyTag } from "@/components/auth/verifyKit";
@@ -14,6 +11,35 @@ export type VerifiedStatus = "verified" | "expired" | "invalid" | "already";
 
 // Sits under the main navbar, so leave room for it instead of forcing a full viewport.
 const PAGE_MIN_HEIGHT = "85vh";
+
+const form = css({ mt: "24px", display: "flex", flexDirection: "column", gap: "12px" });
+const label = css({ display: "block", fontSize: "12px", lineHeight: 1.5, fontWeight: 600, color: "ink2", mb: "6px" });
+// Square ink-palette text field (was a raw MUI InputBase, not a slate kit field).
+const input = css({
+  display: "block",
+  w: "100%",
+  h: "48px",
+  boxSizing: "border-box",
+  m: "0",
+  px: "16px",
+  py: "0",
+  fontFamily: "inherit",
+  fontSize: "15px",
+  lineHeight: 1.4375,
+  color: "rgba(0,0,0,0.87)",
+  bg: "surface",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairlineStrong",
+  borderRadius: "0",
+  outline: "none",
+  _placeholder: { color: "currentcolor", opacity: 0.42 },
+  _focus: { borderColor: "ink" },
+});
+const actions = css({ display: "flex", gap: "12px", flexWrap: "wrap" });
+const hint = css({ fontSize: "12px", lineHeight: 1.5, color: "ink3" });
+const gap20 = css({ mt: "20px" });
+const gap28 = css({ mt: "28px" });
 
 function ResendLinkForm() {
   const [email, setEmail] = useState("");
@@ -46,43 +72,32 @@ function ResendLinkForm() {
   }
 
   return (
-    <Box component="form" onSubmit={submit} sx={{ mt: 3, display: "flex", flexDirection: "column", gap: 1.5 }}>
-      <Box>
-        <Typography
-          component="label"
-          htmlFor="resend-link-email"
-          sx={{ display: "block", fontSize: 12, fontWeight: 600, color: tokens.text2, mb: 0.75 }}>
+    <form onSubmit={submit} className={form}>
+      <div>
+        <label htmlFor="resend-link-email" className={label}>
           Email address
-        </Typography>
-        <InputBase
+        </label>
+        <input
           id="resend-link-email"
           type="email"
           required
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@example.com"
-          sx={{
-            width: "100%",
-            height: 48,
-            px: 2,
-            fontSize: 15,
-            border: `1px solid ${tokens.borderStrong}`,
-            bgcolor: tokens.surface,
-            "&.Mui-focused": { borderColor: tokens.text },
-          }}
+          className={input}
         />
-      </Box>
+      </div>
       {error && <VerifyNotice tone="error">{error}</VerifyNotice>}
-      <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+      <div className={actions}>
         <VerifyButton type="submit" disabled={sending}>
           {sending ? "Sending…" : "Send a new link"}
         </VerifyButton>
         <VerifyButton variant="secondary" href="/auth/sign-in">
           Back to sign in
         </VerifyButton>
-      </Box>
-      <Typography sx={{ fontSize: 12, color: tokens.text3 }}>You can request up to 5 links per minute.</Typography>
-    </Box>
+      </div>
+      <p className={hint}>You can request up to 5 links per minute.</p>
+    </form>
   );
 }
 
@@ -103,13 +118,13 @@ export default function EmailVerifiedContent({ status }: { status: VerifiedStatu
       <VerifyCard minHeight={PAGE_MIN_HEIGHT}>
         <VerifyTag tone="error">{expired ? "Link expired" : "Link not valid"}</VerifyTag>
         <VerifyHeadline>{expired ? "This link has expired" : "This link isn't valid"}</VerifyHeadline>
-        <Box sx={{ mt: 2.5 }}>
+        <div className={gap20}>
           <VerifyBody>
             {expired
               ? "Verification links only work for 60 minutes. Enter the email you signed up with and we'll send a fresh one."
               : "This link doesn't match an account — it may have been copied incompletely. Enter the email you signed up with and we'll send a fresh one."}
           </VerifyBody>
-        </Box>
+        </div>
         <ResendLinkForm />
       </VerifyCard>
     );
@@ -135,7 +150,7 @@ export default function EmailVerifiedContent({ status }: { status: VerifiedStatu
           </>
         )}
       </VerifyHeadline>
-      <Box sx={{ mt: 2.5 }}>
+      <div className={gap20}>
         <VerifyBody>
           {user
             ? "You're signed in and ready. Taking you to Explore Services…"
@@ -143,10 +158,10 @@ export default function EmailVerifiedContent({ status }: { status: VerifiedStatu
               ? "This address was confirmed earlier — nothing else to do here. Sign in and pick up where you left off."
               : "Your email is confirmed and your account is active. Sign in to finish your profile — a finished profile gets noticed first."}
         </VerifyBody>
-      </Box>
-      <Box sx={{ mt: 3.5 }}>
+      </div>
+      <div className={gap28}>
         <VerifyButton href={user ? "/explore-services" : "/auth/sign-in"}>{user ? "Go to Explore Services" : "Continue to sign in"}</VerifyButton>
-      </Box>
+      </div>
     </VerifyCard>
   );
 }

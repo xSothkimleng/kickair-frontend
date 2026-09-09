@@ -2,17 +2,13 @@
 
 import { useCallback, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Button, CircularProgress, Dialog, IconButton, Typography } from "@mui/material";
-import {
-  Close as CloseIcon,
-  ErrorOutline,
-  LockOutlined,
-  VerifiedUserOutlined,
-  CheckCircleOutline,
-} from "@mui/icons-material";
+import { AlertCircle, CheckCircle2, Lock, ShieldCheck, X } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Dialog, Spinner, iconButton } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { useAuth } from "@/components/context/AuthContext";
 import GoogleButton from "@/components/auth/GoogleButton";
-import { tokens } from "@/theme";
+import { pillButton } from "@/components/payment/pill";
 import { withRedirect } from "@/lib/redirect";
 import type { User } from "@/types/user";
 
@@ -62,6 +58,82 @@ const CONTENT = {
 } as const;
 
 const fmtUsd = (n: number) => `$${n.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+
+// Stable id so `Dialog.Title` keeps labelling the panel (was `aria-labelledby`).
+const GATE_IDS = { title: "purchase-gate-heading" };
+
+const panelCss = css({ boxShadow: "0 16px 48px rgba(0,0,0,0.18)" });
+const bodyCss = css({ p: { base: "24px 20px 20px", sm: "28px 28px 24px" }, position: "relative", color: "ink" });
+// Recipe + overrides merged into one style object: Panda's `cx` only
+// concatenates class names, so an override passed as a second class would lose
+// to whichever atomic rule the generated sheet happens to emit last.
+const closeBtn = css(iconButton.raw({ size: "md", shape: "round", variant: "ghost", tone: "default" }), {
+  position: "absolute",
+  top: "16px",
+  right: "16px",
+  w: "32px",
+  h: "32px",
+  bg: "rgba(0,0,0,0.05)",
+  color: "ink2",
+  _hover: { bg: "rgba(0,0,0,0.1)", color: "ink2" },
+});
+const brandRow = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", mb: "20px" });
+const brandMark = css({ w: "22px", h: "22px", borderRadius: "7px", bg: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
+const brandDot = css({ w: "8px", h: "8px", borderRadius: "2px", bg: "#fff", transform: "rotate(45deg)" });
+const brandName = css({ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.01em" });
+// The `mb` these two carried as MUI Typography never applied — globals.css's
+// unlayered `p, h1-h6 { margin: 0 }` outranks any layered rule — so it's dropped.
+const headingCss = css({ fontSize: "20px", fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.01em", color: "ink" });
+const bodyText = css({ fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+// GoogleButton merges an extra `className` with `cx`, which can't override its
+// own atomic classes — a descendant selector on a wrapper wins on specificity.
+const googleWrap = css({
+  "& > button": {
+    borderRadius: "pill",
+    borderColor: "hairlineStrong",
+    color: "ink",
+    transition: "background 0.15s, box-shadow 0.15s",
+    _hover: { borderColor: "hairlineStrong", bg: "surface2", boxShadow: "0 1px 4px rgba(0,0,0,0.10)" },
+  },
+});
+const orRow = css({ display: "flex", alignItems: "center", gap: "12px", my: "16px" });
+const orRule = css({ flex: 1, h: "1px", bg: "hairline" });
+const orLabel = css({ fontSize: "12px", color: "ink3" });
+const errorBox = css({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: "9px",
+  bg: "errorTint",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#dc262633",
+  borderRadius: "10px",
+  p: "10px 12px",
+  mb: "14px",
+});
+const errorIcon = css({ flex: "0 0 16px", mt: "1px", color: "error" });
+const errorText = css({ fontSize: "13px", lineHeight: 1.4, color: "error" });
+const stepsRow = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", mb: "18px" });
+const primaryBtn = css(pillButton.raw({ tone: "accent", size: "md", full: true }), { h: "46px" });
+// `_disabled` reproduces MUI's disabled Button text colour (the gate greys the
+// secondary out while "Become a client" is in flight).
+const secondaryBtn = css(pillButton.raw({ tone: "grey", size: "md", full: true }), {
+  h: "46px",
+  mt: "10px",
+  _disabled: { color: "rgba(0,0,0,0.26)" },
+});
+const primarySpinner = css({ ml: "-4px" });
+const trustRow = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "16px",
+  mt: "20px",
+  pt: "18px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+});
 
 /**
  * Purchase precondition gate, shared by every buy entry point (service "Continue",
@@ -140,131 +212,102 @@ export function usePurchaseGate(options: UsePurchaseGateOptions = {}) {
   const c = gate ? CONTENT[gate] : null;
 
   const gateDialog = (
-    <Dialog
+    <BareModal
       open={gate !== null}
-      onClose={close}
-      aria-labelledby="purchase-gate-heading"
-      slotProps={{ paper: { sx: { borderRadius: "16px", m: 2, maxWidth: 440, width: "100%", boxShadow: "0 16px 48px rgba(0,0,0,0.18)" } } }}>
+      onOpenChange={o => { if (!o) close(); }}
+      maxW='440px'
+      ids={GATE_IDS}
+      className={panelCss}>
       {gate && c && (
-        <Box sx={{ p: { xs: "24px 20px 20px", sm: "28px 28px 24px" }, position: "relative", color: tokens.text }}>
+        <div className={bodyCss}>
           {/* Close */}
-          <IconButton
-            aria-label="Close"
-            onClick={close}
-            disabled={busy}
-            sx={{ position: "absolute", top: 16, right: 16, width: 32, height: 32, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
-            <CloseIcon sx={{ fontSize: 18 }} />
-          </IconButton>
+          <Dialog.CloseTrigger asChild>
+            <button type='button' aria-label='Close' disabled={busy} className={closeBtn}>
+              <X size={18} />
+            </button>
+          </Dialog.CloseTrigger>
 
           {/* Brand mark */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 2.5 }}>
-            <Box sx={{ width: 22, height: 22, borderRadius: "7px", bgcolor: tokens.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Box sx={{ width: 8, height: 8, borderRadius: "2px", bgcolor: "#fff", transform: "rotate(45deg)" }} />
-            </Box>
-            <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em" }}>KickAir</Typography>
-          </Box>
+          <div className={brandRow}>
+            <div className={brandMark}>
+              <div className={brandDot} />
+            </div>
+            <p className={brandName}>KickAir</p>
+          </div>
 
           {/* Order summary */}
           {summary && <OrderSummaryCard summary={summary} />}
 
           {/* Heading + body */}
-          <Typography id="purchase-gate-heading" component="h2" sx={{ fontSize: 20, fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.01em", mb: 1 }}>
-            {c.heading}
-          </Typography>
-          <Typography sx={{ fontSize: 14, lineHeight: 1.5, color: tokens.text2, mb: 2.5 }}>{c.body}</Typography>
+          <Dialog.Title className={headingCss}>{c.heading}</Dialog.Title>
+          <p className={bodyText}>{c.body}</p>
 
           {/* Google fast path — login only */}
           {gate === "login" && (
             <>
-              <GoogleButton
-                label="Continue with Google"
-                roles={{ is_client: true }}
-                onAuthenticated={afterGoogle}
-                onError={setError}
-                sx={{
-                  borderRadius: "999px",
-                  borderColor: tokens.borderStrong,
-                  color: tokens.text,
-                  transition: "background 0.15s, box-shadow 0.15s",
-                  "&:hover": { borderColor: tokens.borderStrong, backgroundColor: tokens.surface2, boxShadow: "0 1px 4px rgba(0,0,0,0.10)" },
-                }}
-              />
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, my: 2 }}>
-                <Box sx={{ flex: 1, height: "1px", bgcolor: tokens.border }} />
-                <Typography sx={{ fontSize: 12, color: tokens.text3 }}>or</Typography>
-                <Box sx={{ flex: 1, height: "1px", bgcolor: tokens.border }} />
-              </Box>
+              <div className={googleWrap}>
+                <GoogleButton
+                  label='Continue with Google'
+                  roles={{ is_client: true }}
+                  onAuthenticated={afterGoogle}
+                  onError={setError}
+                />
+              </div>
+              <div className={orRow}>
+                <div className={orRule} />
+                <p className={orLabel}>or</p>
+                <div className={orRule} />
+              </div>
             </>
           )}
 
           {/* Error (become-client can fail) */}
           {error && (
-            <Box role="alert" sx={{ display: "flex", alignItems: "flex-start", gap: "9px", bgcolor: tokens.errorTint, border: `1px solid ${tokens.error}33`, borderRadius: "10px", p: "10px 12px", mb: 1.75 }}>
-              <ErrorOutline sx={{ fontSize: 16, flex: "0 0 16px", mt: "1px", color: tokens.error }} />
-              <Typography sx={{ fontSize: 13, lineHeight: 1.4, color: tokens.error }}>{error}</Typography>
-            </Box>
+            <div role='alert' className={errorBox}>
+              <AlertCircle size={16} className={errorIcon} />
+              <p className={errorText}>{error}</p>
+            </div>
           )}
 
           {/* KYC step hint */}
           {gate === "kyc" && (
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 1, mb: 2.25 }}>
+            <div className={stepsRow}>
               <StepPill>1 · ID</StepPill>
               <Arrow />
               <StepPill>2 · Selfie</StepPill>
               <Arrow />
               <StepPill done>3 · Done</StepPill>
-            </Box>
+            </div>
           )}
 
           {/* Primary CTA */}
           {busy ? (
-            <Button
-              fullWidth
-              disabled
-              startIcon={<CircularProgress size={16} sx={{ color: "#fff" }} />}
-              sx={{ height: 46, borderRadius: "999px", bgcolor: tokens.accent, color: "#fff", textTransform: "none", fontSize: 15, fontWeight: 500, "&.Mui-disabled": { bgcolor: tokens.accent, color: "#fff", opacity: 0.65 } }}>
+            <button type='button' disabled className={primaryBtn}>
+              <Spinner size={16} className={primarySpinner} />
               {c.primary}
-            </Button>
+            </button>
           ) : (
-            <Button
-              fullWidth
-              onClick={onPrimary}
-              sx={{
-                height: 46,
-                borderRadius: "999px",
-                bgcolor: tokens.accent,
-                color: "#fff",
-                textTransform: "none",
-                fontSize: 15,
-                fontWeight: 500,
-                transition: "background 0.15s",
-                "&:hover": { bgcolor: tokens.accentHover },
-                "&:focus-visible": { outline: "none", boxShadow: `0 0 0 3px rgba(${tokens.accentRgb}, 0.18)` },
-              }}>
+            <button type='button' onClick={onPrimary} className={primaryBtn}>
               {c.primary}
-            </Button>
+            </button>
           )}
 
           {/* Secondary */}
-          <Button
-            fullWidth
-            onClick={onSecondary}
-            disabled={busy}
-            sx={{ mt: 1.25, height: 46, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: tokens.text, textTransform: "none", fontSize: 15, fontWeight: 500, transition: "background 0.15s", "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
+          <button type='button' onClick={onSecondary} disabled={busy} className={secondaryBtn}>
             {c.secondary}
-          </Button>
+          </button>
 
           {/* Trust row — login only */}
           {gate === "login" && (
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 2, mt: 2.5, pt: 2.25, borderTop: `1px solid ${tokens.border}` }}>
-              <TrustItem icon={<VerifiedUserOutlined sx={{ fontSize: 14 }} />}>Money-back</TrustItem>
-              <TrustItem icon={<LockOutlined sx={{ fontSize: 14 }} />}>Escrow-protected</TrustItem>
-              <TrustItem icon={<CheckCircleOutline sx={{ fontSize: 14 }} />}>Verified</TrustItem>
-            </Box>
+            <div className={trustRow}>
+              <TrustItem icon={<ShieldCheck size={14} />}>Money-back</TrustItem>
+              <TrustItem icon={<Lock size={14} />}>Escrow-protected</TrustItem>
+              <TrustItem icon={<CheckCircle2 size={14} />}>Verified</TrustItem>
+            </div>
           )}
-        </Box>
+        </div>
       )}
-    </Dialog>
+    </BareModal>
   );
 
   return { ensureCanPurchase, gateDialog };
@@ -272,81 +315,109 @@ export function usePurchaseGate(options: UsePurchaseGateOptions = {}) {
 
 /* ---- presentational helpers ---- */
 
+const summaryCard = css({
+  display: "flex",
+  gap: "14px",
+  alignItems: "center",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  bg: "surface2",
+  borderRadius: "12px",
+  p: "12px",
+  mb: "22px",
+});
+const summaryThumb = css({
+  w: "56px",
+  h: "56px",
+  flex: "0 0 56px",
+  borderRadius: "10px",
+  overflow: "hidden",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+const summaryThumbEmpty = css({ backgroundImage: "repeating-linear-gradient(45deg,rgba(0,0,0,0.05) 0 6px,rgba(0,0,0,0.09) 6px 12px)" });
+const summaryThumbImg = css({ w: "100%", h: "100%", objectFit: "cover" });
+const summaryPlaceholder = css({ fontFamily: "mono", fontSize: "7px", color: "ink3", textAlign: "center", lineHeight: 1.2 });
+const summaryMain = css({ flex: 1, minWidth: 0 });
+const summaryTitle = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const summaryMeta = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
+const summaryMetaGap = css({ mb: "4px" });
+const summaryTier = css({
+  fontSize: "11px",
+  fontWeight: 500,
+  color: "accent",
+  bg: "accentFill",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#0071e333",
+  borderRadius: "pill",
+  px: "9px",
+  py: "1px",
+});
+const summarySeller = css({ fontSize: "12px", color: "ink2" });
+const summaryLine = css({ fontSize: "12px", color: "ink3" });
+const summaryAmount = css({ fontFamily: "mono", fontSize: "16px", fontWeight: 600, fontVariantNumeric: "tabular-nums", alignSelf: "flex-start" });
+
 function OrderSummaryCard({ summary }: { summary: PurchaseSummary }) {
   return (
-    <Box sx={{ display: "flex", gap: 1.75, alignItems: "center", border: `1px solid ${tokens.border}`, bgcolor: tokens.surface2, borderRadius: "12px", p: 1.5, mb: 2.75 }}>
-      <Box
-        sx={{
-          width: 56,
-          height: 56,
-          flex: "0 0 56px",
-          borderRadius: "10px",
-          overflow: "hidden",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          backgroundImage: summary.imageUrl ? undefined : "repeating-linear-gradient(45deg,rgba(0,0,0,0.05) 0 6px,rgba(0,0,0,0.09) 6px 12px)",
-        }}>
+    <div className={summaryCard}>
+      <div className={cx(summaryThumb, !summary.imageUrl && summaryThumbEmpty)}>
         {summary.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={summary.imageUrl} alt={summary.title} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+          <img src={summary.imageUrl} alt={summary.title} className={summaryThumbImg} />
         ) : (
-          <Typography sx={{ fontFamily: tokens.mono, fontSize: 7, color: tokens.text3, textAlign: "center", lineHeight: 1.2 }}>
+          <p className={summaryPlaceholder}>
             service
             <br />
             image
-          </Typography>
+          </p>
         )}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 14, fontWeight: 500, lineHeight: 1.3, mb: 0.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-          {summary.title}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: summary.metaLine ? 0.5 : 0, flexWrap: "wrap" }}>
-          {summary.tierLabel && (
-            <Box component="span" sx={{ fontSize: 11, fontWeight: 500, color: tokens.accent, bgcolor: tokens.accentFill, border: `1px solid ${tokens.accent}33`, borderRadius: "999px", px: 1.125, py: "1px" }}>
-              {summary.tierLabel}
-            </Box>
-          )}
-          {summary.sellerName && <Typography component="span" sx={{ fontSize: 12, color: tokens.text2 }}>by {summary.sellerName}</Typography>}
-        </Box>
-        {summary.metaLine && <Typography sx={{ fontSize: 12, color: tokens.text3 }}>{summary.metaLine}</Typography>}
-      </Box>
-      <Typography sx={{ fontFamily: tokens.mono, fontSize: 16, fontWeight: 600, fontVariantNumeric: "tabular-nums", alignSelf: "flex-start" }}>
-        {fmtUsd(summary.amount)}
-      </Typography>
-    </Box>
+      </div>
+      <div className={summaryMain}>
+        <p className={summaryTitle}>{summary.title}</p>
+        <div className={cx(summaryMeta, summary.metaLine && summaryMetaGap)}>
+          {summary.tierLabel && <span className={summaryTier}>{summary.tierLabel}</span>}
+          {summary.sellerName && <span className={summarySeller}>by {summary.sellerName}</span>}
+        </div>
+        {summary.metaLine && <p className={summaryLine}>{summary.metaLine}</p>}
+      </div>
+      <p className={summaryAmount}>{fmtUsd(summary.amount)}</p>
+    </div>
   );
 }
+
+const stepPill = cva({
+  base: { fontSize: "12px", fontWeight: 500, borderRadius: "pill", px: "12px", py: "5px", borderWidth: "1px", borderStyle: "solid" },
+  variants: {
+    done: {
+      true: { color: "successText", bg: "successTint", borderColor: "#16a34a33" },
+      false: { color: "ink2", bg: "surface2", borderColor: "hairline" },
+    },
+  },
+  defaultVariants: { done: false },
+});
 
 function StepPill({ children, done }: { children: React.ReactNode; done?: boolean }) {
-  return (
-    <Box
-      component="span"
-      sx={{
-        fontSize: 12,
-        fontWeight: 500,
-        borderRadius: "999px",
-        px: 1.5,
-        py: 0.625,
-        color: done ? tokens.successText : tokens.text2,
-        bgcolor: done ? tokens.successTint : tokens.surface2,
-        border: `1px solid ${done ? `${tokens.success}33` : tokens.border}`,
-      }}>
-      {children}
-    </Box>
-  );
+  return <span className={stepPill({ done })}>{children}</span>;
 }
 
+const arrowCss = css({ color: "ink3", fontSize: "12px" });
+
 function Arrow() {
-  return <Box component="span" sx={{ color: tokens.text3, fontSize: 12 }}>→</Box>;
+  return <span className={arrowCss}>→</span>;
 }
+
+// `& svg` keeps MUI SvgIcon's `flex-shrink: 0` for the icons passed in.
+const trustItem = css({ display: "flex", alignItems: "center", gap: "5px", color: "ink3", "& svg": { flexShrink: 0 } });
+const trustLabel = css({ fontSize: "11px", color: "ink3" });
 
 function TrustItem({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.625, color: tokens.text3 }}>
+    <div className={trustItem}>
       {icon}
-      <Typography sx={{ fontSize: 11, color: tokens.text3 }}>{children}</Typography>
-    </Box>
+      <p className={trustLabel}>{children}</p>
+    </div>
   );
 }

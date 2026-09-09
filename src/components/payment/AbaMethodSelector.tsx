@@ -1,7 +1,6 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
-import { tokens } from "@/theme";
+import { css } from "styled-system/css";
 import PaymentOption from "./PaymentOption";
 import PayLogo, { type PayLogoId } from "./PayLogo";
 import Annot from "./Annot";
@@ -16,6 +15,22 @@ export const ABA_METHODS: { id: AbaMethod; name: string; desc: string; logos: Pa
   { id: "wechat", name: "WeChat Pay", desc: "WeChat wallet", logos: ["wechat"] },
 ];
 
+const listCss = css({ display: "flex", flexDirection: "column", gap: "10px" });
+const headCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "2px" });
+const headLabelCss = css({
+  fontSize: "11px",
+  fontWeight: 600,
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+  color: "ink3",
+  lineHeight: 1.5,
+});
+const rowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" });
+const textColCss = css({ minWidth: 0 });
+const nameCss = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5 });
+const descCss = css({ fontSize: "13px", color: "ink2", lineHeight: 1.5 });
+const logosCss = css({ display: "flex", gap: "6px", flexShrink: 0 });
+
 /** ABA step 6 — select payment method on our page (handed to ABA's popup after). */
 export default function AbaMethodSelector({
   value,
@@ -25,29 +40,26 @@ export default function AbaMethodSelector({
   onChange: (m: AbaMethod) => void;
 }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.25 }}>
-        <Typography
-          sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>
-          Choose a payment method
-        </Typography>
+    <div className={listCss}>
+      <div className={headCss}>
+        <p className={headLabelCss}>Choose a payment method</p>
         <Annot>STEP 6</Annot>
-      </Box>
+      </div>
       {ABA_METHODS.map(m => (
         <PaymentOption key={m.id} selected={value === m.id} onClick={() => onChange(m.id)}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5 }}>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontWeight: 600, fontSize: 15 }}>{m.name}</Typography>
-              <Typography sx={{ fontSize: 13, color: tokens.text2 }}>{m.desc}</Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
+          <div className={rowCss}>
+            <div className={textColCss}>
+              <p className={nameCss}>{m.name}</p>
+              <p className={descCss}>{m.desc}</p>
+            </div>
+            <div className={logosCss}>
               {m.logos.map(l => (
                 <PayLogo key={l} id={l} size='sm' />
               ))}
-            </Box>
-          </Box>
+            </div>
+          </div>
         </PaymentOption>
       ))}
-    </Box>
+    </div>
   );
 }

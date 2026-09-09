@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography } from "@mui/material";
+import { css } from "styled-system/css";
+import { Stack } from "styled-system/jsx";
 import { SelectInput, TextInput } from "@/components/ui/inputs";
 import { ServiceCategory } from "@/types/service";
 
@@ -12,6 +13,9 @@ export interface CategoryValue {
 }
 
 const NEW = "__new__";
+
+// Owner-facing review hint under a "new category" field.
+const hintCss = css({ fontSize: "12px", lineHeight: 1.5, color: "pendingText" });
 
 function findAisleId(tree: ServiceCategory[], categoryId: number | null): number | null {
   if (!categoryId) return null;
@@ -80,7 +84,7 @@ export default function CategoryPicker({
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <Stack gap="16px">
       <SelectInput
         label='Category'
         required={required}
@@ -96,7 +100,7 @@ export default function CategoryPicker({
       />
 
       {isNewAisle && (
-        <Box>
+        <div>
           <TextInput
             label='New category name'
             required
@@ -106,11 +110,11 @@ export default function CategoryPicker({
             error={error}
           />
           {showNewCategoryHint && (
-            <Typography sx={{ fontSize: 12, color: "#b45309", mt: 0.75 }}>
+            <p className={hintCss}>
               New top-level category — an admin will review and approve it. Your listing still goes live in the meantime.
-            </Typography>
+            </p>
           )}
-        </Box>
+        </div>
       )}
 
       {!isNewAisle && resolvedAisle != null && (
@@ -129,7 +133,7 @@ export default function CategoryPicker({
       )}
 
       {isNewShelf && (
-        <Box>
+        <div>
           <TextInput
             label='New subcategory name'
             required
@@ -139,12 +143,12 @@ export default function CategoryPicker({
             error={error}
           />
           {showNewCategoryHint && (
-            <Typography sx={{ fontSize: 12, color: "#b45309", mt: 0.75 }}>
+            <p className={hintCss}>
               New subcategory — an admin will review and approve it. Your listing still goes live in the meantime.
-            </Typography>
+            </p>
           )}
-        </Box>
+        </div>
       )}
-    </Box>
+    </Stack>
   );
 }

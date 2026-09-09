@@ -2,17 +2,69 @@
 import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Box, Container, Typography, Button, Skeleton } from "@mui/material";
-import { Check as CheckIcon, ArrowForwardOutlined } from "@mui/icons-material";
+import { ArrowRight, Check } from "lucide-react";
+import { css } from "styled-system/css";
+import { Container } from "styled-system/jsx";
+import { Skeleton } from "@/components/ds";
 import { api } from "@/lib/api";
 import { Notification } from "@/types/notification";
 import { useAuth } from "@/components/context/AuthContext";
-import { tokens } from "@/theme";
 import { TypeTile, RoleChip, UnreadDot, typeMeta, getNotificationRoute, notifTimeAgo, notifGroup } from "@/components/notifications/shared";
 import { invalidateForNotification } from "@/lib/realtimeInvalidation";
 import PushToggle from "@/components/notifications/PushToggle";
 
 type RoleTab = "all" | "freelancer" | "client" | "admin";
+
+// ── Page chrome ──
+const pageCss = css({ minH: "100vh", bg: "canvas", pb: "48px" });
+const headerColCss = css({ display: "flex", flexDirection: "column", gap: { base: "14px", md: "18px" } });
+const headerRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px", flexWrap: "wrap" });
+const titleCss = css({ fontSize: { base: "27px", md: "34px" }, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1.5, color: "ink" });
+const subCss = css({ fontSize: { base: "13.5px", md: "14.5px" }, color: "ink2", mt: "6px", lineHeight: 1.5 });
+const subStrongCss = css({ color: "ink", fontWeight: 600 });
+const actionsCss = css({ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" });
+// Neutral pill buttons (Mark all / CTA / Load more) — hand-rolled like the originals.
+const pillRaw = css.raw({ appearance: "none", display: "inline-flex", alignItems: "center", justifyContent: "center", border: "none", cursor: "pointer", fontFamily: "inherit", borderRadius: "999px", bg: "rgba(0,0,0,0.05)", color: "#000", fontWeight: 600, whiteSpace: "nowrap", lineHeight: 1.75, transition: "background-color .25s", _hover: { bg: "rgba(0,0,0,0.1)" }, _disabled: { opacity: 0.5, cursor: "default", pointerEvents: "none" } });
+const markAllCss = css(pillRaw, { h: "40px", px: "16px", fontSize: "13px", gap: "8px", "& svg": { ml: "-4px" } });
+const tabsRowCss = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
+const tabRaw = css.raw({ appearance: "none", display: "inline-flex", alignItems: "center", gap: "7px", h: "36px", px: "16px", borderRadius: "999px", border: "none", cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: 500 });
+const tabOnCss = css(tabRaw, { bg: "#000", color: "#fff", _hover: { bg: "#000" } });
+const tabOffCss = css(tabRaw, { bg: "rgba(0,0,0,0.05)", color: "ink2", _hover: { bg: "rgba(0,0,0,0.09)" } });
+const tabCountRaw = css.raw({ fontFamily: "mono", fontSize: "11.5px", fontWeight: 600 });
+const tabCountOnCss = css(tabCountRaw, { opacity: 0.65, color: "#fff" });
+const tabCountOffCss = css(tabCountRaw, { opacity: 1, color: "ink3" });
+const bodyCss = css({ mt: { base: "20px", md: "24px" } });
+const listCss = css({ display: "flex", flexDirection: "column", gap: "10px" });
+const emptyCss = css({ bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card", p: { base: "56px", md: "72px" }, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "16px" });
+const emptyCircleCss = css({ w: "76px", h: "76px", borderRadius: "50%", bg: "canvas", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", display: "flex", alignItems: "center", justifyContent: "center", color: "ink3" });
+const emptyTextCss = css({ maxW: "320px" });
+const emptyTitleCss = css({ fontSize: "19px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.5 });
+const emptyBodyCss = css({ fontSize: "14px", lineHeight: 1.5, color: "ink2", mt: "6px" });
+const groupsCss = css({ display: "flex", flexDirection: "column", gap: { base: "22px", md: "26px" } });
+const groupCss = css({ display: "flex", flexDirection: "column", gap: "10px" });
+const groupLabelCss = css({ fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3", px: "2px", lineHeight: 1.5 });
+const loadMoreWrapCss = css({ display: "flex", justifyContent: "center", pt: "4px" });
+const loadMoreCss = css(pillRaw, { h: "42px", px: "28px", fontSize: "13.5px" });
+
+// ── Cards ──
+const cardRaw = css.raw({ display: "flex", gap: { base: "13px", sm: "16px" }, p: { base: "16px", sm: "18px 20px" }, alignItems: "flex-start", cursor: "pointer", borderWidth: "1px", borderStyle: "solid", borderRadius: "cardSm", transition: "border-color .15s, background .15s", _hover: { borderColor: "hairlineStrong" } });
+const cardUnreadCss = css(cardRaw, { bg: "rgba(0,113,227,0.05)", borderColor: "rgba(0,113,227,0.18)" });
+const cardReadCss = css(cardRaw, { bg: "surface", borderColor: "hairline" });
+const cardColCss = css({ display: "flex", flexDirection: "column", gap: { base: "9px", sm: "7px" }, minW: 0, flex: 1 });
+const cardTextCss = css({ display: "flex", flexDirection: "column", gap: "5px" });
+const cardTitleRowCss = css({ display: "flex", alignItems: "center", gap: "8px" });
+const cardTitleRaw = css.raw({ fontSize: { base: "14.5px", sm: "15px" }, letterSpacing: "-0.01em", lineHeight: 1.3, color: "ink" });
+const cardTitleUnreadCss = css(cardTitleRaw, { fontWeight: 600 });
+const cardTitleReadCss = css(cardTitleRaw, { fontWeight: 500 });
+const cardBodyCss = css({ fontSize: { base: "13px", sm: "13.5px" }, lineHeight: 1.5, color: "ink2", lineClamp: 2 });
+const cardMetaCss = css({ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" });
+const cardTimeCss = css({ fontSize: "12px", color: "ink3", fontWeight: 500, whiteSpace: "nowrap" });
+const ctaCss = css(pillRaw, { h: { base: "36px", sm: "38px" }, px: "14px", fontSize: "13px", flex: { base: "1", sm: "none" }, gap: "8px", "& svg": { mr: "-4px" } });
+const ctaMobileWrapCss = css({ display: { base: "flex", sm: "none" }, mt: "2px" });
+const ctaDesktopWrapCss = css({ display: { base: "none", sm: "flex" }, alignSelf: "center", flex: "none" });
+const skCardCss = css({ display: "flex", gap: "16px", p: "18px 20px", alignItems: "flex-start", bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm" });
+const skColCss = css({ flex: 1, pt: "2px" });
+const skBtnWrapCss = css({ alignSelf: "center", display: { base: "none", sm: "block" } });
 
 function PageCard({ n, showRole, onOpen }: { n: Notification; showRole: boolean; onOpen: (n: Notification) => void }) {
   const unread = !n.readAt;
@@ -20,51 +72,44 @@ function PageCard({ n, showRole, onOpen }: { n: Notification; showRole: boolean;
   const cta = typeMeta(n.type).cta;
 
   const button = route && (
-    <Button
-      onClick={e => { e.stopPropagation(); onOpen(n); }}
-      endIcon={<ArrowForwardOutlined sx={{ fontSize: 15 }} />}
-      sx={{ height: { xs: 36, sm: 38 }, px: 1.75, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 600, whiteSpace: "nowrap", flex: { xs: 1, sm: "none" }, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
+    <button type="button" onClick={e => { e.stopPropagation(); onOpen(n); }} className={ctaCss}>
       {cta}
-    </Button>
+      <ArrowRight size={20} />
+    </button>
   );
 
   return (
-    <Box role="button" tabIndex={0} onClick={() => onOpen(n)}
-      sx={{ display: "flex", gap: { xs: 1.625, sm: 2 }, p: { xs: 2, sm: "18px 20px" }, alignItems: "flex-start", cursor: "pointer",
-        bgcolor: unread ? `rgba(${tokens.accentRgb},0.05)` : tokens.surface,
-        border: "1px solid", borderColor: unread ? `rgba(${tokens.accentRgb},0.18)` : tokens.border,
-        borderRadius: `${tokens.radius.cardSm}px`, transition: "border-color .15s, background .15s",
-        "&:hover": { borderColor: tokens.borderStrong } }}>
+    <div role="button" tabIndex={0} onClick={() => onOpen(n)} className={unread ? cardUnreadCss : cardReadCss}>
       <TypeTile type={n.type} size={44} />
-      <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 1.125, sm: 0.875 }, minWidth: 0, flex: 1 }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.625 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+      <div className={cardColCss}>
+        <div className={cardTextCss}>
+          <div className={cardTitleRowCss}>
             {unread && <UnreadDot />}
-            <Typography sx={{ fontSize: { xs: 14.5, sm: 15 }, fontWeight: unread ? 600 : 500, letterSpacing: "-0.01em", lineHeight: 1.3, color: tokens.text }}>{n.title}</Typography>
-          </Box>
-          <Typography sx={{ fontSize: { xs: 13, sm: 13.5 }, lineHeight: 1.5, color: tokens.text2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{n.body}</Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap" }}>
-          <Typography sx={{ fontSize: 12, color: tokens.text3, fontWeight: 500, whiteSpace: "nowrap" }}>{notifTimeAgo(n.createdAt)}</Typography>
+            <div className={unread ? cardTitleUnreadCss : cardTitleReadCss}>{n.title}</div>
+          </div>
+          <div className={cardBodyCss}>{n.body}</div>
+        </div>
+        <div className={cardMetaCss}>
+          <span className={cardTimeCss}>{notifTimeAgo(n.createdAt)}</span>
           {showRole && <RoleChip role={n.role} />}
-        </Box>
+        </div>
         {/* mobile: button below */}
-        {button && <Box sx={{ display: { xs: "flex", sm: "none" }, mt: 0.25 }}>{button}</Box>}
-      </Box>
-      {button && <Box sx={{ display: { xs: "none", sm: "flex" }, alignSelf: "center", flex: "none" }}>{button}</Box>}
-    </Box>
+        {button && <div className={ctaMobileWrapCss}>{button}</div>}
+      </div>
+      {button && <div className={ctaDesktopWrapCss}>{button}</div>}
+    </div>
   );
 }
 
 function PageCardSkeleton() {
   return (
-    <Box sx={{ display: "flex", gap: 2, p: "18px 20px", alignItems: "flex-start", bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.cardSm}px` }}>
-      <Skeleton variant="rounded" width={44} height={44} sx={{ borderRadius: "11px" }} />
-      <Box sx={{ flex: 1, pt: "2px" }}>
+    <div className={skCardCss}>
+      <Skeleton variant="rect" width={44} height={44} />
+      <div className={skColCss}>
         <Skeleton variant="text" width="46%" height={20} /><Skeleton variant="text" width="100%" /><Skeleton variant="text" width="72%" /><Skeleton variant="text" width={64} />
-      </Box>
-      <Skeleton variant="rounded" width={104} height={38} sx={{ borderRadius: "999px", alignSelf: "center", display: { xs: "none", sm: "block" } }} />
-    </Box>
+      </div>
+      <div className={skBtnWrapCss}><Skeleton variant="circle" width={104} height={38} /></div>
+    </div>
   );
 }
 
@@ -153,84 +198,82 @@ export default function NotificationsPage() {
     .filter(([, items]) => items.length > 0);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas, pb: 6 }}>
-      <Container sx={{ pt: { xs: 3.5, md: 5 }, maxWidth: "720px !important" }}>
+    <div className={pageCss}>
+      <Container maxW="720px" px={{ base: "16px", sm: "24px" }} pt={{ base: "28px", md: "40px" }}>
         {/* Header */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 1.75, md: 2.25 } }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5, flexWrap: "wrap" }}>
-            <Box>
-              <Typography sx={{ fontSize: { xs: 27, md: 34 }, fontWeight: 600, letterSpacing: "-0.025em" }}>Notifications</Typography>
+        <div className={headerColCss}>
+          <div className={headerRowCss}>
+            <div>
+              <div className={titleCss}>Notifications</div>
               {!loading && (
-                <Typography sx={{ fontSize: { xs: 13.5, md: 14.5 }, color: tokens.text2, mt: 0.75 }}>
+                <div className={subCss}>
                   {total === 0 ? "You're all caught up." : unreadCount > 0
-                    ? <><Box component="span" sx={{ color: tokens.text, fontWeight: 600 }}>{unreadCount} unread</Box> · {total} total</>
+                    ? <><span className={subStrongCss}>{unreadCount} unread</span> · {total} total</>
                     : <>All read · {total} total</>}
-                </Typography>
+                </div>
               )}
-            </Box>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap" }}>
+            </div>
+            <div className={actionsCss}>
               <PushToggle />
               {!loading && unreadCount > 0 && (
-                <Button onClick={handleMarkAll} disabled={markingAll} startIcon={<CheckIcon sx={{ fontSize: 16 }} />}
-                  sx={{ height: 40, px: 2, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 600, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
+                <button type="button" onClick={handleMarkAll} disabled={markingAll} className={markAllCss}>
+                  <Check size={20} />
                   {markingAll ? "Marking…" : "Mark all as read"}
-                </Button>
+                </button>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           {showRole && !loading && total > 0 && (
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+            <div className={tabsRowCss}>
               {tabs.map(([id, label]) => {
                 const on = tab === id;
                 const c = tabCount(id);
                 return (
-                  <Box key={id} component="button" onClick={() => setTab(id)}
-                    sx={{ display: "inline-flex", alignItems: "center", gap: 0.875, height: 36, px: 2, borderRadius: "999px", border: "none", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 500, bgcolor: on ? "#000" : "rgba(0,0,0,0.05)", color: on ? "#fff" : tokens.text2, "&:hover": { bgcolor: on ? "#000" : "rgba(0,0,0,0.09)" } }}>
-                    {label}{c > 0 && <Box component="span" sx={{ fontFamily: tokens.mono, fontSize: 11.5, fontWeight: 600, opacity: on ? 0.65 : 1, color: on ? "#fff" : tokens.text3 }}>{c}</Box>}
-                  </Box>
+                  <button key={id} type="button" onClick={() => setTab(id)} className={on ? tabOnCss : tabOffCss}>
+                    {label}{c > 0 && <span className={on ? tabCountOnCss : tabCountOffCss}>{c}</span>}
+                  </button>
                 );
               })}
-            </Box>
+            </div>
           )}
-        </Box>
+        </div>
 
         {/* Body */}
-        <Box sx={{ mt: { xs: 2.5, md: 3 } }}>
+        <div className={bodyCss}>
           {loading ? (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>{[0, 1, 2, 3, 4, 5].map(i => <PageCardSkeleton key={i} />)}</Box>
+            <div className={listCss}>{[0, 1, 2, 3, 4, 5].map(i => <PageCardSkeleton key={i} />)}</div>
           ) : filtered.length === 0 ? (
-            <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 7, md: 9 }, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 2 }}>
-              <Box sx={{ width: 76, height: 76, borderRadius: "50%", bgcolor: tokens.canvas, border: `1px solid ${tokens.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                <CheckIcon sx={{ fontSize: 30, color: tokens.text3 }} />
-              </Box>
-              <Box sx={{ maxWidth: 320 }}>
-                <Typography sx={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.015em" }}>No notifications yet</Typography>
-                <Typography sx={{ fontSize: 14, lineHeight: 1.5, color: tokens.text2, mt: 0.75 }}>When there&rsquo;s activity on your orders, proposals, listings and disputes, you&rsquo;ll see it here.</Typography>
-              </Box>
-            </Box>
+            <div className={emptyCss}>
+              <div className={emptyCircleCss}>
+                <Check size={30} />
+              </div>
+              <div className={emptyTextCss}>
+                <div className={emptyTitleCss}>No notifications yet</div>
+                <div className={emptyBodyCss}>When there&rsquo;s activity on your orders, proposals, listings and disputes, you&rsquo;ll see it here.</div>
+              </div>
+            </div>
           ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 2.75, md: 3.25 } }}>
+            <div className={groupsCss}>
               {groups.map(([g, items]) => (
-                <Box key={g} sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
-                  <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, px: 0.25 }}>{g}</Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+                <div key={g} className={groupCss}>
+                  <div className={groupLabelCss}>{g}</div>
+                  <div className={listCss}>
                     {items.map(n => <PageCard key={n.id} n={n} showRole={showRole} onOpen={openNotif} />)}
-                  </Box>
-                </Box>
+                  </div>
+                </div>
               ))}
               {hasMore && (
-                <Box sx={{ display: "flex", justifyContent: "center", pt: 0.5 }}>
-                  <Button onClick={handleLoadMore} disabled={loadingMore}
-                    sx={{ height: 42, px: 3.5, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13.5, fontWeight: 600, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
+                <div className={loadMoreWrapCss}>
+                  <button type="button" onClick={handleLoadMore} disabled={loadingMore} className={loadMoreCss}>
                     {loadingMore ? "Loading…" : "Load more"}
-                  </Button>
-                </Box>
+                  </button>
+                </div>
               )}
-            </Box>
+            </div>
           )}
-        </Box>
+        </div>
       </Container>
-    </Box>
+    </div>
   );
 }

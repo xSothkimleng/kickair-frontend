@@ -1,9 +1,9 @@
 "use client";
 
-import { TextField, InputAdornment, IconButton } from "@mui/material";
-import { Search, Close } from "@mui/icons-material";
+import { Search, X } from "lucide-react";
 import { FieldShell } from "./FieldShell";
-import { fieldSx, FieldBaseProps, tokens } from "./tokens";
+import { fieldAdornment, fieldControl, fieldIconButton, fieldRoot } from "./field";
+import { FieldBaseProps } from "./tokens";
 
 export interface SearchInputProps extends FieldBaseProps {
   value?: string;
@@ -19,34 +19,33 @@ export default function SearchInput({
   value, onChange, onClear, onEnter, placeholder = "Search…", id,
 }: SearchInputProps) {
   const body = (
-    <TextField
-      id={id}
-      type="search"
-      value={value ?? ""}
-      onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-      onKeyDown={(e) => { if (e.key === "Enter") onEnter?.(); }}
-      placeholder={placeholder}
-      disabled={disabled}
-      error={!!error}
-      fullWidth
-      sx={fieldSx(size)}
-      InputProps={{
-        startAdornment: (
-          <InputAdornment position="start" sx={{ color: tokens.muted }}>
-            <Search fontSize="small" />
-          </InputAdornment>
-        ),
-        endAdornment: value
-          ? (
-            <InputAdornment position="end">
-              <IconButton size="small" onClick={() => { onChange?.(""); onClear?.(); }} aria-label="Clear search" sx={{ color: tokens.muted }}>
-                <Close fontSize="small" />
-              </IconButton>
-            </InputAdornment>
-          )
-          : undefined,
-      }}
-    />
+    <div className={fieldRoot({ size })} data-invalid={error ? "" : undefined} data-disabled={disabled ? "" : undefined}>
+      <span className={fieldAdornment}>
+        <Search size={18} />
+      </span>
+      <input
+        id={id}
+        type="search"
+        value={value ?? ""}
+        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+        readOnly={!onChange}
+        onKeyDown={(e) => { if (e.key === "Enter") onEnter?.(); }}
+        placeholder={placeholder}
+        disabled={disabled}
+        aria-invalid={error ? true : undefined}
+        className={fieldControl}
+      />
+      {value ? (
+        <button
+          type="button"
+          onClick={() => { onChange?.(""); onClear?.(); }}
+          disabled={disabled}
+          aria-label="Clear search"
+          className={fieldIconButton}>
+          <X size={16} />
+        </button>
+      ) : null}
+    </div>
   );
 
   // When unlabelled (e.g. a toolbar search), render the bare field without the shell.

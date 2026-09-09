@@ -2,19 +2,33 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Paper, Typography, Button, Divider, Alert, Select, MenuItem, CircularProgress } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
+import { ArrowLeft } from "lucide-react";
+import { css } from "styled-system/css";
+import { Alert, Divider, Link, Text } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import GoogleButton from "@/components/auth/GoogleButton";
+import { AuthFallback, AuthPage, AuthPrimaryButton, authBackButton, authFooterText, authForm, authMutedButton, authSubtitle, authTitle } from "@/components/auth/authKit";
 import { safeRedirect } from "@/lib/redirect";
 import {
-  TextInput, PasswordInput, PhoneInput, OtpInput, SegmentedControl,
-  FieldLabel, FieldHelper, fieldSx, tokens,
+  TextInput, PasswordInput, PhoneInput, OtpInput, SegmentedControl, SelectInput,
+  FieldLabel, FieldHelper,
 } from "@/components/ui/inputs";
 
 type Role = "client" | "freelancer";
 type Method = "email" | "phone";
+
+const pagePad = css({ py: "32px" });
+const intro = css({ textAlign: "center", mb: "20px" });
+const alertGap = css({ mb: "16px" });
+const orRow = css({ lineHeight: 1.5 });
+const contactRow = css({ display: "flex", gap: "8px" });
+const contactField = css({ flex: 1 });
+const methodSelect = css({ minW: "104px" });
+const footer = css({ mt: "32px", display: "flex", flexDirection: "column", gap: "12px" });
+const signInLink = css({ fontWeight: 500 });
+const backIcon = css({ ml: "-4px" });
+const resendRow = css({ display: "flex", justifyContent: "center", mt: "16px" });
 
 function SignUpContent() {
   const router = useRouter();
@@ -102,143 +116,120 @@ function SignUpContent() {
   };
 
   return (
-    <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, sm: 6 }, py: 4, backgroundColor: tokens.page }}>
-      <Box sx={{ width: "100%", maxWidth: 420 }}>
-        <Paper elevation={0} sx={{ borderRadius: 0, border: `1px solid ${tokens.border}`, p: { xs: 3, sm: 4 }, boxShadow: "0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.07)" }}>
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
-            <Box component="img" src="/assets/images/kickair-logo.png" alt="KickAir" sx={{ height: 36 }} />
-          </Box>
+    <AuthPage className={pagePad}>
+      {step === "form" ? (
+        <>
+          <div className={intro}>
+            <h1 className={authTitle}>Create your account</h1>
+            <p className={authSubtitle}>Join KickAir</p>
+          </div>
 
-          {step === "form" ? (
-            <>
-              <Box sx={{ textAlign: "center", mb: 2.5 }}>
-                <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-                  Create your account
-                </Typography>
-                <Typography sx={{ fontSize: 14.5, color: tokens.muted }}>Join KickAir</Typography>
-              </Box>
+          {error && <Alert tone="error" onClose={() => setError("")} className={alertGap}>{error}</Alert>}
 
-              {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
+          <form onSubmit={handleFormSubmit} className={authForm}>
+            <SegmentedControl
+              fullWidth
+              ariaLabel="Account type"
+              value={role}
+              onChange={(v) => setRole(v as Role)}
+              options={[
+                { value: "client", label: "I want to hire", sub: "Client" },
+                { value: "freelancer", label: "I want to work", sub: "Freelancer" },
+              ]}
+            />
 
-              <Box component="form" onSubmit={handleFormSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <SegmentedControl
-                  fullWidth
-                  ariaLabel="Account type"
-                  value={role}
-                  onChange={(v) => setRole(v as Role)}
-                  options={[
-                    { value: "client", label: "I want to hire", sub: "Client" },
-                    { value: "freelancer", label: "I want to work", sub: "Freelancer" },
-                  ]}
+            <GoogleButton
+              label="Continue with Google"
+              roles={roleFlags()}
+              onAuthenticated={(u) => {
+                router.push(redirectTo ?? (u.is_freelancer && !u.is_client ? "/dashboard/freelancer" : "/explore-services"));
+                router.refresh();
+              }}
+              onError={setError}
+            />
+
+            <Divider className={orRow}>or</Divider>
+
+            <TextInput label="Full name" placeholder="Sok Dara" value={name} onChange={setName} autoComplete="name" disabled={isLoading} />
+
+            {/* Combined contact: Email/Phone picker + input */}
+            <div>
+              <FieldLabel>Contact</FieldLabel>
+              <div className={contactRow}>
+                <SelectInput
+                  value={method}
+                  onChange={(v) => { setMethod(v as Method); setEmail(""); setPhone(""); }}
+                  options={[{ value: "email", label: "Email" }, { value: "phone", label: "Phone" }]}
+                  disabled={isLoading}
+                  fullWidth={false}
+                  className={methodSelect}
                 />
+                <div className={contactField}>
+                  {method === "email"
+                    ? <TextInput type="email" placeholder="you@example.com" value={email} onChange={setEmail} autoComplete="email" disabled={isLoading} />
+                    : <PhoneInput placeholder="12 345 678" value={phone} onChange={setPhone} disabled={isLoading} />}
+                </div>
+              </div>
+              <FieldHelper>
+                {method === "email" ? "We'll send a verification link here." : "Cambodian number — we'll text you a code to verify."}
+              </FieldHelper>
+            </div>
 
-                <GoogleButton
-                  label="Continue with Google"
-                  roles={roleFlags()}
-                  onAuthenticated={(u) => {
-                    router.push(redirectTo ?? (u.is_freelancer && !u.is_client ? "/dashboard/freelancer" : "/explore-services"));
-                    router.refresh();
-                  }}
-                  onError={setError}
-                />
+            <PasswordInput label="Password" placeholder="Create a password" value={password} onChange={setPassword} autoComplete="new-password" helper="At least 8 characters" disabled={isLoading} />
+            <PasswordInput label="Confirm password" placeholder="Re-enter your password" value={confirm} onChange={setConfirm} autoComplete="new-password" disabled={isLoading} />
 
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Divider sx={{ flex: 1, borderColor: tokens.border }} />
-                  <Typography sx={{ fontSize: 13, color: tokens.muted }}>or</Typography>
-                  <Divider sx={{ flex: 1, borderColor: tokens.border }} />
-                </Box>
+            <AuthPrimaryButton type="submit" disabled={isLoading}>
+              {isLoading ? "Creating account…" : "Create account"}
+            </AuthPrimaryButton>
+          </form>
 
-                <TextInput label="Full name" placeholder="Sok Dara" value={name} onChange={setName} autoComplete="name" disabled={isLoading} />
+          <div className={footer}>
+            <p className={authFooterText}>
+              Already have an account?{" "}
+              <Link href="/auth/sign-in" className={signInLink}>
+                Sign in
+              </Link>
+            </p>
+            <Text size="xs" tone="muted" align="center">
+              By continuing, you agree to KickAir&rsquo;s Terms of Service and Privacy Policy.
+            </Text>
+          </div>
+        </>
+      ) : (
+        <>
+          <button type="button" onClick={() => { setStep("form"); setCode(""); setError(""); }} className={authBackButton}>
+            <ArrowLeft size={20} className={backIcon} />
+            Back
+          </button>
+          <h1 className={authTitle}>Verify your phone</h1>
+          <p className={authSubtitle}>
+            We sent a 6-digit code to {e164Phone()} via Telegram. Check your Telegram app.
+          </p>
 
-                {/* Combined contact: Email/Phone picker + input */}
-                <Box>
-                  <FieldLabel>Contact</FieldLabel>
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    <Select
-                      value={method}
-                      onChange={(e) => { setMethod(e.target.value as Method); setEmail(""); setPhone(""); }}
-                      disabled={isLoading}
-                      sx={{ ...fieldSx("md"), minWidth: 104 }}>
-                      <MenuItem value="email">Email</MenuItem>
-                      <MenuItem value="phone">Phone</MenuItem>
-                    </Select>
-                    <Box sx={{ flex: 1 }}>
-                      {method === "email"
-                        ? <TextInput type="email" placeholder="you@example.com" value={email} onChange={setEmail} autoComplete="email" disabled={isLoading} />
-                        : <PhoneInput placeholder="12 345 678" value={phone} onChange={setPhone} disabled={isLoading} />}
-                    </Box>
-                  </Box>
-                  <FieldHelper>
-                    {method === "email" ? "We'll send a verification link here." : "Cambodian number — we'll text you a code to verify."}
-                  </FieldHelper>
-                </Box>
+          {error && <Alert tone="error" onClose={() => setError("")} className={alertGap}>{error}</Alert>}
 
-                <PasswordInput label="Password" placeholder="Create a password" value={password} onChange={setPassword} autoComplete="new-password" helper="At least 8 characters" disabled={isLoading} />
-                <PasswordInput label="Confirm password" placeholder="Re-enter your password" value={confirm} onChange={setConfirm} autoComplete="new-password" disabled={isLoading} />
+          <form onSubmit={handleVerify} className={authForm}>
+            <OtpInput value={code} onChange={setCode} autoFocus disabled={isLoading} />
 
-                <Button type="submit" variant="contained" fullWidth disabled={isLoading}
-                  sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
-                  {isLoading ? "Creating account…" : "Create account"}
-                </Button>
-              </Box>
+            <AuthPrimaryButton type="submit" disabled={isLoading || code.length < 6}>
+              {isLoading ? "Verifying…" : "Verify & create account"}
+            </AuthPrimaryButton>
+          </form>
 
-              <Box sx={{ mt: 4, display: "flex", flexDirection: "column", gap: 1.5 }}>
-                <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body }}>
-                  Already have an account?{" "}
-                  <Box component="a" onClick={() => router.push("/auth/sign-in")} sx={{ color: tokens.accent, fontWeight: 500, cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
-                    Sign in
-                  </Box>
-                </Typography>
-                <Typography sx={{ textAlign: "center", fontSize: 12, color: tokens.muted, lineHeight: 1.5 }}>
-                  By continuing, you agree to KickAir&rsquo;s Terms of Service and Privacy Policy.
-                </Typography>
-              </Box>
-            </>
-          ) : (
-            <>
-              <Button onClick={() => { setStep("form"); setCode(""); setError(""); }} startIcon={<ArrowBack />}
-                sx={{ color: tokens.muted, textTransform: "none", mb: 1, ml: -1, "&:hover": { backgroundColor: "transparent", color: tokens.body } }}>
-                Back
-              </Button>
-              <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-                Verify your phone
-              </Typography>
-              <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 2.5 }}>
-                We sent a 6-digit code to {e164Phone()} via Telegram. Check your Telegram app.
-              </Typography>
-
-              {error && <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2 }}>{error}</Alert>}
-
-              <Box component="form" onSubmit={handleVerify} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <OtpInput value={code} onChange={setCode} autoFocus disabled={isLoading} />
-
-                <Button type="submit" variant="contained" fullWidth disabled={isLoading || code.length < 6}
-                  sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
-                  {isLoading ? "Verifying…" : "Verify & create account"}
-                </Button>
-              </Box>
-
-              <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-                <Button onClick={resendCode} disabled={isLoading} sx={{ fontSize: 13, color: tokens.muted, textTransform: "none" }}>
-                  Resend code
-                </Button>
-              </Box>
-            </>
-          )}
-        </Paper>
-      </Box>
-    </Box>
+          <div className={resendRow}>
+            <button type="button" onClick={resendCode} disabled={isLoading} className={authMutedButton}>
+              Resend code
+            </button>
+          </div>
+        </>
+      )}
+    </AuthPage>
   );
 }
 
 export default function SignUpPage() {
   return (
-    <Suspense
-      fallback={
-        <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: tokens.page }}>
-          <CircularProgress sx={{ color: tokens.accent }} />
-        </Box>
-      }>
+    <Suspense fallback={<AuthFallback />}>
       <SignUpContent />
     </Suspense>
   );

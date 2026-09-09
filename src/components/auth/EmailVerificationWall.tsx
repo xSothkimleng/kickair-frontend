@@ -1,9 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import Box from "@mui/material/Box";
-import Typography from "@mui/material/Typography";
-import { tokens } from "@/theme";
+import { css } from "styled-system/css";
 import { VerifyBody, VerifyButton, VerifyCard, VerifyHeadline, VerifyNotice, VerifyOverline } from "./verifyKit";
 
 interface EmailVerificationWallProps {
@@ -11,6 +9,42 @@ interface EmailVerificationWallProps {
   onResend: () => Promise<void>;
   onLogout: () => Promise<void>;
 }
+
+const gap20 = css({ mt: "20px" });
+const gap12 = css({ mt: "12px" });
+const emailRow = css({
+  mt: "12px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  gap: "16px",
+  px: "16px",
+  py: "12px",
+  bg: "canvas",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+});
+const emailText = css({ fontFamily: "mono", fontSize: "14px", lineHeight: 1.5, color: "ink", wordBreak: "break-all" });
+const notYou = css({
+  flexShrink: 0,
+  bg: "none",
+  border: "0",
+  p: "0",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  lineHeight: 1.5,
+  fontWeight: 600,
+  color: "accent",
+  cursor: "pointer",
+  _hover: { color: "accentHover" },
+  _disabled: { opacity: 0.5, cursor: "default" },
+});
+const strong = css({ color: "ink", fontWeight: 600 });
+const actions = css({ mt: "28px", display: "flex", gap: "12px", flexWrap: "wrap" });
+const footer = css({ mt: "36px", pt: "24px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
+const footerTitle = css({ fontSize: "13px", lineHeight: 1.5, fontWeight: 600, color: "ink", mb: "4px" });
+const footerBody = css({ fontSize: "13px", lineHeight: 1.6, color: "ink3" });
 
 /** Full-screen wall shown in place of the app until the user clicks the verification link. */
 export default function EmailVerificationWall({ email, onResend, onLogout }: EmailVerificationWallProps) {
@@ -47,81 +81,51 @@ export default function EmailVerificationWall({ email, onResend, onLogout }: Ema
         <br />
         you&apos;re in.
       </VerifyHeadline>
-      <Box sx={{ mt: 2.5 }}>
+      <div className={gap20}>
         <VerifyBody>We sent a verification link to</VerifyBody>
-      </Box>
+      </div>
 
       {email ? (
-        <Box
-          sx={{
-            mt: 1.5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 2,
-            px: 2,
-            py: 1.5,
-            bgcolor: tokens.canvas,
-            border: `1px solid ${tokens.border}`,
-          }}>
-          <Typography sx={{ fontFamily: tokens.mono, fontSize: 14, color: tokens.text, wordBreak: "break-all" }}>{email}</Typography>
-          <Typography
-            component="button"
-            type="button"
-            onClick={logout}
-            disabled={loggingOut}
-            sx={{
-              flexShrink: 0,
-              background: "none",
-              border: 0,
-              p: 0,
-              fontFamily: "inherit",
-              fontSize: 12,
-              fontWeight: 600,
-              color: tokens.accent,
-              cursor: "pointer",
-              "&:hover": { color: tokens.accentHover },
-              "&:disabled": { opacity: 0.5, cursor: "default" },
-            }}>
+        <div className={emailRow}>
+          <p className={emailText}>{email}</p>
+          <button type="button" onClick={logout} disabled={loggingOut} className={notYou}>
             {loggingOut ? "Signing out…" : "Not you?"}
-          </Typography>
-        </Box>
+          </button>
+        </div>
       ) : (
-        <Box sx={{ mt: 1.5 }}>
-          <VerifyBody sx={{ color: tokens.text }}>the address you signed up with.</VerifyBody>
-        </Box>
+        <div className={gap12}>
+          <VerifyBody tone="strong">the address you signed up with.</VerifyBody>
+        </div>
       )}
 
-      <Box sx={{ mt: 2.5 }}>
+      <div className={gap20}>
         <VerifyBody>
-          Open it and press <strong style={{ color: tokens.text, fontWeight: 600 }}>Verify email address</strong> — it takes about ten
+          Open it and press <strong className={strong}>Verify email address</strong> — it takes about ten
           seconds. The link works for 60 minutes.
         </VerifyBody>
-      </Box>
+      </div>
 
       {status === "error" && <VerifyNotice tone="error">{error}</VerifyNotice>}
       {status === "sent" && (
         <VerifyNotice tone="success">A fresh link is on its way{email ? ` to ${email}` : ""}. Give it a minute.</VerifyNotice>
       )}
 
-      <Box sx={{ mt: 3.5, display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+      <div className={actions}>
         <VerifyButton onClick={resend} disabled={status === "sending" || status === "sent"}>
           {status === "sending" ? "Sending…" : status === "sent" ? "Email sent" : "Resend email"}
         </VerifyButton>
         <VerifyButton variant="secondary" onClick={logout} disabled={loggingOut}>
           {loggingOut ? "Signing out…" : "Sign out"}
         </VerifyButton>
-      </Box>
+      </div>
 
-      <Box sx={{ mt: 4.5, pt: 3, borderTop: `1px solid ${tokens.border}` }}>
-        <Typography component="div" sx={{ fontSize: 13, fontWeight: 600, color: tokens.text, mb: 0.5 }}>
-          Didn&apos;t get it?
-        </Typography>
-        <Typography sx={{ fontSize: 13, lineHeight: 1.6, color: tokens.text3 }}>
+      <div className={footer}>
+        <div className={footerTitle}>Didn&apos;t get it?</div>
+        <p className={footerBody}>
           Give it a minute, then check your Spam or Promotions folder. If the address above is wrong, sign out and create the
           account again with the right one.
-        </Typography>
-      </Box>
+        </p>
+      </div>
     </VerifyCard>
   );
 }

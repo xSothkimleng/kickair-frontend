@@ -1,20 +1,14 @@
 "use client";
 
-import { useMemo } from "react";
-import { Autocomplete, TextField, Chip, Box, createFilterOptions } from "@mui/material";
-import { AddOutlined } from "@mui/icons-material";
+import { useMemo, useState } from "react";
+import { Combobox, createListCollection } from "@ark-ui/react";
+import { Check, ChevronDown, Plus, X } from "lucide-react";
+import { cx } from "styled-system/css";
 import { FieldShell } from "./FieldShell";
-import { fieldSx, FieldBaseProps, tokens } from "./tokens";
+import { matches } from "./AutocompleteInput";
+import { fieldChip, fieldChipArea, fieldChipRemove, fieldControl, fieldEmpty, fieldIconButton, fieldIndicator, fieldOption, fieldOptionBox, fieldOptionCreate, fieldOptionList, fieldPopup, fieldPositioner, fieldRoot } from "./field";
 import type { SelectOption } from "./SelectInput";
-
-interface InternalOption {
-  value: string | number;
-  label: string;
-  /** Raw typed text when this is the synthetic `Add "xyz"` option. */
-  createLabel?: string;
-}
-
-const filter = createFilterOptions<InternalOption>({ stringify: (o) => o.label });
+import { FieldBaseProps } from "./tokens";
 
 export interface MultiAutocompleteInputProps extends FieldBaseProps {
   value?: (string | number)[];
@@ -30,92 +24,130 @@ export interface MultiAutocompleteInputProps extends FieldBaseProps {
   onCreate?: (label: string) => void | Promise<void>;
 }
 
+interface Item {
+  label: string;
+  value: string;
+  raw?: string | number;
+  /** Raw typed text when this is the synthetic `Add "xyz"` row. */
+  create?: string;
+}
+
+const CREATE_PREFIX = "__create__";
+
 export default function MultiAutocompleteInput({
   label, helper, error, required, size = "md", fullWidth = true, disabled,
   value = [], onChange, options, placeholder = "Search…", id, onCreate,
 }: MultiAutocompleteInputProps) {
-  const selected = useMemo<InternalOption[]>(
-    () => value.map((v) => {
-      const match = options.find((o) => o.value === v);
-      return match ? { value: match.value, label: match.label } : { value: v, label: String(v) };
-    }),
-    [value, options],
-  );
+  const [query, setQuery] = useState<string | null>(null);
+  const typed = (query ?? "").trim();
 
-  const handleChange = (items: (InternalOption | string)[]) => {
-    const next: (string | number)[] = [];
-    for (const item of items) {
-      if (typeof item === "string") {
-        // Free-text Enter: select the case-insensitive match if it exists, else create.
-        const typed = item.trim();
-        if (!typed) continue;
-        const match = options.find((o) => o.label.toLowerCase() === typed.toLowerCase());
-        if (match) {
-          if (!next.includes(match.value)) next.push(match.value);
-        } else {
-          void onCreate?.(typed);
-        }
-      } else if (item.createLabel !== undefined) {
-        void onCreate?.(item.createLabel);
-      } else if (!next.includes(item.value)) {
-        next.push(item.value);
-      }
+  const items = useMemo<Item[]>(() => {
+    const list: Item[] = options
+      .filter((o) => !typed || matches(o.label, typed))
+      .map((o) => ({ label: o.label, value: String(o.value), raw: o.value }));
+    if (onCreate && typed && !options.some((o) => o.label.toLowerCase() === typed.toLowerCase())) {
+      list.push({ label: `Add "${typed}"`, value: CREATE_PREFIX + typed, create: typed });
     }
-    onChange?.(next);
+    return list;
+  }, [options, typed, onCreate]);
+  const collection = useMemo(() => createListCollection<Item>({ items }), [items]);
+
+  const selected = value.map(String);
+  const labelOf = (v: string | number) => options.find((o) => o.value === v)?.label ?? String(v);
+
+  /** Free-text Enter: select the case-insensitive match if it exists, else create. */
+  const commitTyped = (text: string) => {
+    const t = text.trim();
+    if (!t) return;
+    const match = options.find((o) => o.label.toLowerCase() === t.toLowerCase());
+    if (match) {
+      if (!value.includes(match.value)) onChange?.([...value, match.value]);
+    } else {
+      void onCreate?.(t);
+    }
+    setQuery(null);
   };
+
+  const handleValueChange = (next: string[]) => {
+    const out: (string | number)[] = [];
+    for (const v of next) {
+      if (v.startsWith(CREATE_PREFIX)) { void onCreate?.(v.slice(CREATE_PREFIX.length)); continue; }
+      const opt = options.find((o) => String(o.value) === v);
+      if (opt) { if (!out.includes(opt.value)) out.push(opt.value); continue; }
+      const prev = value.find((x) => String(x) === v); // stale-but-selected value not in options
+      if (prev !== undefined && !out.includes(prev)) out.push(prev);
+    }
+    onChange?.(out);
+  };
+
+  const remove = (v: string | number) => onChange?.(value.filter((x) => x !== v));
 
   return (
     <FieldShell label={label} required={required} helper={helper} error={error} htmlFor={id} fullWidth={fullWidth}>
-      <Autocomplete<InternalOption, true, false, boolean>
-        id={id}
+      <Combobox.Root
+        collection={collection}
         multiple
-        freeSolo={!!onCreate}
-        disableCloseOnSelect
-        options={options.map((o) => ({ value: o.value, label: o.label }))}
+        closeOnSelect={false}
+        selectionBehavior="clear"
         value={selected}
+        inputValue={query ?? ""}
+        onInputValueChange={(d) => setQuery(d.reason === "input-change" ? d.inputValue : null)}
+        onOpenChange={(d) => { if (!d.open) setQuery(null); }}
+        onValueChange={(d) => handleValueChange(d.value)}
+        allowCustomValue={!!onCreate}
+        openOnClick
         disabled={disabled}
-        fullWidth
-        isOptionEqualToValue={(o, v) => o.value === v.value}
-        getOptionLabel={(o) => (typeof o === "string" ? o : o.label)}
-        filterOptions={(opts, params) => {
-          const filtered = filter(opts, params);
-          const typed = params.inputValue.trim();
-          if (onCreate && typed) {
-            const exists = opts.some((o) => o.label.toLowerCase() === typed.toLowerCase());
-            if (!exists) filtered.push({ value: `__create__${typed}`, label: `Add "${typed}"`, createLabel: typed });
-          }
-          return filtered;
-        }}
-        onChange={(_, v) => handleChange(v as (InternalOption | string)[])}
-        renderOption={(props, option) => {
-          const { key, ...optionProps } = props as { key: string } & React.HTMLAttributes<HTMLLIElement>;
-          return (
-            <Box component="li" key={key} {...optionProps}
-              sx={{ fontSize: 14.5, ...(option.createLabel !== undefined && { color: tokens.accent, fontWeight: 600, display: "flex", alignItems: "center", gap: 0.75 }) }}>
-              {option.createLabel !== undefined && <AddOutlined sx={{ fontSize: 16 }} />}
-              {option.label}
-            </Box>
-          );
-        }}
-        renderTags={(vals, getTagProps) =>
-          vals.map((opt, index) => {
-            const { key, ...tagProps } = getTagProps({ index });
-            return (
-              <Chip
-                key={key}
-                label={typeof opt === "string" ? opt : opt.label}
-                size="small"
-                {...tagProps}
-                sx={{ backgroundColor: tokens.fill, border: `1px solid ${tokens.border}`, borderRadius: "7px", color: tokens.heading }}
-              />
-            );
-          })
-        }
-        slotProps={{ paper: { sx: { borderRadius: "11px", mt: 0.5, boxShadow: "0 12px 32px rgba(15,23,42,0.14)" } } }}
-        renderInput={(params) => (
-          <TextField {...params} placeholder={value.length ? "" : placeholder} error={!!error} sx={fieldSx(size)} />
-        )}
-      />
+        invalid={!!error}
+        ids={id ? { input: id } : undefined}
+        positioning={{ placement: "bottom-start", strategy: "fixed", sameWidth: true, gutter: 4 }}
+        lazyMount
+        unmountOnExit>
+        <Combobox.Control className={fieldRoot({ size })}>
+          <span className={fieldChipArea}>
+            {value.map((v) => (
+              <span key={String(v)} className={fieldChip}>
+                {labelOf(v)}
+                <button
+                  type="button"
+                  className={fieldChipRemove}
+                  disabled={disabled}
+                  aria-label={`Remove ${labelOf(v)}`}
+                  onClick={(e) => { e.stopPropagation(); remove(v); }}>
+                  <X size={12} />
+                </button>
+              </span>
+            ))}
+            <Combobox.Context>
+              {(api) => (
+                <Combobox.Input
+                  className={fieldControl}
+                  placeholder={value.length ? "" : placeholder}
+                  autoComplete="off"
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && typed && !api.highlightedValue) { e.preventDefault(); commitTyped(typed); }
+                  }}
+                />
+              )}
+            </Combobox.Context>
+          </span>
+          <Combobox.Trigger className={cx(fieldIconButton, fieldIndicator)} aria-label="Show options">
+            <ChevronDown size={18} />
+          </Combobox.Trigger>
+        </Combobox.Control>
+        <Combobox.Positioner className={fieldPositioner}>
+          <Combobox.Content className={cx(fieldPopup, fieldOptionList)}>
+            {items.length === 0 && <div className={fieldEmpty}>No matches</div>}
+            {items.map((item) => (
+              <Combobox.Item key={item.value} item={item} className={cx(fieldOption, item.create !== undefined && fieldOptionCreate)}>
+                {item.create !== undefined
+                  ? <Plus size={16} />
+                  : <span className={fieldOptionBox} aria-hidden="true"><Check size={13} strokeWidth={3} /></span>}
+                <Combobox.ItemText>{item.label}</Combobox.ItemText>
+              </Combobox.Item>
+            ))}
+          </Combobox.Content>
+        </Combobox.Positioner>
+      </Combobox.Root>
     </FieldShell>
   );
 }

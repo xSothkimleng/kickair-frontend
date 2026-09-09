@@ -1,11 +1,12 @@
 "use client";
 import { useState, useEffect, useCallback } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { MessageCircle } from "lucide-react";
 import { registerMessageRefresh } from "@/components/layout/GlobalNotificationToast";
-import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
-import { Badge, IconButton, Tooltip } from "@mui/material";
+import { Indicator, Tooltip } from "@/components/ds";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
+import { bellBtnCss } from "./styles";
 
 export function MessageBell() {
   const { user } = useAuth();
@@ -35,9 +36,14 @@ export function MessageBell() {
 
   useEffect(() => {
     if (!user) return;
-    fetchUnreadCount();
+    // First fetch runs from a task (not synchronously in the effect body — React
+    // Compiler lint), then poll every 30s.
+    const first = setTimeout(fetchUnreadCount, 0);
     const id = setInterval(fetchUnreadCount, 30000);
-    return () => clearInterval(id);
+    return () => {
+      clearTimeout(first);
+      clearInterval(id);
+    };
   }, [user, fetchUnreadCount]);
 
   // Pusher message toasts trigger an immediate refresh of the badge.
@@ -46,12 +52,12 @@ export function MessageBell() {
   if (!user) return null;
 
   return (
-    <Tooltip title="Messages">
-      <IconButton onClick={() => router.push(messagesHref)} size="small" sx={{ color: "rgba(0,0,0,0.7)" }}>
-        <Badge badgeContent={unreadCount || null} color="error" max={99}>
-          <ChatBubbleOutlineIcon sx={{ fontSize: 20 }} />
-        </Badge>
-      </IconButton>
-    </Tooltip>
+    <Indicator count={unreadCount} max={99}>
+      <Tooltip content='Messages'>
+        <button type='button' onClick={() => router.push(messagesHref)} className={bellBtnCss} aria-label='Messages'>
+          <MessageCircle size={20} />
+        </button>
+      </Tooltip>
+    </Indicator>
   );
 }

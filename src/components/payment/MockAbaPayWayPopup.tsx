@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Button, Dialog, Typography } from "@mui/material";
-import {
-  Lock as LockIcon,
-  AccessTime as ClockIcon,
-  Smartphone as PhoneIcon,
-} from "@mui/icons-material";
-import { tokens } from "@/theme";
+import { Clock, Lock, Smartphone } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { BareModal } from "@/components/ds/BareModal";
+import { pillButton } from "./pill";
 import { fmtUsd } from "./format";
 import type { AbaMethod } from "./AbaMethodSelector";
 import QrGlyph from "./QrGlyph";
@@ -18,6 +15,103 @@ import QrGlyph from "./QrGlyph";
  * stand-in that gets replaced by ABA's real popup + status polling once the
  * merchant account/API is live. Deliberately ABA-navy so it never reads as ours.
  */
+
+const backdropCss = css({ bg: "rgba(10,15,30,0.55)", backdropFilter: "blur(3px)" });
+// Clips the navy header / white footer to the panel's 16px radius (the old Paper `overflow: hidden`).
+const shellCss = css({ borderRadius: "card", overflow: "hidden" });
+
+const headerCss = css({
+  background: "linear-gradient(180deg, var(--colors-aba-navy), var(--colors-aba-navy2))",
+  color: "#fff",
+  p: "16px 20px",
+});
+const headTopCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "14px" });
+const brandCss = css({ display: "flex", alignItems: "center", gap: "9px" });
+const brandMarkCss = css({
+  width: "30px",
+  height: "30px",
+  borderRadius: "7px",
+  bg: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+});
+const brandMarkTextCss = css({ fontWeight: 800, fontSize: "13px", color: "aba.navy", letterSpacing: "-0.04em", lineHeight: 1.5 });
+const brandNameCss = css({ fontWeight: 700, fontSize: "14px", letterSpacing: "-0.01em", lineHeight: 1.1 });
+const brandSubCss = css({ fontSize: "10px", color: "rgba(255,255,255,0.6)", letterSpacing: "0.02em", lineHeight: 1.5 });
+const secureCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  bg: "rgba(255,255,255,0.12)",
+  px: "10px",
+  py: "5px",
+  borderRadius: "pill",
+});
+const secureIconCss = css({ color: "#7fd1a0", flexShrink: 0 });
+const secureTextCss = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5 });
+
+const merchantCss = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  bg: "rgba(255,255,255,0.08)",
+  borderRadius: "12px",
+  p: "12px 14px",
+});
+const merchantLeftCss = css({ display: "flex", alignItems: "center", gap: "10px" });
+const merchantAvatarCss = css({
+  width: "34px",
+  height: "34px",
+  borderRadius: "50%",
+  bg: "#000",
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontWeight: 700,
+  fontSize: "16px",
+});
+const merchantNameCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5 });
+const merchantSubCss = css({ fontSize: "10.5px", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 });
+const amountColCss = css({ textAlign: "right" });
+const amountCss = css({ fontFamily: "mono", fontSize: "20px", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.5 });
+const currencyCss = css({ fontSize: "10px", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 });
+
+const bodyCss = css({ p: "22px 20px", bg: "aba.bg" });
+
+const footerCss = css({
+  p: "13px 20px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+  bg: "#fff",
+  display: "flex",
+  justifyContent: "space-between",
+});
+const footerBtnCss = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    m: 0,
+    p: 0,
+    minW: 0,
+    border: "none",
+    bg: "transparent",
+    fontFamily: "inherit",
+    fontSize: "12.5px",
+    fontWeight: 500,
+    lineHeight: 1.75,
+    letterSpacing: "0.02857em",
+    cursor: "pointer",
+    appearance: "none",
+    _hover: { textDecoration: "underline" },
+    _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  },
+  variants: { tone: { ink2: { color: "ink2" }, ink3: { color: "ink3" } } },
+});
+
 export default function MockAbaPayWayPopup({
   open,
   method,
@@ -39,189 +133,233 @@ export default function MockAbaPayWayPopup({
   const methodName = { khqr: "ABA KHQR", alipay: "Alipay", wechat: "WeChat Pay", card: "Card" }[method];
 
   return (
-    <Dialog
+    <BareModal
       open={open}
-      onClose={onCancel}
-      maxWidth={false}
-      slotProps={{ backdrop: { sx: { bgcolor: "rgba(10,15,30,0.55)", backdropFilter: "blur(3px)" } } }}
-      PaperProps={{
-        sx: { width: 420, maxWidth: "calc(100% - 32px)", m: 2, borderRadius: `${tokens.radius.card}px`, overflow: "hidden" },
-      }}>
-      {/* ABA hosted header — navy, distinctly ABA */}
-      <Box sx={{ background: `linear-gradient(180deg, ${tokens.abaNavy}, ${tokens.abaNavy2})`, color: "#fff", p: "16px 20px" }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.75 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.125 }}>
-            <Box sx={{ width: 30, height: 30, borderRadius: "7px", bgcolor: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Typography sx={{ fontWeight: 800, fontSize: 13, color: tokens.abaNavy, letterSpacing: "-0.04em" }}>ABA</Typography>
-            </Box>
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: 14, letterSpacing: "-0.01em", lineHeight: 1.1 }}>ABA PayWay</Typography>
-              <Typography sx={{ fontSize: 10, color: "rgba(255,255,255,0.6)", letterSpacing: "0.02em" }}>Powered by ABA Bank</Typography>
-            </Box>
-          </Box>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "rgba(255,255,255,0.12)", px: 1.25, py: 0.625, borderRadius: "999px" }}>
-            <LockIcon sx={{ fontSize: 12, color: "#7fd1a0" }} />
-            <Typography sx={{ fontSize: 11, fontWeight: 600 }}>Secure</Typography>
-          </Box>
-        </Box>
+      onOpenChange={o => {
+        if (!o) onCancel();
+      }}
+      maxW='420px'
+      backdropClassName={backdropCss}>
+      <div className={shellCss}>
+        {/* ABA hosted header — navy, distinctly ABA */}
+        <div className={headerCss}>
+          <div className={headTopCss}>
+            <div className={brandCss}>
+              <div className={brandMarkCss}>
+                <span className={brandMarkTextCss}>ABA</span>
+              </div>
+              <div>
+                <div className={brandNameCss}>ABA PayWay</div>
+                <div className={brandSubCss}>Powered by ABA Bank</div>
+              </div>
+            </div>
+            <div className={secureCss}>
+              <Lock size={12} className={secureIconCss} />
+              <span className={secureTextCss}>Secure</span>
+            </div>
+          </div>
 
-        {/* Merchant + amount */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", bgcolor: "rgba(255,255,255,0.08)", borderRadius: "12px", p: "12px 14px" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            <Box sx={{ width: 34, height: 34, borderRadius: "50%", bgcolor: "#000", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: 16 }}>
-              K
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{merchant}</Typography>
-              <Typography sx={{ fontSize: 10.5, color: "rgba(255,255,255,0.55)" }}>Merchant payment</Typography>
-            </Box>
-          </Box>
-          <Box sx={{ textAlign: "right" }}>
-            <Typography sx={{ fontFamily: tokens.mono, fontSize: 20, fontWeight: 700, letterSpacing: "-0.02em" }}>{fmtUsd(amount)}</Typography>
-            <Typography sx={{ fontSize: 10, color: "rgba(255,255,255,0.55)" }}>USD</Typography>
-          </Box>
-        </Box>
-      </Box>
+          {/* Merchant + amount */}
+          <div className={merchantCss}>
+            <div className={merchantLeftCss}>
+              <div className={merchantAvatarCss}>K</div>
+              <div>
+                <div className={merchantNameCss}>{merchant}</div>
+                <div className={merchantSubCss}>Merchant payment</div>
+              </div>
+            </div>
+            <div className={amountColCss}>
+              <div className={amountCss}>{fmtUsd(amount)}</div>
+              <div className={currencyCss}>USD</div>
+            </div>
+          </div>
+        </div>
 
-      {/* Body */}
-      <Box sx={{ p: "22px 20px", bgcolor: tokens.abaBg }}>
-        {isCard ? (
-          <CardForm amount={amount} onPay={onScanComplete} />
-        ) : (
-          <QrPane method={method} methodName={methodName} onComplete={onScanComplete} />
-        )}
-      </Box>
+        {/* Body */}
+        <div className={bodyCss}>
+          {isCard ? (
+            <CardForm amount={amount} onPay={onScanComplete} />
+          ) : (
+            <QrPane method={method} methodName={methodName} onComplete={onScanComplete} />
+          )}
+        </div>
 
-      {/* Hosted footer */}
-      <Box sx={{ p: "13px 20px", borderTop: `1px solid ${tokens.border}`, bgcolor: "#fff", display: "flex", justifyContent: "space-between" }}>
-        <Button onClick={onFailure} sx={{ p: 0, minWidth: 0, fontSize: 12.5, color: tokens.text2, textTransform: "none", "&:hover": { bgcolor: "transparent", textDecoration: "underline" } }}>
-          Simulate failure ›
-        </Button>
-        <Button onClick={onCancel} sx={{ p: 0, minWidth: 0, fontSize: 12.5, color: tokens.text3, textTransform: "none", "&:hover": { bgcolor: "transparent", textDecoration: "underline" } }}>
-          Cancel &amp; return
-        </Button>
-      </Box>
-    </Dialog>
+        {/* Hosted footer */}
+        <div className={footerCss}>
+          <button type='button' onClick={onFailure} className={footerBtnCss({ tone: "ink2" })}>
+            Simulate failure ›
+          </button>
+          <button type='button' onClick={onCancel} className={footerBtnCss({ tone: "ink3" })}>
+            Cancel &amp; return
+          </button>
+        </div>
+      </div>
+    </BareModal>
   );
 }
 
 /* QR / scan variant (KHQR, Alipay, WeChat) */
+
+const qrPaneCss = css({ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" });
+const qrHeadRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" });
+const qrMethodCss = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
+const qrTimerCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  fontSize: "12px",
+  fontWeight: 600,
+  color: "pendingText",
+  bg: "pendingTint",
+  px: "10px",
+  py: "4px",
+  borderRadius: "pill",
+});
+const qrCardCss = css({
+  width: "100%",
+  maxWidth: "240px",
+  borderWidth: "1.5px",
+  borderStyle: "solid",
+  borderRadius: "14px",
+  overflow: "hidden",
+  bg: "#fff",
+});
+const qrCardHeadCss = css({
+  color: "#fff",
+  p: "8px 12px",
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+});
+const qrCardTitleCss = css({ fontWeight: 700, fontSize: "13px", letterSpacing: "0.02em", lineHeight: 1.5 });
+const qrCardCurrencyCss = css({ fontSize: "11px", opacity: 0.85, lineHeight: 1.5 });
+const qrGlyphWrapCss = css({ p: "18px", display: "flex", justifyContent: "center" });
+const qrCaptionWrapCss = css({ px: "16px", pb: "14px", textAlign: "center" });
+const qrCaptionCss = css({ fontSize: "11px", color: "ink3", fontFamily: "mono", lineHeight: 1.5 });
+const qrHintCss = css({ textAlign: "center", fontSize: "13px", color: "ink2", lineHeight: 1.5 });
+
+const BRAND_COLOR: Record<AbaMethod, string> = { khqr: "#e2202a", alipay: "#1296db", wechat: "#09bb07", card: "#e2202a" };
+
 function QrPane({ method, methodName, onComplete }: { method: AbaMethod; methodName: string; onComplete: () => void }) {
   const timer = useCountdown(292);
-  const brandColor = ({ khqr: "#e2202a", alipay: "#1296db", wechat: "#09bb07", card: "#e2202a" } as Record<AbaMethod, string>)[method];
+  const brandColor = BRAND_COLOR[method];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.75 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" }}>
-        <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{methodName}</Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12, fontWeight: 600, color: tokens.pendingText, bgcolor: tokens.pendingTint, px: 1.25, py: 0.5, borderRadius: "999px" }}>
-          <ClockIcon sx={{ fontSize: 13 }} /> Expires in {timer}
-        </Box>
-      </Box>
+    <div className={qrPaneCss}>
+      <div className={qrHeadRowCss}>
+        <div className={qrMethodCss}>{methodName}</div>
+        <div className={qrTimerCss}>
+          <Clock size={13} /> Expires in {timer}
+        </div>
+      </div>
 
-      <Box sx={{ width: "100%", maxWidth: 240, border: `1.5px solid ${brandColor}`, borderRadius: "14px", overflow: "hidden", bgcolor: "#fff" }}>
-        <Box sx={{ bgcolor: brandColor, color: "#fff", p: "8px 12px", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <Typography sx={{ fontWeight: 700, fontSize: 13, letterSpacing: "0.02em" }}>{method === "khqr" ? "KHQR" : methodName}</Typography>
-          <Typography sx={{ fontSize: 11, opacity: 0.85 }}>USD</Typography>
-        </Box>
-        <Box sx={{ p: 2.25, display: "flex", justifyContent: "center" }}>
+      <div className={qrCardCss} style={{ borderColor: brandColor }}>
+        <div className={qrCardHeadCss} style={{ backgroundColor: brandColor }}>
+          <div className={qrCardTitleCss}>{method === "khqr" ? "KHQR" : methodName}</div>
+          <div className={qrCardCurrencyCss}>USD</div>
+        </div>
+        <div className={qrGlyphWrapCss}>
           <QrGlyph color='#111' />
-        </Box>
-        <Box sx={{ px: 2, pb: 1.75, textAlign: "center" }}>
-          <Typography sx={{ fontSize: 11, color: tokens.text3, fontFamily: tokens.mono }}>placeholder QR · mocked</Typography>
-        </Box>
-      </Box>
+        </div>
+        <div className={qrCaptionWrapCss}>
+          <div className={qrCaptionCss}>placeholder QR · mocked</div>
+        </div>
+      </div>
 
-      <Typography sx={{ textAlign: "center", fontSize: 13, color: tokens.text2 }}>
+      <div className={qrHintCss}>
         {method === "khqr" ? "Scan with any Cambodian banking app" : `Scan with the ${methodName} app`}
-      </Typography>
+      </div>
 
-      <Button
-        fullWidth
-        onClick={onComplete}
-        startIcon={<PhoneIcon sx={{ fontSize: 16 }} />}
-        sx={{ height: 44, borderRadius: "999px", bgcolor: tokens.accent, color: "#fff", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: tokens.accentHover } }}>
+      <button type='button' onClick={onComplete} className={pillButton({ tone: "accent", size: "md", full: true })}>
+        <Smartphone size={16} />
         Open ABA Mobile
-      </Button>
-      <Button
-        fullWidth
-        onClick={onComplete}
-        sx={{ height: 44, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 15, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>
+      </button>
+      <button type='button' onClick={onComplete} className={pillButton({ tone: "black", size: "md", full: true })}>
         I&apos;ve completed the scan
-      </Button>
-    </Box>
+      </button>
+    </div>
   );
 }
 
 /* Card form variant */
+
+const cardFormCss = css({ display: "flex", flexDirection: "column", gap: "14px" });
+const cardRowCss = css({ display: "flex", gap: "12px" });
+const cardFieldHalfCss = css({ flex: 1 });
+const payBtnCss = css(pillButton.raw({ tone: "accent", size: "lg", full: true }), { mt: "4px" });
+const cardNoteCss = css({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  gap: "6px",
+  color: "ink3",
+  fontSize: "11.5px",
+});
+
 function CardForm({ amount, onPay }: { amount: number; onPay: () => void }) {
   const [num, setNum] = useState("");
   const fmtCard = (v: string) => v.replace(/\D/g, "").slice(0, 16).replace(/(.{4})/g, "$1 ").trim();
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
+    <div className={cardFormCss}>
       <AbaField label='Card number'>
         <AbaInput inputMode='numeric' placeholder='1234 5678 9012 3456' value={num} onChange={e => setNum(fmtCard(e.target.value))} />
       </AbaField>
-      <Box sx={{ display: "flex", gap: 1.5 }}>
-        <AbaField label='Expiry' sx={{ flex: 1 }}>
+      <div className={cardRowCss}>
+        <AbaField label='Expiry' className={cardFieldHalfCss}>
           <AbaInput placeholder='MM / YY' />
         </AbaField>
-        <AbaField label='CVV' sx={{ flex: 1 }}>
+        <AbaField label='CVV' className={cardFieldHalfCss}>
           <AbaInput placeholder='123' inputMode='numeric' maxLength={4} />
         </AbaField>
-      </Box>
+      </div>
       <AbaField label='Cardholder name'>
         <AbaInput placeholder='Name on card' />
       </AbaField>
-      <Button
-        fullWidth
-        onClick={onPay}
-        startIcon={<LockIcon sx={{ fontSize: 16 }} />}
-        sx={{ mt: 0.5, height: 52, borderRadius: "999px", bgcolor: tokens.accent, color: "#fff", textTransform: "none", fontSize: 16, fontWeight: 500, "&:hover": { bgcolor: tokens.accentHover } }}>
+      <button type='button' onClick={onPay} className={payBtnCss}>
+        <Lock size={16} />
         Pay {fmtUsd(amount)}
-      </Button>
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75, color: tokens.text3, fontSize: 11.5 }}>
-        <LockIcon sx={{ fontSize: 12 }} /> 3-D Secure · your card details never touch KickAir
-      </Box>
-    </Box>
+      </button>
+      <div className={cardNoteCss}>
+        <Lock size={12} /> 3-D Secure · your card details never touch KickAir
+      </div>
+    </div>
   );
 }
 
-function AbaField({ label, children, sx }: { label: string; children: React.ReactNode; sx?: object }) {
+const fieldCss = css({ display: "flex", flexDirection: "column" });
+const fieldLabelCss = css({ fontSize: "13px", fontWeight: 500, color: "ink2", mb: "7px", lineHeight: 1.5 });
+
+function AbaField({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", ...sx }}>
-      <Typography component='label' sx={{ fontSize: 13, fontWeight: 500, color: tokens.text2, mb: "7px" }}>
-        {label}
-      </Typography>
+    <div className={cx(fieldCss, className)}>
+      <label className={fieldLabelCss}>{label}</label>
       {children}
-    </Box>
+    </div>
   );
 }
+
+const inputCss = css({
+  width: "100%",
+  boxSizing: "border-box",
+  height: "44px",
+  px: "14px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairlineStrong",
+  borderRadius: "input",
+  bg: "surface",
+  fontFamily: "inherit",
+  fontSize: "15px",
+  color: "ink",
+  outline: "none",
+  transition: "border-color .15s ease, box-shadow .15s ease",
+  _placeholder: { color: "ink3" },
+  _focus: { borderColor: "accent", boxShadow: "0 0 0 3px var(--colors-accent-fill)" },
+});
 
 function AbaInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <Box
-      component='input'
-      {...props}
-      sx={{
-        width: "100%",
-        boxSizing: "border-box",
-        height: 44,
-        px: "14px",
-        border: `1px solid ${tokens.borderStrong}`,
-        borderRadius: `${tokens.radius.input}px`,
-        bgcolor: tokens.surface,
-        font: "inherit",
-        fontSize: 15,
-        color: tokens.text,
-        outline: "none",
-        transition: "border-color .15s ease, box-shadow .15s ease",
-        "&::placeholder": { color: tokens.text3 },
-        "&:focus": { borderColor: tokens.accent, boxShadow: `0 0 0 3px ${tokens.accentFill}` },
-      }}
-    />
-  );
+  return <input {...props} className={inputCss} />;
 }
 
 function useCountdown(seconds: number) {

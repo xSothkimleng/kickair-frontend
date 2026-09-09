@@ -1,19 +1,106 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Box, Button, Dialog, IconButton, Typography } from "@mui/material";
-import { Close as CloseIcon, Add as AddIcon, InfoOutlined as InfoIcon } from "@mui/icons-material";
+import { Info, Plus, X } from "lucide-react";
+import { css, cva } from "styled-system/css";
+import { Dialog, iconButton } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
-import { tokens } from "@/theme";
 import { CurrencyInput, parseMoney } from "@/components/ui/inputs";
 import AbaMethodSelector, { type AbaMethod } from "./AbaMethodSelector";
 import { usePaymentProcessing } from "./usePaymentProcessing";
+import { pillButton } from "./pill";
 import { fmtUsd } from "./format";
 import Annot from "./Annot";
 
 const CHIPS = [10, 25, 50, 100];
+
+const headerCss = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  p: "20px 24px",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "hairline",
+});
+const titleCss = css({ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.015em", color: "ink" });
+// Merged into one style object (Panda's `cx` only concatenates — it can't
+// resolve conflicting atomic classes), so these beat the recipe's own colours.
+const closeBtn = css(iconButton.raw({ size: "md", shape: "round", variant: "ghost", tone: "default" }), {
+  color: "ink2",
+  _hover: { bg: "rgba(0,0,0,0.04)", color: "ink" },
+});
+const bodyCss = css({ p: "24px" });
+
+const noteBox = css({
+  display: "flex",
+  gap: "8px",
+  mb: "18px",
+  p: "11px 13px",
+  bg: "accentFill",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0, 113, 227, 0.2)",
+  borderRadius: "tile",
+});
+// MUI's SvgIcon carried `flex-shrink: 0`; lucide's svg does not.
+const noteIcon = css({ color: "accent", flexShrink: 0 });
+const noteText = css({ fontSize: "12.5px", color: "accent" });
+
+const amountWrap = css({ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", mb: "20px" });
+const amountLabel = css({ fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const amountRow = css({ display: "flex", alignItems: "baseline", gap: "2px" });
+const amountSymbol = css({ fontSize: "30px", fontWeight: 500, color: "ink3" });
+const amountValue = css({ fontFamily: "mono", fontSize: "52px", fontWeight: 600, letterSpacing: "-0.03em", color: "ink" });
+
+const chipGrid = css({ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", mb: "10px" });
+const chipBtn = cva({
+  base: {
+    h: "44px",
+    borderRadius: "tile",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    fontSize: "15px",
+    fontWeight: 600,
+    borderWidth: "1px",
+    borderStyle: "solid",
+  },
+  variants: {
+    active: {
+      true: { borderColor: "accent", bg: "accentFill", color: "accent" },
+      false: { borderColor: "hairlineStrong", bg: "surface", color: "ink" },
+    },
+  },
+});
+const customBtn = cva({
+  base: {
+    w: "100%",
+    h: "44px",
+    borderRadius: "tile",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    fontSize: "14px",
+    fontWeight: 500,
+    borderWidth: "1px",
+    borderStyle: "solid",
+  },
+  variants: {
+    active: {
+      true: { mb: "8px", borderColor: "accent", bg: "accentFill", color: "accent" },
+      false: { mb: "20px", borderColor: "hairlineStrong", bg: "surface", color: "ink2" },
+    },
+  },
+});
+const customField = css({ mb: "20px" });
+const methodWrap = css({ mb: "22px" });
+const submitBtn = pillButton({ tone: "black", size: "lg", full: true });
+const startIcon = css({ ml: "-4px" });
+// The original `mt: 1.75` sat on a MUI Typography <p>, where globals.css's
+// unlayered `p { margin: 0 }` already suppressed it — so it stays dropped.
+const footNote = css({ textAlign: "center", fontSize: "11.5px", color: "ink3" });
 
 /**
  * Wallet top-up. Form (amount + ABA method) → shared payment flow → success.
@@ -40,13 +127,18 @@ export default function TopUpDialog({
   const [custom, setCustom] = useState(false);
   const [method, setMethod] = useState<AbaMethod | null>(null);
 
-  useEffect(() => {
+  // Reset the form whenever the dialog (re)opens or the suggestion changes.
+  // Done during render (React "adjusting state on prop change" pattern) so the
+  // React Compiler lint rule against setState in effects is satisfied.
+  const [prev, setPrev] = useState({ open, suggestedAmount });
+  if (prev.open !== open || prev.suggestedAmount !== suggestedAmount) {
+    setPrev({ open, suggestedAmount });
     if (open) {
       setAmount(String(suggestedAmount));
       setCustom(false);
       setMethod(null);
     }
-  }, [open, suggestedAmount]);
+  }
 
   const amt = parseMoney(amount) ?? 0;
   const valid = amt >= 1 && !!method;
@@ -76,126 +168,74 @@ export default function TopUpDialog({
 
   return (
     <>
-      <Dialog
-        open={open && !flow.active}
-        onClose={onClose}
-        fullWidth
-        maxWidth='xs'
-        PaperProps={{ sx: { borderRadius: `${tokens.radius.card}px` } }}>
+      <BareModal open={open && !flow.active} onOpenChange={o => { if (!o) onClose(); }}>
         {/* Header */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: "20px 24px", borderBottom: `1px solid ${tokens.border}` }}>
-          <Box>
+        <div className={headerCss}>
+          <div>
             <Annot>STEP 1–3 · top up</Annot>
-            <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em" }}>Add money to wallet</Typography>
-          </Box>
-          <IconButton onClick={onClose} sx={{ color: tokens.text2 }}>
-            <CloseIcon sx={{ fontSize: 20 }} />
-          </IconButton>
-        </Box>
+            <Dialog.Title className={titleCss}>Add money to wallet</Dialog.Title>
+          </div>
+          <Dialog.CloseTrigger asChild>
+            <button type='button' aria-label='Close' className={closeBtn}>
+              <X size={20} />
+            </button>
+          </Dialog.CloseTrigger>
+        </div>
 
-        <Box sx={{ p: 3 }}>
+        <div className={bodyCss}>
           {returnNote && (
-            <Box sx={{ display: "flex", gap: 1, mb: 2.25, p: "11px 13px", bgcolor: tokens.accentFill, border: `1px solid rgba(${tokens.accentRgb},0.2)`, borderRadius: `${tokens.radius.tile}px` }}>
-              <InfoIcon sx={{ fontSize: 16, color: tokens.accent }} />
-              <Typography sx={{ fontSize: 12.5, color: tokens.accent }}>{returnNote}</Typography>
-            </Box>
+            <div className={noteBox}>
+              <Info size={16} className={noteIcon} />
+              <p className={noteText}>{returnNote}</p>
+            </div>
           )}
 
           {/* Amount display */}
-          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 0.5, mb: 2.5 }}>
-            <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>Amount (USD)</Typography>
-            <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.25 }}>
-              <Typography sx={{ fontSize: 30, fontWeight: 500, color: tokens.text3 }}>$</Typography>
-              <Typography sx={{ fontFamily: tokens.mono, fontSize: 52, fontWeight: 600, letterSpacing: "-0.03em" }}>
-                {amt ? (amt % 1 ? amt.toFixed(2) : amt) : "0"}
-              </Typography>
-            </Box>
-          </Box>
+          <div className={amountWrap}>
+            <p className={amountLabel}>Amount (USD)</p>
+            <div className={amountRow}>
+              <p className={amountSymbol}>$</p>
+              <p className={amountValue}>{amt ? (amt % 1 ? amt.toFixed(2) : amt) : "0"}</p>
+            </div>
+          </div>
 
           {/* Quick-pick chips */}
-          <Box sx={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 1, mb: 1.25 }}>
-            {CHIPS.map(v => {
-              const active = !custom && amt === v;
-              return (
-                <Box
-                  key={v}
-                  component='button'
-                  type='button'
-                  onClick={() => setChip(v)}
-                  sx={{
-                    height: 44,
-                    borderRadius: `${tokens.radius.tile}px`,
-                    cursor: "pointer",
-                    font: "inherit",
-                    fontSize: 15,
-                    fontWeight: 600,
-                    border: `1px solid ${active ? tokens.accent : tokens.borderStrong}`,
-                    bgcolor: active ? tokens.accentFill : tokens.surface,
-                    color: active ? tokens.accent : tokens.text,
-                  }}>
-                  ${v}
-                </Box>
-              );
-            })}
-          </Box>
+          <div className={chipGrid}>
+            {CHIPS.map(v => (
+              <button key={v} type='button' onClick={() => setChip(v)} className={chipBtn({ active: !custom && amt === v })}>
+                ${v}
+              </button>
+            ))}
+          </div>
 
           {/* Custom */}
-          <Box
-            component='button'
+          <button
             type='button'
             onClick={() => {
               setCustom(true);
               setAmount("");
             }}
-            sx={{
-              width: "100%",
-              height: 44,
-              borderRadius: `${tokens.radius.tile}px`,
-              cursor: "pointer",
-              font: "inherit",
-              fontSize: 14,
-              fontWeight: 500,
-              mb: custom ? 1 : 2.5,
-              border: `1px solid ${custom ? tokens.accent : tokens.borderStrong}`,
-              bgcolor: custom ? tokens.accentFill : tokens.surface,
-              color: custom ? tokens.accent : tokens.text2,
-            }}>
+            className={customBtn({ active: custom })}>
             Custom amount
-          </Box>
+          </button>
           {custom && (
-            <Box sx={{ mb: 2.5 }}>
+            <div className={customField}>
               <CurrencyInput autoFocus placeholder='0.00' value={amount} onChange={setAmount} />
-            </Box>
+            </div>
           )}
 
           {/* Method selector */}
-          <Box sx={{ mb: 2.75 }}>
+          <div className={methodWrap}>
             <AbaMethodSelector value={method} onChange={setMethod} />
-          </Box>
+          </div>
 
-          <Button
-            fullWidth
-            disabled={!valid}
-            onClick={() => method && flow.startAba(method, amt)}
-            startIcon={<AddIcon sx={{ fontSize: 16 }} />}
-            sx={{
-              height: 52,
-              borderRadius: "999px",
-              bgcolor: "#000",
-              color: "#fff",
-              textTransform: "none",
-              fontSize: 16,
-              fontWeight: 500,
-              "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-              "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.18)", color: "#fff" },
-            }}>
+          <button type='button' disabled={!valid} onClick={() => method && flow.startAba(method, amt)} className={submitBtn}>
+            <Plus size={16} className={startIcon} />
             Add {fmtUsd(amt)} to wallet
-          </Button>
-          <Typography sx={{ textAlign: "center", fontSize: 11.5, color: tokens.text3, mt: 1.75 }}>
-            Balance is stored in your KickAir wallet · USD
-          </Typography>
-        </Box>
-      </Dialog>
+          </button>
+          <p className={footNote}>Balance is stored in your KickAir wallet · USD</p>
+        </div>
+      </BareModal>
 
       {flow.overlay}
     </>

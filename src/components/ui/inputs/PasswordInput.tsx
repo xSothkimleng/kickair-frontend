@@ -1,10 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { TextField, InputAdornment, IconButton } from "@mui/material";
-import { Visibility, VisibilityOff } from "@mui/icons-material";
+import { Eye, EyeOff } from "lucide-react";
 import { FieldShell } from "./FieldShell";
-import { fieldSx, FieldBaseProps, tokens } from "./tokens";
+import { fieldControl, fieldIconButton, fieldRoot } from "./field";
+import { FieldBaseProps } from "./tokens";
 
 export interface PasswordInputProps extends FieldBaseProps {
   value?: string;
@@ -23,28 +23,29 @@ export default function PasswordInput({
 
   return (
     <FieldShell label={label} required={required} helper={helper} error={error} htmlFor={id} fullWidth={fullWidth}>
-      <TextField
-        id={id}
-        name={name}
-        type={show ? "text" : "password"}
-        value={value ?? ""}
-        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-        placeholder={placeholder}
-        disabled={disabled}
-        error={!!error}
-        fullWidth
-        autoComplete={autoComplete}
-        sx={fieldSx(size)}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton onClick={() => setShow((s) => !s)} edge="end" size="small" aria-label={show ? "Hide password" : "Show password"} sx={{ color: tokens.muted }}>
-                {show ? <VisibilityOff fontSize="small" /> : <Visibility fontSize="small" />}
-              </IconButton>
-            </InputAdornment>
-          ),
-        }}
-      />
+      <div className={fieldRoot({ size })} data-invalid={error ? "" : undefined} data-disabled={disabled ? "" : undefined}>
+        <input
+          id={id}
+          name={name}
+          type={show ? "text" : "password"}
+          value={value ?? ""}
+          onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+          readOnly={!onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          aria-invalid={error ? true : undefined}
+          autoComplete={autoComplete}
+          className={fieldControl}
+        />
+        <button
+          type="button"
+          onClick={() => setShow((s) => !s)}
+          disabled={disabled}
+          aria-label={show ? "Hide password" : "Show password"}
+          className={fieldIconButton}>
+          {show ? <EyeOff size={18} /> : <Eye size={18} />}
+        </button>
+      </div>
     </FieldShell>
   );
 }

@@ -46,7 +46,7 @@ export const tdVars = css({
 });
 
 /* ── Layout ─────────────────────────────────────────────────────────────── */
-export const page = css({ px: "36px", py: "28px", maxW: "1320px", mx: "auto", w: "100%" });
+export const page = css({ px: "36px", py: "28px", maxW: "1320px", mx: "auto", w: "100%", boxSizing: "border-box" });
 
 export const stack = cva({
   base: { display: "flex", flexDirection: "column" },
@@ -310,7 +310,7 @@ export function Tabs<T extends string>({ value, onChange, items }: { value: T; o
 
 /* ── Form fields ────────────────────────────────────────────────────────── */
 const fieldBase = css({
-  w: "100%", h: "36px", px: "11px", bg: "var(--td-surface)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line-2)", borderRadius: "9px",
+  w: "100%", boxSizing: "border-box", h: "36px", px: "11px", bg: "var(--td-surface)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line-2)", borderRadius: "9px",
   fontSize: "13.5px", color: "var(--td-ink)", appearance: "none", outline: "none", transition: "border-color .12s, box-shadow .12s",
   _placeholder: { color: "var(--td-ink-3)" },
   _focus: { borderColor: "var(--td-accent)", boxShadow: "0 0 0 3px var(--td-accent-soft)" },

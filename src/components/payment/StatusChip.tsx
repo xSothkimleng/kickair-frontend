@@ -1,20 +1,38 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { Box } from "@mui/material";
-import { tokens } from "@/theme";
+import { css, cva } from "styled-system/css";
 
 export type ChipStatus = "completed" | "success" | "pending" | "failed" | "error" | "escrow" | "neutral";
 
-const MAP: Record<ChipStatus, { bg: string; color: string }> = {
-  completed: { bg: tokens.successTint, color: tokens.successText },
-  success: { bg: tokens.successTint, color: tokens.successText },
-  pending: { bg: tokens.pendingTint, color: tokens.pendingText },
-  escrow: { bg: tokens.pendingTint, color: tokens.pendingText },
-  failed: { bg: tokens.errorTint, color: tokens.errorText },
-  error: { bg: tokens.errorTint, color: tokens.errorText },
-  neutral: { bg: "rgba(0,0,0,0.05)", color: tokens.text2 },
-};
+const STATUSES: ChipStatus[] = ["completed", "success", "pending", "failed", "error", "escrow", "neutral"];
+
+const chipCss = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    gap: "6px",
+    h: "24px",
+    px: "10px",
+    borderRadius: "pill",
+    fontSize: "12px",
+    fontWeight: 600,
+  },
+  variants: {
+    status: {
+      completed: { bg: "successTint", color: "successText" },
+      success: { bg: "successTint", color: "successText" },
+      pending: { bg: "pendingTint", color: "pendingText" },
+      escrow: { bg: "pendingTint", color: "pendingText" },
+      failed: { bg: "errorTint", color: "errorText" },
+      error: { bg: "errorTint", color: "errorText" },
+      neutral: { bg: "rgba(0,0,0,0.05)", color: "ink2" },
+    },
+  },
+  defaultVariants: { status: "neutral" },
+});
+
+const dotCss = css({ width: "6px", height: "6px", borderRadius: "50%", bg: "currentColor" });
 
 /** Small tinted status pill with a leading dot. */
 export default function StatusChip({
@@ -26,24 +44,11 @@ export default function StatusChip({
   children: ReactNode;
   dot?: boolean;
 }) {
-  const c = MAP[status] ?? MAP.neutral;
+  const tone = STATUSES.includes(status) ? status : "neutral";
   return (
-    <Box
-      component='span'
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        gap: 0.75,
-        height: 24,
-        px: 1.25,
-        borderRadius: "999px",
-        fontSize: 12,
-        fontWeight: 600,
-        bgcolor: c.bg,
-        color: c.color,
-      }}>
-      {dot && <Box component='span' sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "currentColor" }} />}
+    <span className={chipCss({ status: tone })}>
+      {dot && <span className={dotCss} />}
       {children}
-    </Box>
+    </span>
   );
 }

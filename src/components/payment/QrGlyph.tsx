@@ -17,21 +17,25 @@ export default function QrGlyph({ color = "#111", size = 150 }: { color?: string
     }
   }
 
-  const Finder = ({ tx, ty }: { tx: number; ty: number }) => (
+  return (
+    <svg width={size} height={size} viewBox='0 0 21 21' shapeRendering='crispEdges'>
+      <rect width='21' height='21' fill='#fff' />
+      {cells}
+      <Finder tx={0} ty={0} color={color} />
+      <Finder tx={14} ty={0} color={color} />
+      <Finder tx={0} ty={14} color={color} />
+    </svg>
+  );
+}
+
+/** QR finder pattern (the three corner squares). Module-level so React does not
+ *  see a new component type on every render. */
+function Finder({ tx, ty, color }: { tx: number; ty: number; color: string }) {
+  return (
     <g transform={`translate(${tx},${ty})`}>
       <rect x='0' y='0' width='7' height='7' fill={color} />
       <rect x='1' y='1' width='5' height='5' fill='#fff' />
       <rect x='2' y='2' width='3' height='3' fill={color} />
     </g>
-  );
-
-  return (
-    <svg width={size} height={size} viewBox='0 0 21 21' shapeRendering='crispEdges'>
-      <rect width='21' height='21' fill='#fff' />
-      {cells}
-      <Finder tx={0} ty={0} />
-      <Finder tx={14} ty={0} />
-      <Finder tx={0} ty={14} />
-    </svg>
   );
 }

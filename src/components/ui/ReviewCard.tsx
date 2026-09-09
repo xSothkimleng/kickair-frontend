@@ -1,27 +1,11 @@
 "use client";
 
-import { Box, Typography, Avatar } from "@mui/material";
-import { Star } from "@mui/icons-material";
+import { css } from "styled-system/css";
+import { Avatar, Rating } from "@/components/ds";
 import { FreelancerReview } from "@/lib/api";
 
 interface ReviewCardProps {
   review: FreelancerReview;
-}
-
-function StarRating({ rating }: { rating: number }) {
-  return (
-    <Box sx={{ display: "flex", gap: 0.25 }}>
-      {[1, 2, 3, 4, 5].map((star) => (
-        <Star
-          key={star}
-          sx={{
-            fontSize: 14,
-            color: star <= rating ? "#f59e0b" : "rgba(0,0,0,0.15)",
-          }}
-        />
-      ))}
-    </Box>
-  );
 }
 
 function formatDate(dateString: string): string {
@@ -32,44 +16,33 @@ function formatDate(dateString: string): string {
   });
 }
 
+const cardCss = css({ bg: "white", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.08)", p: "24px" });
+const headRow = css({ display: "flex", alignItems: "flex-start", gap: "16px" });
+const headRowSpaced = css({ display: "flex", alignItems: "flex-start", gap: "16px", mb: "16px" });
+const bodyCol = css({ flex: 1, minW: 0 });
+const nameRow = css({ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", mb: "4px" });
+const nameCss = css({ fontSize: "14px", fontWeight: 600, color: "black" });
+const dateCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.4)", flexShrink: 0 });
+const commentCss = css({ fontSize: "13px", color: "rgba(0,0,0,0.7)", lineHeight: 1.65, pl: "56px" });
+
 export default function ReviewCard({ review }: ReviewCardProps) {
   const client = review.client_profile?.user;
   const name = client?.name || "Anonymous";
   const avatar = client?.avatar_url || undefined;
-  const initials = name.charAt(0).toUpperCase();
 
   return (
-    <Box
-      sx={{
-        bgcolor: "white",
-        borderRadius: 3,
-        border: "1px solid rgba(0,0,0,0.08)",
-        p: 3,
-      }}
-    >
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 2, mb: review.comment ? 2 : 0 }}>
-        <Avatar
-          src={avatar}
-          alt={name}
-          sx={{ width: 40, height: 40, fontSize: 15, bgcolor: "rgba(0,113,227,0.12)", color: "#0071e3", flexShrink: 0 }}
-        >
-          {initials}
-        </Avatar>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 1, mb: 0.5 }}>
-            <Typography sx={{ fontSize: 14, fontWeight: 600, color: "black" }}>{name}</Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)", flexShrink: 0 }}>
-              {formatDate(review.created_at)}
-            </Typography>
-          </Box>
-          <StarRating rating={review.rating} />
-        </Box>
-      </Box>
-      {review.comment && (
-        <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.7)", lineHeight: 1.65, pl: 7 }}>
-          {review.comment}
-        </Typography>
-      )}
-    </Box>
+    <div className={cardCss}>
+      <div className={review.comment ? headRowSpaced : headRow}>
+        <Avatar src={avatar} name={name} px={40} />
+        <div className={bodyCol}>
+          <div className={nameRow}>
+            <p className={nameCss}>{name}</p>
+            <p className={dateCss}>{formatDate(review.created_at)}</p>
+          </div>
+          <Rating value={review.rating} size={14} readOnly />
+        </div>
+      </div>
+      {review.comment && <p className={commentCss}>{review.comment}</p>}
+    </div>
   );
 }

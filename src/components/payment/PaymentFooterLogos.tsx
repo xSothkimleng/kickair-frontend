@@ -1,10 +1,35 @@
 "use client";
 
-import { Box, Typography } from "@mui/material";
-import { tokens } from "@/theme";
+import { css, cva } from "styled-system/css";
 import PayLogo, { type PayLogoId } from "./PayLogo";
 
 const FOOTER_METHODS: PayLogoId[] = ["visa", "mc", "unionpay", "jcb", "alipay", "wechat"];
+
+const wrapCss = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  flexWrap: "wrap",
+  gap: "20px",
+});
+
+const titleCss = cva({
+  base: {
+    fontSize: "12px",
+    fontWeight: 600,
+    letterSpacing: "0.04em",
+    textTransform: "uppercase",
+    lineHeight: 1.5,
+  },
+  variants: { dark: { true: { color: "rgba(255,255,255,0.55)" }, false: { color: "ink3" } } },
+});
+
+const subCss = cva({
+  base: { fontSize: "12px", lineHeight: 1.5 },
+  variants: { dark: { true: { color: "rgba(255,255,255,0.4)" }, false: { color: "ink3" } } },
+});
+
+const logosCss = css({ display: "flex", gap: "10px", flexWrap: "wrap" });
 
 /**
  * Accepted-payments strip for the site footer (ABA guideline requirement).
@@ -13,32 +38,16 @@ const FOOTER_METHODS: PayLogoId[] = ["visa", "mc", "unionpay", "jcb", "alipay", 
 export default function PaymentFooterLogos({ variant = "light" }: { variant?: "light" | "dark" }) {
   const dark = variant === "dark";
   return (
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        flexWrap: "wrap",
-        gap: 2.5,
-      }}>
-      <Box>
-        <Typography
-          sx={{
-            fontSize: 12,
-            fontWeight: 600,
-            letterSpacing: "0.04em",
-            textTransform: "uppercase",
-            color: dark ? "rgba(255,255,255,0.55)" : tokens.text3,
-          }}>
-          Secure payments by ABA PayWay
-        </Typography>
-        <Typography sx={{ fontSize: 12, color: dark ? "rgba(255,255,255,0.4)" : tokens.text3 }}>USD · escrow-protected</Typography>
-      </Box>
-      <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
+    <div className={wrapCss}>
+      <div>
+        <p className={titleCss({ dark })}>Secure payments by ABA PayWay</p>
+        <p className={subCss({ dark })}>USD · escrow-protected</p>
+      </div>
+      <div className={logosCss}>
         {FOOTER_METHODS.map(id => (
           <PayLogo key={id} id={id} />
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

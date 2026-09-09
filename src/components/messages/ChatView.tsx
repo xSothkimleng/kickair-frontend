@@ -1,14 +1,222 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Typography, TextField, Avatar, Badge, IconButton, Button, CircularProgress, Chip } from "@mui/material";
-import { SendOutlined, AddOutlined, WorkOutlineOutlined, SearchOutlined, ReceiptLongOutlined } from "@mui/icons-material";
+import { Briefcase, Plus, Receipt, Search, Send } from "lucide-react";
+import { css, cva } from "styled-system/css";
+import { Avatar, Spinner, button, iconButton } from "@/components/ds";
 import { Conversation, ConversationOrderEvent, Message } from "@/types/message";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import MessageBubble from "./MessageBubble";
+
+/* ── empty state (no conversation selected) ── */
+const emptyRootCss = css({ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", bg: "surface" });
+const emptyInnerCss = css({ textAlign: "center" });
+const emptyIconWrapCss = css({
+  w: "48px",
+  h: "48px",
+  borderRadius: "50%",
+  bg: "rgba(0, 0, 0, 0.05)",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  mx: "auto",
+  mb: "16px",
+  color: "rgba(0, 0, 0, 0.2)",
+});
+// globals.css zeroes margin/padding on <p> outside any layer, so the `mb` these
+// carried as MUI Typography never rendered — dropped rather than ported.
+const emptyTitleCss = css({ fontSize: "17px", fontWeight: 600, color: "ink" });
+const emptyCopyCss = css({ fontSize: "13px", color: "ink2" });
+
+/* ── shell ── */
+const rootCss = css({ flex: 1, display: "flex", flexDirection: "column" });
+const headerCss = css({
+  p: "16px",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "hairline",
+  bg: "surface",
+});
+const rowBetweenCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between" });
+const headerIdentityCss = css({ display: "flex", alignItems: "center", gap: "12px" });
+const headerNameCss = css({ fontSize: "15px", fontWeight: 600, color: "ink" });
+const headerSubCss = css({ fontSize: "11px", color: "ink2" });
+
+// MUI <Badge variant="dot" overlap="circular" anchorOrigin={bottom,right}> —
+// transparent fill inside a 2px white ring.
+const avatarWrapCss = css({ position: "relative", display: "inline-flex", verticalAlign: "middle", flexShrink: 0 });
+const avatarDotCss = css({
+  position: "absolute",
+  bottom: "14%",
+  right: "14%",
+  transform: "translate(50%, 50%)",
+  w: "10px",
+  h: "10px",
+  boxSizing: "border-box",
+  borderRadius: "50%",
+  bg: "transparent",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  borderColor: "white",
+});
+
+/* ── order context banner ── */
+const bannerCss = css({
+  mt: "12px",
+  p: "12px",
+  bg: "rgba(37, 99, 235, 0.05)",
+  borderRadius: "12px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(37, 99, 235, 0.1)",
+});
+const bannerLeftCss = css({ display: "flex", alignItems: "center", gap: "8px" });
+const bannerIconCss = css({ color: "#3b82f6", flexShrink: 0 });
+const bannerTextCss = css({ fontSize: "12px", color: "rgb(29, 78, 216)", fontWeight: 500 });
+const viewOrderBtnCss = css(button.raw({ variant: "text" }), {
+  h: "auto",
+  minW: "auto",
+  px: 0,
+  py: 0,
+  borderWidth: 0,
+  borderRadius: 0,
+  fontSize: "11px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  color: "#3b82f6",
+  _hover: { bg: "transparent", color: "#3b82f6", textDecoration: "underline" },
+});
+
+/* ── chip (MUI <Chip size="small" | default>) ── */
+const chipCss = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
+    maxW: "100%",
+    borderRadius: "pill",
+    fontFamily: "inherit",
+    fontWeight: 400,
+    whiteSpace: "nowrap",
+  },
+  variants: {
+    tone: {
+      status: { h: "20px", px: "8px", fontSize: "10px", bg: "rgba(37, 99, 235, 0.1)", color: "#3b82f6" },
+      date: { h: "24px", px: "12px", fontSize: "11px", bg: "rgba(0, 0, 0, 0.05)", color: "ink2" },
+    },
+  },
+});
+
+/* ── message stream ── */
+const streamCss = css({ flex: 1, overflowY: "auto", p: "24px", display: "flex", flexDirection: "column" });
+const loadingCss = css({ display: "flex", justifyContent: "center", py: "32px" });
+const spinnerCss = css({ color: "accent" });
+const noMessagesWrapCss = css({ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" });
+const noMessagesCss = css({ fontSize: "13px", color: "rgba(0, 0, 0, 0.5)" });
+const dateRowCss = cva({
+  base: { display: "flex", justifyContent: "center", mb: "16px" },
+  variants: { first: { true: { mt: 0 }, false: { mt: "16px" } } },
+});
+
+/* ── inline order event pill ── */
+const eventRowCss = css({ display: "flex", justifyContent: "center", my: "10px" });
+const eventPillCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "6px",
+  px: "12px",
+  py: "4.8px",
+  bg: "rgba(37, 99, 235, 0.06)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(37, 99, 235, 0.14)",
+  borderRadius: "999px",
+  cursor: "pointer",
+  maxW: "86%",
+  _hover: { bg: "rgba(37, 99, 235, 0.1)" },
+});
+const eventIconCss = css({ color: "#3b82f6", flexShrink: 0 });
+const eventOrderCss = css({ fontSize: "11.5px", color: "#1D4ED8", fontWeight: 600, whiteSpace: "nowrap" });
+const eventLabelCss = css({ fontSize: "11.5px", color: "rgba(0,0,0,0.65)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const eventTimeCss = css({ fontSize: "10.5px", color: "rgba(0,0,0,0.45)", whiteSpace: "nowrap" });
+
+/* ── composer ── */
+const composerWrapCss = css({
+  p: "16px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+  bg: "surface",
+});
+const composerRowCss = css({ display: "flex", alignItems: "flex-end", gap: "12px" });
+const addBtnCss = css(iconButton.raw({ shape: "round", variant: "ghost" }), {
+  w: "40px",
+  h: "40px",
+  color: "ink2",
+  _hover: { bg: "rgba(0, 0, 0, 0.05)", color: "ink2" },
+});
+// MUI multiline OutlinedInput: 16px radius, 5 % black fill, no border, 8 % on focus.
+const fieldCss = css({
+  display: "flex",
+  alignItems: "stretch",
+  flex: 1,
+  minW: 0,
+  minH: "44px",
+  px: "14px",
+  boxSizing: "border-box",
+  bg: "rgba(0, 0, 0, 0.05)",
+  borderRadius: "16px",
+  fontSize: "13px",
+  color: "ink",
+  _focusWithin: { bg: "rgba(0, 0, 0, 0.08)" },
+});
+const textareaCss = css({
+  display: "block",
+  flex: 1,
+  minW: 0,
+  w: "100%",
+  boxSizing: "border-box",
+  m: 0,
+  px: 0,
+  py: "14px",
+  bg: "transparent",
+  border: "none",
+  outline: "none",
+  boxShadow: "none",
+  appearance: "none",
+  resize: "none",
+  overflowY: "hidden",
+  fontFamily: "inherit",
+  fontSize: "inherit",
+  lineHeight: 1.5,
+  color: "inherit",
+  _placeholder: { color: "rgba(0, 0, 0, 0.42)", opacity: 1 },
+  _disabled: { color: "rgba(0, 0, 0, 0.38)", cursor: "default" },
+});
+const sendBtnActiveCss = css(iconButton.raw({ shape: "round", variant: "ghost" }), {
+  w: "40px",
+  h: "40px",
+  bg: "accent",
+  color: "white",
+  _hover: { bg: "accentHover", color: "white" },
+});
+const sendBtnIdleCss = css(iconButton.raw({ shape: "round", variant: "ghost" }), {
+  w: "40px",
+  h: "40px",
+  bg: "rgba(0, 0, 0, 0.05)",
+  color: "rgba(0, 0, 0, 0.2)",
+  _hover: { bg: "rgba(0, 0, 0, 0.05)", color: "rgba(0, 0, 0, 0.2)" },
+  _disabled: { opacity: 1, cursor: "default", pointerEvents: "none" },
+});
+const sendSpinnerCss = css({ color: "rgba(0, 0, 0, 0.3)" });
+const hintCss = css({ fontSize: "10px", color: "ink3", textAlign: "center" });
+
+const COMPOSER_MAX_ROWS = 4;
 
 interface ChatViewProps {
   conversation: Conversation | null;
@@ -61,6 +269,7 @@ export default function ChatView({
 }: ChatViewProps) {
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const composerRef = useRef<HTMLTextAreaElement>(null);
   const router = useRouter();
 
   const orderRoute = (orderId: number) =>
@@ -83,6 +292,20 @@ export default function ChatView({
   useEffect(() => {
     // scrollToBottom();
   }, [messages]);
+
+  // Replaces MUI's TextareaAutosize (maxRows=4): grow with the content, then scroll.
+  useLayoutEffect(() => {
+    const el = composerRef.current;
+    if (!el) return;
+    const cs = getComputedStyle(el);
+    const lineHeight = parseFloat(cs.lineHeight) || 20;
+    const pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+    const max = COMPOSER_MAX_ROWS * lineHeight + pad;
+    el.style.height = "auto";
+    const content = el.scrollHeight;
+    el.style.height = `${Math.min(content, max)}px`;
+    el.style.overflowY = content > max ? "auto" : "hidden";
+  }, [messageText]);
 
   const handleSend = async () => {
     if (!messageText.trim() || sending) return;
@@ -117,235 +340,136 @@ export default function ChatView({
 
   if (!conversation) {
     return (
-      <Box
-        sx={{
-          flex: 1,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: "white",
-        }}>
-        <Box sx={{ textAlign: "center" }}>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: "50%",
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              mx: "auto",
-              mb: 2,
-            }}>
-            <SearchOutlined sx={{ fontSize: 24, color: "rgba(0, 0, 0, 0.2)" }} />
-          </Box>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>Select a conversation</Typography>
-          <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>
-            Choose a {participantLabel} from the list to start messaging
-          </Typography>
-        </Box>
-      </Box>
+      <div className={emptyRootCss}>
+        <div className={emptyInnerCss}>
+          <div className={emptyIconWrapCss}>
+            <Search size={24} />
+          </div>
+          <p className={emptyTitleCss}>Select a conversation</p>
+          <p className={emptyCopyCss}>Choose a {participantLabel} from the list to start messaging</p>
+        </div>
+      </div>
     );
   }
 
+  const canSend = !!messageText.trim() && !sending;
+
   return (
-    <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+    <div className={rootCss}>
       {/* Header */}
-      <Box sx={{ p: 2, borderBottom: "1px solid rgba(0, 0, 0, 0.08)", bgcolor: "white" }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Badge
-              overlap='circular'
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              variant='dot'
-              sx={{
-                "& .MuiBadge-badge": {
-                  backgroundColor: "transparent",
-                  width: 10,
-                  height: 10,
-                  borderRadius: "50%",
-                  border: "2px solid white",
-                },
-              }}>
+      <div className={headerCss}>
+        <div className={rowBetweenCss}>
+          <div className={headerIdentityCss}>
+            <span className={avatarWrapCss}>
               <Avatar
                 src={conversation.other_participant.avatar_url || undefined}
-                alt={conversation.other_participant.name}
-                sx={{ width: 40, height: 40 }}
+                name={conversation.other_participant.name}
+                px={40}
               />
-            </Badge>
-            <Box>
-              <Typography sx={{ fontSize: 15, fontWeight: 600, color: "black" }}>
-                {conversation.other_participant.name}
-              </Typography>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{conversation.order ? conversation.order.title : "One thread — all your orders & messages"}</Typography>
-            </Box>
-          </Box>
-        </Box>
+              <span className={avatarDotCss} />
+            </span>
+            <div>
+              <p className={headerNameCss}>{conversation.other_participant.name}</p>
+              <p className={headerSubCss}>
+                {conversation.order ? conversation.order.title : "One thread — all your orders & messages"}
+              </p>
+            </div>
+          </div>
+        </div>
 
         {/* Order Context Banner — only for order-anchored conversations */}
         {conversation.order && (
-          <Box
-            sx={{
-              mt: 1.5,
-              p: 1.5,
-              bgcolor: "rgba(37, 99, 235, 0.05)",
-              borderRadius: 3,
-              border: "1px solid rgba(37, 99, 235, 0.1)",
-            }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <WorkOutlineOutlined sx={{ fontSize: 14, color: "#3b82f6" }} />
-                <Typography sx={{ fontSize: 12, color: "rgb(29, 78, 216)", fontWeight: 500 }}>
-                  Order: {conversation.order.title}
-                </Typography>
-                <Chip
-                  label={conversation.order.status}
-                  size='small'
-                  sx={{
-                    height: 20,
-                    fontSize: 10,
-                    bgcolor: "rgba(37, 99, 235, 0.1)",
-                    color: "#3b82f6",
-                  }}
-                />
-              </Box>
-              <Button
+          <div className={bannerCss}>
+            <div className={rowBetweenCss}>
+              <div className={bannerLeftCss}>
+                <Briefcase size={14} className={bannerIconCss} />
+                <p className={bannerTextCss}>Order: {conversation.order.title}</p>
+                <span className={chipCss({ tone: "status" })}>{conversation.order.status}</span>
+              </div>
+              <button
+                type="button"
                 onClick={() => conversation.order && router.push(orderRoute(conversation.order.id))}
-                sx={{
-                  fontSize: 11,
-                  color: "#3b82f6",
-                  textTransform: "none",
-                  p: 0,
-                  minWidth: "auto",
-                  "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
-                }}>
+                className={viewOrderBtnCss}>
                 View Order
-              </Button>
-            </Box>
-          </Box>
+              </button>
+            </div>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Messages */}
-      <Box
-        sx={{
-          flex: 1,
-          overflowY: "auto",
-          p: 3,
-          display: "flex",
-          flexDirection: "column",
-        }}>
+      <div className={streamCss}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
-            <CircularProgress size={24} />
-          </Box>
+          <div className={loadingCss}>
+            <Spinner size={24} className={spinnerCss} />
+          </div>
         ) : items.length === 0 ? (
-          <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.5)" }}>No messages yet. Start the conversation!</Typography>
-          </Box>
+          <div className={noMessagesWrapCss}>
+            <p className={noMessagesCss}>No messages yet. Start the conversation!</p>
+          </div>
         ) : (
           groupedItems.map((group, groupIdx) => (
-            <Box key={groupIdx}>
-              <Box sx={{ display: "flex", justifyContent: "center", mb: 2, mt: groupIdx > 0 ? 2 : 0 }}>
-                <Chip
-                  label={formatDateHeader(group.date)}
-                  sx={{
-                    height: 24,
-                    bgcolor: "rgba(0, 0, 0, 0.05)",
-                    color: "rgba(0, 0, 0, 0.6)",
-                    fontSize: 11,
-                  }}
-                />
-              </Box>
+            <div key={groupIdx}>
+              <div className={dateRowCss({ first: groupIdx === 0 })}>
+                <span className={chipCss({ tone: "date" })}>{formatDateHeader(group.date)}</span>
+              </div>
               {group.items.map(item =>
                 item.kind === "message" ? (
                   <MessageBubble key={`m-${item.message.id}`} message={item.message} />
                 ) : (
-                  <Box key={`e-${item.event.id}`} sx={{ display: "flex", justifyContent: "center", my: 1.25 }}>
-                    <Box
+                  <div key={`e-${item.event.id}`} className={eventRowCss}>
+                    <div
                       onClick={() => router.push(orderRoute(item.event.order_id))}
-                      sx={{
-                        display: "flex", alignItems: "center", gap: 0.75, px: 1.5, py: 0.6,
-                        bgcolor: "rgba(37, 99, 235, 0.06)", border: "1px solid rgba(37, 99, 235, 0.14)",
-                        borderRadius: "999px", cursor: "pointer", maxWidth: "86%",
-                        "&:hover": { bgcolor: "rgba(37, 99, 235, 0.1)" },
-                      }}>
-                      <ReceiptLongOutlined sx={{ fontSize: 13, color: "#3b82f6", flexShrink: 0 }} />
-                      <Typography sx={{ fontSize: 11.5, color: "#1D4ED8", fontWeight: 600, whiteSpace: "nowrap" }}>
-                        Order #{item.event.order_id}
-                      </Typography>
-                      <Typography sx={{ fontSize: 11.5, color: "rgba(0,0,0,0.65)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      className={eventPillCss}>
+                      <Receipt size={13} className={eventIconCss} />
+                      <p className={eventOrderCss}>Order #{item.event.order_id}</p>
+                      <p className={eventLabelCss}>
                         {EVENT_LABEL[item.event.event_type] ?? item.event.event_type} · {item.event.order_title}
-                      </Typography>
-                      <Typography sx={{ fontSize: 10.5, color: "rgba(0,0,0,0.45)", whiteSpace: "nowrap" }}>
+                      </p>
+                      <p className={eventTimeCss}>
                         {new Date(item.event.created_at).toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                      </Typography>
-                    </Box>
-                  </Box>
+                      </p>
+                    </div>
+                  </div>
                 )
               )}
-            </Box>
+            </div>
           ))
         )}
         <div ref={messagesEndRef} />
-      </Box>
+      </div>
 
       {/* Input */}
-      <Box sx={{ p: 2, borderTop: "1px solid rgba(0, 0, 0, 0.08)", bgcolor: "white" }}>
-        <Box sx={{ display: "flex", alignItems: "flex-end", gap: 1.5 }}>
-          <IconButton size='small' sx={{ p: 1.25, "&:hover": { bgcolor: "rgba(0, 0, 0, 0.05)" } }}>
-            <AddOutlined sx={{ fontSize: 20, color: "rgba(0, 0, 0, 0.6)" }} />
-          </IconButton>
+      <div className={composerWrapCss}>
+        <div className={composerRowCss}>
+          <button type="button" aria-label="Add attachment" className={addBtnCss}>
+            <Plus size={20} />
+          </button>
 
-          <TextField
-            fullWidth
-            multiline
-            maxRows={4}
-            value={messageText}
-            onChange={e => setMessageText(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder='Type a message...'
-            disabled={sending}
-            sx={{
-              flex: 1,
-              "& .MuiOutlinedInput-root": {
-                minHeight: 44,
-                borderRadius: 4,
-                bgcolor: "rgba(0, 0, 0, 0.05)",
-                fontSize: 13,
-                "& fieldset": { border: "none" },
-                "&.Mui-focused": { bgcolor: "rgba(0, 0, 0, 0.08)" },
-              },
-            }}
-          />
+          <div className={fieldCss}>
+            <textarea
+              ref={composerRef}
+              rows={1}
+              value={messageText}
+              onChange={e => setMessageText(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Type a message..."
+              disabled={sending}
+              className={textareaCss}
+            />
+          </div>
 
-          <IconButton
+          <button
+            type="button"
+            aria-label="Send message"
             onClick={handleSend}
-            disabled={!messageText.trim() || sending}
-            sx={{
-              p: 1.25,
-              bgcolor: messageText.trim() && !sending ? "#0071e3" : "rgba(0, 0, 0, 0.05)",
-              color: messageText.trim() && !sending ? "white" : "rgba(0, 0, 0, 0.2)",
-              "&:hover": {
-                bgcolor: messageText.trim() && !sending ? "#0077ED" : "rgba(0, 0, 0, 0.05)",
-              },
-              "&.Mui-disabled": {
-                bgcolor: "rgba(0, 0, 0, 0.05)",
-                color: "rgba(0, 0, 0, 0.2)",
-              },
-            }}>
-            {sending ? (
-              <CircularProgress size={20} sx={{ color: "rgba(0, 0, 0, 0.3)" }} />
-            ) : (
-              <SendOutlined sx={{ fontSize: 20 }} />
-            )}
-          </IconButton>
-        </Box>
-        <Typography sx={{ fontSize: 10, color: "rgba(0, 0, 0, 0.4)", textAlign: "center", mt: 1 }}>
-          Press Enter to send · Shift + Enter for new line
-        </Typography>
-      </Box>
-    </Box>
+            disabled={!canSend}
+            className={canSend ? sendBtnActiveCss : sendBtnIdleCss}>
+            {sending ? <Spinner size={20} className={sendSpinnerCss} /> : <Send size={20} />}
+          </button>
+        </div>
+        <p className={hintCss}>Press Enter to send · Shift + Enter for new line</p>
+      </div>
+    </div>
   );
 }

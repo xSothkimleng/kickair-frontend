@@ -52,6 +52,7 @@ import { useServiceListingLive } from "@/hooks/useServiceListingLive";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import { RequestQuoteOutlined } from "@mui/icons-material";
 import { LevelBadge } from "@/components/profile/profileKit";
+import { toast } from "@/components/ds";
 
 interface ServiceDetailPageProps {
   serviceId: number;
@@ -72,6 +73,8 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const [openFaq, setOpenFaq] = useState<number | null>(null);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showCustomOrderDialog, setShowCustomOrderDialog] = useState(false);
+  // "Contact Freelancer" — opens (or creates) the conversation with this service's owner.
+  const [contacting, setContacting] = useState(false);
   const [imageError, setImageError] = useState<{ [key: string]: boolean }>({});
   // Set when a live "service.changed" event arrives for this service — the freelancer edited
   // (delisted) or deleted it while the visitor was on this page. Blocks purchases of the stale
@@ -127,6 +130,26 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
 
   const handleImageError = (imageKey: string) => {
     setImageError(prev => ({ ...prev, [imageKey]: true }));
+  };
+
+  // Mirrors `handleMessage` on the freelancer profile page: guests go to sign-in,
+  // everyone else lands in the client messages view on the freelancer's conversation.
+  const contactUserId = service?.freelancer_profile?.user_id ?? service?.freelancer_profile?.user?.id ?? null;
+
+  const handleContact = async () => {
+    if (!currentUser) {
+      router.push("/auth/sign-in");
+      return;
+    }
+    if (!contactUserId) return;
+    setContacting(true);
+    try {
+      const conv = await api.startConversation(contactUserId);
+      router.push(`/dashboard/client/messages?id=${conv.id}`);
+    } catch (err) {
+      setContacting(false);
+      toast.error(err instanceof Error ? err.message : "Couldn't open the conversation. Please try again.");
+    }
   };
 
   // Loading state
@@ -785,6 +808,8 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                           fullWidth
                           variant='outlined'
                           startIcon={<ChatBubbleOutline />}
+                          onClick={handleContact}
+                          disabled={contacting || isOwnService || !contactUserId}
                           sx={{
                             height: 44,
                             bgcolor: "white",
@@ -811,6 +836,8 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                     fullWidth
                     variant='contained'
                     startIcon={<ChatBubbleOutline />}
+                    onClick={handleContact}
+                    disabled={contacting || isOwnService || !contactUserId}
                     sx={{
                       height: 44,
                       bgcolor: "#0071e3",

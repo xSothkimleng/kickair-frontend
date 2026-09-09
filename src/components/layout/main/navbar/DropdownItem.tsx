@@ -1,6 +1,6 @@
 import Link from "next/link";
-import { Box, Button } from "@mui/material";
-import { dropdownItemSx } from "./styles";
+import { css } from "styled-system/css";
+import { dropdownItemCss } from "./styles";
 
 export interface DropdownItemProps {
   icon?: React.ReactNode;
@@ -11,29 +11,34 @@ export interface DropdownItemProps {
   onClick?: () => void;
 }
 
+const iconCss = css({ flexShrink: 0, mt: "2px" });
+const titleCss = css({ fontSize: "13px", fontWeight: 600 });
+const descCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)" });
+const extraCss = css({ mt: "8px" });
+
 export function DropdownItem({ icon, title, description, extra, href, onClick }: DropdownItemProps) {
   const inner = (
     <>
-      {icon && <Box sx={{ flexShrink: 0, mt: 0.25 }}>{icon}</Box>}
-      <Box>
-        <Box sx={{ fontSize: 13, fontWeight: 600 }}>{title}</Box>
-        <Box sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>{description}</Box>
-        {extra && <Box sx={{ mt: 1 }}>{extra}</Box>}
-      </Box>
+      {icon && <div className={iconCss}>{icon}</div>}
+      <div>
+        <div className={titleCss}>{title}</div>
+        <div className={descCss}>{description}</div>
+        {extra && <div className={extraCss}>{extra}</div>}
+      </div>
     </>
   );
 
   if (href) {
     return (
-      <Button component={Link as React.ElementType} href={href} onClick={onClick} sx={dropdownItemSx}>
+      <Link href={href} onClick={onClick} className={dropdownItemCss}>
         {inner}
-      </Button>
+      </Link>
     );
   }
 
   return (
-    <Button onClick={onClick} sx={dropdownItemSx}>
+    <button type='button' onClick={onClick} className={dropdownItemCss}>
       {inner}
-    </Button>
+    </button>
   );
 }

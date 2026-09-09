@@ -2,10 +2,17 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Paper, Typography, Button, Alert, CircularProgress } from "@mui/material";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import { PasswordInput, tokens } from "@/components/ui/inputs";
+import { CircleCheck } from "lucide-react";
+import { css } from "styled-system/css";
+import { Alert } from "@/components/ds";
+import { AuthFallback, AuthPage, AuthPrimaryButton, authForm, authSubtitle, authTitle } from "@/components/auth/authKit";
+import { FieldLabel, PasswordInput } from "@/components/ui/inputs";
 import { api } from "@/lib/api";
+
+const centred = css({ textAlign: "center" });
+const intro = css({ textAlign: "center", mb: "32px" });
+const doneIcon = css({ color: "success", mb: "12px" });
+const alertGap = css({ mb: "20px" });
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState("");
@@ -49,101 +56,57 @@ function ResetPasswordContent() {
   };
 
   return (
-    <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, sm: 6 }, backgroundColor: tokens.page }}>
-      <Box sx={{ width: "100%", maxWidth: 420 }}>
-        <Paper elevation={0} sx={{ borderRadius: 0, border: `1px solid ${tokens.border}`, p: { xs: 3, sm: 4 }, boxShadow: "0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.07)" }}>
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
-            <Box component="img" src="/assets/images/kickair-logo.png" alt="KickAir" sx={{ height: 36 }} />
-          </Box>
+    <AuthPage>
+      {done ? (
+        <div className={centred}>
+          <CircleCheck size={44} className={doneIcon} aria-hidden="true" />
+          <h1 className={authTitle}>Password reset</h1>
+          <p className={authSubtitle}>Your password has been changed. Sign in with your new password to continue.</p>
+          <AuthPrimaryButton onClick={() => router.push("/auth/sign-in")}>Sign in</AuthPrimaryButton>
+        </div>
+      ) : linkBroken ? (
+        <div className={centred}>
+          <h1 className={authTitle}>Invalid reset link</h1>
+          <p className={authSubtitle}>This link is missing its reset details. Request a new one and use the link from the latest email.</p>
+          <AuthPrimaryButton onClick={() => router.push("/auth/forgot-password")}>Request a new link</AuthPrimaryButton>
+        </div>
+      ) : (
+        <>
+          <div className={intro}>
+            <h1 className={authTitle}>Choose a new password</h1>
+            <p className={authSubtitle}>
+              Resetting the password for <b>{email}</b>
+            </p>
+          </div>
 
-          {done ? (
-            <Box sx={{ textAlign: "center" }}>
-              <CheckCircleOutlineIcon sx={{ fontSize: 44, color: tokens.success, mb: 1.5 }} />
-              <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-                Password reset
-              </Typography>
-              <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 3 }}>
-                Your password has been changed. Sign in with your new password to continue.
-              </Typography>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => router.push("/auth/sign-in")}
-                sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
-                Sign in
-              </Button>
-            </Box>
-          ) : linkBroken ? (
-            <Box sx={{ textAlign: "center" }}>
-              <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-                Invalid reset link
-              </Typography>
-              <Typography sx={{ fontSize: 14.5, color: tokens.muted, mb: 3 }}>
-                This link is missing its reset details. Request a new one and use the link from the latest email.
-              </Typography>
-              <Button
-                fullWidth
-                variant="contained"
-                onClick={() => router.push("/auth/forgot-password")}
-                sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
-                Request a new link
-              </Button>
-            </Box>
-          ) : (
-            <>
-              <Box sx={{ textAlign: "center", mb: 4 }}>
-                <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-                  Choose a new password
-                </Typography>
-                <Typography sx={{ fontSize: 14.5, color: tokens.muted }}>
-                  Resetting the password for <b>{email}</b>
-                </Typography>
-              </Box>
-
-              {error && (
-                <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2.5 }}>
-                  {error}
-                </Alert>
-              )}
-
-              <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                <Box>
-                  <Typography component="label" htmlFor="new-password" sx={{ display: "block", fontSize: 13, fontWeight: 500, color: tokens.body, mb: 0.875 }}>
-                    New password
-                  </Typography>
-                  <PasswordInput id="new-password" value={password} onChange={setPassword} placeholder="At least 8 characters" disabled={isLoading} />
-                </Box>
-                <Box>
-                  <Typography component="label" htmlFor="confirm-password" sx={{ display: "block", fontSize: 13, fontWeight: 500, color: tokens.body, mb: 0.875 }}>
-                    Confirm new password
-                  </Typography>
-                  <PasswordInput id="confirm-password" value={confirm} onChange={setConfirm} placeholder="Repeat the password" disabled={isLoading} />
-                </Box>
-                <Button
-                  type="submit"
-                  variant="contained"
-                  fullWidth
-                  disabled={isLoading || !password || !confirm}
-                  sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
-                  {isLoading ? "Resetting…" : "Reset password"}
-                </Button>
-              </Box>
-            </>
+          {error && (
+            <Alert tone="error" onClose={() => setError("")} className={alertGap}>
+              {error}
+            </Alert>
           )}
-        </Paper>
-      </Box>
-    </Box>
+
+          <form onSubmit={handleSubmit} className={authForm}>
+            <div>
+              <FieldLabel htmlFor="new-password">New password</FieldLabel>
+              <PasswordInput id="new-password" value={password} onChange={setPassword} placeholder="At least 8 characters" disabled={isLoading} />
+            </div>
+            <div>
+              <FieldLabel htmlFor="confirm-password">Confirm new password</FieldLabel>
+              <PasswordInput id="confirm-password" value={confirm} onChange={setConfirm} placeholder="Repeat the password" disabled={isLoading} />
+            </div>
+            <AuthPrimaryButton type="submit" disabled={isLoading || !password || !confirm}>
+              {isLoading ? "Resetting…" : "Reset password"}
+            </AuthPrimaryButton>
+          </form>
+        </>
+      )}
+    </AuthPage>
   );
 }
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense
-      fallback={
-        <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: tokens.page }}>
-          <CircularProgress sx={{ color: tokens.accent }} />
-        </Box>
-      }>
+    <Suspense fallback={<AuthFallback />}>
       <ResetPasswordContent />
     </Suspense>
   );

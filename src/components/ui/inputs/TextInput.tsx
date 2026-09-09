@@ -1,9 +1,9 @@
 "use client";
 
-import { TextField, InputAdornment } from "@mui/material";
 import { ReactNode } from "react";
 import { FieldShell } from "./FieldShell";
-import { fieldSx, FieldBaseProps, tokens } from "./tokens";
+import { fieldAdornment, fieldControl, fieldRoot } from "./field";
+import { FieldBaseProps } from "./tokens";
 
 export interface TextInputProps extends FieldBaseProps {
   value?: string;
@@ -18,8 +18,8 @@ export interface TextInputProps extends FieldBaseProps {
   endIcon?: ReactNode;
   inputMode?: "text" | "numeric" | "tel" | "email" | "search" | "url" | "decimal" | "none";
   maxLength?: number;
-  onBlur?: React.FocusEventHandler<HTMLInputElement | HTMLTextAreaElement>;
-  onKeyDown?: React.KeyboardEventHandler<HTMLDivElement>;
+  onBlur?: React.FocusEventHandler<HTMLInputElement>;
+  onKeyDown?: React.KeyboardEventHandler<HTMLInputElement>;
 }
 
 export default function TextInput({
@@ -29,27 +29,28 @@ export default function TextInput({
 }: TextInputProps) {
   return (
     <FieldShell label={label} required={required} helper={helper} error={error} htmlFor={id} fullWidth={fullWidth}>
-      <TextField
-        id={id}
-        name={name}
-        type={type}
-        value={value ?? ""}
-        onChange={onChange ? (e) => onChange(e.target.value) : undefined}
-        placeholder={placeholder}
-        disabled={disabled}
-        error={!!error}
-        fullWidth
-        autoComplete={autoComplete}
-        autoFocus={autoFocus}
-        onBlur={onBlur}
-        onKeyDown={onKeyDown}
-        sx={fieldSx(size)}
-        inputProps={{ inputMode, maxLength }}
-        InputProps={{
-          startAdornment: startIcon ? <InputAdornment position="start" sx={{ color: tokens.muted }}>{startIcon}</InputAdornment> : undefined,
-          endAdornment: endIcon ? <InputAdornment position="end" sx={{ color: tokens.muted }}>{endIcon}</InputAdornment> : undefined,
-        }}
-      />
+      <div className={fieldRoot({ size })} data-invalid={error ? "" : undefined} data-disabled={disabled ? "" : undefined}>
+        {startIcon && <span className={fieldAdornment}>{startIcon}</span>}
+        <input
+          id={id}
+          name={name}
+          type={type}
+          value={value ?? ""}
+          onChange={onChange ? (e) => onChange(e.target.value) : undefined}
+          readOnly={!onChange}
+          placeholder={placeholder}
+          disabled={disabled}
+          aria-invalid={error ? true : undefined}
+          autoComplete={autoComplete}
+          autoFocus={autoFocus}
+          inputMode={inputMode}
+          maxLength={maxLength}
+          onBlur={onBlur}
+          onKeyDown={onKeyDown}
+          className={fieldControl}
+        />
+        {endIcon && <span className={fieldAdornment}>{endIcon}</span>}
+      </div>
     </FieldShell>
   );
 }

@@ -1,10 +1,33 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Box } from "@mui/material";
-import AccountBalanceWalletOutlinedIcon from "@mui/icons-material/AccountBalanceWalletOutlined";
+import { Wallet } from "lucide-react";
+import { css } from "styled-system/css";
 import { useAuth } from "@/components/context/AuthContext";
 import { useWalletSummary } from "@/hooks/useWalletSummary";
+
+const chipCss = css({
+  appearance: "none",
+  display: "flex",
+  alignItems: "center",
+  gap: "5px",
+  h: "32px",
+  m: 0,
+  px: "11px",
+  py: 0,
+  border: "1px solid rgba(0,0,0,0.12)",
+  borderRadius: "999px",
+  bg: "transparent",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 600,
+  color: "rgba(0,0,0,0.8)",
+  whiteSpace: "nowrap",
+  transition: "border-color .15s, color .15s",
+  _hover: { color: "black", borderColor: "rgba(0,0,0,0.3)" },
+  "& svg": { opacity: 0.7, flexShrink: 0 },
+});
 
 /**
  * Steam-style wallet balance next to the profile — money only, links to the
@@ -23,30 +46,13 @@ export function WalletChip() {
       : "/dashboard/client?tab=finance";
 
   return (
-    <Box
-      component="button"
+    <button
+      type='button'
       onClick={() => router.push(financeHref)}
       aria-label={`Wallet balance $${balance.toFixed(2)} — open Finance`}
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 0.625,
-        height: 32,
-        px: 1.375,
-        border: "1px solid rgba(0,0,0,0.12)",
-        borderRadius: "999px",
-        bgcolor: "transparent",
-        cursor: "pointer",
-        fontFamily: "inherit",
-        fontSize: 13,
-        fontWeight: 600,
-        color: "rgba(0,0,0,0.8)",
-        whiteSpace: "nowrap",
-        transition: "border-color .15s, color .15s",
-        "&:hover": { color: "black", borderColor: "rgba(0,0,0,0.3)" },
-      }}>
-      <AccountBalanceWalletOutlinedIcon sx={{ fontSize: 16, opacity: 0.7 }} />
+      className={chipCss}>
+      <Wallet size={16} />
       ${balance.toFixed(2)}
-    </Box>
+    </button>
   );
 }

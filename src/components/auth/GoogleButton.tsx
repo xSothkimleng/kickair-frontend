@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Button, CircularProgress, type SxProps, type Theme } from "@mui/material";
 import { useGoogleLogin } from "@react-oauth/google";
+import { css, cx } from "styled-system/css";
+import { Spinner, button } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { User } from "@/types/user";
 
@@ -14,8 +15,10 @@ type GoogleButtonProps = {
   onAuthenticated: (user: User) => void;
   onError?: (message: string) => void;
   disabled?: boolean;
-  /** Optional style override, merged last (e.g. to match a pill-shaped surface). */
-  sx?: SxProps<Theme>;
+  /** Optional extra classes merged last (e.g. to match a pill-shaped surface). */
+  className?: string;
+  /** @deprecated MUI-era style override; ignored since the Panda port. Pass `className` instead. */
+  sx?: Record<string, unknown>;
 };
 
 /**
@@ -31,7 +34,7 @@ export default function GoogleButton(props: GoogleButtonProps) {
         label={props.label}
         loading={false}
         disabled={props.disabled}
-        sx={props.sx}
+        className={props.className}
         onClick={() => props.onError?.("Google sign-in isn't configured on this site yet.")}
       />
     );
@@ -46,7 +49,7 @@ export default function GoogleButton(props: GoogleButtonProps) {
  * `roles` carries the role pre-selected on the sign-up page; it's ignored when the
  * Google account already exists.
  */
-function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabled, sx }: GoogleButtonProps) {
+function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabled, className }: GoogleButtonProps) {
   const { googleAuth } = useAuth();
   const [loading, setLoading] = useState(false);
 
@@ -75,7 +78,7 @@ function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabl
       label={label}
       loading={loading}
       disabled={disabled}
-      sx={sx}
+      className={className}
       onClick={() => {
         setLoading(true);
         login();
@@ -84,51 +87,49 @@ function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabl
   );
 }
 
+// ds outline button at the 46px / 15px-500 size these screens use; the disabled
+// palette mirrors the MUI outlined default the loading state used to show.
+const googleButton = css(button.raw({ variant: "outline", full: true }), {
+  h: "46px",
+  paddingX: "15px",
+  fontSize: "15px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  gap: "8px",
+  _hover: { bg: "#F8FAFC", borderColor: "borderStrong" },
+  _disabled: { color: "rgba(0,0,0,0.26)", borderColor: "rgba(0,0,0,0.12)", opacity: 1, cursor: "not-allowed", pointerEvents: "none" },
+});
+const startIcon = css({ w: "18px", h: "18px", ml: "-4px", flexShrink: 0 });
+const startSpinner = css({ ml: "-4px", color: "placeholder" });
+
 function GoogleButtonView({
   label,
   loading,
   disabled,
   onClick,
-  sx,
+  className,
 }: {
   label: string;
   loading: boolean;
   disabled?: boolean;
   onClick: () => void;
-  sx?: SxProps<Theme>;
+  className?: string;
 }) {
   return (
-    <Button
-      type="button"
-      fullWidth
-      variant="outlined"
-      onClick={onClick}
-      disabled={disabled || loading}
-      startIcon={loading ? <CircularProgress size={18} sx={{ color: "#94A3B8" }} /> : <GoogleIcon />}
-      sx={{
-        height: 46,
-        borderRadius: 2.5,
-        textTransform: "none",
-        fontSize: 15,
-        fontWeight: 500,
-        color: "#0F172A",
-        borderColor: "#E2E8F0",
-        backgroundColor: "#fff",
-        "&:hover": { borderColor: "#CBD5E1", backgroundColor: "#F8FAFC" },
-        ...sx,
-      }}>
+    <button type="button" onClick={onClick} disabled={disabled || loading} className={cx(googleButton, className)}>
+      {loading ? <Spinner size={18} className={startSpinner} /> : <GoogleIcon />}
       {loading ? "Connecting…" : label}
-    </Button>
+    </button>
   );
 }
 
 function GoogleIcon() {
   return (
-    <Box component="svg" sx={{ width: 18, height: 18 }} viewBox="0 0 48 48" aria-hidden="true">
+    <svg className={startIcon} viewBox="0 0 48 48" aria-hidden="true">
       <path fill="#FFC107" d="M43.611 20.083H42V20H24v8h11.303c-1.649 4.657-6.08 8-11.303 8-6.627 0-12-5.373-12-12s5.373-12 12-12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 12.955 4 4 12.955 4 24s8.955 20 20 20 20-8.955 20-20c0-1.341-.138-2.65-.389-3.917z" />
       <path fill="#FF3D00" d="M6.306 14.691l6.571 4.819C14.655 15.108 18.961 12 24 12c3.059 0 5.842 1.154 7.961 3.039l5.657-5.657C34.046 6.053 29.268 4 24 4 16.318 4 9.656 8.337 6.306 14.691z" />
       <path fill="#4CAF50" d="M24 44c5.166 0 9.86-1.977 13.409-5.192l-6.19-5.238C29.211 35.091 26.715 36 24 36c-5.202 0-9.619-3.317-11.283-7.946l-6.522 5.025C9.505 39.556 16.227 44 24 44z" />
       <path fill="#1976D2" d="M43.611 20.083H42V20H24v8h11.303c-.792 2.237-2.231 4.166-4.087 5.571.001-.001.002-.001.003-.002l6.19 5.238C36.971 39.205 44 34 44 24c0-1.341-.138-2.65-.389-3.917z" />
-    </Box>
+    </svg>
   );
 }

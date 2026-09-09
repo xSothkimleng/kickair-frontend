@@ -7,6 +7,7 @@ import "./globals.css";
 import { Geist } from "next/font/google";
 import { AuthProvider } from "@/components/context/AuthContext";
 import Providers from "./providers";
+import { AppToaster } from "@/components/ds/Toast";
 
 export const metadata: Metadata = {
   title: "KickAir",
@@ -30,6 +31,7 @@ export default function RootLayout({
           <ThemeProvider theme={theme}>
             <Providers>
               <AuthProvider>{children}</AuthProvider>
+              <AppToaster />
             </Providers>
           </ThemeProvider>
         </AppRouterCacheProvider>

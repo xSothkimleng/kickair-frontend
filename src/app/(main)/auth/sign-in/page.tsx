@@ -2,12 +2,21 @@
 
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Paper, Typography, Button, Divider, Alert, CircularProgress } from "@mui/material";
+import { css } from "styled-system/css";
+import { Alert, Divider, Link } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import GoogleButton from "@/components/auth/GoogleButton";
-import { TextInput, PasswordInput, tokens } from "@/components/ui/inputs";
+import { AuthFallback, AuthPage, AuthPrimaryButton, authFooterText, authForm, authLinkStrong, authSubtitle, authTextButton, authTitle } from "@/components/auth/authKit";
+import { TextInput, PasswordInput } from "@/components/ui/inputs";
 import { safeRedirect } from "@/lib/redirect";
 import { User } from "@/types/user";
+
+const intro = css({ textAlign: "center", mb: "32px" });
+const orRow = css({ my: "20px", lineHeight: 1.5 });
+const alertGap = css({ mb: "20px" });
+const labelRow = css({ display: "flex", justifyContent: "space-between", alignItems: "baseline", mb: "7px" });
+const label = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5, color: "body" });
+const footer = css({ mt: "32px" });
 
 function SignInContent() {
   const [identifier, setIdentifier] = useState("");
@@ -58,97 +67,65 @@ function SignInContent() {
   };
 
   return (
-    <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, sm: 6 }, backgroundColor: tokens.page }}>
-      <Box sx={{ width: "100%", maxWidth: 420 }}>
-        <Paper elevation={0} sx={{ borderRadius: 0, border: `1px solid ${tokens.border}`, p: { xs: 3, sm: 4 }, boxShadow: "0 1px 2px rgba(15,23,42,0.04), 0 12px 32px rgba(15,23,42,0.07)" }}>
-          <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5 }}>
-            <Box component="img" src="/assets/images/kickair-logo.png" alt="KickAir" sx={{ height: 36 }} />
-          </Box>
+    <AuthPage>
+      <div className={intro}>
+        <h1 className={authTitle}>Welcome back</h1>
+        <p className={authSubtitle}>Sign in to continue to KickAir</p>
+      </div>
 
-          <Box sx={{ textAlign: "center", mb: 4 }}>
-            <Typography component="h1" sx={{ fontSize: 23, fontWeight: 700, color: tokens.heading, letterSpacing: "-0.02em", mb: 0.5 }}>
-              Welcome back
-            </Typography>
-            <Typography sx={{ fontSize: 14.5, color: tokens.muted }}>
-              Sign in to continue to KickAir
-            </Typography>
-          </Box>
+      <GoogleButton label="Continue with Google" onAuthenticated={goAfterAuth} onError={setError} />
 
-          <GoogleButton label="Continue with Google" onAuthenticated={goAfterAuth} onError={setError} />
+      <Divider className={orRow}>or</Divider>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, my: 2.5 }}>
-            <Divider sx={{ flex: 1, borderColor: tokens.border }} />
-            <Typography sx={{ fontSize: 13, color: tokens.muted }}>or</Typography>
-            <Divider sx={{ flex: 1, borderColor: tokens.border }} />
-          </Box>
+      {error && (
+        <Alert tone="error" onClose={() => setError("")} className={alertGap}>
+          {error}
+        </Alert>
+      )}
 
-          {error && (
-            <Alert severity="error" onClose={() => setError("")} sx={{ mb: 2.5 }}>
-              {error}
-            </Alert>
-          )}
+      <form onSubmit={handleSubmit} className={authForm}>
+        <TextInput
+          label="Email or phone"
+          id="identifier"
+          value={identifier}
+          onChange={setIdentifier}
+          placeholder="you@example.com or +855…"
+          autoComplete="username"
+          disabled={isLoading}
+        />
 
-          <Box component="form" onSubmit={handleSubmit} sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-            <TextInput
-              label="Email or phone"
-              id="identifier"
-              value={identifier}
-              onChange={setIdentifier}
-              placeholder="you@example.com or +855…"
-              autoComplete="username"
-              disabled={isLoading}
-            />
+        <div>
+          <div className={labelRow}>
+            <label htmlFor="password" className={label}>
+              Password
+            </label>
+            <button type="button" onClick={() => router.push("/auth/forgot-password")} className={authTextButton}>
+              Forgot password?
+            </button>
+          </div>
+          <PasswordInput id="password" value={password} onChange={setPassword} placeholder="Enter your password" disabled={isLoading} />
+        </div>
 
-            <Box>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", mb: 0.875 }}>
-                <Typography component="label" htmlFor="password" sx={{ fontSize: 13, fontWeight: 500, color: tokens.body }}>
-                  Password
-                </Typography>
-                <Button
-                  type="button"
-                  onClick={() => router.push("/auth/forgot-password")}
-                  sx={{ minWidth: 0, p: 0, fontSize: 13, color: tokens.accent, textTransform: "none", "&:hover": { backgroundColor: "transparent", textDecoration: "underline" } }}>
-                  Forgot password?
-                </Button>
-              </Box>
-              <PasswordInput id="password" value={password} onChange={setPassword} placeholder="Enter your password" disabled={isLoading} />
-            </Box>
+        <AuthPrimaryButton type="submit" disabled={isLoading}>
+          {isLoading ? "Signing in…" : "Sign in"}
+        </AuthPrimaryButton>
+      </form>
 
-            <Button
-              type="submit"
-              variant="contained"
-              fullWidth
-              disabled={isLoading}
-              sx={{ height: 48, borderRadius: 2.5, textTransform: "none", fontSize: "1rem", fontWeight: 500, color: "common.white", backgroundColor: tokens.accent, "&:hover": { backgroundColor: tokens.accentHover } }}>
-              {isLoading ? "Signing in…" : "Sign in"}
-            </Button>
-          </Box>
-
-          <Box sx={{ mt: 4 }}>
-            <Typography sx={{ textAlign: "center", fontSize: 14, color: tokens.body }}>
-              New to KickAir?{" "}
-              <Box
-                component="a"
-                onClick={() => router.push("/auth/sign-up")}
-                sx={{ color: tokens.accent, fontWeight: 700, cursor: "pointer", textDecoration: "underline", textUnderlineOffset: 3, "&:hover": { opacity: 0.85 } }}>
-                Create one
-              </Box>
-            </Typography>
-          </Box>
-        </Paper>
-      </Box>
-    </Box>
+      <div className={footer}>
+        <p className={authFooterText}>
+          New to KickAir?{" "}
+          <Link href="/auth/sign-up" underline="always" className={authLinkStrong}>
+            Create one
+          </Link>
+        </p>
+      </div>
+    </AuthPage>
   );
 }
 
 export default function SignInPage() {
   return (
-    <Suspense
-      fallback={
-        <Box sx={{ minHeight: "95vh", display: "flex", alignItems: "center", justifyContent: "center", backgroundColor: tokens.page }}>
-          <CircularProgress sx={{ color: tokens.accent }} />
-        </Box>
-      }>
+    <Suspense fallback={<AuthFallback />}>
       <SignInContent />
     </Suspense>
   );

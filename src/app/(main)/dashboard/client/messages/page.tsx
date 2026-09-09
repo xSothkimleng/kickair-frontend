@@ -2,14 +2,45 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { Box, Paper, Typography, IconButton, CircularProgress } from "@mui/material";
-import { ArrowBack } from "@mui/icons-material";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { css } from "styled-system/css";
+import { Spinner, iconButton } from "@/components/ds";
 import { ConversationList, ChatView } from "@/components/messages";
 import { api } from "@/lib/api";
 import { useConversations } from "@/hooks/useConversations";
 import { useChat } from "@/hooks/useChat";
 import { Conversation } from "@/types/message";
+
+const pageCss = css({ minH: "100vh", bg: "canvas" });
+const headerCss = css({
+  bg: "surface",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "hairline",
+  px: "24px",
+  py: "16px",
+});
+const headerInnerCss = css({ maxW: "1440px", mx: "auto", display: "flex", alignItems: "center", gap: "16px" });
+// `a { color: inherit }` in globals.css beats the recipe's colour, so the icon carries it.
+const backCss = css(iconButton.raw({ size: "sm" }), {
+  _hover: { bg: "rgba(0, 0, 0, 0.05)" },
+  "& svg": { color: "ink" },
+});
+const titleCss = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.6, letterSpacing: "0.0075em", color: "ink" });
+const bodyCss = css({ maxW: "1440px", mx: "auto", p: "24px" });
+const panelCss = css({
+  display: "flex",
+  h: "calc(100vh - 180px)",
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  overflow: "hidden",
+});
+const fallbackCss = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "100vh" });
+const fallbackSpinnerCss = css({ color: "accent" });
 
 function ClientMessagesContent() {
   const searchParams = useSearchParams();
@@ -17,6 +48,7 @@ function ClientMessagesContent() {
 
   const { conversations, loading: conversationsLoading } = useConversations();
   const [selectedConversation, setSelectedConversation] = useState<Conversation | null>(null);
+  const [syncedKey, setSyncedKey] = useState<string | null>(null);
 
   const {
     messages,
@@ -29,22 +61,29 @@ function ClientMessagesContent() {
   // Select the conversation from the URL param — fetching it directly if it isn't
   // in the paginated list, so deep links from orders/notifications always open the
   // right thread (with its name + history) — otherwise fall back to the first one.
-  useEffect(() => {
-    if (conversationIdParam) {
-      const idNum = Number(conversationIdParam);
-      if (selectedConversation?.id === idNum) return;
-      const found = conversations.find((c) => c.id === idNum);
-      if (found) {
-        setSelectedConversation(found);
-      } else {
-        api.get(`/api/conversations/${idNum}`)
-          .then((res) => { if (res?.data) setSelectedConversation(res.data as Conversation); })
-          .catch(() => {});
+  // The synchronous half runs during render (React's "adjust state when the inputs
+  // change" pattern); a setState in an effect body would cascade an extra render.
+  const conversationId = conversationIdParam ? Number(conversationIdParam) : null;
+  const listedConversation = conversationId !== null ? conversations.find((c) => c.id === conversationId) : undefined;
+  const syncKey = `${conversationIdParam ?? ""}|${conversations.length}`;
+  if (syncKey !== syncedKey) {
+    setSyncedKey(syncKey);
+    if (conversationId !== null) {
+      if (listedConversation && selectedConversation?.id !== conversationId) {
+        setSelectedConversation(listedConversation);
       }
     } else if (conversations.length > 0 && !selectedConversation) {
       setSelectedConversation(conversations[0]);
     }
-  }, [conversations, conversationIdParam, selectedConversation]);
+  }
+
+  // Deep link to a conversation that isn't in the loaded page of the list.
+  useEffect(() => {
+    if (conversationId === null || listedConversation || selectedConversation?.id === conversationId) return;
+    api.get(`/api/conversations/${conversationId}`)
+      .then((res) => { if (res?.data) setSelectedConversation(res.data as Conversation); })
+      .catch(() => {});
+  }, [conversationId, listedConversation, selectedConversation]);
 
   // Mark messages as read when conversation is selected
   useEffect(() => {
@@ -66,38 +105,20 @@ function ClientMessagesContent() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
+    <div className={pageCss}>
       {/* Header */}
-      <Box
-        sx={{
-          bgcolor: "white",
-          borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-          px: 3,
-          py: 2,
-        }}
-      >
-        <Box sx={{ maxWidth: 1440, mx: "auto", display: "flex", alignItems: "center", gap: 2 }}>
-          <IconButton component={Link} href="/dashboard/client" size="small" sx={{ "&:hover": { bgcolor: "rgba(0, 0, 0, 0.05)" } }}>
-            <ArrowBack sx={{ fontSize: 20, color: "black" }} />
-          </IconButton>
-          <Typography variant="h6" fontWeight={600}>
-            Messages
-          </Typography>
-        </Box>
-      </Box>
+      <div className={headerCss}>
+        <div className={headerInnerCss}>
+          <Link href="/dashboard/client" aria-label="Back to dashboard" className={backCss}>
+            <ArrowLeft size={20} />
+          </Link>
+          <h6 className={titleCss}>Messages</h6>
+        </div>
+      </div>
 
       {/* Content */}
-      <Box sx={{ maxWidth: 1440, mx: "auto", p: 3 }}>
-        <Paper
-          elevation={0}
-          sx={{
-            display: "flex",
-            height: "calc(100vh - 180px)",
-            borderRadius: 4,
-            border: "1px solid rgba(0, 0, 0, 0.08)",
-            overflow: "hidden",
-          }}
-        >
+      <div className={bodyCss}>
+        <div className={panelCss}>
           <ConversationList
             conversations={conversations}
             selectedId={selectedConversation?.id ?? null}
@@ -114,15 +135,15 @@ function ClientMessagesContent() {
             participantLabel="freelancer"
             viewerRole="client"
           />
-        </Paper>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }
 
 export default function ClientMessagesPage() {
   return (
-    <Suspense fallback={<Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}><CircularProgress /></Box>}>
+    <Suspense fallback={<div className={fallbackCss}><Spinner size={40} className={fallbackSpinnerCss} /></div>}>
       <ClientMessagesContent />
     </Suspense>
   );

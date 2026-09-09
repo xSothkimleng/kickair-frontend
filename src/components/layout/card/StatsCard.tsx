@@ -1,8 +1,13 @@
-import { Box, Typography, SvgIconProps } from "@mui/material";
-import { ArrowRight } from "@mui/icons-material";
+import type { ComponentType, CSSProperties } from "react";
+import { ArrowRight } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+
+// Any icon component that takes className/style works: lucide icons (size prop) and,
+// during the MUI removal, the remaining MUI icon components.
+type IconComponent = ComponentType<{ className?: string; style?: CSSProperties; size?: number }>;
 
 interface StatsCardProps {
-  icon: React.ComponentType<SvgIconProps>;
+  icon: IconComponent;
   iconColor: string;
   value: string | number;
   label: string;
@@ -12,81 +17,79 @@ interface StatsCardProps {
   onClick?: () => void;
 }
 
+const card = cva({
+  base: {
+    position: "relative",
+    borderRadius: "card",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    p: "24px",
+    cursor: "default",
+    transition: "all 0.3s",
+  },
+  variants: {
+    gradient: {
+      true: { bg: "transparent", borderColor: "rgba(34, 197, 94, 0.2)" },
+      false: { bg: "white", borderColor: "rgba(0, 0, 0, 0.08)" },
+    },
+    clickable: {
+      true: { cursor: "pointer", _hover: { "& .arrow-icon": { opacity: 1 } } },
+      false: {},
+    },
+  },
+  compoundVariants: [
+    { gradient: true, clickable: true, css: { _hover: { borderColor: "rgba(34, 197, 94, 0.3)" } } },
+    { gradient: false, clickable: true, css: { _hover: { borderColor: "rgba(0, 0, 0, 0.2)" } } },
+  ],
+});
+
+const topRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "16px" });
+const iconCss = css({ w: "20px", h: "20px", fontSize: "20px" });
+
+const arrow = cva({
+  base: { opacity: 0, transition: "opacity 0.3s" },
+  variants: {
+    gradient: { true: { color: "rgba(22, 163, 74, 0.4)" }, false: { color: "rgba(0, 0, 0, 0.4)" } },
+  },
+});
+
+const value = cva({
+  base: { fontSize: "28px", fontWeight: 600, lineHeight: 1.5 },
+  variants: { gradient: { true: { color: "rgb(21, 128, 61)" }, false: { color: "black" } } },
+});
+
+const label = cva({
+  base: { fontSize: "11px", lineHeight: 1.5 },
+  variants: { gradient: { true: { color: "rgba(21, 128, 61, 0.7)" }, false: { color: "rgba(0, 0, 0, 0.6)" } } },
+});
+
+const dotCss = css({ position: "absolute", top: "16px", right: "16px", w: "8px", h: "8px", borderRadius: "50%" });
+
 export default function StatsCard({
   icon: Icon,
   iconColor,
-  value,
-  label,
+  value: valueText,
+  label: labelText,
   gradient = false,
   gradientColors,
   hasNotification = false,
   onClick,
 }: StatsCardProps) {
   return (
-    <Box
+    <div
       onClick={onClick}
-      sx={{
-        bgcolor: gradient ? "transparent" : "white",
-        background: gradient ? gradientColors : undefined,
-        borderRadius: 4,
-        border: gradient ? "1px solid rgba(34, 197, 94, 0.2)" : "1px solid rgba(0, 0, 0, 0.08)",
-        p: 3,
-        cursor: onClick ? "pointer" : "default",
-        position: "relative",
-        transition: "all 0.3s",
-        "&:hover": onClick
-          ? {
-              borderColor: gradient ? "rgba(34, 197, 94, 0.3)" : "rgba(0, 0, 0, 0.2)",
-              "& .arrow-icon": {
-                opacity: 1,
-              },
-            }
-          : undefined,
-      }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 2 }}>
-        <Icon sx={{ fontSize: 20, color: iconColor }} />
-        <ArrowRight
-          className='arrow-icon'
-          sx={{
-            fontSize: 16,
-            color: gradient ? "rgba(22, 163, 74, 0.4)" : "rgba(0, 0, 0, 0.4)",
-            opacity: 0,
-            transition: "opacity 0.3s",
-          }}
-        />
-      </Box>
+      className={card({ gradient, clickable: !!onClick })}
+      style={gradient && gradientColors ? { background: gradientColors } : undefined}>
+      <div className={topRowCss}>
+        <Icon size={20} className={iconCss} style={{ color: iconColor }} />
+        <ArrowRight size={16} className={cx("arrow-icon", arrow({ gradient }))} />
+      </div>
 
-      <Typography
-        sx={{
-          fontSize: 28,
-          fontWeight: 600,
-          color: gradient ? "rgb(21, 128, 61)" : "black",
-          mb: 0.5,
-        }}>
-        {value}
-      </Typography>
+      <p className={value({ gradient })}>{valueText}</p>
 
-      <Typography
-        sx={{
-          fontSize: 11,
-          color: gradient ? "rgba(21, 128, 61, 0.7)" : "rgba(0, 0, 0, 0.6)",
-        }}>
-        {label}
-      </Typography>
+      <p className={label({ gradient })}>{labelText}</p>
 
-      {hasNotification && (
-        <Box
-          sx={{
-            position: "absolute",
-            top: 16,
-            right: 16,
-            width: 8,
-            height: 8,
-            bgcolor: iconColor,
-            borderRadius: "50%",
-          }}
-        />
-      )}
-    </Box>
+      {hasNotification && <span className={dotCss} style={{ background: iconColor }} />}
+    </div>
   );
 }

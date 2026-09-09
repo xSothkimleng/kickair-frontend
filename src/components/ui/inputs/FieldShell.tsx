@@ -1,33 +1,30 @@
 "use client";
 
-import { Box, Typography, SxProps, Theme } from "@mui/material";
 import { ReactNode } from "react";
-import { tokens } from "./tokens";
+import { css, cx } from "styled-system/css";
+import { fieldHelper, fieldLabel } from "./field";
 
-export function FieldLabel({ children, required, htmlFor }: { children: ReactNode; required?: boolean; htmlFor?: string }) {
+export function FieldLabel({ children, required, htmlFor, className }: { children: ReactNode; required?: boolean; htmlFor?: string; className?: string }) {
   return (
-    <Typography
-      component="label"
-      htmlFor={htmlFor}
-      sx={{ display: "block", fontSize: 13, fontWeight: 500, color: tokens.body, mb: 0.875 }}>
+    <label htmlFor={htmlFor} className={cx(fieldLabel, className)}>
       {children}
-      {required && <Box component="span" sx={{ color: tokens.error, ml: 0.5 }}>*</Box>}
-    </Typography>
+      {required && <span className={css({ color: "error", ml: "4px" })}>*</span>}
+    </label>
   );
 }
 
 export function FieldHelper({ children, error }: { children?: ReactNode; error?: boolean }) {
   if (!children) return null;
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.625, mt: 0.875, fontSize: 12.5, lineHeight: 1.45, color: error ? tokens.error : tokens.muted }}>
+    <div className={fieldHelper({ error: !!error })}>
       {error && (
-        <Box component="svg" sx={{ width: 13, height: 13, flexShrink: 0, color: tokens.error }} viewBox="0 0 24 24" fill="none">
+        <svg className={css({ w: "13px", h: "13px", flexShrink: 0 })} viewBox="0 0 24 24" fill="none" aria-hidden="true">
           <circle cx="12" cy="12" r="9" stroke="currentColor" strokeWidth="2" />
           <path d="M12 7v6M12 16.4v.4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-        </Box>
+        </svg>
       )}
       <span>{children}</span>
-    </Box>
+    </div>
   );
 }
 
@@ -43,7 +40,7 @@ export function FieldShell({
   htmlFor,
   fullWidth,
   children,
-  sx,
+  className,
 }: {
   label?: string;
   required?: boolean;
@@ -52,11 +49,11 @@ export function FieldShell({
   htmlFor?: string;
   fullWidth?: boolean;
   children: ReactNode;
-  sx?: SxProps<Theme>;
+  className?: string;
 }) {
   const errorText = typeof error === "string" ? error : undefined;
   return (
-    <Box sx={{ width: fullWidth ? "100%" : undefined, ...sx }}>
+    <div className={cx(fullWidth ? css({ w: "100%" }) : undefined, className)}>
       {label && (
         <FieldLabel htmlFor={htmlFor} required={required}>
           {label}
@@ -64,6 +61,6 @@ export function FieldShell({
       )}
       {children}
       <FieldHelper error={!!error}>{errorText ?? helper}</FieldHelper>
-    </Box>
+    </div>
   );
 }

@@ -2,12 +2,12 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import CloseIcon from "@mui/icons-material/Close";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import { Logout, Settings as SettingsIcon, HelpOutline, Work as BriefcaseIcon } from "@mui/icons-material";
-import { Box, Button, Avatar, Typography, CircularProgress, Drawer, IconButton, Divider } from "@mui/material";
+import { Briefcase, ChevronDown, CircleHelp, LogOut, Settings as SettingsIcon, X } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Avatar, Divider, Drawer, Spinner, iconButton } from "@/components/ds";
 import { LANGUAGES, type Language, type UserMode } from "./types";
 import { WalletChip } from "./WalletChip";
+import { muiBtnRaw, modeBtnOnCss, modeBtnOffCss } from "./styles";
 
 export interface MobileDrawerProps {
   open: boolean;
@@ -54,6 +54,41 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
+// The old MUI drawer paper was 280px wide; the ds Drawer's `sm` is min(320px, 100vw).
+const panelCss = css({ maxW: "280px" });
+const colCss = css({ display: "flex", flexDirection: "column", minH: "100%" });
+const headerCss = css({ px: "16px", py: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)", flexShrink: 0 });
+const logoCss = css({ objectFit: "contain" });
+const closeBtnCss = css(iconButton.raw({ size: "sm" }), { color: "rgba(0,0,0,0.54)", _hover: { bg: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.54)" } });
+const navBoxCss = css({ py: "8px", flexShrink: 0 });
+const navItemCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "20px", py: "10px", fontSize: "14px", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const sectionChevronCss = css({ ml: "auto", mr: "-4px", flexShrink: 0, transition: "transform 0.2s" });
+const openCss = css({ transform: "rotate(180deg)" });
+const subBoxCss = css({ pl: "16px", pb: "8px" });
+const subItemCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "6px", color: "black", flexDirection: "column", alignItems: "flex-start", textAlign: "left", borderRadius: "4px", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const subTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5 });
+const subDescCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.5)", lineHeight: 1.5 });
+const langBoxCss = css({ px: "20px", py: "16px", flexShrink: 0 });
+const sectionLabelCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", mb: "8px", lineHeight: 1.5 });
+const langRowCss = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
+const langBtnRaw = css.raw({ px: "12px", py: "4px", fontSize: "12px", borderRadius: "8px" });
+const langOnCss = css(muiBtnRaw, langBtnRaw, { bg: "black", color: "white", _hover: { bg: "black" } });
+const langOffCss = css(muiBtnRaw, langBtnRaw, { bg: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", _hover: { bg: "rgba(0,0,0,0.1)" } });
+const authBoxCss = css({ px: "16px", py: "16px", mt: "auto", flexShrink: 0 });
+const userRowCss = css({ display: "flex", alignItems: "center", gap: "12px", mb: "16px" });
+const userTextCss = css({ flex: 1, minW: 0 });
+const nameCss = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5 });
+const modeTextCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.5)", textTransform: "capitalize", lineHeight: 1.5 });
+const modeBoxCss = css({ mb: "16px" });
+const modeRowCss = css({ display: "flex", gap: "8px" });
+const linksCss = css({ display: "flex", flexDirection: "column", mb: "8px" });
+const linkCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", fontSize: "13px", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const linkIconCss = css({ color: "rgba(0,0,0,0.6)", mr: "8px", flexShrink: 0 });
+const logoutCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", fontSize: "13px", color: "#dc2626", _hover: { bg: "#fef2f2" } });
+const logoutIconCss = css({ mr: "8px", flexShrink: 0 });
+// `<a>` colour needs !important: globals.css sets `a { color: inherit }` outside any layer.
+const signInCss = css(muiBtnRaw, { w: "100%", bg: "black", color: "white !important", borderRadius: "100px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+
 export function MobileDrawer({
   open,
   onClose,
@@ -74,272 +109,165 @@ export function MobileDrawer({
   const avatarSrc = user?.avatar_url ?? undefined;
 
   return (
-    <Drawer anchor='left' open={open} onClose={onClose} disableScrollLock slotProps={{ paper: { sx: { width: 280 } } }}>
-      <Box sx={{ display: "flex", flexDirection: "column", height: "100%", overflowY: "auto" }}>
+    <Drawer open={open} onOpenChange={o => { if (!o) onClose(); }} side='left' size='sm' showClose={false} flush className={panelCss}>
+      <div className={colCss}>
         {/* Header */}
-        <Box
-          sx={{
-            px: 2,
-            py: 1.5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid rgba(0,0,0,0.08)",
-            flexShrink: 0,
-          }}>
+        <div className={headerCss}>
           <Link href='/' onClick={onClose}>
-            <Image src='/assets/images/kickair-logo.png' alt='KickAir' width={80} height={30} style={{ objectFit: "contain" }} />
+            <Image src='/assets/images/kickair-logo.png' alt='KickAir' width={80} height={30} className={logoCss} />
           </Link>
-          <IconButton onClick={onClose} size='small' aria-label='Close menu'>
-            <CloseIcon fontSize='small' />
-          </IconButton>
-        </Box>
+          <button type='button' onClick={onClose} className={closeBtnCss} aria-label='Close menu'>
+            <X size={20} />
+          </button>
+        </div>
 
         {/* Nav sections */}
-        <Box sx={{ py: 1, flexShrink: 0 }}>
+        <div className={navBoxCss}>
           {NAV_SECTIONS.map(section => {
             if (!section.items) {
               return (
-                <Button
-                  key={section.href}
-                  component={Link as React.ElementType}
-                  href={section.href}
-                  onClick={onClose}
-                  sx={{
-                    width: "100%",
-                    justifyContent: "flex-start",
-                    px: 2.5,
-                    py: 1.25,
-                    fontSize: 14,
-                    textTransform: "none",
-                    color: "black",
-                    "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                  }}>
+                <Link key={section.href} href={section.href} onClick={onClose} className={navItemCss}>
                   {section.label}
-                </Button>
+                </Link>
               );
             }
 
             const isOpen = expandedSection === section.label;
             return (
-              <Box key={section.label}>
-                <Button
-                  onClick={() => toggleSection(section.label)}
-                  endIcon={
-                    <KeyboardArrowDownIcon
-                      sx={{ fontSize: 16, transition: "transform 0.2s", transform: isOpen ? "rotate(180deg)" : "none" }}
-                    />
-                  }
-                  sx={{
-                    width: "100%",
-                    justifyContent: "flex-start",
-                    px: 2.5,
-                    py: 1.25,
-                    fontSize: 14,
-                    textTransform: "none",
-                    color: "black",
-                    "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                    "& .MuiButton-endIcon": { ml: "auto" },
-                  }}>
+              <div key={section.label}>
+                <button type='button' onClick={() => toggleSection(section.label)} className={navItemCss}>
                   {section.label}
-                </Button>
+                  <ChevronDown size={20} className={cx(sectionChevronCss, isOpen && openCss)} />
+                </button>
 
                 {isOpen && (
-                  <Box sx={{ pl: 2, pb: 1 }}>
+                  <div className={subBoxCss}>
                     {section.items.map(item => (
-                      <Button
+                      <Link
                         key={item.href + item.title}
-                        component={Link as React.ElementType}
                         href={item.authGated && !user ? "/auth/sign-in" : item.href}
                         onClick={onClose}
-                        sx={{
-                          width: "100%",
-                          justifyContent: "flex-start",
-                          px: 2,
-                          py: 0.75,
-                          textTransform: "none",
-                          color: "black",
-                          flexDirection: "column",
-                          alignItems: "flex-start",
-                          borderRadius: 1,
-                          "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                        }}>
-                        <Typography sx={{ fontSize: 13, fontWeight: 600 }}>{item.title}</Typography>
-                        <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)" }}>{item.description}</Typography>
-                      </Button>
+                        className={subItemCss}>
+                        <div className={subTitleCss}>{item.title}</div>
+                        <div className={subDescCss}>{item.description}</div>
+                      </Link>
                     ))}
-                  </Box>
+                  </div>
                 )}
-              </Box>
+              </div>
             );
           })}
-        </Box>
+        </div>
 
         <Divider />
 
         {/* Language selector */}
-        <Box sx={{ px: 2.5, py: 2, flexShrink: 0 }}>
-          <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", mb: 1 }}>
-            Language
-          </Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+        <div className={langBoxCss}>
+          <div className={sectionLabelCss}>Language</div>
+          <div className={langRowCss}>
             {LANGUAGES.map(lang => (
-              <Button
+              <button
                 key={lang.code}
+                type='button'
                 onClick={() => {
                   onLanguageChange(lang);
                   onClose();
                 }}
-                sx={{
-                  px: 1.5,
-                  py: 0.5,
-                  fontSize: 12,
-                  textTransform: "none",
-                  borderRadius: 2,
-                  bgcolor: selectedLanguage.code === lang.code ? "black" : "rgba(0,0,0,0.05)",
-                  color: selectedLanguage.code === lang.code ? "white" : "rgba(0,0,0,0.6)",
-                  "&:hover": { bgcolor: selectedLanguage.code === lang.code ? "black" : "rgba(0,0,0,0.1)" },
-                }}>
+                className={selectedLanguage.code === lang.code ? langOnCss : langOffCss}>
                 {lang.label}
-              </Button>
+              </button>
             ))}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         <Divider />
 
         {/* Auth */}
-        <Box sx={{ px: 2, py: 2, mt: "auto", flexShrink: 0 }}>
+        <div className={authBoxCss}>
           {loading ? (
-            <CircularProgress size={20} />
+            <Spinner size={20} />
           ) : user ? (
-            <Box>
+            <div>
               {/* User header */}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 2 }}>
-                <Avatar src={avatarSrc} alt={user.name} sx={{ width: 32, height: 32 }}>
-                  {!avatarSrc && user.name?.charAt(0).toUpperCase()}
-                </Avatar>
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{user.name}</Typography>
-                  <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)", textTransform: "capitalize" }}>{currentMode} mode</Typography>
-                </Box>
+              <div className={userRowCss}>
+                <Avatar src={avatarSrc} name={user.name} px={32} />
+                <div className={userTextCss}>
+                  <div className={nameCss}>{user.name}</div>
+                  <div className={modeTextCss}>{currentMode} mode</div>
+                </div>
                 <WalletChip />
-              </Box>
+              </div>
 
               {/* Mode switcher */}
-              <Box sx={{ mb: 2 }}>
-                <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", mb: 1 }}>
-                  Mode
-                </Typography>
-                <Box sx={{ display: "flex", gap: 1 }}>
+              <div className={modeBoxCss}>
+                <div className={sectionLabelCss}>Mode</div>
+                <div className={modeRowCss}>
                   {(["freelancer", "client"] as const).map(mode => {
                     const hasRole = mode === "freelancer" ? !!user?.is_freelancer : !!user?.is_client;
                     const label = hasRole
                       ? mode.charAt(0).toUpperCase() + mode.slice(1)
                       : mode === "freelancer" ? "Become a freelancer" : "Become a client";
                     return (
-                      <Button
+                      <button
                         key={mode}
+                        type='button'
                         onClick={() => {
                           onModeSwitch(mode);
                           onClose();
                         }}
-                        sx={{
-                          flex: 1,
-                          px: 1.5,
-                          py: 1,
-                          fontSize: 12,
-                          borderRadius: 2,
-                          textTransform: "none",
-                          bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
-                          color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
-                          "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
-                        }}>
+                        className={currentMode === mode ? modeBtnOnCss : modeBtnOffCss}>
                         {label}
-                      </Button>
+                      </button>
                     );
                   })}
-                </Box>
-              </Box>
+                </div>
+              </div>
 
               {/* Profile nav links */}
-              <Box sx={{ display: "flex", flexDirection: "column", mb: 1 }}>
+              <div className={linksCss}>
                 {[
                   {
                     href: currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client",
-                    icon: <BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                    icon: <Briefcase size={14} className={linkIconCss} />,
                     label: currentMode === "freelancer" ? "Freelancer Dashboard" : "Client Dashboard",
                   },
                   {
                     href: "/settings",
-                    icon: <SettingsIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                    icon: <SettingsIcon size={14} className={linkIconCss} />,
                     label: "Settings",
                   },
                   {
                     href: "/help",
-                    icon: <HelpOutline sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                    icon: <CircleHelp size={14} className={linkIconCss} />,
                     label: "Help & Support",
                   },
                 ].map(item => (
-                  <Button
-                    key={item.href}
-                    component={Link as React.ElementType}
-                    href={item.href}
-                    onClick={onClose}
-                    sx={{
-                      width: "100%",
-                      justifyContent: "flex-start",
-                      px: 1,
-                      py: 1,
-                      fontSize: 13,
-                      color: "black",
-                      textTransform: "none",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                    }}>
+                  <Link key={item.href} href={item.href} onClick={onClose} className={linkCss}>
                     {item.icon}
                     {item.label}
-                  </Button>
+                  </Link>
                 ))}
-              </Box>
+              </div>
 
               {/* Logout */}
-              <Button
+              <button
+                type='button'
                 onClick={async () => {
                   await onLogout();
                   onClose();
                 }}
-                sx={{
-                  width: "100%",
-                  justifyContent: "flex-start",
-                  px: 1,
-                  py: 1,
-                  fontSize: 13,
-                  color: "#dc2626",
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "#fef2f2" },
-                }}>
-                <Logout sx={{ fontSize: 14, mr: 1 }} />
+                className={logoutCss}>
+                <LogOut size={14} className={logoutIconCss} />
                 Logout
-              </Button>
-            </Box>
+              </button>
+            </div>
           ) : (
-            <Button
-              component={Link as React.ElementType}
-              href='/auth/sign-in'
-              onClick={onClose}
-              sx={{
-                width: "100%",
-                bgcolor: "black",
-                color: "white !important",
-                borderRadius: 25,
-                textTransform: "none",
-                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-              }}>
+            <Link href='/auth/sign-in' onClick={onClose} className={signInCss}>
               Sign In
-            </Button>
+            </Link>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
     </Drawer>
   );
 }

@@ -196,6 +196,26 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     }
   };
 
+  // Bring the first invalid field into view (in page order) so the user doesn't
+  // have to hunt for the red field on a long form. Mirrors the service form.
+  const ERROR_ANCHORS: Array<[key: string, anchorId: string]> = [
+    ["title", "job-field-title"],
+    ["category", "job-field-category"],
+    ["description", "job-field-description"],
+    ["budgetMin", "job-field-budget-min"],
+    ["budgetMax", "job-field-budget-max"],
+    ["deadline", "job-field-deadline"],
+  ];
+
+  const scrollToFirstError = (errs: Record<string, string>) => {
+    for (const [key, anchorId] of ERROR_ANCHORS) {
+      if (errs[key]) {
+        document.getElementById(anchorId)?.scrollIntoView({ behavior: "smooth", block: "center" });
+        return;
+      }
+    }
+  };
+
   // A draft can be saved incomplete — only the publish path ("Post Job"/"Publish Job")
   // enforces the required fields. Empty values are sent as null so the backend stores a
   // genuinely blank draft (rather than "0"/invalid) that the publish gate later checks.
@@ -213,6 +233,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
       setFieldErrors(errs);
       if (Object.keys(errs).length > 0) {
         setError("Please complete the required fields highlighted below before submitting.");
+        scrollToFirstError(errs);
         return;
       }
     } else {
@@ -338,25 +359,29 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
 
         <Stack spacing={3}>
           {/* Title */}
-          <TextInput
-            label="Job Title"
-            value={title}
-            onChange={v => { setTitle(v); clearFieldError("title"); }}
-            placeholder="e.g., Build a modern e-commerce website"
-            error={fieldErrors.title}
-          />
+          <div id="job-field-title">
+            <TextInput
+              label="Job Title"
+              value={title}
+              onChange={v => { setTitle(v); clearFieldError("title"); }}
+              placeholder="e.g., Build a modern e-commerce website"
+              error={fieldErrors.title}
+            />
+          </div>
 
           {/* Category */}
-          <CategoryPicker
-            tree={categories}
-            loading={refLoading}
-            value={category}
-            onChange={v => { setCategory(v); clearFieldError("category"); }}
-            error={fieldErrors.category}
-          />
+          <div id="job-field-category">
+            <CategoryPicker
+              tree={categories}
+              loading={refLoading}
+              value={category}
+              onChange={v => { setCategory(v); clearFieldError("category"); }}
+              error={fieldErrors.category}
+            />
+          </div>
 
           {/* Description */}
-          <Box>
+          <Box id="job-field-description">
             <Typography sx={{ fontSize: 13, fontWeight: 500, mb: 1, color: fieldErrors.description ? "#d32f2f" : "rgba(0,0,0,0.7)" }}>Description</Typography>
             <Box sx={fieldErrors.description ? { border: "1px solid #d32f2f", borderRadius: 2 } : undefined}>
               <RichTextEditor
@@ -373,7 +398,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
 
           {/* Budget */}
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 6 }} id="job-field-budget-min">
               <TextInput
                 label="Budget Min (USD)"
                 inputMode="decimal"
@@ -384,7 +409,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 startIcon="$"
               />
             </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 6 }} id="job-field-budget-max">
               <TextInput
                 label="Budget Max (USD)"
                 inputMode="decimal"
@@ -399,7 +424,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
 
           {/* Deadline + Max Proposals */}
           <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            <Grid size={{ xs: 12, sm: 6 }} id="job-field-deadline">
               <DatePicker
                 label="Deadline"
                 value={parseYmd(deadline)}

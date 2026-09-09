@@ -3,20 +3,18 @@
 import { useState, useCallback } from "react";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import ReviewCard from "@/components/ui/ReviewCard";
-import { Box, Typography, Button, IconButton, Pagination, CircularProgress } from "@mui/material";
+import { css, cva, cx } from "styled-system/css";
+import { button, iconButton, Spinner, Pager } from "@/components/ds";
 import {
-  ChevronLeft, ChevronRight, Close, RoomOutlined, ShieldOutlined, ChatBubbleOutline,
-  FavoriteBorder, Favorite, ShareOutlined, SchoolOutlined, WorkspacePremiumOutlined,
-  GridViewOutlined, ImageOutlined, OpenInNewOutlined, PhotoLibrary, CheckRounded, CloseRounded,
-  EditOutlined, RateReviewOutlined,
-} from "@mui/icons-material";
+  ChevronLeft, ChevronRight, X, MapPin, Shield, MessageCircle, Heart, Share2, GraduationCap, Award,
+  LayoutGrid, Image as ImageIcon, ExternalLink, Images, Check, Pencil, MessageSquareText,
+} from "lucide-react";
 import { useRouter } from "next/navigation";
 import { FreelancerProfile, FreelancerProfileService, PortfolioItem } from "@/types/user";
 import { Service } from "@/types/service";
 import ServiceCard from "@/app/(main)/explore-services/ServiceCard";
 import { api, FreelancerReview } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
-import { tokens } from "@/theme";
 import { ProfileAvatar, Stars5, StarGlyph, LevelBadge, LangChip, EntryRow, Empty } from "@/components/profile/profileKit";
 
 interface FreelancerProfilePageProps {
@@ -35,15 +33,164 @@ const portfolioDate = (iso: string | null) => (iso ? new Date(iso).toLocaleDateS
 // Legacy rows may hold scheme-less URLs ("example.com") — prepend https:// so the link doesn't resolve relative to our site.
 const externalUrl = (url: string) => (/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url : `https://${url}`);
 
+/* ── Buttons: black pill (primary) and outlined pill (secondary), on the ds button recipe ── */
+const pill = css.raw({ borderRadius: "pill", h: "40px", boxShadow: "none" });
+const primaryRaw = css.raw({ bg: "#000", color: "#fff", fontSize: "14px", px: "16px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const secRaw = css.raw({ bg: "surface", color: "ink", fontSize: "13.5px", px: "16px", borderColor: "hairlineStrong", _hover: { bg: "surface2", borderColor: "hairlineStrong" } });
+const heroPrimaryBtn = css(button.raw({ variant: "solid", size: "sm" }), pill, primaryRaw, { px: "22px" });
+const heroPrimaryBtnFull = css(button.raw({ variant: "solid", size: "sm", full: true }), pill, primaryRaw, { h: "44px" });
+const heroPrimaryBtnBar = css(button.raw({ variant: "solid", size: "sm" }), pill, primaryRaw, { flex: 1, h: "46px" });
+const heroSecBtn = css(button.raw({ variant: "outline", size: "sm" }), pill, secRaw);
+const heroSecBtnFull = css(button.raw({ variant: "outline", size: "sm", full: true }), pill, secRaw, { h: "44px" });
+const heroSecBtnFlex = css(button.raw({ variant: "outline", size: "sm" }), pill, secRaw, { flex: 1 });
+const backBtn = css(button.raw({ variant: "ghost", size: "sm" }), { h: "auto", minW: "64px", py: "6px", px: "8px", gap: "8px", fontSize: "12.5px", fontWeight: 500, color: "ink2", _hover: { color: "ink", bg: "transparent" } });
+const retryBtn = css(button.raw({ variant: "text", size: "sm" }), { mt: "12px", h: "auto", py: "6px", px: "8px", fontSize: "13px", fontWeight: 500, color: "accent", _hover: { color: "accent", textDecoration: "none", bg: "rgba(0,113,227,0.04)" } });
+const whiteSpinner = css({ color: "#fff" });
+
+/* ── Hero icon buttons (40px outlined) ── */
+const heroIconOutline = css(iconButton.raw({ variant: "outline", shape: "round" }), { w: "40px", h: "40px", borderColor: "hairlineStrong", color: "ink2", bg: "surface" });
+const heroIconFav = css(iconButton.raw({ variant: "outline", shape: "round" }), { w: "40px", h: "40px", borderColor: "rgba(220,38,38,0.3)", color: "error", bg: "errorTint", _hover: { bg: "errorTint", borderColor: "rgba(220,38,38,0.3)", color: "error" } });
+const barIconBtn = css(iconButton.raw({ variant: "outline", shape: "round" }), { w: "46px", h: "46px", flex: "none", borderColor: "hairlineStrong", color: "ink2" });
+const barIconBtnFav = css(iconButton.raw({ variant: "outline", shape: "round" }), { w: "46px", h: "46px", flex: "none", borderColor: "hairlineStrong", color: "error" });
+
+/* ── Layout ── */
+const page = css({ minH: "100vh", bg: "canvas" });
+const backBar = css({ bg: "surface", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const backBarInner = css({ maxW: "1000px", mx: "auto", px: { base: "16px", md: "24px" }, py: "10px" });
+const main = css({ maxW: "1000px", mx: "auto", px: { base: "14px", md: "24px" }, py: { base: "16px", md: "28px" } });
+const surfaceCard = css({ bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card" });
+const heroCard = cx(surfaceCard, css({ overflow: "hidden" }));
+const heroInner = css({ px: { base: "18px", md: "26px" }, pt: { base: "20px", md: "24px" }, pb: { base: "20px", md: "24px" } });
+const heroRow = css({ display: "flex", flexDirection: { base: "column", md: "row" }, alignItems: { base: "flex-start", md: "center" }, gap: { base: "14px", md: "20px" } });
+const avatarRing = css({ borderRadius: "50%", borderWidth: "4px", borderStyle: "solid", borderColor: "surface", bg: "surface" });
+const heroText = css({ flex: 1, minW: 0, pb: { md: "4px" } });
+const nameRow = css({ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap" });
+const heroName = css({ fontSize: { base: "23px", md: "27px" }, fontWeight: 600, letterSpacing: "-0.025em" });
+const tagline = css({ fontSize: { base: "14.5px", md: "16px" }, color: "ink", mt: "6px", lineHeight: 1.4 });
+const noTagline = css({ color: "ink3" });
+const metaRow = css({ display: "flex", alignItems: "center", gap: "14px", mt: "10px", flexWrap: "wrap", fontSize: "13.5px", color: "ink2" });
+const metaItem = css({ display: "inline-flex", alignItems: "center", gap: "5px" });
+const metaVerified = css({ display: "inline-flex", alignItems: "center", gap: "5px", color: "accent" });
+const desktopActions = css({ display: { base: "none", md: "flex" }, gap: "9px", flex: "none", pb: "4px" });
+const statStrip = css({ display: "flex", alignItems: "center", gap: { base: "16px", md: "26px" }, mt: "18px", pt: "16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", flexWrap: "wrap" });
+const statCol = css({ display: "flex", flexDirection: "column", gap: "3px", minW: 0 });
+const statLabel = css({ fontSize: "10px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const statValue = css({ lineHeight: 1.1 });
+const statDivider = css({ w: "1px", h: "30px", bg: "hairline", flex: "none" });
+const ratingInline = css({ display: "inline-flex", alignItems: "center", gap: "6px" });
+const monoStat = css({ fontSize: "16px", fontWeight: 600, fontFamily: "mono" });
+const ratingCountText = css({ fontSize: "12.5px", color: "ink2" });
+const statNew = css({ fontSize: "14px", color: "ink3" });
+const levelStat = css({ fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em" });
+const langStat = css({ fontSize: "14.5px", fontWeight: 500 });
+const langStatWrap = css({ display: { base: "none", md: "contents" } });
+
+const bodyRow = css({ display: "flex", gap: "24px", mt: "18px", alignItems: "flex-start" });
+const bodyMain = css({ flex: 1, minW: 0 });
+const tabBar = css({ display: "flex", gap: "26px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline", mb: "22px", overflowX: "auto", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } });
+const tabBtn = cva({
+  base: { position: "relative", h: "40px", px: "4px", border: 0, bg: "transparent", cursor: "pointer", fontFamily: "inherit", fontSize: "14.5px", whiteSpace: "nowrap", _hover: { color: "ink" } },
+  variants: {
+    on: {
+      true: { fontWeight: 600, color: "ink", _after: { content: '""', position: "absolute", left: 0, right: 0, bottom: "-1px", h: "2px", bg: "#000", borderRadius: "2px" } },
+      false: { fontWeight: 500, color: "ink2" },
+    },
+  },
+});
+const tabCount = css({ ml: "6px", fontSize: "12px", color: "ink3" });
+const tabPanel = cx(surfaceCard, css({ p: { base: "18px", md: "26px" } }));
+
+const sideCol = css({ display: { base: "none", md: "block" }, w: "290px", flex: "none", position: "sticky", top: "20px" });
+const sideCard = cx(surfaceCard, css({ p: "22px" }));
+const ownerPill = css({ display: "inline-flex", alignItems: "center", gap: "7px", px: "11px", py: "6px", borderRadius: "pill", bg: "accentFill", color: "accent", fontSize: "11.5px", fontWeight: 600, mb: "14px" });
+const sideIdRow = css({ display: "flex", alignItems: "center", gap: "12px" });
+const sideIdText = css({ minW: 0 });
+const sideName = css({ fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em" });
+const sideTagline = css({ fontSize: "12.5px", color: "ink2", mt: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const sideActions = css({ display: "flex", flexDirection: "column", gap: "9px", mt: "18px" });
+const sideActionRow = css({ display: "flex", gap: "9px" });
+const sideChecks = css({ mt: "18px", pt: "16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", display: "flex", flexDirection: "column", gap: "11px" });
+const checkRow = css({ display: "flex", alignItems: "center", gap: "9px", fontSize: "13px" });
+const checkIcon = cva({ base: { display: "flex" }, variants: { ok: { true: { color: "success" }, false: { color: "ink3" } } } });
+const checkLabel = cva({ base: { fontSize: "13px" }, variants: { ok: { true: { color: "ink" }, false: { color: "ink3" } } } });
+
+const mobileBar = css({ display: { base: "flex", md: "none" }, position: "sticky", bottom: 0, gap: "9px", p: "12px 14px", bg: "rgba(255,255,255,0.9)", backdropFilter: "saturate(1.4) blur(16px)", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
+
+/* ── Tab bodies ── */
+const aboutCol = css({ display: "flex", flexDirection: "column" });
+const aboutProse = css({ fontSize: "15px", lineHeight: 1.65, color: "ink" });
+const emptyLine = css({ color: "ink3", fontSize: "14px" });
+const chipWrap = css({ display: "flex", flexWrap: "wrap", gap: "9px" });
+const skillWrap = css({ display: "flex", flexWrap: "wrap", gap: "8px" });
+const skillChip = css({ display: "inline-flex", alignItems: "center", h: "32px", px: "13px", borderRadius: "pill", bg: "rgba(0,0,0,0.045)", fontSize: "13px", fontWeight: 500 });
+const certRow = css({ display: "flex", alignItems: "center", gap: "8px" });
+const certMain = css({ flex: 1, minW: 0 });
+// globals.css styles `a` outside any layer, so link colour/underline need !important to beat it.
+const certLink = css({ fontSize: "12.5px", fontWeight: 600, color: "var(--colors-accent) !important", textDecoration: "none", whiteSpace: "nowrap", _hover: { textDecoration: "underline !important" } });
+
+const twoColGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "16px" });
+const twoColGridRepeat = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)" }, gap: "16px" });
+const portfolioCard = cva({
+  base: { borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "14px", overflow: "hidden", bg: "surface", transition: "box-shadow .15s, transform .12s, border-color .15s", _hover: { boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 30px rgba(0,0,0,0.08)", transform: "translateY(-2px)", borderColor: "hairlineStrong" } },
+  variants: { clickable: { true: { cursor: "pointer" }, false: { cursor: "default" } } },
+});
+const portfolioCover = css({ position: "relative", aspectRatio: "16 / 10", bg: "rgba(0,0,0,0.04)" });
+const coverImg = css({ w: "100%", h: "100%", objectFit: "cover", display: "block" });
+const coverPlaceholder = css({ w: "100%", h: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "ink3" });
+const coverCount = css({ position: "absolute", top: "10px", right: "10px", display: "inline-flex", alignItems: "center", gap: "4px", h: "26px", px: "9px", borderRadius: "pill", bg: "rgba(0,0,0,0.6)", color: "#fff", fontSize: "11.5px", fontWeight: 600 });
+const portfolioText = css({ p: "13px 15px" });
+const portfolioTitle = css({ fontSize: "14.5px", fontWeight: 600, letterSpacing: "-0.01em" });
+const portfolioDesc = css({ fontSize: "12.5px", color: "ink2", mt: "5px", lineClamp: 1 });
+const portfolioMeta = css({ display: "flex", alignItems: "center", gap: "12px", mt: "9px" });
+const portfolioDateText = css({ fontSize: "12px", color: "ink3", fontFamily: "mono" });
+const projectLink = css({ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: 600, color: "var(--colors-accent) !important", textDecoration: "none", _hover: { textDecoration: "underline !important" } });
+
+const reviewsHead = css({ display: "flex", flexDirection: { base: "column", sm: "row" }, gap: { base: "16px", sm: "36px" }, alignItems: { base: "flex-start", sm: "center" }, pb: "24px", mb: "24px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const reviewsScore = css({ textAlign: { base: "left", sm: "center" }, flex: "none" });
+const reviewsAvg = css({ fontFamily: "mono", fontSize: "44px", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1 });
+const reviewsStars = css({ mt: "8px" });
+const reviewsCount = css({ fontSize: "12.5px", color: "ink2", mt: "6px" });
+const reviewsBlurb = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.6 });
+const reviewsLoadingWrap = css({ display: "flex", justifyContent: "center", py: "48px" });
+const reviewsErrorWrap = css({ textAlign: "center", py: "32px" });
+const reviewsErrorText = css({ fontSize: "14px", color: "ink3" });
+const reviewsList = css({ display: "flex", flexDirection: "column", gap: "16px" });
+// Selected page is black in this design (was `.Mui-selected` override); nested selector beats the Pager's own accent class.
+const pagerWrap = css({ display: "flex", justifyContent: "center", mt: "32px", "& [aria-current=page]": { bg: "#000", color: "#fff", _hover: { bg: "#000", color: "#fff" } } });
+
+/* ── Lightbox ── */
+const lightboxRoot = css({ position: "fixed", inset: 0, zIndex: 1400, bg: "rgba(16,14,12,0.92)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column" });
+const lightboxHead = css({ display: "flex", alignItems: "center", justifyContent: "space-between", p: "16px 20px", color: "#fff" });
+const lightboxTitle = css({ fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em" });
+const lightboxCounter = css({ fontSize: "12.5px", opacity: 0.6, mt: "2px", fontFamily: "mono" });
+const lightboxBtn = css(iconButton.raw({ variant: "ghost", shape: "round" }), { w: "36px", h: "36px", bg: "rgba(255,255,255,0.1)", color: "#fff", _hover: { bg: "rgba(255,255,255,0.2)", color: "#fff" } });
+const lightboxNav = css(iconButton.raw({ variant: "ghost", shape: "round" }), { position: "absolute", w: "48px", h: "48px", bg: "rgba(255,255,255,0.1)", color: "#fff", _hover: { bg: "rgba(255,255,255,0.2)", color: "#fff" } });
+const lightboxNavLeft = css({ left: "18px" });
+const lightboxNavRight = css({ right: "18px" });
+const lightboxStage = css({ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", px: { base: "16px", md: "80px" }, minH: 0, position: "relative" });
+const lightboxImg = css({ maxW: "100%", maxH: "70vh", objectFit: "contain", borderRadius: "8px" });
+const thumbRow = css({ display: "flex", gap: "10px", justifyContent: "center", p: "18px", flexWrap: "wrap" });
+const thumb = cva({
+  base: { w: "64px", h: "48px", borderRadius: "7px", cursor: "pointer", overflow: "hidden", transition: "opacity .15s, outline-color .15s" },
+  variants: { active: { true: { opacity: 1, outline: "2px solid #fff" }, false: { opacity: 0.45, outline: "2px solid transparent" } } },
+});
+const thumbImg = css({ w: "100%", h: "100%", objectFit: "cover" });
+
+/* ── PPBlock ── */
+const ppBlock = css({ pb: "26px", mb: "26px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const ppBlockLast = css({ pb: 0, mb: 0, borderBottom: "none" });
+const ppHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "16px" });
+const ppTitle = css({ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.015em" });
+
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.375, minWidth: 0 }}>
-      <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>{label}</Typography>
-      <Box sx={{ lineHeight: 1.1 }}>{children}</Box>
-    </Box>
+    <div className={statCol}>
+      <p className={statLabel}>{label}</p>
+      <div className={statValue}>{children}</div>
+    </div>
   );
 }
-const StatDivider = () => <Box sx={{ width: "1px", height: 30, bgcolor: tokens.border, flex: "none" }} />;
+const StatDivider = () => <div className={statDivider} />;
 
 export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
   const router = useRouter();
@@ -79,7 +226,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
     setActiveTab(tab);
     if (tab === "reviews" && !reviewsFetched) fetchReviews(1);
   };
-  const handleReviewsPageChange = (_: React.ChangeEvent<unknown>, page: number) => {
+  const handleReviewsPageChange = (page: number) => {
     setReviewsPage(page);
     fetchReviews(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
@@ -114,235 +261,232 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
 
   /* ── Tab bodies ── */
   const aboutBody = (
-    <Box sx={{ display: "flex", flexDirection: "column" }}>
+    <div className={aboutCol}>
       <PPBlock title="About">
-        {profile.about ? <Box sx={{ fontSize: 15, lineHeight: 1.65, color: tokens.text }}><RichTextDisplay value={profile.about} /></Box>
-          : <Typography sx={{ color: tokens.text3, fontSize: 14 }}>This freelancer hasn&rsquo;t written a bio yet.</Typography>}
+        {profile.about ? <div className={aboutProse}><RichTextDisplay value={profile.about} /></div>
+          : <p className={emptyLine}>This freelancer hasn&rsquo;t written a bio yet.</p>}
       </PPBlock>
       <PPBlock title="Languages">
-        {languages.length ? <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.125 }}>{languages.map(l => <LangChip key={l.id} name={l.name} proficiency={l.proficiency} />)}</Box>
-          : <Typography sx={{ color: tokens.text3, fontSize: 14 }}>No languages listed.</Typography>}
+        {languages.length ? <div className={chipWrap}>{languages.map(l => <LangChip key={l.id} name={l.name} proficiency={l.proficiency} />)}</div>
+          : <p className={emptyLine}>No languages listed.</p>}
       </PPBlock>
       <PPBlock title="Skills">
-        {expertises.length ? <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>{expertises.map(s => (
-          <Box key={s.id} component="span" sx={{ display: "inline-flex", alignItems: "center", height: 32, px: 1.625, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.045)", fontSize: 13, fontWeight: 500 }}>{s.expertise_name}</Box>
-        ))}</Box> : <Typography sx={{ color: tokens.text3, fontSize: 14 }}>No skills listed.</Typography>}
+        {expertises.length ? <div className={skillWrap}>{expertises.map(s => (
+          <span key={s.id} className={skillChip}>{s.expertise_name}</span>
+        ))}</div> : <p className={emptyLine}>No skills listed.</p>}
       </PPBlock>
       <PPBlock title="Education">
-        {educations.length ? <Box>{educations.map((e, i) => <EntryRow key={i} icon={<SchoolOutlined sx={{ fontSize: 19 }} />} title={e.studies} sub={e.facility} />)}</Box>
-          : <Typography sx={{ color: tokens.text3, fontSize: 14 }}>No education listed.</Typography>}
+        {educations.length ? <div>{educations.map((e, i) => <EntryRow key={i} icon={<GraduationCap size={19} />} title={e.studies} sub={e.facility} />)}</div>
+          : <p className={emptyLine}>No education listed.</p>}
       </PPBlock>
       <PPBlock title="Certifications" last>
-        {certificates.length ? <Box>{certificates.map((c, i) => (
-          <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <EntryRow icon={<WorkspacePremiumOutlined sx={{ fontSize: 19 }} />} title={c.title} sub={c.source} />
-            </Box>
+        {certificates.length ? <div>{certificates.map((c, i) => (
+          <div key={i} className={certRow}>
+            <div className={certMain}>
+              <EntryRow icon={<Award size={19} />} title={c.title} sub={c.source} />
+            </div>
             {c.file_url && (
-              <Typography component="a" href={c.file_url} target="_blank" rel="noopener noreferrer"
-                sx={{ fontSize: 12.5, fontWeight: 600, color: tokens.accent, textDecoration: "none", whiteSpace: "nowrap", "&:hover": { textDecoration: "underline" } }}>
+              <a href={c.file_url} target="_blank" rel="noopener noreferrer" className={certLink}>
                 View certificate
-              </Typography>
+              </a>
             )}
-          </Box>
-        ))}</Box>
-          : <Typography sx={{ color: tokens.text3, fontSize: 14 }}>No certifications listed.</Typography>}
+          </div>
+        ))}</div>
+          : <p className={emptyLine}>No certifications listed.</p>}
       </PPBlock>
-    </Box>
+    </div>
   );
 
   const portfolioBody = portfolio.length ? (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
+    <div className={twoColGrid}>
       {portfolio.map(item => {
         const cover = item.images[0]?.file_url;
         const date = portfolioDate(item.completed_on);
         return (
-          <Box key={item.id} onClick={() => item.images.length > 0 && setLightbox({ item, index: 0 })}
-            sx={{ border: `1px solid ${tokens.border}`, borderRadius: "14px", overflow: "hidden", cursor: item.images.length ? "pointer" : "default", bgcolor: tokens.surface, transition: "box-shadow .15s, transform .12s, border-color .15s", "&:hover": { boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 12px 30px rgba(0,0,0,0.08)", transform: "translateY(-2px)", borderColor: tokens.borderStrong } }}>
-            <Box sx={{ position: "relative", aspectRatio: "16 / 10", bgcolor: "rgba(0,0,0,0.04)" }}>
-              {cover ? <Box component="img" src={cover} alt={item.title} sx={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
-                : <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: tokens.text3 }}><PhotoLibrary sx={{ fontSize: 30 }} /></Box>}
+          <div key={item.id} onClick={() => item.images.length > 0 && setLightbox({ item, index: 0 })} className={portfolioCard({ clickable: item.images.length > 0 })}>
+            <div className={portfolioCover}>
+              {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded portfolio images */}
+              {cover ? <img src={cover} alt={item.title} className={coverImg} />
+                : <div className={coverPlaceholder}><Images size={30} /></div>}
               {item.images.length > 1 && (
-                <Box sx={{ position: "absolute", top: 10, right: 10, display: "inline-flex", alignItems: "center", gap: 0.5, height: 26, px: 1.125, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.6)", color: "#fff", fontSize: 11.5, fontWeight: 600 }}>
-                  <ImageOutlined sx={{ fontSize: 13 }} />{item.images.length}
-                </Box>
+                <div className={coverCount}>
+                  <ImageIcon size={13} />{item.images.length}
+                </div>
               )}
-            </Box>
-            <Box sx={{ p: "13px 15px" }}>
-              <Typography sx={{ fontSize: 14.5, fontWeight: 600, letterSpacing: "-0.01em" }}>{item.title}</Typography>
-              {item.description && <Typography sx={{ fontSize: 12.5, color: tokens.text2, mt: 0.625, display: "-webkit-box", WebkitLineClamp: 1, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{item.description}</Typography>}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mt: 1.125 }}>
-                {date && <Typography sx={{ fontSize: 12, color: tokens.text3, fontFamily: tokens.mono }}>{date}</Typography>}
+            </div>
+            <div className={portfolioText}>
+              <p className={portfolioTitle}>{item.title}</p>
+              {item.description && <p className={portfolioDesc}>{item.description}</p>}
+              <div className={portfolioMeta}>
+                {date && <p className={portfolioDateText}>{date}</p>}
                 {item.project_url && (
-                  <Box component="a" href={externalUrl(item.project_url)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()}
-                    sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, fontSize: 12, fontWeight: 600, color: tokens.accent, textDecoration: "none", "&:hover": { textDecoration: "underline" } }}>
-                    View project <OpenInNewOutlined sx={{ fontSize: 13 }} />
-                  </Box>
+                  <a href={externalUrl(item.project_url)} target="_blank" rel="noopener noreferrer" onClick={e => e.stopPropagation()} className={projectLink}>
+                    View project <ExternalLink size={13} />
+                  </a>
                 )}
-              </Box>
-            </Box>
-          </Box>
+              </div>
+            </div>
+          </div>
         );
       })}
-    </Box>
-  ) : <Empty icon={<GridViewOutlined sx={{ fontSize: 24 }} />} title="No portfolio yet" sub="This freelancer hasn't added any projects to show." />;
+    </div>
+  ) : <Empty icon={<LayoutGrid size={24} />} title="No portfolio yet" sub="This freelancer hasn't added any projects to show." />;
 
   const servicesBody = services.length ? (
-    <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" }, gap: 2 }}>
+    <div className={twoColGridRepeat}>
       {services.map((s: FreelancerProfileService) => <ServiceCard key={s.id} service={s as unknown as Service} />)}
-    </Box>
-  ) : <Empty icon={<GridViewOutlined sx={{ fontSize: 24 }} />} title="No services yet" sub="This freelancer hasn't published any services." />;
+    </div>
+  ) : <Empty icon={<LayoutGrid size={24} />} title="No services yet" sub="This freelancer hasn't published any services." />;
 
   const reviewsBody = (
-    <Box>
-      <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: { xs: 2, sm: 4.5 }, alignItems: { xs: "flex-start", sm: "center" }, pb: 3, mb: 3, borderBottom: `1px solid ${tokens.border}` }}>
-        <Box sx={{ textAlign: { xs: "left", sm: "center" }, flex: "none" }}>
-          <Typography sx={{ fontFamily: tokens.mono, fontSize: 44, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1 }}>{hasRating ? ratingAvg.toFixed(1) : "—"}</Typography>
-          <Box sx={{ mt: 1 }}><Stars5 rating={ratingAvg} size={16} /></Box>
-          <Typography sx={{ fontSize: 12.5, color: tokens.text2, mt: 0.75 }}>{ratingCount} review{ratingCount !== 1 ? "s" : ""}</Typography>
-        </Box>
-        <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.6 }}>
+    <div>
+      <div className={reviewsHead}>
+        <div className={reviewsScore}>
+          <p className={reviewsAvg}>{hasRating ? ratingAvg.toFixed(1) : "—"}</p>
+          <div className={reviewsStars}><Stars5 rating={ratingAvg} size={16} /></div>
+          <p className={reviewsCount}>{ratingCount} review{ratingCount !== 1 ? "s" : ""}</p>
+        </div>
+        <p className={reviewsBlurb}>
           {hasRating ? "Ratings come from clients after they complete and approve an order, so they reflect real, paid work." : "No reviews yet — they'll appear here once clients complete orders with this freelancer."}
-        </Typography>
-      </Box>
+        </p>
+      </div>
       {reviewsLoading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 6 }}><CircularProgress size={28} /></Box>
+        <div className={reviewsLoadingWrap}><Spinner size={28} /></div>
       ) : reviewsError ? (
-        <Box sx={{ textAlign: "center", py: 4 }}>
-          <Typography sx={{ fontSize: 14, color: tokens.text3 }}>{reviewsError}</Typography>
-          <Button onClick={() => fetchReviews(reviewsPage)} sx={{ mt: 1.5, fontSize: 13, textTransform: "none", color: tokens.accent }}>Try again</Button>
-        </Box>
+        <div className={reviewsErrorWrap}>
+          <p className={reviewsErrorText}>{reviewsError}</p>
+          <button type="button" onClick={() => fetchReviews(reviewsPage)} className={retryBtn}>Try again</button>
+        </div>
       ) : reviews.length === 0 ? (
-        <Empty icon={<RateReviewOutlined sx={{ fontSize: 24 }} />} title="No reviews yet" sub="Reviews from completed orders will appear here." />
+        <Empty icon={<MessageSquareText size={24} />} title="No reviews yet" sub="Reviews from completed orders will appear here." />
       ) : (
         <>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>{reviews.map(r => <ReviewCard key={r.id} review={r} />)}</Box>
+          <div className={reviewsList}>{reviews.map(r => <ReviewCard key={r.id} review={r} />)}</div>
           {reviewsLastPage > 1 && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <Pagination count={reviewsLastPage} page={reviewsPage} onChange={handleReviewsPageChange} shape="rounded" sx={{ "& .Mui-selected": { bgcolor: "#000 !important", color: "#fff" } }} />
-            </Box>
+            <div className={pagerWrap}>
+              <Pager count={reviewsLastPage} page={reviewsPage} onChange={handleReviewsPageChange} />
+            </div>
           )}
         </>
       )}
-    </Box>
+    </div>
   );
 
   const body = { about: aboutBody, portfolio: portfolioBody, services: servicesBody, reviews: reviewsBody }[activeTab];
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
+    <div className={page}>
       {/* Back bar */}
-      <Box sx={{ bgcolor: tokens.surface, borderBottom: `1px solid ${tokens.border}` }}>
-        <Box sx={{ maxWidth: 1000, mx: "auto", px: { xs: 2, md: 3 }, py: 1.25 }}>
-          <Button onClick={() => router.back()} startIcon={<ChevronLeft sx={{ fontSize: 18 }} />} sx={{ fontSize: 12.5, color: tokens.text2, textTransform: "none", "&:hover": { color: tokens.text, bgcolor: "transparent" } }}>Back</Button>
-        </Box>
-      </Box>
+      <div className={backBar}>
+        <div className={backBarInner}>
+          <button type="button" onClick={() => router.back()} className={backBtn}><ChevronLeft size={18} />Back</button>
+        </div>
+      </div>
 
-      <Box sx={{ maxWidth: 1000, mx: "auto", px: { xs: 1.75, md: 3 }, py: { xs: 2, md: 3.5 } }}>
+      <div className={main}>
         {/* Hero */}
-        <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, overflow: "hidden" }}>
-          <Box sx={{ px: { xs: 2.25, md: 3.25 }, pt: { xs: 2.5, md: 3 }, pb: { xs: 2.5, md: 3 } }}>
-            <Box sx={{ display: "flex", flexDirection: { xs: "column", md: "row" }, alignItems: { xs: "flex-start", md: "center" }, gap: { xs: 1.75, md: 2.5 } }}>
-              <Box sx={{ borderRadius: "50%", border: `4px solid ${tokens.surface}`, bgcolor: tokens.surface }}>
+        <div className={heroCard}>
+          <div className={heroInner}>
+            <div className={heroRow}>
+              <div className={avatarRing}>
                 <ProfileAvatar name={name} src={avatar} size={104} verified={isVerified} />
-              </Box>
-              <Box sx={{ flex: 1, minWidth: 0, pb: { md: 0.5 } }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.125, flexWrap: "wrap" }}>
-                  <Typography sx={{ fontSize: { xs: 23, md: 27 }, fontWeight: 600, letterSpacing: "-0.025em" }}>{name}</Typography>
+              </div>
+              <div className={heroText}>
+                <div className={nameRow}>
+                  <p className={heroName}>{name}</p>
                   {isVerified && profile.level && <LevelBadge level={profile.level} />}
-                </Box>
-                <Typography sx={{ fontSize: { xs: 14.5, md: 16 }, color: tokens.text, mt: 0.75, lineHeight: 1.4 }}>
-                  {profile.tagline || <Box component="span" sx={{ color: tokens.text3 }}>No tagline yet</Box>}
-                </Typography>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.75, mt: 1.25, flexWrap: "wrap", fontSize: 13.5, color: tokens.text2 }}>
-                  {profile.location && <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.625 }}><RoomOutlined sx={{ fontSize: 15 }} />{profile.location}</Box>}
-                  {isVerified && <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.625, color: tokens.accent }}><ShieldOutlined sx={{ fontSize: 15 }} />Verified</Box>}
-                </Box>
-              </Box>
+                </div>
+                <p className={tagline}>
+                  {profile.tagline || <span className={noTagline}>No tagline yet</span>}
+                </p>
+                <div className={metaRow}>
+                  {profile.location && <span className={metaItem}><MapPin size={15} />{profile.location}</span>}
+                  {isVerified && <span className={metaVerified}><Shield size={15} />Verified</span>}
+                </div>
+              </div>
               {/* desktop actions */}
-              <Box sx={{ display: { xs: "none", md: "flex" }, gap: 1.125, flex: "none", pb: 0.5 }}>
+              <div className={desktopActions}>
                 {isOwner ? (
-                  <Button onClick={() => router.push("/dashboard/freelancer")} startIcon={<EditOutlined sx={{ fontSize: 15 }} />} sx={heroSecBtn}>Edit profile</Button>
+                  <button type="button" onClick={() => router.push("/dashboard/freelancer")} className={heroSecBtn}><Pencil size={15} />Edit profile</button>
                 ) : (
                   <>
-                    <IconButton onClick={() => setIsFavorite(!isFavorite)} sx={{ width: 40, height: 40, border: `1px solid ${isFavorite ? "rgba(220,38,38,0.3)" : tokens.borderStrong}`, color: isFavorite ? tokens.error : tokens.text2, bgcolor: isFavorite ? tokens.errorTint : tokens.surface }}>{isFavorite ? <Favorite sx={{ fontSize: 17 }} /> : <FavoriteBorder sx={{ fontSize: 17 }} />}</IconButton>
-                    <IconButton sx={{ width: 40, height: 40, border: `1px solid ${tokens.borderStrong}`, color: tokens.text2, bgcolor: tokens.surface }}><ShareOutlined sx={{ fontSize: 17 }} /></IconButton>
-                    <Button onClick={handleMessage} disabled={messaging} startIcon={messaging ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : <ChatBubbleOutline sx={{ fontSize: 15 }} />} sx={{ ...heroPrimaryBtn, px: 2.75 }}>Message</Button>
+                    <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-label={isFavorite ? "Remove from saved" : "Save freelancer"} aria-pressed={isFavorite} className={isFavorite ? heroIconFav : heroIconOutline}><Heart size={17} fill={isFavorite ? "currentColor" : "none"} /></button>
+                    <button type="button" aria-label="Share" className={heroIconOutline}><Share2 size={17} /></button>
+                    <button type="button" onClick={handleMessage} disabled={messaging} className={heroPrimaryBtn}>{messaging ? <Spinner size={15} className={whiteSpinner} /> : <MessageCircle size={15} />}Message</button>
                   </>
                 )}
-              </Box>
-            </Box>
+              </div>
+            </div>
             {/* stat strip */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 2, md: 3.25 }, mt: 2.25, pt: 2, borderTop: `1px solid ${tokens.border}`, flexWrap: "wrap" }}>
-              <Stat label="Rating">{hasRating ? <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.75 }}><StarGlyph size={16} /><Typography component="span" sx={{ fontSize: 16, fontWeight: 600, fontFamily: tokens.mono }}>{ratingAvg.toFixed(1)}</Typography><Typography component="span" sx={{ fontSize: 12.5, color: tokens.text2 }}>({ratingCount})</Typography></Box> : <Typography sx={{ fontSize: 14, color: tokens.text3 }}>New</Typography>}</Stat>
+            <div className={statStrip}>
+              <Stat label="Rating">{hasRating ? <span className={ratingInline}><StarGlyph size={16} /><span className={monoStat}>{ratingAvg.toFixed(1)}</span><span className={ratingCountText}>({ratingCount})</span></span> : <span className={statNew}>New</span>}</Stat>
               <StatDivider />
-              <Stat label="Orders"><Typography component="span" sx={{ fontSize: 16, fontWeight: 600, fontFamily: tokens.mono }}>{profile.completed_orders_count ?? 0}</Typography></Stat>
-              {profile.level && <><StatDivider /><Stat label="Level"><Typography component="span" sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>{profile.level}</Typography></Stat></>}
-              {languages.length > 0 && <Box sx={{ display: { xs: "none", md: "contents" } }}><StatDivider /><Stat label="Languages"><Typography component="span" sx={{ fontSize: 14.5, fontWeight: 500 }}>{languages.map(l => l.name).join(", ")}</Typography></Stat></Box>}
-            </Box>
-          </Box>
-        </Box>
+              <Stat label="Orders"><span className={monoStat}>{profile.completed_orders_count ?? 0}</span></Stat>
+              {profile.level && <><StatDivider /><Stat label="Level"><span className={levelStat}>{profile.level}</span></Stat></>}
+              {languages.length > 0 && <div className={langStatWrap}><StatDivider /><Stat label="Languages"><span className={langStat}>{languages.map(l => l.name).join(", ")}</span></Stat></div>}
+            </div>
+          </div>
+        </div>
 
         {/* Body: content + sticky CTA */}
-        <Box sx={{ display: "flex", gap: 3, mt: 2.25, alignItems: "flex-start" }}>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: "flex", gap: 3.25, borderBottom: `1px solid ${tokens.border}`, mb: 2.75, overflowX: "auto", scrollbarWidth: "none", msOverflowStyle: "none", "&::-webkit-scrollbar": { display: "none" } }}>
+        <div className={bodyRow}>
+          <div className={bodyMain}>
+            <div className={tabBar}>
               {TABS.map(t => {
                 const on = activeTab === t.id;
                 return (
-                  <Box key={t.id} component="button" onClick={() => handleTabChange(t.id)}
-                    sx={{ position: "relative", height: 40, px: 0.5, border: 0, bgcolor: "transparent", cursor: "pointer", fontFamily: "inherit", fontSize: 14.5, fontWeight: on ? 600 : 500, color: on ? tokens.text : tokens.text2, whiteSpace: "nowrap", "&:hover": { color: tokens.text }, "&::after": on ? { content: '""', position: "absolute", left: 0, right: 0, bottom: -1, height: 2, bgcolor: "#000", borderRadius: "2px" } : {} }}>
-                    {t.label}{counts[t.id] > 0 && <Box component="span" sx={{ ml: 0.75, fontSize: 12, color: tokens.text3 }}>{counts[t.id]}</Box>}
-                  </Box>
+                  <button key={t.id} type="button" onClick={() => handleTabChange(t.id)} className={tabBtn({ on })}>
+                    {t.label}{counts[t.id] > 0 && <span className={tabCount}>{counts[t.id]}</span>}
+                  </button>
                 );
               })}
-            </Box>
-            <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 3.25 } }}>{body}</Box>
-          </Box>
+            </div>
+            <div className={tabPanel}>{body}</div>
+          </div>
 
           {/* desktop sticky contact card */}
-          <Box sx={{ display: { xs: "none", md: "block" }, width: 290, flex: "none", position: "sticky", top: 20 }}>
-            <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.75 }}>
-              {isOwner && <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.875, px: 1.375, py: 0.75, borderRadius: "999px", bgcolor: tokens.accentFill, color: tokens.accent, fontSize: 11.5, fontWeight: 600, mb: 1.75 }}>Owner preview</Box>}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+          <div className={sideCol}>
+            <div className={sideCard}>
+              {isOwner && <div className={ownerPill}>Owner preview</div>}
+              <div className={sideIdRow}>
                 <ProfileAvatar name={name} src={avatar} size={48} verified={isVerified} />
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>{name}</Typography>
-                  <Typography sx={{ fontSize: 12.5, color: tokens.text2, mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{profile.tagline || (isVerified ? "Verified freelancer" : "Freelancer on KickAir")}</Typography>
-                </Box>
-              </Box>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1.125, mt: 2.25 }}>
+                <div className={sideIdText}>
+                  <p className={sideName}>{name}</p>
+                  <p className={sideTagline}>{profile.tagline || (isVerified ? "Verified freelancer" : "Freelancer on KickAir")}</p>
+                </div>
+              </div>
+              <div className={sideActions}>
                 {isOwner ? (
-                  <Button onClick={() => router.push("/dashboard/freelancer")} startIcon={<EditOutlined sx={{ fontSize: 16 }} />} sx={{ ...heroSecBtn, width: "100%", height: 44 }}>Edit profile</Button>
+                  <button type="button" onClick={() => router.push("/dashboard/freelancer")} className={heroSecBtnFull}><Pencil size={16} />Edit profile</button>
                 ) : (
                   <>
-                    <Button onClick={handleMessage} disabled={messaging} startIcon={messaging ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <ChatBubbleOutline sx={{ fontSize: 16 }} />} sx={{ ...heroPrimaryBtn, width: "100%", height: 44 }}>Message {name.split(" ")[0]}</Button>
-                    <Box sx={{ display: "flex", gap: 1.125 }}>
-                      <Button onClick={() => setIsFavorite(!isFavorite)} startIcon={isFavorite ? <Favorite sx={{ fontSize: 16 }} /> : <FavoriteBorder sx={{ fontSize: 16 }} />} sx={{ ...heroSecBtn, flex: 1 }}>Save</Button>
-                      <Button startIcon={<ShareOutlined sx={{ fontSize: 16 }} />} sx={{ ...heroSecBtn, flex: 1 }}>Share</Button>
-                    </Box>
+                    <button type="button" onClick={handleMessage} disabled={messaging} className={heroPrimaryBtnFull}>{messaging ? <Spinner size={16} className={whiteSpinner} /> : <MessageCircle size={16} />}Message {name.split(" ")[0]}</button>
+                    <div className={sideActionRow}>
+                      <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-pressed={isFavorite} className={heroSecBtnFlex}><Heart size={16} fill={isFavorite ? "currentColor" : "none"} />Save</button>
+                      <button type="button" className={heroSecBtnFlex}><Share2 size={16} />Share</button>
+                    </div>
                   </>
                 )}
-              </Box>
-              <Box sx={{ mt: 2.25, pt: 2, borderTop: `1px solid ${tokens.border}`, display: "flex", flexDirection: "column", gap: 1.375 }}>
+              </div>
+              <div className={sideChecks}>
                 {([["Identity verified", isVerified], ["Phone verified", isPhoneVerified]] as const).map(([label, ok]) => (
-                  <Box key={label} sx={{ display: "flex", alignItems: "center", gap: 1.125, fontSize: 13 }}>
-                    <Box sx={{ color: ok ? tokens.success : tokens.text3, display: "flex" }}>{ok ? <CheckRounded sx={{ fontSize: 16 }} /> : <CloseRounded sx={{ fontSize: 16 }} />}</Box>
-                    <Typography sx={{ fontSize: 13, color: ok ? tokens.text : tokens.text3 }}>{label}</Typography>
-                  </Box>
+                  <div key={label} className={checkRow}>
+                    <div className={checkIcon({ ok })}>{ok ? <Check size={16} /> : <X size={16} />}</div>
+                    <p className={checkLabel({ ok })}>{label}</p>
+                  </div>
                 ))}
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* mobile bottom action bar */}
       {!isOwner && (
-        <Box sx={{ display: { xs: "flex", md: "none" }, position: "sticky", bottom: 0, gap: 1.125, p: "12px 14px", bgcolor: "rgba(255,255,255,0.9)", backdropFilter: "saturate(1.4) blur(16px)", borderTop: `1px solid ${tokens.border}` }}>
-          <IconButton onClick={() => setIsFavorite(!isFavorite)} sx={{ width: 46, height: 46, flex: "none", border: `1px solid ${tokens.borderStrong}`, color: isFavorite ? tokens.error : tokens.text2 }}>{isFavorite ? <Favorite sx={{ fontSize: 18 }} /> : <FavoriteBorder sx={{ fontSize: 18 }} />}</IconButton>
-          <Button onClick={handleMessage} disabled={messaging} startIcon={messaging ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : <ChatBubbleOutline sx={{ fontSize: 16 }} />} sx={{ ...heroPrimaryBtn, flex: 1, height: 46 }}>Message</Button>
-        </Box>
+        <div className={mobileBar}>
+          <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-label={isFavorite ? "Remove from saved" : "Save freelancer"} aria-pressed={isFavorite} className={isFavorite ? barIconBtnFav : barIconBtn}><Heart size={18} fill={isFavorite ? "currentColor" : "none"} /></button>
+          <button type="button" onClick={handleMessage} disabled={messaging} className={heroPrimaryBtnBar}>{messaging ? <Spinner size={16} className={whiteSpinner} /> : <MessageCircle size={16} />}Message</button>
+        </div>
       )}
 
       {/* Lightbox */}
@@ -351,47 +495,46 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
         const cur = imgs[lightbox.index];
         const go = (delta: number, e: React.MouseEvent) => { e.stopPropagation(); setLightbox(lb => (lb ? { ...lb, index: (lb.index + delta + imgs.length) % imgs.length } : lb)); };
         return (
-          <Box onClick={() => setLightbox(null)} sx={{ position: "fixed", inset: 0, zIndex: 1400, bgcolor: "rgba(16,14,12,0.92)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column" }}>
-            <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", p: "16px 20px", color: "#fff" }} onClick={e => e.stopPropagation()}>
-              <Box>
-                <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>{lightbox.item.title}</Typography>
-                <Typography sx={{ fontSize: 12.5, opacity: 0.6, mt: 0.25, fontFamily: tokens.mono }}>{lightbox.index + 1} / {imgs.length}</Typography>
-              </Box>
-              <IconButton onClick={() => setLightbox(null)} sx={{ width: 36, height: 36, bgcolor: "rgba(255,255,255,0.1)", color: "#fff", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" } }}><Close /></IconButton>
-            </Box>
-            <Box sx={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", px: { xs: 2, md: 10 }, minHeight: 0, position: "relative" }} onClick={e => e.stopPropagation()}>
-              {imgs.length > 1 && <IconButton onClick={e => go(-1, e)} sx={{ position: "absolute", left: 18, width: 48, height: 48, bgcolor: "rgba(255,255,255,0.1)", color: "#fff", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" } }}><ChevronLeft sx={{ fontSize: 24 }} /></IconButton>}
-              <Box component="img" src={cur?.file_url} alt={lightbox.item.title} sx={{ maxWidth: "100%", maxHeight: "70vh", objectFit: "contain", borderRadius: 2 }} />
-              {imgs.length > 1 && <IconButton onClick={e => go(1, e)} sx={{ position: "absolute", right: 18, width: 48, height: 48, bgcolor: "rgba(255,255,255,0.1)", color: "#fff", "&:hover": { bgcolor: "rgba(255,255,255,0.2)" } }}><ChevronRight sx={{ fontSize: 24 }} /></IconButton>}
-            </Box>
+          <div onClick={() => setLightbox(null)} className={lightboxRoot}>
+            <div className={lightboxHead} onClick={e => e.stopPropagation()}>
+              <div>
+                <p className={lightboxTitle}>{lightbox.item.title}</p>
+                <p className={lightboxCounter}>{lightbox.index + 1} / {imgs.length}</p>
+              </div>
+              <button type="button" onClick={() => setLightbox(null)} aria-label="Close" className={lightboxBtn}><X size={24} /></button>
+            </div>
+            <div className={lightboxStage} onClick={e => e.stopPropagation()}>
+              {imgs.length > 1 && <button type="button" onClick={e => go(-1, e)} aria-label="Previous image" className={cx(lightboxNav, lightboxNavLeft)}><ChevronLeft size={24} /></button>}
+              {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded portfolio images */}
+              <img src={cur?.file_url} alt={lightbox.item.title} className={lightboxImg} />
+              {imgs.length > 1 && <button type="button" onClick={e => go(1, e)} aria-label="Next image" className={cx(lightboxNav, lightboxNavRight)}><ChevronRight size={24} /></button>}
+            </div>
             {imgs.length > 1 && (
-              <Box sx={{ display: "flex", gap: 1.25, justifyContent: "center", p: 2.25, flexWrap: "wrap" }} onClick={e => e.stopPropagation()}>
+              <div className={thumbRow} onClick={e => e.stopPropagation()}>
                 {imgs.map((im, i) => (
-                  <Box key={im.id} onClick={() => setLightbox(lb => (lb ? { ...lb, index: i } : lb))} sx={{ width: 64, height: 48, borderRadius: "7px", cursor: "pointer", overflow: "hidden", opacity: i === lightbox.index ? 1 : 0.45, outline: i === lightbox.index ? "2px solid #fff" : "2px solid transparent", transition: "opacity .15s, outline-color .15s" }}>
-                    <Box component="img" src={im.file_url} alt="" sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                  </Box>
+                  <div key={im.id} onClick={() => setLightbox(lb => (lb ? { ...lb, index: i } : lb))} className={thumb({ active: i === lightbox.index })}>
+                    {/* eslint-disable-next-line @next/next/no-img-element -- user-uploaded portfolio images */}
+                    <img src={im.file_url} alt="" className={thumbImg} />
+                  </div>
                 ))}
-              </Box>
+              </div>
             )}
-          </Box>
+          </div>
         );
       })()}
-    </Box>
+    </div>
   );
 }
 
 /* Content block within a tab (title + divider) */
 function PPBlock({ title, action, children, last }: { title: string; action?: React.ReactNode; children: React.ReactNode; last?: boolean }) {
   return (
-    <Box sx={{ pb: last ? 0 : 3.25, mb: last ? 0 : 3.25, borderBottom: last ? "none" : `1px solid ${tokens.border}` }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em" }}>{title}</Typography>
+    <div className={last ? ppBlockLast : ppBlock}>
+      <div className={ppHead}>
+        <p className={ppTitle}>{title}</p>
         {action}
-      </Box>
+      </div>
       {children}
-    </Box>
+    </div>
   );
 }
-
-const heroPrimaryBtn = { height: 40, borderRadius: "999px", textTransform: "none", fontSize: 14, fontWeight: 600, bgcolor: "#000", color: "#fff", boxShadow: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.8)", boxShadow: "none" } } as const;
-const heroSecBtn = { height: 40, px: 2, borderRadius: "999px", textTransform: "none", fontSize: 13.5, fontWeight: 600, border: `1px solid ${tokens.borderStrong}`, color: tokens.text, bgcolor: tokens.surface, "&:hover": { bgcolor: tokens.surface2 } } as const;

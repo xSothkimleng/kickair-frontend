@@ -1,32 +1,32 @@
 "use client";
 
 import { useRef } from "react";
-import { Box } from "@mui/material";
-import { styled } from "@mui/material/styles";
+import { css } from "styled-system/css";
 import { FieldShell } from "./FieldShell";
-import { tokens, FOCUS_RING, FOCUS_RING_ERROR } from "./tokens";
 
-const OtpBox = styled("input", { shouldForwardProp: (p) => p !== "$error" })<{ $error?: boolean }>(
-  ({ $error }) => ({
-    width: 46,
-    height: 52,
-    textAlign: "center",
-    fontSize: 20,
-    fontWeight: 500,
-    fontFamily: "inherit",
-    color: tokens.heading,
-    background: "#fff",
-    border: `1px solid ${$error ? tokens.error : tokens.border}`,
-    borderRadius: 10,
-    outline: "none",
-    transition: "border-color .15s, box-shadow .15s",
-    "&:focus": {
-      borderColor: $error ? tokens.error : tokens.accent,
-      boxShadow: $error ? FOCUS_RING_ERROR : FOCUS_RING,
-    },
-    "&:disabled": { background: tokens.fill, cursor: "not-allowed" },
-  }),
-);
+const otpBox = css({
+  w: "46px",
+  h: "52px",
+  p: 0,
+  m: 0,
+  textAlign: "center",
+  fontSize: "20px",
+  fontWeight: 500,
+  fontFamily: "inherit",
+  color: "heading",
+  bg: "field",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border",
+  borderRadius: "input",
+  outline: "none",
+  appearance: "none",
+  transition: "border-color .15s, box-shadow .15s",
+  _focus: { borderColor: "accent", boxShadow: "focusRing" },
+  "&[aria-invalid=true], &[aria-invalid=true]:focus": { borderColor: "error" },
+  "&[aria-invalid=true]:focus": { boxShadow: "focusRingError" },
+  _disabled: { bg: "fill", cursor: "not-allowed" },
+});
 
 export interface OtpInputProps {
   label?: string;
@@ -66,9 +66,9 @@ export default function OtpInput({ label, helper, error, value, onChange, length
 
   return (
     <FieldShell label={label} helper={helper} error={error}>
-      <Box sx={{ display: "flex", gap: 1.25 }}>
+      <div className={css({ display: "flex", gap: "10px" })}>
         {chars.map((c, i) => (
-          <OtpBox
+          <input
             key={i}
             ref={(el) => { refs.current[i] = el; }}
             value={c}
@@ -76,13 +76,15 @@ export default function OtpInput({ label, helper, error, value, onChange, length
             maxLength={1}
             disabled={disabled}
             autoFocus={autoFocus && i === 0}
-            $error={!!error}
+            aria-invalid={error ? true : undefined}
+            aria-label={`Digit ${i + 1}`}
             onChange={(e) => setChar(i, e.target.value)}
             onKeyDown={(e) => onKey(i, e)}
             onPaste={onPaste}
+            className={otpBox}
           />
         ))}
-      </Box>
+      </div>
     </FieldShell>
   );
 }

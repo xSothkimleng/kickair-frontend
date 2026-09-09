@@ -1,4 +1,7 @@
-import { Box, Tabs, Tab, Container, Badge } from "@mui/material";
+"use client";
+
+import { Tabs } from "@ark-ui/react";
+import { css } from "styled-system/css";
 
 interface FreelancerTabsProps {
   activeTab: string;
@@ -6,57 +9,55 @@ interface FreelancerTabsProps {
   tabs?: { value: string; label: string; badge?: number }[];
 }
 
+const bar = css({ bg: "white", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const container = css({ w: "100%", maxW: "1200px", mx: "auto", boxSizing: "border-box", px: "24px" });
+const list = css({ position: "relative", display: "flex", minH: "48px", overflowX: "auto", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } });
+const trigger = css({
+  position: "relative",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "6px",
+  minH: "48px",
+  minW: "90px",
+  px: "16px",
+  border: "none",
+  bg: "transparent",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 400,
+  lineHeight: 1.25,
+  color: "ink2",
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  transition: "color .15s",
+  _hover: { color: "ink" },
+  _focusVisible: { outline: "none", boxShadow: "inset 0 0 0 2px token(colors.accentFill)" },
+  "&[data-selected]": { color: "ink", fontWeight: 500 },
+});
+const indicator = css({ h: "2px", bg: "ink", bottom: 0 });
+const badge = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  minW: "16px", h: "16px", px: "4px", borderRadius: "pill",
+  bg: "error", color: "white", fontSize: "10px", fontWeight: 600, lineHeight: 1,
+});
+
 export default function FreelancerTabs({ activeTab, onTabChange, tabs }: FreelancerTabsProps) {
   return (
-    <Box
-      sx={{
-        bgcolor: "white",
-        borderBottom: 1,
-        borderColor: "rgba(0, 0, 0, 0.08)",
-      }}>
-      <Container sx={{ px: 3 }}>
-        <Tabs
-          value={activeTab}
-          onChange={(_, newValue) => onTabChange(newValue)}
-          sx={{
-            minHeight: 48,
-            "& .MuiTab-root": {
-              fontSize: 13,
-              textTransform: "none",
-              minHeight: 48,
-              color: "rgba(0, 0, 0, 0.6)",
-              fontWeight: 400,
-              "&.Mui-selected": {
-                color: "black",
-                fontWeight: 500,
-              },
-            },
-            "& .MuiTabs-indicator": {
-              height: 2,
-              bgcolor: "black",
-            },
-          }}>
-          {tabs && tabs.map(tab => (
-            <Tab
-              key={tab.value}
-              value={tab.value}
-              label={
-                tab.badge ? (
-                  <Badge
-                    badgeContent={tab.badge}
-                    color="error"
-                    max={99}
-                    sx={{ "& .MuiBadge-badge": { right: -10, top: 2, fontSize: 10, height: 16, minWidth: 16 } }}>
-                    {tab.label}
-                  </Badge>
-                ) : (
-                  tab.label
-                )
-              }
-            />
-          ))}
-        </Tabs>
-      </Container>
-    </Box>
+    <div className={bar}>
+      <div className={container}>
+        <Tabs.Root value={activeTab} onValueChange={(d) => onTabChange(d.value)}>
+          <Tabs.List className={list}>
+            {tabs?.map((tab) => (
+              <Tabs.Trigger key={tab.value} value={tab.value} className={trigger}>
+                {tab.label}
+                {tab.badge ? <span className={badge}>{tab.badge > 99 ? "99+" : tab.badge}</span> : null}
+              </Tabs.Trigger>
+            ))}
+            <Tabs.Indicator className={indicator} />
+          </Tabs.List>
+        </Tabs.Root>
+      </div>
+    </div>
   );
 }

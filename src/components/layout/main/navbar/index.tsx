@@ -1,38 +1,76 @@
 "use client";
 import { useRef, useState, useEffect } from "react";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import LanguageIcon from "@mui/icons-material/Language";
-import BookOpenIcon from "@mui/icons-material/MenuBook";
-import BoltIcon from "@mui/icons-material/Bolt";
-import BusinessCenterIcon from "@mui/icons-material/BusinessCenter";
-import SearchIcon from "@mui/icons-material/Search";
-import PeopleIcon from "@mui/icons-material/People";
-import ShieldIcon from "@mui/icons-material/Shield";
-import MenuIcon from "@mui/icons-material/Menu";
-import { Settings as SettingsIcon, HelpOutline, Logout, Work as BriefcaseIcon } from "@mui/icons-material";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  Box,
-  Button,
-  Avatar,
-  Typography,
-  CircularProgress,
-  Dialog,
-  DialogContent,
-  DialogActions,
-  IconButton,
-  Container,
-} from "@mui/material";
-import { useAuth } from "@/components/context/AuthContext";
 import { useRouter, usePathname } from "next/navigation";
+import { BookOpen, Briefcase, ChevronDown, CircleHelp, Globe, LogOut, Menu as MenuIcon, Search, Settings as SettingsIcon, Shield, Users, Zap } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Avatar, Dialog, Portal, Spinner, iconButton } from "@/components/ds";
+import { useAuth } from "@/components/context/AuthContext";
 import { type DropdownType, type UserMode, type Language, LANGUAGES } from "./types";
-import { dropdownPanelSx, navBtnSx } from "./styles";
+import { dropdownPanelRaw, muiBtnRaw, navBtnCss, modeBtnOnCss, modeBtnOffCss } from "./styles";
 import { DropdownItem } from "./DropdownItem";
 import { MobileDrawer } from "./MobileDrawer";
 import { NotificationBell } from "./NotificationBell";
 import { MessageBell } from "./MessageBell";
 import { WalletChip } from "./WalletChip";
+
+// The desktop/hamburger switch keeps MUI's exact `lg` breakpoint (1200px) via a
+// literal media query — Panda's `lg` token is 1024px.
+const navCss = css({ position: "sticky", top: 0, zIndex: 1100, bg: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" });
+const containerCss = css({ w: "100%", maxW: "1200px", mx: "auto", boxSizing: "border-box", px: { base: "16px", sm: "24px" }, display: "flex", alignItems: "center", justifyContent: "space-between" });
+const logoWrapCss = css({ display: "block", h: "48px" });
+const logoCss = css({ objectFit: "contain", mt: "5px" });
+const desktopCss = css({ display: "none", alignItems: "center", gap: "20px", "@media (min-width: 1200px)": { display: "flex" } });
+const navGroupCss = css({ display: "flex", gap: "10px", alignItems: "center" });
+const relCss = css({ position: "relative" });
+const navChevronCss = css({ ml: "8px", mr: "-4px", flexShrink: 0, transition: "transform 0.2s" });
+const openCss = css({ transform: "rotate(180deg)" });
+const megaPanelCss = css(dropdownPanelRaw, { left: "50%", transform: "translateX(-50%)" });
+const megaInnerCss = css({ p: "24px" });
+const megaLeadCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", mb: "16px", lineHeight: 1.5 });
+const megaListCss = css({ display: "flex", flexDirection: "column", gap: "4px" });
+const ddIconCss = css({ color: "rgba(0,0,0,0.6)", display: "block" });
+const rightGroupCss = css({ display: "flex", alignItems: "center", gap: "10px" });
+const langBtnCss = css(muiBtnRaw, { fontSize: "12px", gap: "4px", color: "rgba(0,0,0,0.7)", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const langPanelCss = css(dropdownPanelRaw, { right: 0, mt: "8px", borderRadius: "12px", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" });
+const langListCss = css({ py: "8px" });
+const langOptRaw = css.raw({ w: "100%", justifyContent: "flex-start", px: "16px", py: "8px", fontSize: "12px", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const langOptOnCss = css(muiBtnRaw, langOptRaw, { color: "black", fontWeight: 600 });
+const langOptOffCss = css(muiBtnRaw, langOptRaw, { color: "rgba(0,0,0,0.6)", fontWeight: 400 });
+const spinnerCss = css({ color: "rgba(0,0,0,0.6)" });
+const profileBtnCss = css(muiBtnRaw, { display: "flex", alignItems: "center", gap: "8px", px: "12px", h: "44px", fontSize: "12px", color: "rgba(0,0,0,0.8)", _hover: { color: "black", bg: "transparent" } });
+const profileChevronCss = css({ opacity: 0.6, flexShrink: 0, transition: "transform 0.2s" });
+const menuPanelCss = css(dropdownPanelRaw, { width: "360px", right: 0, mt: "8px", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" });
+const menuHeaderCss = css({ p: "12px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)" });
+const menuHeaderRowCss = css({ display: "flex", alignItems: "center", gap: "12px", px: "8px" });
+const menuNameCss = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5 });
+const menuModeTextCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", textTransform: "capitalize", lineHeight: 1.5 });
+const modeBoxCss = css({ p: "16px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)" });
+const modeLabelCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", mb: "8px", lineHeight: 1.5 });
+const modeRowCss = css({ display: "flex", gap: "8px" });
+const menuGroupCss = css({ py: "8px" });
+const menuItemCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "10px", fontSize: "12px", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const menuIconCss = css({ color: "rgba(0,0,0,0.6)", mr: "8px", flexShrink: 0 });
+const logoutBoxCss = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0,0,0,0.08)", p: "8px" });
+const logoutCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "10px", fontSize: "12px", color: "#dc2626", borderRadius: "4px", _hover: { bg: "#fef2f2" } });
+const logoutIconCss = css({ mr: "8px", flexShrink: 0 });
+// `<a>` colour needs !important: globals.css sets `a { color: inherit }` outside any layer.
+const signInCss = css(muiBtnRaw, { ml: "8px", px: "16px", h: "32px", fontSize: "12px", color: "white !important", fontWeight: 700, bg: "black", borderRadius: "100px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const hamburgerCss = css(iconButton.raw({ size: "md" }), { w: "40px", h: "40px", color: "rgba(0,0,0,0.54)", _hover: { bg: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.54)" }, "@media (min-width: 1200px)": { display: "none" } });
+// Enable-second-role dialog — keeps the MUI Dialog geometry (600px paper, 12px radius, 8px paper padding).
+const dlgBackdropCss = css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 1300 });
+const dlgPositionerCss = css({ position: "fixed", inset: 0, zIndex: 1300, display: "flex", alignItems: "center", justifyContent: "center" });
+const dlgPaperCss = css({ bg: "white", borderRadius: "12px", w: "600px", minW: "400px", maxW: "calc(100vw - 64px)", maxH: "calc(100vh - 64px)", m: "32px", p: "8px", overflowY: "auto", display: "flex", flexDirection: "column", boxShadow: "0 11px 15px -7px rgba(0,0,0,0.2), 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12)", _focus: { outline: "none" } });
+const dlgContentCss = css({ px: "24px", py: "20px" });
+const dlgTitleWrapCss = css({ pb: "8px" });
+const dlgTitleCss = css({ fontSize: "18px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.87)" });
+const dlgBodyCss = css({ fontSize: "14px", lineHeight: 1.5, color: "rgba(0,0,0,0.6)" });
+const dlgErrorCss = css({ fontSize: "13px", color: "#dc2626", pt: "12px", lineHeight: 1.5 });
+const dlgActionsCss = css({ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", px: "24px", pt: "8px", pb: "16px" });
+const dlgCancelCss = css(muiBtnRaw, { fontSize: "13px", color: "rgba(0,0,0,0.6)", _hover: { bg: "rgba(0,0,0,0.04)" }, _disabled: { color: "rgba(0,0,0,0.26)" } });
+const dlgPrimaryCss = css(muiBtnRaw, { fontSize: "13px", bg: "black", color: "white", px: "24px", borderRadius: "8px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const whiteSpinnerCss = css({ color: "white" });
 
 export default function MainNavbar() {
   const [activeDropdown, setActiveDropdown] = useState<DropdownType>(null);
@@ -292,81 +330,38 @@ export default function MainNavbar() {
   };
 
   return (
-    <Box
-      component='nav'
-      role='navigation'
-      aria-label='Main navigation'
-      sx={{
-        position: "sticky",
-        top: 0,
-        zIndex: 1100,
-        bgcolor: "white",
-        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-      }}>
-      <Container
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-        }}>
+    <nav role='navigation' aria-label='Main navigation' className={navCss}>
+      <div className={containerCss}>
         {/* Logo */}
-        <Box component='span'>
+        <span className={logoWrapCss}>
           <Link href='/'>
-            <Image
-              src='/assets/images/kickair-logo.png'
-              alt='KickAir'
-              width={100}
-              height={38}
-              style={{ objectFit: "contain", marginTop: 5 }}
-            />
+            <Image src='/assets/images/kickair-logo.png' alt='KickAir' width={100} height={38} className={logoCss} />
           </Link>
-        </Box>
+        </span>
 
         {/* ── Desktop Nav ──────────────────────────────────────────────────────── */}
-        <Box sx={{ display: { xs: "none", lg: "flex" }, alignItems: "center", gap: "20px" }}>
+        <div className={desktopCss}>
           {/* Hover state: entering any trigger opens (or switches) its menu; leaving a
               trigger/panel region schedules a short-delay close that re-entering cancels,
               so sliding between trigger and panel never flickers, but leaving closes. */}
-          <Box
-            sx={{ display: "flex", gap: "10px", alignItems: "center" }}
-            onMouseLeave={scheduleHoverClose}>
+          <div className={navGroupCss} onMouseLeave={scheduleHoverClose}>
             {/* Explore Services — no dropdown, so hovering it clears any open hover menu */}
-            <Button
-              component={Link as React.ElementType}
-              href='/explore-services'
-              onMouseEnter={closeHoverMenuNow}
-              sx={navBtnSx}>
+            <Link href='/explore-services' onMouseEnter={closeHoverMenuNow} className={navBtnCss}>
               Explore Services
-            </Button>
+            </Link>
 
             {/* Why KickAir ▾ */}
-            <Box
-              sx={{ position: "relative" }}
-              onMouseEnter={() => openHoverMenu("why")}
-              onMouseLeave={scheduleHoverClose}>
-              <Button
-                endIcon={
-                  <KeyboardArrowDownIcon
-                    sx={{
-                      fontSize: 16,
-                      transition: "transform 0.2s",
-                      transform: activeDropdown === "why" ? "rotate(180deg)" : "none",
-                    }}
-                  />
-                }
-                aria-haspopup='true'
-                aria-expanded={activeDropdown === "why"}
-                sx={navBtnSx}>
+            <div className={relCss} onMouseEnter={() => openHoverMenu("why")} onMouseLeave={scheduleHoverClose}>
+              <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "why"} className={navBtnCss}>
                 Why KickAir
-              </Button>
+                <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "why" && openCss)} />
+              </button>
 
               {activeDropdown === "why" && (
-                <Box sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
-                  <Box sx={{ p: 3 }}>
-                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
-                      Learn why KickAir is the best platform for freelancing
-                    </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <div className={megaPanelCss}>
+                  <div className={megaInnerCss}>
+                    <div className={megaLeadCss}>Learn why KickAir is the best platform for freelancing</div>
+                    <div className={megaListCss}>
                       <DropdownItem
                         href='/why-kick-air#how-it-works'
                         title='How It Works'
@@ -385,259 +380,170 @@ export default function MainNavbar() {
                         description='See what people are saying about us'
                         onClick={() => setActiveDropdown(null)}
                       />
-                    </Box>
-                  </Box>
-                </Box>
+                    </div>
+                  </div>
+                </div>
               )}
-            </Box>
+            </div>
 
             {/* For Freelancers ▾ */}
-            <Box
-              sx={{ position: "relative" }}
-              onMouseEnter={() => openHoverMenu("freelancer")}
-              onMouseLeave={scheduleHoverClose}>
-              <Button
-                endIcon={
-                  <KeyboardArrowDownIcon
-                    sx={{
-                      fontSize: 16,
-                      transition: "transform 0.2s",
-                      transform: activeDropdown === "freelancer" ? "rotate(180deg)" : "none",
-                    }}
-                  />
-                }
-                aria-haspopup='true'
-                aria-expanded={activeDropdown === "freelancer"}
-                sx={navBtnSx}>
+            <div className={relCss} onMouseEnter={() => openHoverMenu("freelancer")} onMouseLeave={scheduleHoverClose}>
+              <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "freelancer"} className={navBtnCss}>
                 For Freelancers
-              </Button>
+                <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "freelancer" && openCss)} />
+              </button>
 
               {activeDropdown === "freelancer" && (
-                <Box sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
-                  <Box sx={{ p: 3 }}>
-                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
-                      Learn, earn, and grow your freelance career
-                    </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <div className={megaPanelCss}>
+                  <div className={megaInnerCss}>
+                    <div className={megaLeadCss}>Learn, earn, and grow your freelance career</div>
+                    <div className={megaListCss}>
                       <DropdownItem
-                        icon={<BoltIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
+                        icon={<Zap size={20} className={ddIconCss} />}
                         title='Post Your Service'
                         description='Create your service listing with three-tier pricing'
                         onClick={goToCreateService}
                       />
                       <DropdownItem
-                        icon={<BusinessCenterIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
+                        icon={<Briefcase size={20} className={ddIconCss} />}
                         title='Opportunities'
                         description='Find gigs, part-time & full-time work'
                         href='/jobs'
                         onClick={() => setActiveDropdown(null)}
                       />
                       <DropdownItem
-                        icon={<BookOpenIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
+                        icon={<BookOpen size={20} className={ddIconCss} />}
                         title='KickAir University'
                         description='Master freelancing skills, pricing strategies, and client management'
                         href='/kick-air-university'
                         onClick={() => setActiveDropdown(null)}
                       />
-                    </Box>
-                  </Box>
-                </Box>
+                    </div>
+                  </div>
+                </div>
               )}
-            </Box>
+            </div>
 
             {/* For Clients ▾ */}
-            <Box
-              sx={{ position: "relative" }}
-              onMouseEnter={() => openHoverMenu("client")}
-              onMouseLeave={scheduleHoverClose}>
-              <Button
-                endIcon={
-                  <KeyboardArrowDownIcon
-                    sx={{
-                      fontSize: 16,
-                      transition: "transform 0.2s",
-                      transform: activeDropdown === "client" ? "rotate(180deg)" : "none",
-                    }}
-                  />
-                }
-                aria-haspopup='true'
-                aria-expanded={activeDropdown === "client"}
-                sx={navBtnSx}>
+            <div className={relCss} onMouseEnter={() => openHoverMenu("client")} onMouseLeave={scheduleHoverClose}>
+              <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "client"} className={navBtnCss}>
                 For Clients
-              </Button>
+                <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "client" && openCss)} />
+              </button>
 
               {activeDropdown === "client" && (
-                <Box sx={{ ...dropdownPanelSx, left: "50%", transform: "translateX(-50%)" }}>
-                  <Box sx={{ p: 3 }}>
-                    <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 2 }}>
-                      Get work done with trusted freelancers
-                    </Typography>
-                    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
+                <div className={megaPanelCss}>
+                  <div className={megaInnerCss}>
+                    <div className={megaLeadCss}>Get work done with trusted freelancers</div>
+                    <div className={megaListCss}>
                       <DropdownItem
-                        icon={<BookOpenIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
+                        icon={<BookOpen size={20} className={ddIconCss} />}
                         title='KickAir University'
                         description='Learn project management and hiring best practices'
                         href='/kick-air-university'
                         onClick={() => setActiveDropdown(null)}
                       />
                       <DropdownItem
-                        icon={<SearchIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
+                        icon={<Search size={20} className={ddIconCss} />}
                         title='Explore Services'
                         description='Browse freelancer offerings'
                         href='/explore-services'
                         onClick={() => setActiveDropdown(null)}
                       />
                       <DropdownItem
-                        icon={<PeopleIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
+                        icon={<Users size={20} className={ddIconCss} />}
                         title='Find Freelancers'
                         description='One-off jobs & projects'
                         href='/find-freelancer'
                         onClick={() => setActiveDropdown(null)}
                       />
                       <DropdownItem
-                        icon={<BusinessCenterIcon sx={{ fontSize: 20, color: "rgba(0,0,0,0.6)" }} />}
+                        icon={<Briefcase size={20} className={ddIconCss} />}
                         title='Post Your Gig'
                         description='Create a service listing to sell'
                         onClick={goToCreateService}
                       />
-                    </Box>
-                  </Box>
-                </Box>
+                    </div>
+                  </div>
+                </div>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
           {/* ── Right Side: Language + Auth ──────────────────────────────────────── */}
           {/* Single ref covers both click-based dropdowns */}
-          <Box ref={clickDropdownRef} sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
+          <div ref={clickDropdownRef} className={rightGroupCss}>
             {/* Language ▾ */}
-            <Box sx={{ position: "relative" }}>
-              <Button
+            <div className={relCss}>
+              <button
+                type='button'
                 onClick={() => handleDropdownToggle("language")}
                 aria-haspopup='listbox'
                 aria-expanded={activeDropdown === "language"}
                 aria-label={`Language: ${selectedLanguage.label}`}
-                sx={{ fontSize: 12, textTransform: "none", gap: 0.5, color: "rgba(0,0,0,0.7)" }}>
-                <LanguageIcon sx={{ fontSize: 14 }} />
+                className={langBtnCss}>
+                <Globe size={14} />
                 {selectedLanguage.label}
-              </Button>
+              </button>
 
               {activeDropdown === "language" && (
-                <Box
-                  role='listbox'
-                  aria-label='Select language'
-                  sx={{
-                    ...dropdownPanelSx,
-                    right: 0,
-                    mt: 1,
-                    borderRadius: "12px",
-                    boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                  }}>
-                  <Box sx={{ py: 1 }}>
+                <div role='listbox' aria-label='Select language' className={langPanelCss}>
+                  <div className={langListCss}>
                     {LANGUAGES.map(lang => (
-                      <Button
+                      <button
                         key={lang.code}
+                        type='button'
                         role='option'
                         aria-selected={selectedLanguage.code === lang.code}
                         onClick={() => handleLanguageChange(lang)}
-                        sx={{
-                          width: "100%",
-                          justifyContent: "flex-start",
-                          px: 2,
-                          py: 1,
-                          fontSize: 12,
-                          textTransform: "none",
-                          color: selectedLanguage.code === lang.code ? "black" : "rgba(0,0,0,0.6)",
-                          fontWeight: selectedLanguage.code === lang.code ? 600 : 400,
-                          "&:hover": { backgroundColor: "rgba(0,0,0,0.04)" },
-                        }}>
+                        className={selectedLanguage.code === lang.code ? langOptOnCss : langOptOffCss}>
                         {lang.label}
-                      </Button>
+                      </button>
                     ))}
-                  </Box>
-                </Box>
+                  </div>
+                </div>
               )}
-            </Box>
+            </div>
 
             {/* Auth */}
             {loading ? (
-              <CircularProgress size={24} sx={{ color: "rgba(0,0,0,0.6)" }} />
+              <Spinner size={24} className={spinnerCss} />
             ) : user ? (
               <>
                 <WalletChip />
                 <MessageBell />
                 <NotificationBell />
                 {/* Profile dropdown */}
-                <Box sx={{ position: "relative" }}>
-                  <Button
+                <div className={relCss}>
+                  <button
+                    type='button'
                     onClick={() => handleDropdownToggle("profile")}
                     aria-haspopup='menu'
                     aria-expanded={activeDropdown === "profile"}
                     aria-label='Profile menu'
-                    sx={{
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 1,
-                      px: 1.5,
-                      height: 44,
-                      fontSize: 12,
-                      color: "rgba(0,0,0,0.8)",
-                      textTransform: "none",
-                      "&:hover": { color: "black", bgcolor: "transparent" },
-                    }}>
-                    <Avatar src={profileImageSrc} alt={user.name} sx={{ width: 24, height: 24 }}>
-                      {!profileImageSrc && user.name?.charAt(0).toUpperCase()}
-                    </Avatar>
+                    className={profileBtnCss}>
+                    <Avatar src={profileImageSrc} name={user.name} px={24} />
                     <span>{user.name}</span>
-                    <KeyboardArrowDownIcon
-                      sx={{
-                        fontSize: 14,
-                        opacity: 0.6,
-                        transition: "transform 0.2s",
-                        transform: activeDropdown === "profile" ? "rotate(180deg)" : "none",
-                      }}
-                    />
-                  </Button>
+                    <ChevronDown size={14} className={cx(profileChevronCss, activeDropdown === "profile" && openCss)} />
+                  </button>
 
                   {activeDropdown === "profile" && (
-                    <Box
-                      role='menu'
-                      sx={{
-                        ...dropdownPanelSx,
-                        width: 360,
-                        right: 0,
-                        mt: 1,
-                        borderRadius: 1.5,
-                        boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                      }}>
+                    <div role='menu' className={menuPanelCss}>
                       {/* Profile header */}
-                      <Box sx={{ p: 1.5, borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, px: 1 }}>
-                          <Avatar src={profileImageSrc} alt={user.name} sx={{ width: 40, height: 40 }}>
-                            {!profileImageSrc && user.name?.charAt(0).toUpperCase()}
-                          </Avatar>
-                          <Box>
-                            <Typography sx={{ fontSize: 13, fontWeight: 500 }}>{user.name}</Typography>
-                            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", textTransform: "capitalize" }}>
-                              {currentMode} mode
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
+                      <div className={menuHeaderCss}>
+                        <div className={menuHeaderRowCss}>
+                          <Avatar src={profileImageSrc} name={user.name} px={40} />
+                          <div>
+                            <div className={menuNameCss}>{user.name}</div>
+                            <div className={menuModeTextCss}>{currentMode} mode</div>
+                          </div>
+                        </div>
+                      </div>
 
                       {/* Mode switcher */}
-                      <Box sx={{ p: 2, borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-                        <Typography
-                          sx={{
-                            fontSize: 11,
-                            color: "rgba(0,0,0,0.6)",
-                            textTransform: "uppercase",
-                            letterSpacing: "0.05em",
-                            mb: 1,
-                          }}>
-                          Mode
-                        </Typography>
-                        <Box sx={{ display: "flex", gap: 1 }}>
+                      <div className={modeBoxCss}>
+                        <div className={modeLabelCss}>Mode</div>
+                        <div className={modeRowCss}>
                           {(["freelancer", "client"] as const).map(mode => {
                             const hasRole = mode === "freelancer" ? isFreelancer : isClient;
                             // For a role the user doesn't have yet, the button doubles as the
@@ -648,131 +554,77 @@ export default function MainNavbar() {
                                 ? "Become a freelancer"
                                 : "Become a client";
                             return (
-                              <Button
+                              <button
                                 key={mode}
+                                type='button'
                                 onClick={() => handleModeSwitch(mode)}
-                                sx={{
-                                  flex: 1,
-                                  px: 1.5,
-                                  py: 1,
-                                  fontSize: 12,
-                                  borderRadius: 2,
-                                  textTransform: "none",
-                                  bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.05)",
-                                  color: currentMode === mode ? "white" : "rgba(0,0,0,0.6)",
-                                  "&:hover": { bgcolor: currentMode === mode ? "black" : "rgba(0,0,0,0.1)" },
-                                }}>
+                                className={currentMode === mode ? modeBtnOnCss : modeBtnOffCss}>
                                 {label}
-                              </Button>
+                              </button>
                             );
                           })}
-                        </Box>
-                      </Box>
+                        </div>
+                      </div>
 
                       {/* Menu items */}
-                      <Box role='group' sx={{ py: 1 }}>
+                      <div role='group' className={menuGroupCss}>
                         {[
                           ...(user?.is_admin
                             ? [
                                 {
                                   href: "/admin",
-                                  icon: <ShieldIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                                  icon: <Shield size={14} className={menuIconCss} />,
                                   label: "Go to Admin Dashboard",
                                 },
                               ]
                             : []),
                           {
                             href: currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client",
-                            icon: <BriefcaseIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                            icon: <Briefcase size={14} className={menuIconCss} />,
                             label: currentMode === "freelancer" ? "Freelancer Space" : "Client Space",
                           },
                           {
                             href: "/settings",
-                            icon: <SettingsIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                            icon: <SettingsIcon size={14} className={menuIconCss} />,
                             label: "Settings",
                           },
                           {
                             href: "/help",
-                            icon: <HelpOutline sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)", mr: 1 }} />,
+                            icon: <CircleHelp size={14} className={menuIconCss} />,
                             label: "Help & Support",
                           },
                         ].map(item => (
-                          <Button
-                            key={item.href}
-                            role='menuitem'
-                            component={Link as React.ElementType}
-                            href={item.href}
-                            onClick={() => setActiveDropdown(null)}
-                            sx={{
-                              width: "100%",
-                              justifyContent: "flex-start",
-                              px: 2,
-                              py: 1.25,
-                              fontSize: 12,
-                              color: "black",
-                              textTransform: "none",
-                              "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                            }}>
+                          <Link key={item.href} role='menuitem' href={item.href} onClick={() => setActiveDropdown(null)} className={menuItemCss}>
                             {item.icon}
                             {item.label}
-                          </Button>
+                          </Link>
                         ))}
-                      </Box>
+                      </div>
 
                       {/* Logout */}
-                      <Box sx={{ borderTop: "1px solid rgba(0,0,0,0.08)", p: 1 }}>
-                        <Button
-                          role='menuitem'
-                          onClick={handleLogout}
-                          sx={{
-                            width: "100%",
-                            justifyContent: "flex-start",
-                            px: 2,
-                            py: 1.25,
-                            fontSize: 12,
-                            color: "#dc2626",
-                            borderRadius: 1,
-                            textTransform: "none",
-                            "&:hover": { bgcolor: "#fef2f2" },
-                          }}>
-                          <Logout sx={{ fontSize: 14, mr: 1 }} />
+                      <div className={logoutBoxCss}>
+                        <button type='button' role='menuitem' onClick={handleLogout} className={logoutCss}>
+                          <LogOut size={14} className={logoutIconCss} />
                           Logout
-                        </Button>
-                      </Box>
-                    </Box>
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </Box>
+                </div>
               </>
             ) : (
               // Not logged in
-              <Button
-                component={Link as React.ElementType}
-                href='/auth/sign-in'
-                sx={{
-                  ml: 1,
-                  px: 2,
-                  height: 32,
-                  fontSize: 12,
-                  color: "white !important",
-                  fontWeight: "bold",
-                  bgcolor: "black",
-                  borderRadius: 25,
-                  textTransform: "none",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-                }}>
+              <Link href='/auth/sign-in' className={signInCss}>
                 Sign In
-              </Button>
+              </Link>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* ── Mobile Hamburger (hidden on desktop) ─────────────────────────────── */}
-        <IconButton
-          onClick={() => setMobileOpen(true)}
-          aria-label='Open navigation menu'
-          sx={{ display: { xs: "flex", lg: "none" } }}>
-          <MenuIcon />
-        </IconButton>
+        <button type='button' onClick={() => setMobileOpen(true)} aria-label='Open navigation menu' className={hamburgerCss}>
+          <MenuIcon size={24} />
+        </button>
 
         <MobileDrawer
           open={mobileOpen}
@@ -787,56 +639,43 @@ export default function MainNavbar() {
         />
 
         {/* ── Enable second role dialog (Become a freelancer / Become a client) ──── */}
-        <Dialog
-          open={profileDialogOpen}
-          onClose={handleDialogClose}
-          slotProps={{ paper: { sx: { borderRadius: 3, minWidth: 400, p: 1 } } }}>
-          <DialogContent>
-            <Typography sx={{ fontSize: 18, fontWeight: 600, mb: 1 }}>
-              {profileDialogType === "freelancer" ? "Become a freelancer" : "Become a client"}
-            </Typography>
-            <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }}>
-              {profileDialogType === "freelancer"
-                ? "Enable your freelancer account to offer services and apply to jobs. It's free — you can set up your profile next."
-                : "Enable your client account to post jobs and hire freelancers. It's free and only takes a moment."}
-            </Typography>
-            {profileDialogError && <Typography sx={{ fontSize: 13, color: "#dc2626", mt: 1.5 }}>{profileDialogError}</Typography>}
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2 }}>
-            <Button
-              onClick={handleDialogClose}
-              disabled={profileDialogLoading}
-              sx={{
-                textTransform: "none",
-                fontSize: 13,
-                color: "rgba(0,0,0,0.6)",
-                "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-              }}>
-              Cancel
-            </Button>
-            <Button
-              onClick={handleCreateProfile}
-              disabled={profileDialogLoading}
-              sx={{
-                textTransform: "none",
-                fontSize: 13,
-                bgcolor: "black",
-                color: "white",
-                px: 3,
-                borderRadius: 2,
-                "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-              }}>
-              {profileDialogLoading ? (
-                <CircularProgress size={16} sx={{ color: "white" }} />
-              ) : profileDialogType === "freelancer" ? (
-                "Become a freelancer"
-              ) : (
-                "Become a client"
-              )}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Container>
-    </Box>
+        <Dialog.Root open={profileDialogOpen} onOpenChange={d => { if (!d.open) handleDialogClose(); }} lazyMount unmountOnExit>
+          <Portal>
+            <Dialog.Backdrop className={dlgBackdropCss} />
+            <Dialog.Positioner className={dlgPositionerCss}>
+              <Dialog.Content className={dlgPaperCss}>
+                <div className={dlgContentCss}>
+                  <div className={dlgTitleWrapCss}>
+                    <Dialog.Title className={dlgTitleCss}>
+                      {profileDialogType === "freelancer" ? "Become a freelancer" : "Become a client"}
+                    </Dialog.Title>
+                  </div>
+                  <Dialog.Description className={dlgBodyCss}>
+                    {profileDialogType === "freelancer"
+                      ? "Enable your freelancer account to offer services and apply to jobs. It's free — you can set up your profile next."
+                      : "Enable your client account to post jobs and hire freelancers. It's free and only takes a moment."}
+                  </Dialog.Description>
+                  {profileDialogError && <div className={dlgErrorCss}>{profileDialogError}</div>}
+                </div>
+                <div className={dlgActionsCss}>
+                  <button type='button' onClick={handleDialogClose} disabled={profileDialogLoading} className={dlgCancelCss}>
+                    Cancel
+                  </button>
+                  <button type='button' onClick={handleCreateProfile} disabled={profileDialogLoading} className={dlgPrimaryCss}>
+                    {profileDialogLoading ? (
+                      <Spinner size={16} className={whiteSpinnerCss} />
+                    ) : profileDialogType === "freelancer" ? (
+                      "Become a freelancer"
+                    ) : (
+                      "Become a client"
+                    )}
+                  </button>
+                </div>
+              </Dialog.Content>
+            </Dialog.Positioner>
+          </Portal>
+        </Dialog.Root>
+      </div>
+    </nav>
   );
 }
