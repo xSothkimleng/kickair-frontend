@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 };
 
 const geist = Geist({
-  weight: "400",
+  weight: ["400", "500", "600", "700"],
   subsets: ["latin"],
 });
 
