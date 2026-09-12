@@ -1,226 +1,455 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Box, Button, CircularProgress, Paper, Stack, Typography } from "@mui/material";
 import {
-  ArrowBackIosNew,
-  LockOutlined,
-  CameraAltOutlined,
-  CloudUploadOutlined,
-  ReplayOutlined,
+  BookOpen,
+  Calendar,
+  Camera,
   Check,
+  ChevronLeft,
   ChevronRight,
-  ShieldOutlined,
-  AccessTimeOutlined,
-  BadgeOutlined,
-  MenuBookOutlined,
-  CreditCardOutlined,
-  CenterFocusStrongOutlined,
-  WbSunnyOutlined,
-  CalendarTodayOutlined,
-  HelpOutline,
-  VideocamOffOutlined,
-} from "@mui/icons-material";
+  Clock,
+  CloudUpload,
+  CreditCard,
+  Focus,
+  HelpCircle,
+  IdCard,
+  Lock,
+  RotateCcw,
+  Shield,
+  Sun,
+  VideoOff,
+} from "lucide-react";
+import { css, cva } from "styled-system/css";
+import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { KycDocumentType } from "@/types/user";
-import { C, useObjectUrl } from "./tokens";
+import { useObjectUrl } from "./tokens";
 import CameraCapture from "./CameraCapture";
 
 type DocType = { id: KycDocumentType; label: string; short: string; desc: string; kind: "card" | "passport"; icon: React.ReactNode };
 
 const DOC_TYPES: DocType[] = [
-  { id: "national_id", label: "National ID", short: "ID", desc: "Government-issued ID card", kind: "card", icon: <BadgeOutlined /> },
-  { id: "passport", label: "Passport", short: "passport", desc: "Just the photo page", kind: "passport", icon: <MenuBookOutlined /> },
-  { id: "drivers_license", label: "Driver's License", short: "license", desc: "Front and back", kind: "card", icon: <CreditCardOutlined /> },
+  { id: "national_id", label: "National ID", short: "ID", desc: "Government-issued ID card", kind: "card", icon: <IdCard size={24} /> },
+  { id: "passport", label: "Passport", short: "passport", desc: "Just the photo page", kind: "passport", icon: <BookOpen size={24} /> },
+  { id: "drivers_license", label: "Driver's License", short: "license", desc: "Front and back", kind: "card", icon: <CreditCard size={24} /> },
 ];
 
 type Step = "intro" | "doctype" | "capture" | "selfie" | "review";
 
+// ─── Buttons ────────────────────────────────────────────────────────────────────
+
+/**
+ * The MUI `Button` base the old `sx` overrides sat on: 6px 8px padding, 64px
+ * min-width, 4px radius, 500 weight, 1.75 line-height, no uppercase (the theme
+ * set `textTransform: none` globally) and `color: inherit` on the text variant.
+ */
+const wizButton = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
+    m: 0,
+    p: "6px 8px",
+    minW: "64px",
+    // Long-hand so the `secondary` tone's own border wins regardless of the
+    // order Panda emits the atomic rules in.
+    borderWidth: "0",
+    borderStyle: "none",
+    borderRadius: "4px",
+    bg: "transparent",
+    fontFamily: "inherit",
+    fontSize: "14px",
+    fontWeight: 500,
+    lineHeight: 1.75,
+    textDecoration: "none",
+    verticalAlign: "middle",
+    userSelect: "none",
+    appearance: "none",
+    cursor: "pointer",
+    transition: "background-color .25s cubic-bezier(.4,0,.2,1), box-shadow .25s cubic-bezier(.4,0,.2,1), border-color .25s cubic-bezier(.4,0,.2,1)",
+    _disabled: { pointerEvents: "none", cursor: "default" },
+    "& svg": { flexShrink: 0 },
+  },
+  variants: {
+    tone: {
+      primary: {
+        w: "100%",
+        h: "50px",
+        borderRadius: "11px",
+        fontSize: "16px",
+        fontWeight: 600,
+        bg: "accent",
+        color: "#fff",
+        boxShadow: "none",
+        _hover: { bg: "accentHover", boxShadow: "none" },
+        _disabled: { bg: "fill", color: "placeholder" },
+      },
+      secondary: {
+        w: "100%",
+        h: "48px",
+        borderRadius: "11px",
+        fontSize: "15px",
+        fontWeight: 600,
+        bg: "#fff",
+        color: "body",
+        borderWidth: "1px", borderStyle: "solid", borderColor: "borderStrong",
+        _hover: { bg: "#F8FAFC" },
+      },
+      text: { color: "inherit", _hover: { bg: "rgba(25,118,210,0.04)" } },
+    },
+  },
+});
+
+// MUI's start/end icon slots: 20px glyph, 8px from the label, -4px into the padding.
+const startIconCss = css({ ml: "-4px", mr: "8px" });
+const endIconCss = css({ ml: "8px", mr: "-4px" });
+
+const primaryBtn = wizButton({ tone: "primary" });
+const secondaryBtn = wizButton({ tone: "secondary" });
+const backBtn = css(wizButton.raw({ tone: "text" }), { minW: 0, w: "34px", h: "34px", ml: "-8px", borderRadius: "8px", color: "body" });
+const linkBtnSm = css(wizButton.raw({ tone: "text" }), { fontSize: "13.5px", fontWeight: 600, color: "accent", minW: 0 });
+const linkBtnMd = css(wizButton.raw({ tone: "text" }), { fontSize: "14px", fontWeight: 600, color: "accent", minW: 0 });
+const mutedBtn = css(wizButton.raw({ tone: "text" }), { fontSize: "13.5px", fontWeight: 600, color: "muted" });
+const submitSpinner = css({ color: "#fff", borderColor: "rgba(255,255,255,0.4)", borderTopColor: "#fff" });
+
 // ─── Frame + shared bits ────────────────────────────────────────────────────────
+
+const frameCss = css({ maxW: "480px", mx: "auto", borderRadius: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", overflow: "hidden", bg: "#fff", color: "rgba(0, 0, 0, 0.87)" });
+const frameHeadCss = css({ px: "18px", pt: "12px", pb: "14px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "border" });
+const frameHeadRowCss = css({ display: "flex", alignItems: "center", h: "32px" });
+const spacer26Css = css({ w: "26px" });
+const stepLabelCss = css({ flex: 1, textAlign: "center", fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "muted" });
+const barsRowCss = css({ display: "flex", gap: "5.2px", mt: "11.2px" });
+const barCss = cva({
+  base: { flex: 1, h: "4px", borderRadius: "999px", transition: "background .35s ease" },
+  variants: { on: { true: { bg: "accent" }, false: { bg: "border" } } },
+});
+const frameBodyCss = css({ p: "22px 22px 18px" });
+const frameFooterCss = css({ p: "14px 22px 18px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "border" });
 
 function WizardFrame({ stepNum, onBack, children, footer }: { stepNum?: number; onBack?: () => void; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
-    <Paper elevation={0} sx={{ maxWidth: 480, mx: "auto", borderRadius: 4, border: `1px solid ${C.border}`, overflow: "hidden", bgcolor: "#fff" }}>
+    <div className={frameCss}>
       {stepNum != null && (
-        <Box sx={{ px: 2.25, pt: 1.5, pb: 1.75, borderBottom: `1px solid ${C.border}` }}>
-          <Stack direction="row" alignItems="center" sx={{ height: 32 }}>
+        <div className={frameHeadCss}>
+          <div className={frameHeadRowCss}>
             {onBack ? (
-              <Button onClick={onBack} aria-label="Back" sx={{ minWidth: 0, width: 34, height: 34, ml: -1, borderRadius: 2, color: C.body }}>
-                <ArrowBackIosNew sx={{ fontSize: 16 }} />
-              </Button>
+              <button type="button" onClick={onBack} aria-label="Back" className={backBtn}>
+                <ChevronLeft size={16} />
+              </button>
             ) : (
-              <Box sx={{ width: 26 }} />
+              <div className={spacer26Css} />
             )}
-            <Typography sx={{ flex: 1, textAlign: "center", fontSize: 13, fontWeight: 600, color: C.muted }}>Step {stepNum} of 4</Typography>
-            <Box sx={{ width: 26 }} />
-          </Stack>
-          <Stack direction="row" gap={0.65} sx={{ mt: 1.4 }}>
+            <p className={stepLabelCss}>Step {stepNum} of 4</p>
+            <div className={spacer26Css} />
+          </div>
+          <div className={barsRowCss}>
             {[1, 2, 3, 4].map((i) => (
-              <Box key={i} sx={{ flex: 1, height: 4, borderRadius: 999, bgcolor: i <= stepNum ? C.accent : C.border, transition: "background .35s ease" }} />
+              <div key={i} className={barCss({ on: i <= stepNum })} />
             ))}
-          </Stack>
-        </Box>
+          </div>
+        </div>
       )}
-      <Box sx={{ p: "22px 22px 18px" }}>{children}</Box>
-      {footer && <Box sx={{ p: "14px 22px 18px", borderTop: `1px solid ${C.border}` }}>{footer}</Box>}
-    </Paper>
+      <div className={frameBodyCss}>{children}</div>
+      {footer && <div className={frameFooterCss}>{footer}</div>}
+    </div>
   );
 }
+
+const titleWrapCss = cva({ base: { mb: "20px" }, variants: { center: { true: { textAlign: "center" }, false: { textAlign: "left" } } } });
+// `mb` on the h1 and `m` on the p are dropped: globals.css's unlayered
+// `h1-h6, p { margin: 0 }` already beat the old `sx`, so they never applied.
+const titleCss = css({ fontSize: "22px", fontWeight: 700, color: "heading", letterSpacing: "-.02em", lineHeight: 1.2 });
+const subCss = css({ fontSize: "14.5px", color: "muted", lineHeight: 1.5 });
 
 function Title({ title, sub, center }: { title: string; sub?: string; center?: boolean }) {
   return (
-    <Box sx={{ mb: 2.5, textAlign: center ? "center" : "left" }}>
-      <Typography component="h1" sx={{ m: 0, mb: 0.9, fontSize: 22, fontWeight: 700, color: C.heading, letterSpacing: "-.02em", lineHeight: 1.2 }}>{title}</Typography>
-      {sub && <Typography sx={{ m: 0, fontSize: 14.5, color: C.muted, lineHeight: 1.5 }}>{sub}</Typography>}
-    </Box>
+    <div className={titleWrapCss({ center: !!center })}>
+      <h1 className={titleCss}>{title}</h1>
+      {sub && <p className={subCss}>{sub}</p>}
+    </div>
   );
 }
+
+const reassureCss = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "7.2px", mb: "11.2px", color: "muted" });
+const reassureIconCss = css({ color: "accent" });
+const reassureTextCss = css({ fontSize: "12px", lineHeight: 1.4, textAlign: "center" });
 
 function Reassure() {
   return (
-    <Stack direction="row" alignItems="center" justifyContent="center" gap={0.9} sx={{ mb: 1.4, color: C.muted }}>
-      <LockOutlined sx={{ fontSize: 15, color: C.accent }} />
-      <Typography sx={{ fontSize: 12, lineHeight: 1.4, textAlign: "center" }}>Your documents are encrypted and used only to verify your identity.</Typography>
-    </Stack>
+    <div className={reassureCss}>
+      <Lock size={15} className={reassureIconCss} />
+      <p className={reassureTextCss}>Your documents are encrypted and used only to verify your identity.</p>
+    </div>
   );
 }
 
-const primarySx = { width: "100%", height: 50, borderRadius: 2.75, fontSize: 16, fontWeight: 600, textTransform: "none", bgcolor: C.accent, color: "#fff", boxShadow: "none", "&:hover": { bgcolor: C.accentH, boxShadow: "none" }, "&.Mui-disabled": { bgcolor: C.fill, color: C.ph } } as const;
-const secondarySx = { width: "100%", height: 48, borderRadius: 2.75, fontSize: 15, fontWeight: 600, textTransform: "none", bgcolor: "#fff", color: C.body, border: `1px solid ${C.borderH}`, "&:hover": { bgcolor: "#F8FAFC" } } as const;
-
 // ─── Intro ──────────────────────────────────────────────────────────────────────
+
+const heroWrapCss = css({ display: "flex", justifyContent: "center", mb: "20px", mt: "4px" });
+const heroShieldCss = css({
+  w: "72px",
+  h: "72px",
+  borderRadius: "20px",
+  background: "linear-gradient(135deg, #0071e3 0%, #339bff 100%)",
+  color: "#fff",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxShadow: "0 8px 22px rgba(0,113,227,.30)",
+});
+const rejectBoxCss = css({ mb: "16px", p: "12px 14px", borderRadius: "11px", bg: "#FEF2F2", borderWidth: "1px", borderStyle: "solid", borderColor: "#FBD2D2", display: "flex", gap: "8.8px" });
+const rejectBulletCss = css({ color: "#DC2626", mt: "1px" });
+const rejectTitleCss = css({ fontSize: "12.5px", fontWeight: 700, lineHeight: 1.5, color: "#B91C1C" });
+const rejectBodyCss = css({ fontSize: "13px", color: "#7F1D1D", lineHeight: 1.5 });
+const introListCss = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "border", borderRadius: "14px", px: "16px" });
+const introRowCss = cva({
+  base: { display: "flex", alignItems: "center", gap: "12.8px", py: "12px" },
+  variants: { divided: { true: { borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "border" }, false: {} } },
+});
+const introIconCss = css({ flexShrink: 0, w: "42px", h: "42px", borderRadius: "12px", bg: "fill", color: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
+const introRowTitleCss = css({ fontSize: "14.5px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
+const introRowSubCss = css({ fontSize: "13px", lineHeight: 1.5, color: "muted" });
+
+const INTRO_ITEMS = [
+  { icon: <IdCard size={24} />, title: "A government-issued ID", sub: "National ID, passport or driver's license" },
+  { icon: <Camera size={24} />, title: "A quick live selfie", sub: "So we know it's really you" },
+  { icon: <Clock size={24} />, title: "About 2 minutes", sub: "We'll review it within 1–2 business days" },
+];
 
 function IntroStep({ rejection, onStart }: { rejection?: string | null; onStart: () => void }) {
   return (
-    <WizardFrame footer={<><Reassure /><Button onClick={onStart} endIcon={<ChevronRight />} sx={primarySx}>{rejection ? "Start over" : "Get started"}</Button></>}>
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5, mt: 0.5 }}>
-        <Box sx={{ width: 72, height: 72, borderRadius: 5, background: `linear-gradient(135deg, ${C.accent} 0%, #339bff 100%)`, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 8px 22px rgba(0,113,227,.30)" }}>
-          <ShieldOutlined sx={{ fontSize: 36 }} />
-        </Box>
-      </Box>
+    <WizardFrame
+      footer={
+        <>
+          <Reassure />
+          <button type="button" onClick={onStart} className={primaryBtn}>
+            {rejection ? "Start over" : "Get started"}
+            <ChevronRight size={20} className={endIconCss} />
+          </button>
+        </>
+      }
+    >
+      <div className={heroWrapCss}>
+        <div className={heroShieldCss}>
+          <Shield size={36} />
+        </div>
+      </div>
       <Title center title="Verify your identity" sub="A quick check keeps KickAir safe for everyone. It usually takes about 2 minutes." />
 
       {rejection && (
-        <Box sx={{ mb: 2, p: "12px 14px", borderRadius: 2.75, bgcolor: C.redBg, border: `1px solid ${C.redBd}`, display: "flex", gap: 1.1 }}>
-          <Box sx={{ color: C.red, mt: "1px" }}>•</Box>
-          <Box>
-            <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: "#B91C1C", mb: 0.3 }}>Your last submission was rejected</Typography>
-            <Typography sx={{ fontSize: 13, color: "#7F1D1D", lineHeight: 1.5 }}>{rejection}</Typography>
-          </Box>
-        </Box>
+        <div className={rejectBoxCss}>
+          <div className={rejectBulletCss}>•</div>
+          <div>
+            <p className={rejectTitleCss}>Your last submission was rejected</p>
+            <p className={rejectBodyCss}>{rejection}</p>
+          </div>
+        </div>
       )}
 
-      <Box sx={{ border: `1px solid ${C.border}`, borderRadius: 3.5, px: 2 }}>
-        {[
-          { icon: <BadgeOutlined />, title: "A government-issued ID", sub: "National ID, passport or driver's license" },
-          { icon: <CameraAltOutlined />, title: "A quick live selfie", sub: "So we know it's really you" },
-          { icon: <AccessTimeOutlined />, title: "About 2 minutes", sub: "We'll review it within 1–2 business days" },
-        ].map((it, i) => (
-          <Stack key={it.title} direction="row" alignItems="center" gap={1.6} sx={{ py: 1.5, borderTop: i ? `1px solid ${C.border}` : "none" }}>
-            <Box sx={{ flexShrink: 0, width: 42, height: 42, borderRadius: 3, bgcolor: C.fill, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>{it.icon}</Box>
-            <Box>
-              <Typography sx={{ fontSize: 14.5, fontWeight: 600, color: C.heading }}>{it.title}</Typography>
-              <Typography sx={{ fontSize: 13, color: C.muted }}>{it.sub}</Typography>
-            </Box>
-          </Stack>
+      <div className={introListCss}>
+        {INTRO_ITEMS.map((it, i) => (
+          <div key={it.title} className={introRowCss({ divided: !!i })}>
+            <div className={introIconCss}>{it.icon}</div>
+            <div>
+              <p className={introRowTitleCss}>{it.title}</p>
+              <p className={introRowSubCss}>{it.sub}</p>
+            </div>
+          </div>
         ))}
-      </Box>
+      </div>
     </WizardFrame>
   );
 }
 
 // ─── Step 1: document type ───────────────────────────────────────────────────────
 
+const docListCss = css({ display: "flex", flexDirection: "column", gap: "11.2px" });
+const docTileCss = cva({
+  base: {
+    display: "flex",
+    alignItems: "center",
+    gap: "15.2px",
+    w: "100%",
+    boxSizing: "border-box",
+    textAlign: "left",
+    p: "16px",
+    borderRadius: "13px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "border-color .15s, background .15s",
+  },
+  variants: {
+    selected: {
+      true: { bg: "#EFF6FF", borderWidth: "1.5px", borderStyle: "solid", borderColor: "accent", _hover: { borderColor: "accent" } },
+      false: { bg: "#fff", borderWidth: "1.5px", borderStyle: "solid", borderColor: "border", _hover: { borderColor: "borderStrong" } },
+    },
+  },
+});
+const docTileIconCss = cva({
+  base: { flexShrink: 0, w: "52px", h: "52px", borderRadius: "13px", display: "flex", alignItems: "center", justifyContent: "center" },
+  variants: { selected: { true: { bg: "#fff", color: "accent" }, false: { bg: "fill", color: "body" } } },
+});
+const docTileTextCss = css({ flex: 1, minW: 0 });
+const docTileLabelCss = css({ fontSize: "15.5px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
+const docTileDescCss = css({ fontSize: "13px", lineHeight: 1.5, color: "muted" });
+const docRadioCss = cva({
+  base: { flexShrink: 0, w: "23px", h: "23px", borderRadius: "50%", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" },
+  variants: { selected: { true: { borderWidth: "2px", borderStyle: "solid", borderColor: "accent", bg: "accent" }, false: { borderWidth: "2px", borderStyle: "solid", borderColor: "borderStrong", bg: "#fff" } } },
+});
+
 function DocTypeStep({ value, onChange, onBack, onContinue }: { value: KycDocumentType | null; onChange: (id: KycDocumentType) => void; onBack: () => void; onContinue: () => void }) {
   return (
-    <WizardFrame stepNum={1} onBack={onBack} footer={<><Reassure /><Button disabled={!value} onClick={onContinue} endIcon={<ChevronRight />} sx={primarySx}>Continue</Button></>}>
+    <WizardFrame
+      stepNum={1}
+      onBack={onBack}
+      footer={
+        <>
+          <Reassure />
+          <button type="button" disabled={!value} onClick={onContinue} className={primaryBtn}>
+            Continue
+            <ChevronRight size={20} className={endIconCss} />
+          </button>
+        </>
+      }
+    >
       <Title title="Choose your document" sub="Pick the ID you'd like to verify with. Make sure it's current and not expired." />
-      <Stack gap={1.4}>
+      <div className={docListCss}>
         {DOC_TYPES.map((t) => {
           const selected = value === t.id;
           return (
-            <Box
-              key={t.id}
-              component="button"
-              onClick={() => onChange(t.id)}
-              aria-pressed={selected}
-              sx={{ display: "flex", alignItems: "center", gap: 1.9, width: "100%", textAlign: "left", p: "16px", borderRadius: 3.25, cursor: "pointer", fontFamily: "inherit", bgcolor: selected ? C.accentBg : "#fff", border: `1.5px solid ${selected ? C.accent : C.border}`, transition: "border-color .15s, background .15s", "&:hover": { borderColor: selected ? C.accent : C.borderH } }}
-            >
-              <Box sx={{ flexShrink: 0, width: 52, height: 52, borderRadius: 3.25, bgcolor: selected ? "#fff" : C.fill, color: selected ? C.accent : C.body, display: "flex", alignItems: "center", justifyContent: "center" }}>{t.icon}</Box>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography sx={{ fontSize: 15.5, fontWeight: 600, color: C.heading }}>{t.label}</Typography>
-                <Typography sx={{ fontSize: 13, color: C.muted }}>{t.desc}</Typography>
-              </Box>
-              <Box sx={{ flexShrink: 0, width: 23, height: 23, borderRadius: "50%", border: `2px solid ${selected ? C.accent : C.borderH}`, bgcolor: selected ? C.accent : "#fff", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                {selected && <Check sx={{ fontSize: 15 }} />}
-              </Box>
-            </Box>
+            <button key={t.id} onClick={() => onChange(t.id)} aria-pressed={selected} className={docTileCss({ selected })}>
+              <div className={docTileIconCss({ selected })}>{t.icon}</div>
+              <div className={docTileTextCss}>
+                <p className={docTileLabelCss}>{t.label}</p>
+                <p className={docTileDescCss}>{t.desc}</p>
+              </div>
+              <div className={docRadioCss({ selected })}>{selected && <Check size={15} />}</div>
+            </button>
           );
         })}
-      </Stack>
+      </div>
     </WizardFrame>
   );
 }
 
 // ─── Step 2: document capture ────────────────────────────────────────────────────
 
+const tileLabelCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "body" });
+const previewFrameCss = css({ position: "relative", borderRadius: "11px", overflow: "hidden", borderWidth: "1.5px", borderStyle: "solid", borderColor: "#A7F3D0" });
+const previewImgCss = css({ w: "100%", aspectRatio: "1.55 / 1", objectFit: "cover", display: "block" });
+const previewCheckCss = css({ position: "absolute", top: "7px", right: "7px", w: "24px", h: "24px", borderRadius: "50%", bg: "#047857", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" });
+const previewRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "8px" });
+const previewOkCss = css({ display: "flex", alignItems: "center", gap: "4.8px", color: "#047857" });
+const previewOkTextCss = css({ fontSize: "12.5px", fontWeight: 600, lineHeight: 1.5 });
+const dropzoneCss = css({
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  w: "100%",
+  boxSizing: "border-box",
+  aspectRatio: "1.55 / 1",
+  borderRadius: "11px",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  bg: "fill",
+  borderWidth: "2px", borderStyle: "dashed", borderColor: "borderStrong",
+  transition: "all .15s",
+  _hover: { bg: "#EFF6FF", borderColor: "accent" },
+});
+const dropzoneIconCss = css({ color: "muted", mb: "8px" });
+const dropzoneTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
+const dropzoneSubCss = css({ fontSize: "11.5px", lineHeight: 1.5, color: "muted" });
+
 function UploadTile({ label, file, onFile, onClear }: { label: string; file: File | null; onFile: (f: File) => void; onClear: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const url = useObjectUrl(file);
   return (
-    <Box>
-      <Typography sx={{ fontSize: 13, fontWeight: 600, color: C.body, mb: 1 }}>{label}</Typography>
+    <div>
+      <p className={tileLabelCss}>{label}</p>
       <input ref={inputRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) onFile(f); e.target.value = ""; }} />
       {file && url ? (
-        <Box>
-          <Box sx={{ position: "relative", borderRadius: 2.75, overflow: "hidden", border: `1.5px solid ${C.greenBd}` }}>
-            <Box component="img" src={url} alt={label} sx={{ width: "100%", aspectRatio: "1.55 / 1", objectFit: "cover", display: "block" }} />
-            <Box sx={{ position: "absolute", top: 7, right: 7, width: 24, height: 24, borderRadius: "50%", bgcolor: C.green, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Check sx={{ fontSize: 15 }} /></Box>
-          </Box>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1 }}>
-            <Stack direction="row" alignItems="center" gap={0.6} sx={{ color: C.green }}>
-              <Check sx={{ fontSize: 15 }} />
-              <Typography sx={{ fontSize: 12.5, fontWeight: 600 }}>Looks good</Typography>
-            </Stack>
-            <Button onClick={onClear} startIcon={<ReplayOutlined sx={{ fontSize: 15 }} />} sx={{ textTransform: "none", fontSize: 13.5, fontWeight: 600, color: C.accent, minWidth: 0 }}>Retake</Button>
-          </Stack>
-        </Box>
+        <div>
+          <div className={previewFrameCss}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={url} alt={label} className={previewImgCss} />
+            <div className={previewCheckCss}><Check size={15} /></div>
+          </div>
+          <div className={previewRowCss}>
+            <div className={previewOkCss}>
+              <Check size={15} />
+              <p className={previewOkTextCss}>Looks good</p>
+            </div>
+            <button type="button" onClick={onClear} className={linkBtnSm}>
+              <RotateCcw size={20} className={startIconCss} />
+              Retake
+            </button>
+          </div>
+        </div>
       ) : (
-        <Box
-          component="button"
-          onClick={() => inputRef.current?.click()}
-          sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", width: "100%", aspectRatio: "1.55 / 1", borderRadius: 2.75, cursor: "pointer", fontFamily: "inherit", bgcolor: C.fill, border: `2px dashed ${C.borderH}`, transition: "all .15s", "&:hover": { bgcolor: C.accentBg, borderColor: C.accent } }}
-        >
-          <CameraAltOutlined sx={{ fontSize: 24, color: C.muted, mb: 1 }} />
-          <Typography sx={{ fontSize: 13, fontWeight: 600, color: C.heading }}>Add a photo</Typography>
-          <Typography sx={{ fontSize: 11.5, color: C.muted, mt: 0.5 }}>Show all 4 corners</Typography>
-        </Box>
+        <button onClick={() => inputRef.current?.click()} className={dropzoneCss}>
+          <Camera size={24} className={dropzoneIconCss} />
+          <p className={dropzoneTitleCss}>Add a photo</p>
+          <p className={dropzoneSubCss}>Show all 4 corners</p>
+        </button>
       )}
-    </Box>
+    </div>
   );
 }
+
+const captureGridCss = cva({
+  base: { display: "grid", gap: "12px" },
+  variants: { card: { true: { gridTemplateColumns: "1fr 1fr", maxW: "none" }, false: { gridTemplateColumns: "1fr", maxW: "320px" } } },
+});
+const hintsRowCss = css({ display: "flex", gap: "8px", flexWrap: "wrap", mt: "16px" });
+const hintChipCss = css({ display: "flex", alignItems: "center", gap: "6px", h: "30px", px: "11.2px", borderRadius: "8px", bg: "fill", color: "body", fontSize: "12.5px", fontWeight: 500 });
+const hintIconCss = css({ display: "flex", color: "#047857" });
+const helpBoxCss = css({ display: "flex", gap: "8.8px", mt: "16px", p: "12px 13px", borderRadius: "11px", bg: "fill" });
+const helpIconCss = css({ color: "muted", flexShrink: 0, mt: "1px" });
+const helpTextCss = css({ fontSize: "12.5px", color: "body", lineHeight: 1.5 });
+
+const CAPTURE_HINTS: [string, React.ReactNode][] = [
+  ["In focus", <Focus key="a" size={15} />],
+  ["No glare", <Sun key="b" size={15} />],
+  ["Not expired", <Calendar key="c" size={14} />],
+];
 
 function CaptureStep({ docType, front, back, setFront, setBack, onBack, onContinue }: { docType: DocType; front: File | null; back: File | null; setFront: (f: File | null) => void; setBack: (f: File | null) => void; onBack: () => void; onContinue: () => void }) {
   const isCard = docType.kind === "card";
   const done = front != null && (!isCard || back != null);
   return (
-    <WizardFrame stepNum={2} onBack={onBack} footer={<><Reassure /><Button disabled={!done} onClick={onContinue} endIcon={<ChevronRight />} sx={primarySx}>Continue</Button></>}>
+    <WizardFrame
+      stepNum={2}
+      onBack={onBack}
+      footer={
+        <>
+          <Reassure />
+          <button type="button" disabled={!done} onClick={onContinue} className={primaryBtn}>
+            Continue
+            <ChevronRight size={20} className={endIconCss} />
+          </button>
+        </>
+      }
+    >
       <Title title={`Photograph your ${docType.short}`} sub={isCard ? "Capture both sides on a flat surface with good lighting." : "Capture the photo page — the one with your picture and details."} />
-      <Box sx={{ display: "grid", gridTemplateColumns: isCard ? "1fr 1fr" : "1fr", gap: 1.5, maxWidth: isCard ? "none" : 320 }}>
+      <div className={captureGridCss({ card: isCard })}>
         <UploadTile label={isCard ? "Front" : "Photo page"} file={front} onFile={setFront} onClear={() => setFront(null)} />
         {isCard && <UploadTile label="Back" file={back} onFile={setBack} onClear={() => setBack(null)} />}
-      </Box>
-      <Stack direction="row" gap={1} flexWrap="wrap" sx={{ mt: 2 }}>
-        {[["In focus", <CenterFocusStrongOutlined key="a" sx={{ fontSize: 15 }} />], ["No glare", <WbSunnyOutlined key="b" sx={{ fontSize: 15 }} />], ["Not expired", <CalendarTodayOutlined key="c" sx={{ fontSize: 14 }} />]].map(([t, ic]) => (
-          <Stack key={t as string} direction="row" alignItems="center" gap={0.75} sx={{ height: 30, px: 1.4, borderRadius: 2, bgcolor: C.fill, color: C.body, fontSize: 12.5, fontWeight: 500 }}>
-            <Box sx={{ display: "flex", color: C.green }}>{ic as React.ReactNode}</Box>{t as string}
-          </Stack>
+      </div>
+      <div className={hintsRowCss}>
+        {CAPTURE_HINTS.map(([t, ic]) => (
+          <div key={t} className={hintChipCss}>
+            <div className={hintIconCss}>{ic}</div>{t}
+          </div>
         ))}
-      </Stack>
-      <Stack direction="row" gap={1.1} sx={{ mt: 2, p: "12px 13px", borderRadius: 2.75, bgcolor: C.fill }}>
-        <HelpOutline sx={{ fontSize: 18, color: C.muted, flexShrink: 0, mt: "1px" }} />
-        <Typography sx={{ fontSize: 12.5, color: C.body, lineHeight: 1.5 }}>Place your ID on a dark, flat surface and avoid covering any corner with your fingers.</Typography>
-      </Stack>
+      </div>
+      <div className={helpBoxCss}>
+        <HelpCircle size={18} className={helpIconCss} />
+        <p className={helpTextCss}>Place your ID on a dark, flat surface and avoid covering any corner with your fingers.</p>
+      </div>
     </WizardFrame>
   );
 }
@@ -228,6 +457,19 @@ function CaptureStep({ docType, front, back, setFront, setBack, onBack, onContin
 // ─── Step 3: live selfie ─────────────────────────────────────────────────────────
 
 type Cam = "prompt" | "camera" | "preview" | "denied";
+
+const stackBelowCss = css({ mt: "8.8px" });
+const deniedTileCss = css({ w: "72px", h: "72px", borderRadius: "20px", bg: "#FFFBEB", color: "#B45309", display: "flex", alignItems: "center", justifyContent: "center" });
+const deniedBoxCss = css({ p: "14px 16px", borderRadius: "12px", bg: "#FFFBEB", borderWidth: "1px", borderStyle: "solid", borderColor: "#FCD9A6" });
+const deniedBoxTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#B45309" });
+const deniedListCss = css({ m: 0, pl: "18px", fontSize: "13px", color: "body", lineHeight: 1.7 });
+const selfiePreviewWrapCss = css({ display: "flex", justifyContent: "center", my: "8px" });
+const selfiePreviewImgCss = css({ w: "210px", h: "210px", borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", boxShadow: "0 6px 20px rgba(15,23,42,.22)" });
+const promptTileCss = css({ w: "72px", h: "72px", borderRadius: "20px", bg: "#EFF6FF", color: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
+const promptNoteCss = css({ display: "flex", gap: "8.8px", p: "14px 16px", borderRadius: "12px", bg: "#fff", borderWidth: "1px", borderStyle: "solid", borderColor: "border" });
+const promptNoteIconCss = css({ color: "accent", flexShrink: 0, mt: "1px" });
+const promptNoteTextCss = css({ fontSize: "13px", color: "body", lineHeight: 1.55 });
+const centerRowCss = css({ display: "flex", justifyContent: "center", mt: "4px" });
 
 function SelfieStep({ selfie, setSelfie, onBack, onContinue }: { selfie: File | null; setSelfie: (f: File | null) => void; onBack: () => void; onContinue: () => void }) {
   const [cam, setCam] = useState<Cam>(selfie ? "preview" : "prompt");
@@ -250,26 +492,32 @@ function SelfieStep({ selfie, setSelfie, onBack, onContinue }: { selfie: File | 
         onBack={onBack}
         footer={
           <>
-            <Button onClick={() => setCam("camera")} startIcon={<ReplayOutlined />} sx={primarySx}>Try the camera again</Button>
-            <Box sx={{ mt: 1.1 }}>
+            <button type="button" onClick={() => setCam("camera")} className={primaryBtn}>
+              <RotateCcw size={20} className={startIconCss} />
+              Try the camera again
+            </button>
+            <div className={stackBelowCss}>
               <input ref={uploadRef} type="file" accept="image/*" hidden onChange={(e) => { const f = e.target.files?.[0]; if (f) { setSelfie(f); setCam("preview"); } e.target.value = ""; }} />
-              <Button onClick={() => uploadRef.current?.click()} startIcon={<CloudUploadOutlined />} sx={secondarySx}>Upload a photo instead</Button>
-            </Box>
+              <button type="button" onClick={() => uploadRef.current?.click()} className={secondaryBtn}>
+                <CloudUpload size={20} className={startIconCss} />
+                Upload a photo instead
+              </button>
+            </div>
           </>
         }
       >
-        <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5, mt: 0.5 }}>
-          <Box sx={{ width: 72, height: 72, borderRadius: 5, bgcolor: C.amberBg, color: C.amber, display: "flex", alignItems: "center", justifyContent: "center" }}><VideocamOffOutlined sx={{ fontSize: 34 }} /></Box>
-        </Box>
+        <div className={heroWrapCss}>
+          <div className={deniedTileCss}><VideoOff size={34} /></div>
+        </div>
         <Title center title="We can't reach your camera" sub="It may be blocked or in use by another app. Re-enable it, or upload a clear photo of yourself this once." />
-        <Box sx={{ p: "14px 16px", borderRadius: 3, bgcolor: C.amberBg, border: `1px solid ${C.amberBd}` }}>
-          <Typography sx={{ fontSize: 13, fontWeight: 600, color: C.amber, mb: 0.9 }}>To turn the camera on</Typography>
-          <Box component="ol" sx={{ m: 0, pl: 2.25, fontSize: 13, color: C.body, lineHeight: 1.7 }}>
+        <div className={deniedBoxCss}>
+          <p className={deniedBoxTitleCss}>To turn the camera on</p>
+          <ol className={deniedListCss}>
             <li>Open your browser&apos;s site settings.</li>
             <li>Allow camera access for KickAir.</li>
             <li>Return here and tap &quot;Try the camera again&quot;.</li>
-          </Box>
-        </Box>
+          </ol>
+        </div>
       </WizardFrame>
     );
   }
@@ -281,15 +529,24 @@ function SelfieStep({ selfie, setSelfie, onBack, onContinue }: { selfie: File | 
         onBack={onBack}
         footer={
           <>
-            <Button onClick={onContinue} startIcon={<Check />} sx={primarySx}>Use photo</Button>
-            <Box sx={{ mt: 1.1 }}><Button onClick={() => { setSelfie(null); setCam("camera"); }} startIcon={<ReplayOutlined />} sx={secondarySx}>Retake</Button></Box>
+            <button type="button" onClick={onContinue} className={primaryBtn}>
+              <Check size={20} className={startIconCss} />
+              Use photo
+            </button>
+            <div className={stackBelowCss}>
+              <button type="button" onClick={() => { setSelfie(null); setCam("camera"); }} className={secondaryBtn}>
+                <RotateCcw size={20} className={startIconCss} />
+                Retake
+              </button>
+            </div>
           </>
         }
       >
         <Title center title="How does this look?" sub="Make sure your face is clear, evenly lit and fully inside the frame." />
-        <Box sx={{ display: "flex", justifyContent: "center", my: 1 }}>
-          <Box component="img" src={previewUrl} alt="Selfie preview" sx={{ width: 210, height: 210, borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", boxShadow: "0 6px 20px rgba(15,23,42,.22)" }} />
-        </Box>
+        <div className={selfiePreviewWrapCss}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src={previewUrl} alt="Selfie preview" className={selfiePreviewImgCss} />
+        </div>
       </WizardFrame>
     );
   }
@@ -302,79 +559,139 @@ function SelfieStep({ selfie, setSelfie, onBack, onContinue }: { selfie: File | 
       footer={
         <>
           <Reassure />
-          <Button onClick={() => setCam("camera")} startIcon={<CameraAltOutlined />} sx={primarySx}>Allow camera access</Button>
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 0.5 }}>
-            <Button onClick={() => setCam("denied")} sx={{ textTransform: "none", fontSize: 13.5, fontWeight: 600, color: C.muted }}>Camera not working?</Button>
-          </Box>
+          <button type="button" onClick={() => setCam("camera")} className={primaryBtn}>
+            <Camera size={20} className={startIconCss} />
+            Allow camera access
+          </button>
+          <div className={centerRowCss}>
+            <button type="button" onClick={() => setCam("denied")} className={mutedBtn}>Camera not working?</button>
+          </div>
         </>
       }
     >
-      <Box sx={{ display: "flex", justifyContent: "center", mb: 2.5, mt: 0.5 }}>
-        <Box sx={{ width: 72, height: 72, borderRadius: 5, bgcolor: C.accentBg, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}><CameraAltOutlined sx={{ fontSize: 34 }} /></Box>
-      </Box>
+      <div className={heroWrapCss}>
+        <div className={promptTileCss}><Camera size={34} /></div>
+      </div>
       <Title center title="Take a live selfie" sub="We'll match your face to your document. This must be a live photo — gallery uploads aren't accepted unless your camera is unavailable." />
-      <Stack direction="row" gap={1.1} sx={{ p: "14px 16px", borderRadius: 3, bgcolor: "#fff", border: `1px solid ${C.border}` }}>
-        <LockOutlined sx={{ fontSize: 16, color: C.accent, flexShrink: 0, mt: "1px" }} />
-        <Typography sx={{ fontSize: 13, color: C.body, lineHeight: 1.55 }}>KickAir needs camera access for this step only. Your selfie is never shown on your public profile.</Typography>
-      </Stack>
+      <div className={promptNoteCss}>
+        <Lock size={16} className={promptNoteIconCss} />
+        <p className={promptNoteTextCss}>KickAir needs camera access for this step only. Your selfie is never shown on your public profile.</p>
+      </div>
     </WizardFrame>
   );
 }
 
 // ─── Step 4: review & submit ─────────────────────────────────────────────────────
 
+const thumbCss = css({ flex: "1 1 110px", minW: "100px", maxW: "150px" });
+const thumbLabelCss = css({ fontSize: "11.5px", fontWeight: 600, lineHeight: 1.5, color: "muted" });
+const thumbFrameCss = css({ position: "relative", borderRadius: "10px", overflow: "hidden", borderWidth: "1px", borderStyle: "solid", borderColor: "border" });
+const thumbImgCss = css({ w: "100%", aspectRatio: "1.55 / 1", objectFit: "cover", display: "block" });
+const thumbCheckCss = css({ position: "absolute", top: "5px", right: "5px", w: "20px", h: "20px", borderRadius: "50%", bg: "#047857", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" });
+
 function Thumb({ label, file }: { label: string; file: File }) {
   const url = useObjectUrl(file);
   return (
-    <Box sx={{ flex: "1 1 110px", minWidth: 100, maxWidth: 150 }}>
-      <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: C.muted, mb: 0.75 }}>{label}</Typography>
-      <Box sx={{ position: "relative", borderRadius: 2.5, overflow: "hidden", border: `1px solid ${C.border}` }}>
-        {url && <Box component="img" src={url} alt={label} sx={{ width: "100%", aspectRatio: "1.55 / 1", objectFit: "cover", display: "block" }} />}
-        <Box sx={{ position: "absolute", top: 5, right: 5, width: 20, height: 20, borderRadius: "50%", bgcolor: C.green, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}><Check sx={{ fontSize: 13 }} /></Box>
-      </Box>
-    </Box>
+    <div className={thumbCss}>
+      <p className={thumbLabelCss}>{label}</p>
+      <div className={thumbFrameCss}>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        {url && <img src={url} alt={label} className={thumbImgCss} />}
+        <div className={thumbCheckCss}><Check size={13} /></div>
+      </div>
+    </div>
   );
 }
+
+const reviewErrorCss = css({ mb: "14px", p: "11px 14px", borderRadius: "10px", bg: "#FEF2F2", borderWidth: "1px", borderStyle: "solid", borderColor: "#FBD2D2", color: "#B91C1C", fontSize: "13px" });
+const docSummaryCss = css({ display: "flex", alignItems: "center", gap: "12.8px", p: "14px 15px", borderRadius: "13px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", mb: "12px" });
+const docSummaryIconCss = css({ flexShrink: 0, w: "46px", h: "46px", borderRadius: "12px", bg: "fill", color: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
+const docSummaryTextCss = css({ flex: 1, minW: 0 });
+const overlineCss = css({ fontSize: "11.5px", fontWeight: 600, lineHeight: 1.5, letterSpacing: ".04em", textTransform: "uppercase", color: "muted" });
+const docSummaryLabelCss = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
+const photosBoxCss = css({ p: "16px 15px", borderRadius: "13px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", mb: "14px" });
+const photosHeadCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "12.8px" });
+const photosRowCss = css({ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-end" });
+const selfieBlockCss = css({ flexShrink: 0 });
+const selfieThumbWrapCss = css({ position: "relative" });
+const selfieThumbImgCss = css({ w: "72px", h: "72px", borderRadius: "50%", objectFit: "cover" });
+const selfieThumbCheckCss = css({ position: "absolute", top: "2px", right: "2px", w: "20px", h: "20px", borderRadius: "50%", bg: "#047857", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 3px rgba(15,23,42,.25)" });
+const consentCss = cva({
+  base: {
+    display: "flex",
+    alignItems: "flex-start",
+    gap: "11.2px",
+    w: "100%",
+    boxSizing: "border-box",
+    textAlign: "left",
+    p: "14px",
+    borderRadius: "12px",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "all .15s",
+  },
+  variants: { on: { true: { bg: "#EFF6FF", borderWidth: "1.5px", borderStyle: "solid", borderColor: "accent" }, false: { bg: "#fff", borderWidth: "1.5px", borderStyle: "solid", borderColor: "border" } } },
+});
+const consentBoxCss = cva({
+  base: { flexShrink: 0, mt: "1px", w: "22px", h: "22px", borderRadius: "8px", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" },
+  variants: { on: { true: { borderWidth: "2px", borderStyle: "solid", borderColor: "accent", bg: "accent" }, false: { borderWidth: "2px", borderStyle: "solid", borderColor: "borderStrong", bg: "#fff" } } },
+});
+const consentTextCss = css({ fontSize: "13.5px", color: "body", lineHeight: 1.5 });
 
 function ReviewStep({ docType, front, back, selfie, consent, setConsent, submitting, error, onBack, onEditDoc, onEditSelfie, onSubmit }: { docType: DocType; front: File; back: File | null; selfie: File; consent: boolean; setConsent: (v: boolean) => void; submitting: boolean; error: string | null; onBack: () => void; onEditDoc: () => void; onEditSelfie: () => void; onSubmit: () => void }) {
   const selfieUrl = useObjectUrl(selfie);
   return (
-    <WizardFrame stepNum={4} onBack={onBack} footer={<><Reassure /><Button disabled={!consent || submitting} onClick={onSubmit} sx={primarySx}>{submitting ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : "Submit for verification"}</Button></>}>
+    <WizardFrame
+      stepNum={4}
+      onBack={onBack}
+      footer={
+        <>
+          <Reassure />
+          <button type="button" disabled={!consent || submitting} onClick={onSubmit} className={primaryBtn}>
+            {submitting ? <Spinner size={20} className={submitSpinner} /> : "Submit for verification"}
+          </button>
+        </>
+      }
+    >
       <Title title="Review and submit" sub="Check everything looks right before sending it to our team." />
 
-      {error && <Box sx={{ mb: 1.75, p: "11px 14px", borderRadius: 2.5, bgcolor: C.redBg, border: `1px solid ${C.redBd}`, color: "#B91C1C", fontSize: 13 }}>{error}</Box>}
+      {error && <div className={reviewErrorCss}>{error}</div>}
 
-      <Stack direction="row" alignItems="center" gap={1.6} sx={{ p: "14px 15px", borderRadius: 3.25, border: `1px solid ${C.border}`, mb: 1.5 }}>
-        <Box sx={{ flexShrink: 0, width: 46, height: 46, borderRadius: 3, bgcolor: C.fill, color: C.accent, display: "flex", alignItems: "center", justifyContent: "center" }}>{docType.icon}</Box>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", color: C.muted }}>Document</Typography>
-          <Typography sx={{ fontSize: 15, fontWeight: 600, color: C.heading }}>{docType.label}</Typography>
-        </Box>
-        <Button onClick={onEditDoc} sx={{ textTransform: "none", fontSize: 14, fontWeight: 600, color: C.accent, minWidth: 0 }}>Edit</Button>
-      </Stack>
+      <div className={docSummaryCss}>
+        <div className={docSummaryIconCss}>{docType.icon}</div>
+        <div className={docSummaryTextCss}>
+          <p className={overlineCss}>Document</p>
+          <p className={docSummaryLabelCss}>{docType.label}</p>
+        </div>
+        <button type="button" onClick={onEditDoc} className={linkBtnMd}>Edit</button>
+      </div>
 
-      <Box sx={{ p: "16px 15px", borderRadius: 3.25, border: `1px solid ${C.border}`, mb: 1.75 }}>
-        <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1.6 }}>
-          <Typography sx={{ fontSize: 11.5, fontWeight: 600, letterSpacing: ".04em", textTransform: "uppercase", color: C.muted }}>Your photos</Typography>
-          <Button onClick={onEditSelfie} startIcon={<ReplayOutlined sx={{ fontSize: 15 }} />} sx={{ textTransform: "none", fontSize: 13.5, fontWeight: 600, color: C.accent, minWidth: 0 }}>Retake selfie</Button>
-        </Stack>
-        <Stack direction="row" gap={1.5} flexWrap="wrap" alignItems="flex-end">
+      <div className={photosBoxCss}>
+        <div className={photosHeadCss}>
+          <p className={overlineCss}>Your photos</p>
+          <button type="button" onClick={onEditSelfie} className={linkBtnSm}>
+            <RotateCcw size={20} className={startIconCss} />
+            Retake selfie
+          </button>
+        </div>
+        <div className={photosRowCss}>
           <Thumb label={docType.kind === "passport" ? "Photo page" : "Front"} file={front} />
           {back && <Thumb label="Back" file={back} />}
-          <Box sx={{ flexShrink: 0 }}>
-            <Typography sx={{ fontSize: 11.5, fontWeight: 600, color: C.muted, mb: 0.75 }}>Selfie</Typography>
-            <Box sx={{ position: "relative" }}>
-              {selfieUrl && <Box component="img" src={selfieUrl} alt="Selfie" sx={{ width: 72, height: 72, borderRadius: "50%", objectFit: "cover" }} />}
-              <Box sx={{ position: "absolute", top: 2, right: 2, width: 20, height: 20, borderRadius: "50%", bgcolor: C.green, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 1px 3px rgba(15,23,42,.25)" }}><Check sx={{ fontSize: 13 }} /></Box>
-            </Box>
-          </Box>
-        </Stack>
-      </Box>
+          <div className={selfieBlockCss}>
+            <p className={thumbLabelCss}>Selfie</p>
+            <div className={selfieThumbWrapCss}>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              {selfieUrl && <img src={selfieUrl} alt="Selfie" className={selfieThumbImgCss} />}
+              <div className={selfieThumbCheckCss}><Check size={13} /></div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Box component="button" onClick={() => setConsent(!consent)} aria-pressed={consent} sx={{ display: "flex", alignItems: "flex-start", gap: 1.4, width: "100%", textAlign: "left", p: "14px", borderRadius: 3, cursor: "pointer", fontFamily: "inherit", bgcolor: consent ? C.accentBg : "#fff", border: `1.5px solid ${consent ? C.accent : C.border}`, transition: "all .15s" }}>
-        <Box sx={{ flexShrink: 0, mt: "1px", width: 22, height: 22, borderRadius: 2, border: `2px solid ${consent ? C.accent : C.borderH}`, bgcolor: consent ? C.accent : "#fff", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>{consent && <Check sx={{ fontSize: 15 }} />}</Box>
-        <Typography sx={{ fontSize: 13.5, color: C.body, lineHeight: 1.5 }}>I confirm this is my own valid ID and that the information is accurate.</Typography>
-      </Box>
+      <button onClick={() => setConsent(!consent)} aria-pressed={consent} className={consentCss({ on: consent })}>
+        <div className={consentBoxCss({ on: consent })}>{consent && <Check size={15} />}</div>
+        <p className={consentTextCss}>I confirm this is my own valid ID and that the information is accurate.</p>
+      </button>
     </WizardFrame>
   );
 }

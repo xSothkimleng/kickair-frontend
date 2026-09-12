@@ -1,7 +1,33 @@
-import { Box, Paper, Typography, Grid } from "@mui/material";
+import { css } from "styled-system/css";
 import { TextInput, Switch } from "@/components/ui/inputs";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { ServiceFormData } from "../types";
+
+const sectionCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+const header = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "24px" });
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+const panel = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "16px",
+  pt: "16px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+});
+const noteBox = css({ p: "16px", bg: "rgba(245, 158, 11, 0.05)", borderRadius: "cardSm" });
+const noteText = css({ lineHeight: 1.5, fontSize: "11px", color: "pendingText" });
+const halfGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" }, gap: "16px" });
+const fieldLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 600, color: "ink" });
+const fieldHint = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
 
 interface CustomOrdersSectionProps {
   formData: ServiceFormData;
@@ -19,28 +45,28 @@ export default function CustomOrdersSection({ formData, onFormDataChange }: Cust
   };
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 3 }}>
-        <Box>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 0.5 }}>Custom Orders (Optional)</Typography>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
+    <div className={sectionCard}>
+      <div className={header}>
+        <div>
+          <p className={sectionTitle}>Custom Orders (Optional)</p>
+          <p className={sectionSub}>
             Allow clients to request custom quotes with their own budget and requirements
-          </Typography>
-        </Box>
+          </p>
+        </div>
         <Switch checked={customOrders.enabled} onChange={(c) => handleChange("enabled", c)} />
-      </Box>
+      </div>
 
       {customOrders.enabled && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2, pt: 2, borderTop: "1px solid rgba(0, 0, 0, 0.08)" }}>
-          <Box sx={{ p: 2, bgcolor: "rgba(245, 158, 11, 0.05)", borderRadius: 3 }}>
-            <Typography sx={{ fontSize: 11, color: "#b45309" }}>
+        <div className={panel}>
+          <div className={noteBox}>
+            <p className={noteText}>
               <strong>How it works:</strong> Clients can send you a custom order request with their budget and specific requirements.
               You can review and accept or decline each request.
-            </Typography>
-          </Box>
+            </p>
+          </div>
 
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, md: 6 }}>
+          <div className={halfGrid}>
+            <div>
               <TextInput
                 size="sm"
                 label="Minimum Budget (USD)"
@@ -51,25 +77,25 @@ export default function CustomOrdersSection({ formData, onFormDataChange }: Cust
                 placeholder="100"
                 startIcon="$"
               />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
 
-          <Box>
-            <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black", mb: 0.5 }}>
+          <div>
+            <p className={fieldLabel}>
               Instructions for Clients
-            </Typography>
-            <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)", mb: 1 }}>
+            </p>
+            <p className={fieldHint}>
               Tell clients what information they should provide in their custom order request
-            </Typography>
+            </p>
             <RichTextEditor
               value={customOrders.customInstructions}
               onChange={(html) => handleChange("customInstructions", html)}
               placeholder="Please provide: project description, timeline expectations, budget range, any reference materials…"
               minHeight={120}
             />
-          </Box>
-        </Box>
+          </div>
+        </div>
       )}
-    </Paper>
+    </div>
   );
 }

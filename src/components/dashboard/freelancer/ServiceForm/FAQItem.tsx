@@ -1,7 +1,30 @@
-import { Box, IconButton } from "@mui/material";
-import { CloseOutlined } from "@mui/icons-material";
+import { X } from "lucide-react";
+import { css } from "styled-system/css";
+import { iconButton } from "@/components/ds";
 import { TextInput, TextArea } from "@/components/ui/inputs";
 import { FAQ } from "../types";
+
+const itemBox = css({
+  p: "20px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "cardSm",
+  bg: "rgba(0, 0, 0, 0.01)",
+});
+const row = css({ display: "flex", alignItems: "flex-start", gap: "12px" });
+const fields = css({ flex: 1, display: "flex", flexDirection: "column", gap: "16px" });
+const removeBtn = css(iconButton.raw({ shape: "square" }), {
+  w: "32px",
+  h: "32px",
+  borderRadius: "8px",
+  color: "rgba(0, 0, 0, 0.45)",
+  bg: "rgba(0, 0, 0, 0.05)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  _hover: { color: "#ef4444", bg: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.2)" },
+});
 
 interface FAQItemProps {
   faq: FAQ;
@@ -14,9 +37,9 @@ const MAX_ANSWER_LENGTH = 500;
 
 export default function FAQItem({ faq, onChange, onRemove }: FAQItemProps) {
   return (
-    <Box sx={{ p: 2.5, border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 3, bgcolor: "rgba(0, 0, 0, 0.01)" }}>
-      <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className={itemBox}>
+      <div className={row}>
+        <div className={fields}>
           <TextInput
             label="Question"
             helper={`${faq.question.length}/${MAX_QUESTION_LENGTH}`}
@@ -32,14 +55,12 @@ export default function FAQItem({ faq, onChange, onRemove }: FAQItemProps) {
             minRows={3}
             maxLength={MAX_ANSWER_LENGTH}
           />
-        </Box>
+        </div>
 
-        <IconButton
-          onClick={onRemove}
-          sx={{ p: 1, color: "rgba(0, 0, 0, 0.45)", bgcolor: "rgba(0, 0, 0, 0.05)", border: "1px solid rgba(0, 0, 0, 0.08)", borderRadius: 2, "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.08)", borderColor: "rgba(239, 68, 68, 0.2)" } }}>
-          <CloseOutlined sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Box>
-    </Box>
+        <button type="button" onClick={onRemove} aria-label="Remove FAQ" className={removeBtn}>
+          <X size={16} />
+        </button>
+      </div>
+    </div>
   );
 }

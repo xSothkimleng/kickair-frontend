@@ -2,9 +2,12 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Box, Paper, Typography, Button, Checkbox, FormControlLabel, CircularProgress, Dialog, DialogContent, DialogContentText, DialogActions } from "@mui/material";
-import { ChevronLeftOutlined, RestoreOutlined, VerifiedUserOutlined } from "@mui/icons-material";
-import { Service, ServiceCategory, ServiceMedia, CreateServiceRequest, TemporaryUpload, UploadToken } from "@/types/service";
+import { ChevronLeft, History, ShieldCheck } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Spinner } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
+import { Checkbox } from "@/components/ui/inputs";
+import { Service, ServiceCategory, ServiceMedia, CreateServiceRequest, TemporaryUpload } from "@/types/service";
 import { ServiceFormData } from "../types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
@@ -17,6 +20,166 @@ import CustomOrdersSection from "./CustomOrdersSection";
 
 // TODO: After implementing Message feature
 // import RequirementsSection from "./RequirementsSection";
+
+const page = css({ display: "flex", flexDirection: "column", gap: "16px" });
+/* MUI text `Button` metrics: 500 weight, 1.75 line-height, no padding here. */
+const backBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "8px",
+  m: 0,
+  mb: "16px",
+  p: 0,
+  border: "none",
+  bg: "transparent",
+  color: "ink2",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "color .25s",
+  _hover: { color: "ink" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
+const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+
+const banner = css({
+  borderRadius: "cardSm",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(245, 158, 11, 0.35)",
+  bg: "rgba(245, 158, 11, 0.06)",
+  p: "16px",
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  flexWrap: "wrap",
+});
+const bannerIcon = css({ color: "pendingText", flexShrink: 0 });
+const bannerText = css({ lineHeight: 1.5, fontSize: "13px", color: "#92400e", flex: 1, minW: "200px" });
+const smallBtnBase = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  m: 0,
+  px: "16px",
+  h: "32px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "8px",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "background-color .25s, color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const amberBtn = css({ bg: "pendingText", color: "white", _hover: { bg: "#92400e" } });
+const amberGhostBtn = css({ bg: "transparent", color: "#92400e", _hover: { bg: "rgba(245,158,11,0.12)" } });
+
+const mediaError = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "#ef4444", borderRadius: "card" });
+const errorText = css({ lineHeight: 1.5, fontSize: "12px", color: "#ef4444" });
+
+const termsCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+const termsRow = css({ display: "flex", alignItems: "center" });
+const termsText = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+const termsLink = css({ lineHeight: 1.5, fontSize: "11px", color: "accent", cursor: "pointer", _hover: { textDecoration: "underline" } });
+const actions = css({ display: "flex", alignItems: "center", gap: "12px" });
+/* Base metrics only — `bg`/`cursor` live on the per-button classes so no two
+   atomic classes ever fight (Panda's `cx` concatenates, it can't resolve conflicts). */
+const bigBtnBase = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  m: 0,
+  px: "24px",
+  h: "44px",
+  minW: "64px",
+  border: "none",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  transition: "background-color .25s, color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  _disabled: { pointerEvents: "none" },
+});
+const publishBtn = cva({
+  base: { borderRadius: "40px", color: "white" },
+  variants: {
+    ready: {
+      true: { bg: "ink", cursor: "pointer", _hover: { bg: "rgba(0, 0, 0, 0.8)" } },
+      false: { bg: "rgba(0, 0, 0, 0.2)", cursor: "not-allowed", _hover: { bg: "rgba(0, 0, 0, 0.2)" } },
+    },
+  },
+});
+const draftBtn = css({ borderRadius: "40px", color: "ink", bg: "rgba(0, 0, 0, 0.05)", cursor: "pointer", _hover: { bg: "rgba(0, 0, 0, 0.1)" } });
+const cancelBtn = css({ color: "ink2", bg: "transparent", cursor: "pointer", _hover: { color: "ink", bg: "transparent" } });
+
+/* Saved-as-draft dialog (MUI `Dialog maxWidth="xs" fullWidth` + `PaperProps p:1`). */
+const dialogPanel = css({ p: "8px" });
+const dialogBody = css({ p: "20px 24px", overflowY: "auto", flex: 1 });
+const dialogTitleRow = css({ display: "flex", alignItems: "center", gap: "12px", fontSize: "18px", fontWeight: 600, pt: "8px", mb: "8px", color: "ink" });
+const dialogText = css({ lineHeight: 1.5, fontSize: "14px", color: "rgba(0,0,0,0.75)" });
+const dialogText2 = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(0,0,0,0.55)" });
+const dialogActions = css({ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", p: "8px 24px 16px", flex: "0 0 auto" });
+const dialogTextBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  m: 0,
+  p: "6px 8px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "ink2",
+  fontFamily: "inherit",
+  fontSize: "14px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.04)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const dialogSolidBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  m: 0,
+  p: "6px 20px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "32px",
+  bg: "ink",
+  color: "white",
+  fontFamily: "inherit",
+  fontSize: "14px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
+  transition: "background-color .25s, box-shadow .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.8)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
 
 interface ServiceFormProps {
   service?: Service | null;
@@ -325,93 +488,58 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   };
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className={page}>
       {/* Header */}
-      <Box>
-        <Button
-          onClick={onBack}
-          startIcon={<ChevronLeftOutlined sx={{ fontSize: 16 }} />}
-          sx={{
-            mb: 2,
-            fontSize: 12,
-            color: "rgba(0, 0, 0, 0.6)",
-            textTransform: "none",
-            p: 0,
-            minWidth: "auto",
-            "&:hover": {
-              color: "black",
-              bgcolor: "transparent",
-            },
-          }}>
+      <div>
+        <button type="button" onClick={onBack} className={backBtn}>
+          <ChevronLeft size={16} />
           Back to Services
-        </Button>
-        <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>
+        </button>
+        <p className={pageTitle}>
           {isEditing ? "Edit Service" : "Create New Service"}
-        </Typography>
-        <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>
+        </p>
+        <p className={pageSub}>
           Fill in the details about your service offering
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Unsaved-changes recovery banner (local-storage safety net) */}
       {recovered && (
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: 3,
-            border: "1px solid rgba(245, 158, 11, 0.35)",
-            bgcolor: "rgba(245, 158, 11, 0.06)",
-            p: 2,
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            flexWrap: "wrap",
-          }}>
-          <RestoreOutlined sx={{ fontSize: 20, color: "#b45309" }} />
-          <Typography sx={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+        <div className={banner}>
+          <History size={20} className={bannerIcon} />
+          <p className={bannerText}>
             You have unsaved changes from a previous session.
-          </Typography>
-          <Button
+          </p>
+          <button
+            type="button"
             onClick={() => { setFormData(recovered.data); dismissRecovery(); }}
-            sx={{ px: 2, height: 32, fontSize: 12, color: "white", bgcolor: "#b45309", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "#92400e" } }}>
+            className={cx(smallBtnBase, amberBtn)}>
             Restore
-          </Button>
-          <Button
-            onClick={discardRecovery}
-            sx={{ px: 2, height: 32, fontSize: 12, color: "#92400e", bgcolor: "transparent", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "rgba(245,158,11,0.12)" } }}>
+          </button>
+          <button type="button" onClick={discardRecovery} className={cx(smallBtnBase, amberGhostBtn)}>
             Discard
-          </Button>
-        </Paper>
+          </button>
+        </div>
       )}
 
       {/* Publish-eligibility heads-up: unverified freelancers can only save drafts. */}
       {user && !user.is_verified_id && (
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: 3,
-            border: "1px solid rgba(245, 158, 11, 0.35)",
-            bgcolor: "rgba(245, 158, 11, 0.06)",
-            p: 2,
-            display: "flex",
-            alignItems: "center",
-            gap: 1.5,
-            flexWrap: "wrap",
-          }}>
-          <VerifiedUserOutlined sx={{ fontSize: 20, color: "#b45309" }} />
-          <Typography sx={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+        <div className={banner}>
+          <ShieldCheck size={20} className={bannerIcon} />
+          <p className={bannerText}>
             <strong>Verify your identity to publish.</strong> You can build and save this service as a draft now — once your
             identity (KYC) is verified, you can publish it for review.
-          </Typography>
-          <Button
+          </p>
+          <button
+            type="button"
             onClick={() => router.push("/dashboard/kyc")}
-            sx={{ px: 2, height: 32, fontSize: 12, color: "white", bgcolor: "#b45309", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "#92400e" } }}>
+            className={cx(smallBtnBase, amberBtn)}>
             Verify identity
-          </Button>
-        </Paper>
+          </button>
+        </div>
       )}
 
-      <Box id='svc-section-basic'>
+      <div id='svc-section-basic'>
       <BasicInfoSection
         formData={formData}
         onFormDataChange={(data) => { setFormData(data); setFieldErrors(prev => ({ ...prev, title: "", category: "" })); }}
@@ -419,14 +547,14 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         categoriesLoading={categoriesLoading}
         fieldErrors={{ title: fieldErrors.title, category: fieldErrors.category }}
       />
-      </Box>
+      </div>
       <PricingSection
         formData={formData}
         onFormDataChange={setFormData}
         fieldErrors={fieldErrors}
         onClearTierError={(key) => setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n; })}
       />
-      <Box id='svc-section-media' sx={fieldErrors.image ? { border: "1px solid #ef4444", borderRadius: 4 } : undefined}>
+      <div id='svc-section-media' className={fieldErrors.image ? mediaError : undefined}>
         <MediaGallerySection
           serviceId={service?.id || null}
           media={media}
@@ -447,9 +575,9 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           onDesiredCoverTempIdChange={setDesiredCoverTempId}
           disabled={submitting}
         />
-      </Box>
+      </div>
       {fieldErrors.image && (
-        <Typography sx={{ fontSize: 12, color: "#ef4444", mt: -1 }}>{fieldErrors.image}</Typography>
+        <p className={errorText}>{fieldErrors.image}</p>
       )}
       <FAQsSection formData={formData} onFormDataChange={setFormData} />
 
@@ -459,129 +587,84 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       {/* <RequirementsSection formData={formData} onFormDataChange={setFormData} /> */}
 
       {/* Terms & Actions */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        <FormControlLabel
-          style={{ display: "flex", alignItems: "center" }}
-          control={
-            <Checkbox
-              checked={formData.agreeToTerms}
-              onChange={e => setFormData({ ...formData, agreeToTerms: e.target.checked })}
-              sx={{
-                color: "rgba(0, 0, 0, 0.2)",
-                "&.Mui-checked": {
-                  color: "black",
-                },
-              }}
-            />
-          }
-          label={
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
-              I agree to the{" "}
-              <Typography
-                component='span'
-                sx={{ fontSize: 11, color: "#0071e3", cursor: "pointer", "&:hover": { textDecoration: "underline" } }}>
-                Terms of Service
-              </Typography>{" "}
-              and confirm that all information provided is accurate
-            </Typography>
-          }
-          sx={{ alignItems: "flex-start" }}
-        />
+      <div className={termsCard}>
+        <div className={termsRow}>
+          <Checkbox
+            checked={formData.agreeToTerms}
+            onChange={c => setFormData({ ...formData, agreeToTerms: c })}
+            label={
+              <span className={termsText}>
+                I agree to the{" "}
+                <span className={termsLink}>
+                  Terms of Service
+                </span>{" "}
+                and confirm that all information provided is accurate
+              </span>
+            }
+          />
+        </div>
 
-        {error && <Typography sx={{ fontSize: 12, color: "#ef4444", mb: 2 }}>{error}</Typography>}
+        {error && <p className={errorText}>{error}</p>}
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Button
+        <div className={actions}>
+          <button
+            type="button"
             onClick={handlePublish}
             disabled={!formData.agreeToTerms || submitting || savingDraft}
-            sx={{
-              px: 3,
-              height: 44,
-              fontSize: 13,
-              borderRadius: 10,
-              textTransform: "none",
-              bgcolor: formData.agreeToTerms && !submitting ? "black" : "rgba(0, 0, 0, 0.2)",
-              color: "white",
-              cursor: formData.agreeToTerms && !submitting ? "pointer" : "not-allowed",
-              "&:hover": {
-                bgcolor: formData.agreeToTerms && !submitting ? "rgba(0, 0, 0, 0.8)" : "rgba(0, 0, 0, 0.2)",
-              },
-              "&.Mui-disabled": {
-                color: "white",
-              },
-            }}>
-            {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : service?.status === "rejected" ? "Resubmit" : (service?.status === "draft" || !isEditing) ? "Publish Service" : "Save Changes"}
-          </Button>
+            className={cx(bigBtnBase, publishBtn({ ready: formData.agreeToTerms && !submitting }))}>
+            {submitting ? <Spinner size={18} /> : service?.status === "rejected" ? "Resubmit" : (service?.status === "draft" || !isEditing) ? "Publish Service" : "Save Changes"}
+          </button>
 
-          <Button
+          <button
+            type="button"
             onClick={handleSaveDraft}
             disabled={submitting || savingDraft}
-            sx={{
-              px: 3,
-              height: 44,
-              fontSize: 13,
-              color: "black",
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              borderRadius: 10,
-              textTransform: "none",
-              "&:hover": {
-                bgcolor: "rgba(0, 0, 0, 0.1)",
-              },
-            }}>
-            {savingDraft ? <CircularProgress size={18} sx={{ color: "rgba(0,0,0,0.5)" }} /> : "Save as Draft"}
-          </Button>
+            className={cx(bigBtnBase, draftBtn)}>
+            {savingDraft ? <Spinner size={18} className={css({ color: "rgba(0,0,0,0.5)" })} /> : "Save as Draft"}
+          </button>
 
-          <Button
+          <button
+            type="button"
             onClick={onBack}
             disabled={submitting}
-            sx={{
-              px: 3,
-              height: 44,
-              fontSize: 13,
-              color: "rgba(0, 0, 0, 0.6)",
-              textTransform: "none",
-              "&:hover": {
-                color: "black",
-                bgcolor: "transparent",
-              },
-            }}>
+            className={cx(bigBtnBase, cancelBtn)}>
             Cancel
-          </Button>
-        </Box>
-      </Paper>
+          </button>
+        </div>
+      </div>
 
       {/* Publish was blocked → the service was saved as a draft. Explain why and offer to verify. */}
-      <Dialog
+      <BareModal
         open={!!kycNotice}
-        onClose={() => { setKycNotice(null); onBack(); }}
-        maxWidth="xs"
-        fullWidth
-        PaperProps={{ sx: { borderRadius: 4, p: 1 } }}>
-        <DialogContent>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, fontSize: 18, fontWeight: 600, pt: 1, mb: 1 }}>
-            <VerifiedUserOutlined sx={{ color: "#f59e0b" }} /> Saved as a draft
-          </Box>
-          <DialogContentText sx={{ fontSize: 14, color: "rgba(0,0,0,0.75)" }}>
+        onOpenChange={(open) => { if (!open) { setKycNotice(null); onBack(); } }}
+        maxW="444px"
+        className={dialogPanel}>
+        <div className={dialogBody}>
+          <div className={dialogTitleRow}>
+            <ShieldCheck size={24} className={css({ color: "warning", flexShrink: 0 })} /> Saved as a draft
+          </div>
+          <p className={dialogText}>
             {kycNotice}
-          </DialogContentText>
-          <DialogContentText sx={{ fontSize: 13, color: "rgba(0,0,0,0.55)", mt: 1.5 }}>
+          </p>
+          <p className={dialogText2}>
             Your work is safe under <strong>Drafts</strong> — publish it for review once you&apos;re verified.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2, gap: 1 }}>
-          <Button
+          </p>
+        </div>
+        <div className={dialogActions}>
+          <button
+            type="button"
             onClick={() => { setKycNotice(null); onBack(); }}
-            sx={{ textTransform: "none", color: "rgba(0,0,0,0.6)" }}>
+            className={dialogTextBtn}>
             Back to My Services
-          </Button>
-          <Button
+          </button>
+          <button
+            type="button"
             onClick={() => router.push("/dashboard/kyc")}
-            variant="contained"
-            sx={{ textTransform: "none", bgcolor: "black", borderRadius: 8, px: 2.5, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>
+            className={dialogSolidBtn}>
             Verify Identity
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          </button>
+        </div>
+      </BareModal>
+    </div>
   );
 }

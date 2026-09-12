@@ -1,6 +1,64 @@
-import { Box, Typography, Button, IconButton } from "@mui/material";
-import { DeleteOutlined } from "@mui/icons-material";
+import { Trash2 } from "lucide-react";
+import { css } from "styled-system/css";
+import { iconButton } from "@/components/ds";
 import { Service } from "@/types/service";
+
+const cardBox = css({
+  p: "16px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0, 0, 0, 0.1)",
+  borderRadius: "cardSm",
+  transition: "border-color 0.3s",
+  _hover: { borderColor: "rgba(0, 0, 0, 0.2)" },
+});
+const row = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" });
+const main = css({ flex: 1, minW: 0 });
+const titleRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
+const title = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 500, color: "ink", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const draftPill = css({
+  px: "8px",
+  py: "2px",
+  bg: "rgba(245, 158, 11, 0.1)",
+  color: "pendingText",
+  fontSize: "10px",
+  fontWeight: 600,
+  borderRadius: "4px",
+  flexShrink: 0,
+});
+const category = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const edited = css({ lineHeight: 1.5, fontSize: "11px", color: "ink3" });
+const sideActions = css({ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 });
+const continueBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  m: 0,
+  px: "16px",
+  h: "32px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "8px",
+  bg: "rgba(0, 0, 0, 0.05)",
+  color: "ink",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.1)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const deleteBtn = css(iconButton.raw({ shape: "square" }), {
+  w: "32px",
+  h: "32px",
+  borderRadius: "8px",
+  color: "rgba(239, 68, 68, 0.6)",
+  _hover: { color: "#ef4444", bg: "rgba(239, 68, 68, 0.05)" },
+});
 
 interface DraftCardProps {
   draft: Service;
@@ -21,59 +79,33 @@ function timeAgo(dateStr: string): string {
 
 export default function DraftCard({ draft, onContinueEditing, onDelete }: DraftCardProps) {
   return (
-    <Box
-      sx={{
-        p: 2,
-        border: "1px solid rgba(0, 0, 0, 0.1)",
-        borderRadius: 3,
-        transition: "border-color 0.3s",
-        "&:hover": { borderColor: "rgba(0, 0, 0, 0.2)" },
-      }}>
-      <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 1.5 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 500, color: "black", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+    <div className={cardBox}>
+      <div className={row}>
+        <div className={main}>
+          <div className={titleRow}>
+            <p className={title}>
               {draft.title?.trim() || "Untitled service"}
-            </Typography>
-            <Box sx={{ px: 1, py: 0.25, bgcolor: "rgba(245, 158, 11, 0.1)", color: "#b45309", fontSize: 10, fontWeight: 600, borderRadius: 1, flexShrink: 0 }}>
+            </p>
+            <div className={draftPill}>
               DRAFT
-            </Box>
-          </Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>
+            </div>
+          </div>
+          <p className={category}>
             {draft.category?.category_name ?? "No category yet"}
-          </Typography>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)" }}>
+          </p>
+          <p className={edited}>
             Last edited {timeAgo(draft.updated_at)}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
-          <Button
-            onClick={onContinueEditing}
-            sx={{
-              px: 2,
-              height: 32,
-              fontSize: 12,
-              color: "black",
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              borderRadius: 2,
-              textTransform: "none",
-              whiteSpace: "nowrap",
-              "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
-            }}>
+          </p>
+        </div>
+        <div className={sideActions}>
+          <button type="button" onClick={onContinueEditing} className={continueBtn}>
             Continue Editing
-          </Button>
-          <IconButton
-            onClick={onDelete}
-            sx={{
-              p: 1,
-              color: "rgba(239, 68, 68, 0.6)",
-              borderRadius: 2,
-              "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.05)" },
-            }}>
-            <DeleteOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Box>
-      </Box>
-    </Box>
+          </button>
+          <button type="button" onClick={onDelete} aria-label="Delete draft" className={deleteBtn}>
+            <Trash2 size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

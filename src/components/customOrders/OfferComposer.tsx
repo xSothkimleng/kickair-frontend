@@ -1,45 +1,78 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Avatar,
-  Button,
-  TextField,
-  InputAdornment,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import {
-  ArrowForward,
-  CheckCircle,
-  InfoOutlined,
-} from "@mui/icons-material";
-import { tokens } from "@/theme";
+import { ArrowRight, CheckCircle2, Info } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Alert, Spinner } from "@/components/ds";
 import { sanitizeMoneyInput } from "@/components/ui/inputs";
 import { api } from "@/lib/api";
 import { CustomOrder } from "@/types/customOrder";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
-import { Money, coCard, coLabel, initials } from "./kit";
+import { CoInput, CoTextArea, Money, coAvatar, coBtn, coBtnEnd, coCard, coLabel, initials } from "./kit";
 import { useCoInvalidate } from "./hooks";
 
-const fieldSx = {
-  "& .MuiOutlinedInput-root": {
-    fontSize: 14,
-    borderRadius: "9px",
-    "& fieldset": { borderColor: tokens.borderStrong },
-    "&:hover fieldset": { borderColor: tokens.text3 },
-    "&.Mui-focused fieldset": { borderColor: tokens.accent, borderWidth: "1px" },
-  },
-};
+const layout = css({ display: "grid", gridTemplateColumns: "1fr", gap: "24px", alignItems: "start" });
+const card = cx(coCard, css({ p: { base: "18px", md: "24px" } }));
+const labelCss = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "ink" });
+const labelSub = css({ color: "ink3", fontWeight: 400 });
 
-const labelSx = { fontSize: 12, fontWeight: 600, mb: 0.75, color: tokens.text };
+const gap20 = css({ mb: "20px" });
+const gap16 = css({ mb: "16px" });
+const twoCol = css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px", mb: "20px" });
+const priceField = css({ maxW: "220px", mb: "20px" });
+const expiryField = css({ maxW: "200px" });
+const noteBlock = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", pt: "18px" });
+
+const clientRow = css({ display: "flex", alignItems: "center", gap: "10px", mt: "14px", mb: "14px" });
+const clientName = css({ fontWeight: 600, fontSize: "14px", lineHeight: 1.5, color: "ink" });
+const clientMeta = css({ fontSize: "11.5px", lineHeight: 1.5, color: "ink2" });
+
+const totalRow = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  py: "12px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairlineStrong",
+});
+const totalLabel = css({ fontWeight: 600, fontSize: "16px", lineHeight: 1.5, color: "ink" });
+
+const feeBox = css({
+  mt: "4px",
+  mb: "10px",
+  p: "12px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "10px",
+  bg: "surface2",
+});
+const feeRow = css({ display: "flex", justifyContent: "space-between", py: "3px" });
+const feeLabel = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const feeValue = css({ fontSize: "12.5px", lineHeight: 1.5, fontFamily: "mono", fontWeight: 600, color: "ink" });
+const feeValueWarn = css({ fontSize: "12.5px", lineHeight: 1.5, fontFamily: "mono", fontWeight: 600, color: "pendingText" });
+const feeDivider = css({ height: "1px", bg: "hairline", my: "4px" });
+const netLabel = css({ fontSize: "12.5px", lineHeight: 1.5, fontWeight: 700, color: "ink" });
+const netValue = css({ fontSize: "13px", lineHeight: 1.5, fontFamily: "mono", fontWeight: 700, color: "successText" });
+
+const statusBox = cva({
+  base: { display: "flex", gap: "8px", p: "12px", borderRadius: "10px", mt: "4px" },
+  variants: { over: { true: { bg: "errorTint" }, false: { bg: "successTint" } } },
+});
+const statusText = cva({
+  base: { fontSize: "12.5px", lineHeight: 1.4, fontWeight: 500 },
+  variants: { over: { true: { color: "errorText" }, false: { color: "successText" } } },
+});
+const monoSpan = css({ fontFamily: "mono" });
+const alertGap = css({ mt: "14px" });
+const sendBtn = css({ mt: "18px" });
+const cancelBtn = css({ mt: "8px" });
 
 export default function OfferComposer({ order, onSent, onCancel }: { order: CustomOrder; onSent: () => void; onCancel: () => void }) {
   const invalidate = useCoInvalidate();
   const rate = useCommissionRate();
-  const clientName = order.client.name ?? "the client";
+  const clientLabel = order.client.name ?? "the client";
 
   const [scope, setScope] = useState(order.description ?? "");
   const [deliveryDays, setDeliveryDays] = useState("30");
@@ -83,96 +116,98 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
   };
 
   return (
-    <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3, alignItems: "start" }}>
+    <div className={layout}>
       {/* ── Builder ── */}
-      <Box sx={{ ...coCard, p: { xs: 2.25, md: 3 } }}>
-        <Typography sx={labelSx}>Scope of work</Typography>
-        <TextField fullWidth multiline minRows={3} value={scope} onChange={(e) => setScope(e.target.value)} sx={{ ...fieldSx, mb: 2.5 }} placeholder="What you'll deliver overall…" />
+      <div className={card}>
+        <p className={labelCss}>Scope of work</p>
+        <CoTextArea radius="9" minRows={3} value={scope} onChange={setScope} className={gap20} placeholder="What you'll deliver overall…" />
 
-        <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 2.5 }}>
-          <Box>
-            <Typography sx={labelSx}>Delivery</Typography>
-            <TextField fullWidth value={deliveryDays} onChange={(e) => setDeliveryDays(e.target.value.replace(/[^0-9]/g, ""))}
-              InputProps={{ endAdornment: <InputAdornment position="end">days</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={fieldSx} />
-          </Box>
-          <Box>
-            <Typography sx={labelSx}>Revisions</Typography>
-            <TextField fullWidth value={revisions} onChange={(e) => setRevisions(e.target.value.replace(/[^0-9]/g, ""))}
-              InputProps={{ endAdornment: <InputAdornment position="end">rounds</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={fieldSx} />
-          </Box>
-        </Box>
+        <div className={twoCol}>
+          <div>
+            <p className={labelCss}>Delivery</p>
+            <CoInput mono radius="9" value={deliveryDays} onChange={(v) => setDeliveryDays(v.replace(/[^0-9]/g, ""))} end="days" />
+          </div>
+          <div>
+            <p className={labelCss}>Revisions</p>
+            <CoInput mono radius="9" value={revisions} onChange={(v) => setRevisions(v.replace(/[^0-9]/g, ""))} end="rounds" />
+          </div>
+        </div>
 
-        <Typography sx={labelSx}>Project price <Box component="span" sx={{ color: tokens.text3, fontWeight: 400 }}>· one-time payment</Box></Typography>
-        <TextField size="small" sx={{ ...fieldSx, maxWidth: 220, mb: 2.5 }} value={amount} onChange={(e) => setAmount(sanitizeMoneyInput(e.target.value))}
-          InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }} />
+        <p className={labelCss}>Project price <span className={labelSub}>· one-time payment</span></p>
+        <CoInput mono radius="9" size="sm" className={priceField} value={amount} onChange={(v) => setAmount(sanitizeMoneyInput(v))} start="$" />
 
-        <Box sx={{ borderTop: `1px solid ${tokens.border}`, pt: 2.25 }}>
-          <Typography sx={labelSx}>Note to client <Box component="span" sx={{ color: tokens.text3, fontWeight: 400 }}>· optional</Box></Typography>
-          <TextField fullWidth multiline minRows={2} value={note} onChange={(e) => setNote(e.target.value)} sx={{ ...fieldSx, mb: 2 }} placeholder="Anything the client should know about the plan…" />
-          <Typography sx={labelSx}>Offer to client expires in</Typography>
-          <TextField value={expiresIn} onChange={(e) => setExpiresIn(e.target.value.replace(/[^0-9]/g, ""))} sx={{ ...fieldSx, maxWidth: 200 }} size="small"
-            InputProps={{ endAdornment: <InputAdornment position="end">days</InputAdornment>, sx: { fontFamily: tokens.mono } }} />
-        </Box>
-      </Box>
+        <div className={noteBlock}>
+          <p className={labelCss}>Note to client <span className={labelSub}>· optional</span></p>
+          <CoTextArea radius="9" minRows={2} value={note} onChange={setNote} className={gap16} placeholder="Anything the client should know about the plan…" />
+          <p className={labelCss}>Offer to client expires in</p>
+          <CoInput mono radius="9" size="sm" className={expiryField} value={expiresIn} onChange={(v) => setExpiresIn(v.replace(/[^0-9]/g, ""))} end="days" />
+        </div>
+      </div>
 
       {/* ── Summary — stacked full-width below the builder ── */}
-      <Box sx={{ ...coCard, p: { xs: 2.25, md: 3 } }}>
-        <Typography sx={coLabel}>Offer summary</Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, my: 1.75 }}>
-          <Avatar sx={{ width: 36, height: 36, bgcolor: tokens.text, fontSize: 13, fontWeight: 600 }}>{initials(clientName)}</Avatar>
-          <Box>
-            <Typography sx={{ fontWeight: 600, fontSize: 14 }}>For {clientName}</Typography>
-            <Typography sx={{ fontSize: 11.5, color: tokens.text2 }}>
+      <div className={card}>
+        <p className={coLabel}>Offer summary</p>
+        <div className={clientRow}>
+          <span className={coAvatar({ size: "sm" })}>{initials(clientLabel)}</span>
+          <div>
+            <p className={clientName}>For {clientLabel}</p>
+            <p className={clientMeta}>
               Budget ${order.budget.toLocaleString()}{order.desired_timeline_days ? ` · ${order.desired_timeline_days} days` : ""}
-            </Typography>
-          </Box>
-        </Box>
+            </p>
+          </div>
+        </div>
 
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.5, borderTop: `1px solid ${tokens.borderStrong}` }}>
-          <Typography sx={{ fontWeight: 600, fontSize: 16 }}>Total</Typography>
-          <Money value={total} size={22} weight={600} color={overBudget ? tokens.errorText : tokens.text} />
-        </Box>
+        <div className={totalRow}>
+          <p className={totalLabel}>Total</p>
+          <Money value={total} size={22} weight={600} color={overBudget ? "var(--colors-error-text)" : "var(--colors-ink)"} />
+        </div>
 
         {/* Fee deduction — what actually lands in the freelancer's wallet. */}
         {rate != null && commission != null && net != null && (
-          <Box sx={{ mt: 0.5, mb: 1.25, p: 1.5, border: `1px solid ${tokens.border}`, borderRadius: "10px", bgcolor: tokens.surface2 }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", py: 0.375 }}>
-              <Typography sx={{ fontSize: 12.5, color: tokens.text2 }}>Client pays</Typography>
-              <Typography sx={{ fontSize: 12.5, fontFamily: tokens.mono, fontWeight: 600 }}>${total.toFixed(2)}</Typography>
-            </Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", py: 0.375 }}>
-              <Typography sx={{ fontSize: 12.5, color: tokens.text2 }}>Platform fee ({Math.round(rate * 100)}%)</Typography>
-              <Typography sx={{ fontSize: 12.5, fontFamily: tokens.mono, fontWeight: 600, color: tokens.pendingText }}>−${commission.toFixed(2)}</Typography>
-            </Box>
-            <Box sx={{ height: "1px", bgcolor: tokens.border, my: 0.5 }} />
-            <Box sx={{ display: "flex", justifyContent: "space-between", py: 0.375 }}>
-              <Typography sx={{ fontSize: 12.5, fontWeight: 700 }}>You receive</Typography>
-              <Typography sx={{ fontSize: 13, fontFamily: tokens.mono, fontWeight: 700, color: tokens.successText }}>${net.toFixed(2)}</Typography>
-            </Box>
-          </Box>
+          <div className={feeBox}>
+            <div className={feeRow}>
+              <p className={feeLabel}>Client pays</p>
+              <p className={feeValue}>${total.toFixed(2)}</p>
+            </div>
+            <div className={feeRow}>
+              <p className={feeLabel}>Platform fee ({Math.round(rate * 100)}%)</p>
+              <p className={feeValueWarn}>−${commission.toFixed(2)}</p>
+            </div>
+            <div className={feeDivider} />
+            <div className={feeRow}>
+              <p className={netLabel}>You receive</p>
+              <p className={netValue}>${net.toFixed(2)}</p>
+            </div>
+          </div>
         )}
 
-        <Box sx={{ display: "flex", gap: 1, p: 1.5, borderRadius: "10px", bgcolor: overBudget ? tokens.errorTint : tokens.successTint, mt: 0.5 }}>
-          {overBudget ? <InfoOutlined sx={{ fontSize: 16, color: tokens.errorText }} /> : <CheckCircle sx={{ fontSize: 16, color: tokens.success }} />}
-          <Typography sx={{ fontSize: 12.5, lineHeight: 1.4, fontWeight: 500, color: overBudget ? tokens.errorText : tokens.successText }}>
+        <div className={statusBox({ over: overBudget })}>
+          {overBudget
+            ? <Info size={16} className={css({ color: "errorText", flexShrink: 0 })} />
+            : <CheckCircle2 size={16} className={css({ color: "success", flexShrink: 0 })} />}
+          <p className={statusText({ over: overBudget })}>
             {overBudget
-              ? <>Over the client&apos;s budget by <Box component="span" sx={{ fontFamily: tokens.mono }}>${over.toLocaleString()}</Box>. They may counter or decline.</>
+              ? <>Over the client&apos;s budget by <span className={monoSpan}>${over.toLocaleString()}</span>. They may counter or decline.</>
               : over === 0
                 ? <>Matches the client&apos;s ${order.budget.toLocaleString()} budget exactly.</>
-                : <><Box component="span" sx={{ fontFamily: tokens.mono }}>${(-over).toLocaleString()}</Box> under budget — comfortable room.</>}
-          </Typography>
-        </Box>
+                : <><span className={monoSpan}>${(-over).toLocaleString()}</span> under budget — comfortable room.</>}
+          </p>
+        </div>
 
-        {error && <Alert severity="error" sx={{ borderRadius: "10px", mt: 1.75 }}>{error}</Alert>}
+        {error && <Alert tone="error" className={alertGap}>{error}</Alert>}
 
-        <Button fullWidth onClick={handleSend} disabled={submitting} endIcon={!submitting && <ArrowForward />}
-          sx={{ mt: 2.25, textTransform: "none", fontWeight: 600, fontSize: 15, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", height: 48, boxShadow: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" } }}>
-          {submitting ? <CircularProgress size={20} sx={{ color: "#fff" }} /> : "Send offer"}
-        </Button>
-        <Button fullWidth onClick={onCancel} disabled={submitting} sx={{ mt: 1, textTransform: "none", fontWeight: 600, fontSize: 13.5, color: tokens.text2, borderRadius: "999px" }}>
+        <button type="button" onClick={handleSend} disabled={submitting} className={cx(coBtn({ tone: "black", size: "xl", strong: true, full: true }), sendBtn)}>
+          {submitting ? <Spinner size={20} className={css({ color: "#fff" })} /> : (
+            <>
+              Send offer
+              <ArrowRight size={20} className={coBtnEnd} />
+            </>
+          )}
+        </button>
+        <button type="button" onClick={onCancel} disabled={submitting} className={cx(coBtn({ tone: "quiet", font: "13.5", strong: true, full: true }), cancelBtn)}>
           Cancel
-        </Button>
-      </Box>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 }

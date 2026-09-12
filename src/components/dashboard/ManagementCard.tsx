@@ -187,7 +187,7 @@ export const mgCard = css({
 
 /**
  * @deprecated MUI `sx` twin of `mgCard`, kept (as a plain object — no MUI import) only until
- * `client/PostServiceContent.tsx` and `dashboard/freelancer/ServiceCard.tsx` are on Panda.
+ * `client/PostServiceContent.tsx` (its last caller) is on Panda; delete it with that migration.
  */
 export const mgCardSx = {
   position: "relative" as const,

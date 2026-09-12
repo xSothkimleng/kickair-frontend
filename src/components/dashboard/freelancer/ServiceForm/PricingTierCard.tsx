@@ -1,7 +1,38 @@
-import { Box, Typography } from "@mui/material";
+import { css, cva } from "styled-system/css";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { CurrencyInput, TextInput, Switch } from "@/components/ui/inputs";
 import { PricingTier } from "../types";
+
+const tierCard = cva({
+  base: { p: "16px", borderWidth: "1px", borderStyle: "solid", borderRadius: "cardSm", transition: "all 0.2s" },
+  variants: {
+    off: {
+      true: { borderColor: "rgba(0, 0, 0, 0.06)", bg: "rgba(0, 0, 0, 0.02)" },
+      false: { borderColor: "rgba(0, 0, 0, 0.1)", bg: "white" },
+    },
+  },
+});
+const header = cva({
+  base: { display: "flex", alignItems: "center", justifyContent: "space-between" },
+  variants: { off: { true: { mb: 0 }, false: { mb: "16px" } } },
+});
+const tierName = cva({
+  base: { fontSize: "13px", fontWeight: 600, lineHeight: 1.5, textTransform: "capitalize" },
+  variants: { off: { true: { color: "rgba(0, 0, 0, 0.3)" }, false: { color: "ink" } } },
+});
+const body = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const editorLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "body" });
+const optionalMark = css({ color: "ink3" });
+const earnings = css({
+  p: "8px 12px",
+  bg: "rgba(22,163,74,0.06)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(22,163,74,0.15)",
+  borderRadius: "8px",
+});
+const earningsText = css({ lineHeight: 1.5, fontSize: "12.5px", color: "#166534" });
+const earningsAmount = css({ fontWeight: 700 });
 
 interface PricingTierCardProps {
   tier: "basic" | "standard" | "premium";
@@ -18,32 +49,24 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
   const disabled = !data.enabled;
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        border: "1px solid",
-        borderColor: disabled ? "rgba(0, 0, 0, 0.06)" : "rgba(0, 0, 0, 0.1)",
-        borderRadius: 3,
-        bgcolor: disabled ? "rgba(0, 0, 0, 0.02)" : "white",
-        transition: "all 0.2s",
-      }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: disabled ? 0 : 2 }}>
-        <Typography sx={{ fontSize: 13, fontWeight: 600, color: disabled ? "rgba(0, 0, 0, 0.3)" : "black", textTransform: "capitalize" }}>
+    <div className={tierCard({ off: disabled })}>
+      <div className={header({ off: disabled })}>
+        <p className={tierName({ off: disabled })}>
           {tier}
-        </Typography>
+        </p>
         <Switch checked={data.enabled} onChange={onToggle} />
-      </Box>
+      </div>
 
       {!disabled && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+        <div className={body}>
           <TextInput size="sm" label="Name" value={data.name} onChange={(v) => onChange({ ...data, name: v })} />
 
-          <Box>
-            <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#334155", mb: 0.875 }}>
-              Description <Typography component="span" sx={{ color: "rgba(0,0,0,0.4)" }}>(optional)</Typography>
-            </Typography>
+          <div>
+            <p className={editorLabel}>
+              Description <span className={optionalMark}>(optional)</span>
+            </p>
             <RichTextEditor value={data.description} onChange={(html) => onChange({ ...data, description: html })} placeholder="What's included?" minHeight={80} />
-          </Box>
+          </div>
 
           <TextInput
             size="sm"
@@ -76,18 +99,18 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
 
           {/* Live earnings preview — the seller-side commission, shown before posting */}
           {commissionRate != null && parseFloat(data.price) > 0 && (
-            <Box sx={{ p: "8px 12px", bgcolor: "rgba(22,163,74,0.06)", border: "1px solid rgba(22,163,74,0.15)", borderRadius: 2 }}>
-              <Typography sx={{ fontSize: 12.5, color: "#166534" }}>
+            <div className={earnings}>
+              <p className={earningsText}>
                 You&apos;ll receive{" "}
-                <Box component="span" sx={{ fontWeight: 700 }}>
+                <span className={earningsAmount}>
                   ${(parseFloat(data.price) * (1 - commissionRate)).toFixed(2)}
-                </Box>
+                </span>
                 {" "}· after the {Math.round(commissionRate * 100)}% platform fee
-              </Typography>
-            </Box>
+              </p>
+            </div>
           )}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

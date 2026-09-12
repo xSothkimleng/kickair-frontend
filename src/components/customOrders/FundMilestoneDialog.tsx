@@ -2,27 +2,13 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { qk } from "@/lib/queryKeys";
-import {
-  Dialog,
-  Box,
-  Typography,
-  IconButton,
-  Button,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import {
-  Close,
-  LockOutlined,
-  AccountBalanceWalletOutlined,
-  ArrowForward,
-  ShieldOutlined,
-  AddRounded,
-} from "@mui/icons-material";
+import { ArrowRight, Lock, Plus, Shield, Wallet, X } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { tokens } from "@/theme";
+import { css, cva } from "styled-system/css";
+import { Alert, Dialog, Spinner } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { api } from "@/lib/api";
-import { Money, coLabel } from "./kit";
+import { Money, coBtn, coBtnStart, coIconBtn, coLabel, coLabelAccent } from "./kit";
 
 interface Props {
   open: boolean;
@@ -36,6 +22,49 @@ interface Props {
   ctaLabel?: string;
   error?: string | null;
 }
+
+const panel = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
+const header = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" });
+
+const dlgTitle = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
+const body = css({ display: "flex", flexDirection: "column", gap: "16px", p: "18px 24px 24px" });
+
+const amountCard = css({
+  p: "18px",
+  textAlign: "center",
+  borderRadius: "12px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  bg: "surface2",
+});
+const amountValue = css({ mt: "6px" });
+const flowRow = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", mt: "8px", color: "ink3" });
+const flowLabel = css({ fontSize: "11.5px", lineHeight: 1.5 });
+const flowTarget = css({
+  fontSize: "11.5px",
+  lineHeight: 1.5,
+  color: "pendingText",
+  maxW: "140px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+
+const rowCss = cva({
+  base: { display: "flex", justifyContent: "space-between", alignItems: "center", py: "10px" },
+  variants: { last: { false: { borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" }, true: {} } },
+});
+const rowLabel = cva({
+  base: { fontSize: "13.5px", lineHeight: 1.5 },
+  variants: { last: { true: { fontWeight: 600, color: "ink" }, false: { fontWeight: 400, color: "ink2" } } },
+});
+const rowValue = css({ fontFamily: "mono", fontSize: "14px" });
+
+const shortBox = css({ display: "flex", gap: "8px", p: "12px", bg: "errorTint", borderRadius: "10px" });
+const shortText = css({ fontSize: "12.5px", lineHeight: 1.45, color: "errorText" });
+const monoSpan = css({ fontFamily: "mono" });
+const footNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", color: "ink3", fontSize: "11.5px" });
 
 export default function FundMilestoneDialog({
   open,
@@ -61,82 +90,87 @@ export default function FundMilestoneDialog({
   const short = amount - available;
 
   return (
-    <Dialog open={open} onClose={submitting ? undefined : onClose} maxWidth="xs" fullWidth
-      PaperProps={{ sx: { borderRadius: "16px", border: `1px solid ${tokens.border}` } }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" }}>
-        <Box>
-          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>{annotation}</Typography>
-          <Typography sx={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>{title}</Typography>
-        </Box>
-        <IconButton onClick={onClose} size="small" disabled={submitting}><Close sx={{ fontSize: 20 }} /></IconButton>
-      </Box>
+    <BareModal
+      open={open}
+      onOpenChange={(o) => { if (!o && !submitting) onClose(); }}
+      maxW="444px"
+      className={panel}
+      closeOnInteractOutside={!submitting}
+      closeOnEscape={!submitting}>
+      <div className={header}>
+        <div>
+          <p className={coLabelAccent}>{annotation}</p>
+          <Dialog.Title className={dlgTitle}>{title}</Dialog.Title>
+        </div>
+        <button type="button" aria-label="Close" onClick={onClose} disabled={submitting} className={coIconBtn()}>
+          <X size={20} />
+        </button>
+      </div>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2, p: "18px 24px 24px" }}>
+      <div className={body}>
         {/* amount → escrow visual */}
-        <Box sx={{ p: 2.25, textAlign: "center", borderRadius: "12px", border: `1px solid ${tokens.border}`, bgcolor: tokens.surface2 }}>
-          <Typography sx={coLabel}>Moving to escrow</Typography>
-          <Box sx={{ mt: 0.75 }}>
-            <Money value={amount} size={34} weight={600} color={tokens.pendingText} cents />
-          </Box>
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 1, mt: 1, color: tokens.text3 }}>
-            <AccountBalanceWalletOutlined sx={{ fontSize: 14 }} />
-            <Typography sx={{ fontSize: 11.5 }}>Wallet</Typography>
-            <ArrowForward sx={{ fontSize: 14 }} />
-            <LockOutlined sx={{ fontSize: 13, color: tokens.pendingText }} />
-            <Typography sx={{ fontSize: 11.5, color: tokens.pendingText, maxWidth: 140, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-              {milestoneTitle}
-            </Typography>
-          </Box>
-        </Box>
+        <div className={amountCard}>
+          <p className={coLabel}>Moving to escrow</p>
+          <div className={amountValue}>
+            <Money value={amount} size={34} weight={600} color="var(--colors-pending-text)" cents />
+          </div>
+          <div className={flowRow}>
+            <Wallet size={14} />
+            <p className={flowLabel}>Wallet</p>
+            <ArrowRight size={14} />
+            <Lock size={13} className={css({ color: "pendingText" })} />
+            <p className={flowTarget}>{milestoneTitle}</p>
+          </div>
+        </div>
 
         {/* wallet rows */}
-        <Box>
-          <Row label="Available balance" valueEl={<Money value={available} size={14} weight={600} color={insufficient ? tokens.errorText : tokens.text} cents />} />
-          <Row label="This payment" valueEl={<Box component="span" sx={{ fontFamily: tokens.mono, fontSize: 14 }}>−{`$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</Box>} />
+        <div>
+          <Row label="Available balance" valueEl={<Money value={available} size={14} weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />} />
+          <Row label="This payment" valueEl={<span className={rowValue}>−{`$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</span>} />
           <Row
             last
             label={insufficient ? "Short by" : "Balance after"}
-            valueEl={<Money value={insufficient ? short : available - amount} size={16} weight={600} color={insufficient ? tokens.errorText : tokens.text} cents />}
+            valueEl={<Money value={insufficient ? short : available - amount} size={16} weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />}
           />
-        </Box>
+        </div>
 
-        {error && <Alert severity="error" sx={{ borderRadius: "10px" }}>{error}</Alert>}
+        {error && <Alert tone="error">{error}</Alert>}
 
         {insufficient ? (
           <>
-            <Box sx={{ display: "flex", gap: 1, p: 1.5, bgcolor: tokens.errorTint, borderRadius: "10px" }}>
-              <Typography sx={{ fontSize: 12.5, lineHeight: 1.45, color: tokens.errorText }}>
+            <div className={shortBox}>
+              <p className={shortText}>
                 Not enough in your wallet for this payment. Top up{" "}
-                <Box component="span" sx={{ fontFamily: tokens.mono }}>${short.toLocaleString(undefined, { minimumFractionDigits: 2 })}</Box>{" "}
+                <span className={monoSpan}>${short.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>{" "}
                 or more, then fund.
-              </Typography>
-            </Box>
-            <Button fullWidth startIcon={<AddRounded />} onClick={() => router.push("/dashboard/client?tab=finance")}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", height: 44, "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }}>
+              </p>
+            </div>
+            <button type="button" onClick={() => router.push("/dashboard/client?tab=finance")} className={coBtn({ tone: "black", size: "md", strong: true, full: true })}>
+              <Plus size={20} className={coBtnStart} />
               Top up wallet
-            </Button>
+            </button>
           </>
         ) : (
           <>
-            <Button fullWidth startIcon={<LockOutlined />} onClick={onConfirm} disabled={submitting || wallet == null}
-              sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", height: 46, boxShadow: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" } }}>
-              {submitting ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : (ctaLabel ?? `Confirm & fund ${`$${amount.toLocaleString()}`}`)}
-            </Button>
-            <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75, color: tokens.text3, fontSize: 11.5 }}>
-              <ShieldOutlined sx={{ fontSize: 13 }} /> Released to the freelancer only when you approve the delivery
-            </Box>
+            <button type="button" onClick={onConfirm} disabled={submitting || wallet == null} className={coBtn({ tone: "black", size: "lg", strong: true, full: true })}>
+              <Lock size={20} className={coBtnStart} />
+              {submitting ? <Spinner size={18} className={css({ color: "#fff" })} /> : (ctaLabel ?? `Confirm & fund ${`$${amount.toLocaleString()}`}`)}
+            </button>
+            <div className={footNote}>
+              <Shield size={13} /> Released to the freelancer only when you approve the delivery
+            </div>
           </>
         )}
-      </Box>
-    </Dialog>
+      </div>
+    </BareModal>
   );
 }
 
 function Row({ label, valueEl, last }: { label: string; valueEl: React.ReactNode; last?: boolean }) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", py: 1.25, borderBottom: last ? "none" : `1px solid ${tokens.border}` }}>
-      <Typography sx={{ fontSize: 13.5, color: tokens.text2, fontWeight: last ? 600 : 400, ...(last && { color: tokens.text }) }}>{label}</Typography>
+    <div className={rowCss({ last: !!last })}>
+      <p className={rowLabel({ last: !!last })}>{label}</p>
       {valueEl}
-    </Box>
+    </div>
   );
 }

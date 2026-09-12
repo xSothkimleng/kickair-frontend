@@ -2,8 +2,9 @@
 
 import { useRef, useState } from "react";
 import Image from "next/image";
-import { Box, Paper, Typography, Button, IconButton, Grid, CircularProgress } from "@mui/material";
-import { CloudUploadOutlined, CloseOutlined, ImageOutlined, VideocamOutlined, InsertDriveFileOutlined, StarBorderOutlined, Star } from "@mui/icons-material";
+import { CloudUpload, FileText, Image as ImageIcon, Star, Video, X } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Spinner } from "@/components/ds";
 import { ServiceMedia, TemporaryUpload } from "@/types/service";
 import { api } from "@/lib/api";
 
@@ -21,6 +22,170 @@ const ACCEPTED_EXTENSIONS = [
   ...FILE_LIMITS.video.extensions,
   ...FILE_LIMITS.pdf.extensions,
 ];
+
+const sectionCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const requiredMark = css({ color: "#ef4444" });
+const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+const errorText = css({ lineHeight: 1.5, fontSize: "12px", color: "#ef4444" });
+const hiddenInput = css({ display: "none" });
+const mediaGrid = css({
+  display: "grid",
+  gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+  gap: "16px",
+});
+const mediaTile = cva({
+  base: {
+    position: "relative",
+    aspectRatio: "1",
+    bg: "rgba(0, 0, 0, 0.05)",
+    borderRadius: "cardSm",
+    overflow: "hidden",
+    borderWidth: "2px",
+    borderStyle: "solid",
+    boxSizing: "border-box",
+    _hover: { "& .delete-btn": { opacity: 1 }, "& .cover-btn": { opacity: 1 } },
+  },
+  variants: {
+    cover: { true: { borderColor: "accent" }, false: { borderColor: "transparent" } },
+  },
+});
+const filePreview = css({
+  width: "100%",
+  height: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bg: "rgba(0, 0, 0, 0.1)",
+  color: "rgba(0, 0, 0, 0.4)",
+});
+const pdfPreview = css({ flexDirection: "column" });
+const pdfName = css({ lineHeight: 1.5,
+  fontSize: "9px",
+  color: "rgba(0, 0, 0, 0.5)",
+  px: "8px",
+  textAlign: "center",
+  maxW: "100%",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+const coverBadge = css({
+  position: "absolute",
+  bottom: "6px",
+  left: "6px",
+  px: "6px",
+  py: "2px",
+  bg: "accent",
+  color: "white",
+  fontSize: "9px",
+  fontWeight: 600,
+  borderRadius: "4px",
+  pointerEvents: "none",
+});
+const coverSpinnerBox = css({
+  position: "absolute",
+  top: "6px",
+  left: "6px",
+  width: "26px",
+  height: "26px",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  color: "white",
+});
+const iconBtnBase = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  position: "absolute",
+  m: 0,
+  border: "none",
+  borderRadius: "pill",
+  fontFamily: "inherit",
+  cursor: "pointer",
+  _disabled: { pointerEvents: "none", opacity: 0.5 },
+  "& svg": { display: "block" },
+});
+const coverBtn = cva({
+  base: {
+    top: "6px",
+    left: "6px",
+    p: "4px",
+    bg: "rgba(0,0,0,0.5)",
+    transition: "opacity 0.2s",
+    _hover: { bg: "rgba(0,0,0,0.7)" },
+  },
+  variants: {
+    active: { true: { color: "#facc15", opacity: 1 }, false: { color: "white", opacity: 0 } },
+  },
+});
+const deleteBtn = css({
+  top: "8px",
+  right: "8px",
+  p: "6px",
+  bg: "#ef4444",
+  color: "white",
+  opacity: 0,
+  transition: "opacity 0.3s",
+  _hover: { bg: "#dc2626" },
+});
+const deletingOverlay = css({
+  position: "absolute",
+  top: 0,
+  left: 0,
+  right: 0,
+  bottom: 0,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bg: "rgba(0, 0, 0, 0.3)",
+  color: "white",
+});
+const uploadBtn = css({
+  aspectRatio: "1",
+  width: "100%",
+  boxSizing: "border-box",
+  m: 0,
+  p: "6px 8px",
+  bg: "rgba(0, 0, 0, 0.05)",
+  borderRadius: "cardSm",
+  border: "none",
+  display: "flex",
+  flexDirection: "column",
+  alignItems: "center",
+  justifyContent: "center",
+  fontFamily: "inherit",
+  color: "ink",
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.08)" },
+  _disabled: { bg: "rgba(0, 0, 0, 0.05)", pointerEvents: "none" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const uploadDimmed = css({ opacity: 0.5 });
+const uploadIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.4)", mb: "8px" });
+const uploadLabel = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+const uploadHint = css({ lineHeight: 1.5, fontSize: "10px", color: "ink3" });
+const limitsRow = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "16px",
+  mt: "16px",
+  fontSize: "11px",
+  color: "ink2",
+});
+const limitItem = css({ display: "flex", alignItems: "center", gap: "4px" });
+const limitText = css({ lineHeight: 1.5, fontSize: "11px" });
+/* The old `ml: auto` sat on a <p>, where the unlayered `p { margin: 0 }` killed it — dropped. */
+const filesCount = css({ lineHeight: 1.5, fontSize: "11px" });
 
 interface MediaGallerySectionProps {
   serviceId: number | null;
@@ -198,37 +363,20 @@ export default function MediaGallerySection({
 
     if (item.file_type === "video") {
       return (
-        <Box
-          sx={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "rgba(0, 0, 0, 0.1)",
-          }}>
-          <VideocamOutlined sx={{ fontSize: 32, color: "rgba(0, 0, 0, 0.4)" }} />
-        </Box>
+        <div className={filePreview}>
+          <Video size={32} />
+        </div>
       );
     }
 
     if (item.file_type === "pdf") {
       return (
-        <Box
-          sx={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "rgba(0, 0, 0, 0.1)",
-          }}>
-          <InsertDriveFileOutlined sx={{ fontSize: 32, color: "rgba(0, 0, 0, 0.4)" }} />
-          <Typography sx={{ fontSize: 9, color: "rgba(0, 0, 0, 0.5)", mt: 0.5, px: 1, textAlign: "center" }} noWrap>
+        <div className={cx(filePreview, pdfPreview)}>
+          <FileText size={32} />
+          <p className={pdfName}>
             {item.file_name}
-          </Typography>
-        </Box>
+          </p>
+        </div>
       );
     }
 
@@ -255,131 +403,70 @@ export default function MediaGallerySection({
     const isSettingCover = coverConfig?.isSettingCover ?? false;
 
     return (
-      <Grid size={{ xs: 6, md: 3 }} key={`${keyPrefix}-${item.id}`}>
-        <Box
-          sx={{
-            position: "relative",
-            aspectRatio: "1",
-            bgcolor: "rgba(0, 0, 0, 0.05)",
-            borderRadius: 3,
-            overflow: "hidden",
-            border: isCover ? "2px solid #0071e3" : "2px solid transparent",
-            "&:hover .delete-btn": { opacity: 1 },
-            "&:hover .cover-btn": { opacity: 1 },
-          }}>
-          {renderPreview(item)}
+      <div className={mediaTile({ cover: isCover })} key={`${keyPrefix}-${item.id}`}>
+        {renderPreview(item)}
 
-          {/* Cover badge */}
-          {isCover && (
-            <Box
-              sx={{
-                position: "absolute",
-                bottom: 6,
-                left: 6,
-                px: 0.75,
-                py: 0.25,
-                bgcolor: "#0071e3",
-                color: "white",
-                fontSize: 9,
-                fontWeight: 600,
-                borderRadius: 1,
-                pointerEvents: "none",
-              }}>
-              COVER
-            </Box>
-          )}
+        {/* Cover badge */}
+        {isCover && (
+          <div className={coverBadge}>
+            COVER
+          </div>
+        )}
 
-          {/* Cover toggle button */}
-          {coverConfig && (
-            isSettingCover ? (
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 6,
-                  left: 6,
-                  width: 26,
-                  height: 26,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                }}>
-                <CircularProgress size={14} sx={{ color: "white" }} />
-              </Box>
-            ) : (
-              <IconButton
-                className="cover-btn"
-                onClick={() => coverConfig.onToggle()}
-                disabled={disabled}
-                title={isCover ? "Remove cover" : "Set as cover"}
-                sx={{
-                  position: "absolute",
-                  top: 6,
-                  left: 6,
-                  p: 0.5,
-                  bgcolor: "rgba(0,0,0,0.5)",
-                  color: isCover ? "#facc15" : "white",
-                  opacity: isCover ? 1 : 0,
-                  transition: "opacity 0.2s",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.7)" },
-                }}>
-                {isCover
-                  ? <Star sx={{ fontSize: 14 }} />
-                  : <StarBorderOutlined sx={{ fontSize: 14 }} />
-                }
-              </IconButton>
-            )
-          )}
-
-          {/* Delete button */}
-          {deletingId === item.id ? (
-            <Box
-              sx={{
-                position: "absolute",
-                top: 0, left: 0, right: 0, bottom: 0,
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: "rgba(0, 0, 0, 0.3)",
-              }}>
-              <CircularProgress size={24} sx={{ color: "white" }} />
-            </Box>
+        {/* Cover toggle button */}
+        {coverConfig && (
+          isSettingCover ? (
+            <div className={coverSpinnerBox}>
+              <Spinner size={14} />
+            </div>
           ) : (
-            <IconButton
-              className="delete-btn"
-              onClick={() => onDelete(item.id)}
+            <button
+              type="button"
+              className={cx("cover-btn", iconBtnBase, coverBtn({ active: isCover }))}
+              onClick={() => coverConfig.onToggle()}
               disabled={disabled}
-              sx={{
-                position: "absolute",
-                top: 8,
-                right: 8,
-                p: 0.75,
-                bgcolor: "#ef4444",
-                color: "white",
-                opacity: 0,
-                transition: "opacity 0.3s",
-                "&:hover": { bgcolor: "#dc2626" },
-              }}>
-              <CloseOutlined sx={{ fontSize: 12 }} />
-            </IconButton>
-          )}
-        </Box>
-      </Grid>
+              title={isCover ? "Remove cover" : "Set as cover"}
+              aria-label={isCover ? "Remove cover" : "Set as cover"}>
+              {isCover
+                ? <Star size={14} fill="currentColor" />
+                : <Star size={14} />
+              }
+            </button>
+          )
+        )}
+
+        {/* Delete button */}
+        {deletingId === item.id ? (
+          <div className={deletingOverlay}>
+            <Spinner size={24} />
+          </div>
+        ) : (
+          <button
+            type="button"
+            className={cx("delete-btn", iconBtnBase, deleteBtn)}
+            onClick={() => onDelete(item.id)}
+            disabled={disabled}
+            aria-label="Remove file">
+            <X size={12} />
+          </button>
+        )}
+      </div>
     );
   };
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>
-        Gallery / Media <Box component='span' sx={{ color: "#ef4444" }}>*</Box>
-      </Typography>
-      <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
+    <div className={sectionCard}>
+      <p className={sectionTitle}>
+        Gallery / Media <span className={requiredMark}>*</span>
+      </p>
+      <p className={sectionSub}>
         Upload images, videos, or PDFs to showcase your work — at least one image is required to publish
-      </Typography>
+      </p>
 
       {error && (
-        <Typography sx={{ fontSize: 12, color: "#ef4444", mb: 2 }}>
+        <p className={errorText}>
           {error}
-        </Typography>
+        </p>
       )}
 
       <input
@@ -387,10 +474,10 @@ export default function MediaGallerySection({
         type="file"
         accept={ACCEPTED_EXTENSIONS.map(ext => `.${ext}`).join(",")}
         onChange={handleFileSelect}
-        style={{ display: "none" }}
+        className={hiddenInput}
       />
 
-      <Grid container spacing={2}>
+      <div className={mediaGrid}>
         {/* Render existing service media (for editing) */}
         {media.map(mediaItem =>
           renderMediaCard(
@@ -425,58 +512,42 @@ export default function MediaGallerySection({
         )}
 
         {/* Upload button */}
-        <Grid size={{ xs: 6, md: 3 }}>
-          <Button
+        <div>
+          <button
+            type="button"
             onClick={handleUploadClick}
             disabled={disabled || uploading || !canUpload || totalUploads >= MAX_FILES_PER_SERVICE}
-            sx={{
-              aspectRatio: "1",
-              width: "100%",
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              borderRadius: 3,
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              justifyContent: "center",
-              textTransform: "none",
-              opacity: !canUpload ? 0.5 : 1,
-              "&:hover": {
-                bgcolor: "rgba(0, 0, 0, 0.08)",
-              },
-              "&.Mui-disabled": {
-                bgcolor: "rgba(0, 0, 0, 0.05)",
-              },
-            }}>
+            className={cx(uploadBtn, !canUpload && uploadDimmed)}>
             {uploading ? (
-              <CircularProgress size={24} sx={{ color: "rgba(0, 0, 0, 0.4)" }} />
+              <Spinner size={24} className={css({ color: "rgba(0, 0, 0, 0.4)" })} />
             ) : (
               <>
-                <CloudUploadOutlined sx={{ fontSize: 24, color: "rgba(0, 0, 0, 0.4)", mb: 1 }} />
-                <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>Upload Media</Typography>
-                <Typography sx={{ fontSize: 10, color: "rgba(0, 0, 0, 0.4)", mt: 0.5 }}>Image, Video, PDF</Typography>
+                <CloudUpload size={24} className={uploadIcon} />
+                <p className={uploadLabel}>Upload Media</p>
+                <p className={uploadHint}>Image, Video, PDF</p>
               </>
             )}
-          </Button>
-        </Grid>
-      </Grid>
+          </button>
+        </div>
+      </div>
 
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 2, fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <ImageOutlined sx={{ fontSize: 14 }} />
-          <Typography sx={{ fontSize: 11 }}>Images (5MB)</Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <VideocamOutlined sx={{ fontSize: 14 }} />
-          <Typography sx={{ fontSize: 11 }}>Videos (50MB)</Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-          <InsertDriveFileOutlined sx={{ fontSize: 14 }} />
-          <Typography sx={{ fontSize: 11 }}>PDFs (10MB)</Typography>
-        </Box>
-        <Typography sx={{ fontSize: 11, ml: "auto" }}>
+      <div className={limitsRow}>
+        <div className={limitItem}>
+          <ImageIcon size={14} />
+          <p className={limitText}>Images (5MB)</p>
+        </div>
+        <div className={limitItem}>
+          <Video size={14} />
+          <p className={limitText}>Videos (50MB)</p>
+        </div>
+        <div className={limitItem}>
+          <FileText size={14} />
+          <p className={limitText}>PDFs (10MB)</p>
+        </div>
+        <p className={filesCount}>
           {totalUploads}/{MAX_FILES_PER_SERVICE} files
-        </Typography>
-      </Box>
-    </Paper>
+        </p>
+      </div>
+    </div>
   );
 }
