@@ -1,7 +1,8 @@
 "use client";
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Box, Container } from "@mui/material";
+import { css } from "styled-system/css";
+import { Container } from "styled-system/jsx";
 import DashboardHeader from "@/components/layout/dashboard/DashboardHeader";
 import DashboardTabs from "@/components/layout/dashboard/DashboardTabs";
 import DashboardContent from "./DsahboardContent";
@@ -29,6 +30,8 @@ const resolveTab = (raw: string | null): Tab => {
   return raw && VALID_TABS.includes(raw) ? (raw as Tab) : "dashboard";
 };
 
+const pageCss = css({ minH: "100vh", bg: "page" });
+
 function ClientSpace() {
   const router = useRouter();
   const tabParam = useSearchParams().get("tab");
@@ -47,11 +50,11 @@ function ClientSpace() {
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
+    <div className={pageCss}>
       <DashboardHeader title='Client Space' description='Manage your projects, orders, and freelancers' />
       {/* @ts-expect-error type unknown */}
       <DashboardTabs activeTab={activeTab} onTabChange={handleTabChange} tabs={tabs} />
-      <Container sx={{ px: 3, py: 4 }}>
+      <Container maxW="1200px" px="24px" py="32px" boxSizing="border-box">
         <KycBanner />
         {activeTab === "dashboard" && <DashboardContent onTabChange={handleTabChange} />}
         {activeTab === "profile"   && <ProfileContent />}
@@ -59,13 +62,13 @@ function ClientSpace() {
         {activeTab === "service"   && <PostProjectContent />}
         {activeTab === "finance"   && <FinanceContent />}
       </Container>
-    </Box>
+    </div>
   );
 }
 
 export default function ClientSpacePage() {
   return (
-    <Suspense fallback={<Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }} />}>
+    <Suspense fallback={<div className={pageCss} />}>
       <ClientSpace />
     </Suspense>
   );

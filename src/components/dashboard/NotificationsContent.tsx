@@ -1,19 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  Button,
-  CircularProgress,
-  Stack,
-  Paper,
-  Chip,
-} from "@mui/material";
-import {
-  NotificationsNoneOutlined,
-  DoneAllOutlined,
-} from "@mui/icons-material";
+import { Bell, CheckCheck } from "lucide-react";
+import { css } from "styled-system/css";
+import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { Notification, NotificationType } from "@/types/notification";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -56,6 +46,67 @@ const getTypeLabel = (type: NotificationType) => {
   }
 };
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "24px" });
+const titleCss = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.334, color: "rgba(0,0,0,0.87)" });
+const subCss = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)" });
+const markAllBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  minW: "64px", px: "8px", py: "6px", border: "none", borderRadius: "4px", bg: "transparent",
+  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75, color: "#0071e3",
+  cursor: "pointer",
+  _hover: { bg: "rgba(0, 113, 227, 0.05)" },
+  _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
+  "& svg": { display: "block" },
+});
+const centerBlock = css({ display: "flex", justifyContent: "center", py: "64px" });
+const errorText = css({ fontSize: "16px", lineHeight: 1.5, color: "#d32f2f" });
+const emptyCard = css({
+  bg: "surface", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  p: "64px", textAlign: "center",
+});
+const emptyIcon = css({ color: "rgba(0,0,0,0.2)", mb: "16px", display: "inline-block" });
+const emptyTitle = css({ fontSize: "16px", fontWeight: 500, lineHeight: 1.5, color: "rgba(0,0,0,0.87)" });
+const emptyBody = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)" });
+const list = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const row = css({
+  p: "16px", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid",
+  borderColor: "hairline", bg: "white", transition: "all 0.2s",
+  _hover: { borderColor: "rgba(0,0,0,0.2)" },
+  "&[data-unread]": { borderColor: "rgba(37, 99, 235, 0.2)", bg: "rgba(37, 99, 235, 0.03)" },
+});
+const rowInner = css({ display: "flex", gap: "12px", alignItems: "flex-start" });
+const dot = css({ w: "10px", h: "10px", borderRadius: "50%", mt: "6px", flexShrink: 0 });
+const rowBody = css({ flex: 1, minW: 0 });
+const rowHead = css({ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", mb: "4px" });
+const rowTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.43, color: "rgba(0,0,0,0.87)" });
+const typeChip = css({
+  display: "inline-flex", alignItems: "center", h: "18px", px: "8px", borderRadius: "999px",
+  fontSize: "9px", fontWeight: 500, whiteSpace: "nowrap",
+});
+const unreadDot = css({ w: "6px", h: "6px", borderRadius: "50%", bg: "#2563eb", flexShrink: 0 });
+const rowText = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)", mb: "6px" });
+const rowFoot = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
+const stamp = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.38)" });
+const markOneBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  minW: "auto", p: 0, border: "none", bg: "transparent", fontFamily: "inherit",
+  fontSize: "11px", fontWeight: 500, lineHeight: 1.75, color: "#0071e3", cursor: "pointer",
+  _hover: { bg: "transparent", textDecoration: "underline" },
+  _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
+});
+const loadMoreWrap = css({ display: "flex", justifyContent: "center", pt: "8px" });
+const loadMoreBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  minW: "64px", h: "36.5px", px: "15px", borderRadius: "8px",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.15)",
+  bg: "transparent", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  color: "rgba(0,0,0,0.6)", cursor: "pointer",
+  _hover: { borderColor: "rgba(0,0,0,0.3)", bg: "rgba(0,0,0,0.02)" },
+  _disabled: { color: "rgba(0,0,0,0.26)", borderColor: "rgba(0,0,0,0.12)", cursor: "default", pointerEvents: "none" },
+});
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function NotificationsContent() {
@@ -90,169 +141,87 @@ export default function NotificationsContent() {
   }, [refetch]);
 
   return (
-    <Box>
+    <div>
       {/* Header */}
-      <Stack direction='row' justifyContent='space-between' alignItems='center' mb={3}>
-        <Box>
-          <Typography variant='h5' fontWeight={600}>
-            Notifications
-          </Typography>
+      <div className={headRow}>
+        <div>
+          <h5 className={titleCss}>Notifications</h5>
           {unreadCount > 0 && (
-            <Typography variant='body2' color='text.secondary'>
+            <p className={subCss}>
               {unreadCount} unread notification{unreadCount !== 1 ? "s" : ""}
-            </Typography>
+            </p>
           )}
-        </Box>
+        </div>
         {unreadCount > 0 && (
-          <Button
-            variant='text'
-            startIcon={markingAll ? <CircularProgress size={14} /> : <DoneAllOutlined sx={{ fontSize: 16 }} />}
-            disabled={markingAll}
-            onClick={handleMarkAll}
-            sx={{
-              textTransform: "none",
-              color: "#0071e3",
-              fontSize: 13,
-              "&:hover": { bgcolor: "rgba(0, 113, 227, 0.05)" },
-            }}>
+          <button type="button" className={markAllBtn} disabled={markingAll} onClick={handleMarkAll}>
+            {markingAll ? <Spinner size={14} /> : <CheckCheck size={16} />}
             Mark all as read
-          </Button>
+          </button>
         )}
-      </Stack>
+      </div>
 
       {/* Content */}
       {loading && notifications.length === 0 ? (
-        <Box display='flex' justifyContent='center' py={8}>
-          <CircularProgress />
-        </Box>
+        <div className={centerBlock}>
+          <Spinner size={40} style={{ color: "#1976d2" }} />
+        </div>
       ) : error ? (
-        <Box display='flex' justifyContent='center' py={8}>
-          <Typography color='error'>{error}</Typography>
-        </Box>
+        <div className={centerBlock}>
+          <p className={errorText}>{error}</p>
+        </div>
       ) : notifications.length === 0 ? (
-        <Paper
-          elevation={0}
-          sx={{
-            borderRadius: 3,
-            border: "1px solid rgba(0,0,0,0.08)",
-            p: 8,
-            textAlign: "center",
-          }}>
-          <NotificationsNoneOutlined sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
-          <Typography variant='body1' fontWeight={500} mb={0.5}>
-            No notifications yet
-          </Typography>
-          <Typography variant='body2' color='text.secondary'>
-            You will be notified about proposals, orders, and reviews here.
-          </Typography>
-        </Paper>
+        <div className={emptyCard}>
+          <Bell size={48} className={emptyIcon} />
+          <p className={emptyTitle}>No notifications yet</p>
+          <p className={emptyBody}>You will be notified about proposals, orders, and reviews here.</p>
+        </div>
       ) : (
-        <Stack spacing={1.5}>
+        <div className={list}>
           {notifications.map((notification: Notification) => (
-            <Paper
-              elevation={0}
-              key={notification.id}
-              sx={{
-                p: 2,
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: notification.readAt === null ? "rgba(37, 99, 235, 0.2)" : "rgba(0,0,0,0.08)",
-                bgcolor: notification.readAt === null ? "rgba(37, 99, 235, 0.03)" : "white",
-                transition: "all 0.2s",
-                "&:hover": { borderColor: "rgba(0,0,0,0.2)" },
-              }}>
-              <Stack direction='row' spacing={1.5} alignItems='flex-start'>
+            <div key={notification.id} className={row} data-unread={notification.readAt === null ? "" : undefined}>
+              <div className={rowInner}>
                 {/* Color dot */}
-                <Box
-                  sx={{
-                    width: 10,
-                    height: 10,
-                    borderRadius: "50%",
-                    bgcolor: getNotificationColor(notification.type),
-                    mt: 0.75,
-                    flexShrink: 0,
-                  }}
-                />
+                <span className={dot} style={{ background: getNotificationColor(notification.type) }} />
 
                 {/* Content */}
-                <Box flex={1} minWidth={0}>
-                  <Stack direction='row' spacing={1} alignItems='center' mb={0.5} flexWrap='wrap'>
-                    <Typography variant='body2' fontWeight={600}>
-                      {notification.title}
-                    </Typography>
-                    <Chip
-                      label={getTypeLabel(notification.type)}
-                      size='small'
-                      sx={{
-                        height: 18,
-                        fontSize: 9,
-                        fontWeight: 500,
-                        bgcolor: `${getNotificationColor(notification.type)}18`,
-                        color: getNotificationColor(notification.type),
-                      }}
-                    />
+                <div className={rowBody}>
+                  <div className={rowHead}>
+                    <p className={rowTitle}>{notification.title}</p>
+                    <span
+                      className={typeChip}
+                      style={{ background: `${getNotificationColor(notification.type)}18`, color: getNotificationColor(notification.type) }}>
+                      {getTypeLabel(notification.type)}
+                    </span>
+                    {notification.readAt === null && <span className={unreadDot} />}
+                  </div>
+                  <p className={rowText}>{notification.body}</p>
+                  <div className={rowFoot}>
+                    <span className={stamp}>{timeAgo(notification.createdAt)}</span>
                     {notification.readAt === null && (
-                      <Box
-                        sx={{
-                          width: 6,
-                          height: 6,
-                          borderRadius: "50%",
-                          bgcolor: "#2563eb",
-                          flexShrink: 0,
-                        }}
-                      />
-                    )}
-                  </Stack>
-                  <Typography variant='body2' color='text.secondary' mb={0.75}>
-                    {notification.body}
-                  </Typography>
-                  <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                    <Typography variant='caption' color='text.disabled'>
-                      {timeAgo(notification.createdAt)}
-                    </Typography>
-                    {notification.readAt === null && (
-                      <Button
-                        size='small'
+                      <button
+                        type="button"
+                        className={markOneBtn}
                         disabled={markingId === notification.id}
-                        onClick={() => handleMarkOne(notification.id)}
-                        sx={{
-                          fontSize: 11,
-                          textTransform: "none",
-                          color: "#0071e3",
-                          p: 0,
-                          minWidth: "auto",
-                          "&:hover": { bgcolor: "transparent", textDecoration: "underline" },
-                        }}>
-                        {markingId === notification.id ? <CircularProgress size={10} /> : "Mark as read"}
-                      </Button>
+                        onClick={() => handleMarkOne(notification.id)}>
+                        {markingId === notification.id ? <Spinner size={10} /> : "Mark as read"}
+                      </button>
                     )}
-                  </Stack>
-                </Box>
-              </Stack>
-            </Paper>
+                  </div>
+                </div>
+              </div>
+            </div>
           ))}
 
           {/* Load More */}
           {meta && meta.current_page < meta.last_page && (
-            <Box display='flex' justifyContent='center' pt={1}>
-              <Button
-                variant='outlined'
-                disabled={loading}
-                onClick={loadMore}
-                sx={{
-                  textTransform: "none",
-                  borderRadius: 2,
-                  borderColor: "rgba(0,0,0,0.15)",
-                  color: "text.secondary",
-                  fontSize: 13,
-                  "&:hover": { borderColor: "rgba(0,0,0,0.3)", bgcolor: "rgba(0,0,0,0.02)" },
-                }}>
-                {loading ? <CircularProgress size={16} /> : "Load more"}
-              </Button>
-            </Box>
+            <div className={loadMoreWrap}>
+              <button type="button" className={loadMoreBtn} disabled={loading} onClick={loadMore}>
+                {loading ? <Spinner size={16} /> : "Load more"}
+              </button>
+            </div>
           )}
-        </Stack>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Box, Typography, Button, Card, CardContent, Avatar, Stack, Chip, Grid, CircularProgress, Alert } from "@mui/material";
-import { Message as MessageCircleIcon, NotificationsActive as ActionIcon, Cancel as CancelIcon, HandshakeOutlined as OfferIcon } from "@mui/icons-material";
+import { css } from "styled-system/css";
+import { MessageCircle, BellRing, XCircle, Handshake } from "lucide-react";
+import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { Order, OrderStatus, MyOrdersResponse } from "@/types/order";
@@ -12,6 +13,13 @@ import { CustomOrder } from "@/types/customOrder";
 import { DatePicker } from "@/components/ui/inputs";
 import { useMyCustomOrders, useCoInvalidate } from "@/components/customOrders/hooks";
 import { initials } from "@/components/customOrders/kit";
+import {
+  ListAvatar, alertIconCss, alertInfoCss, alertMsgCss, avatarStackCss, blueDotCss, byline,
+  cardBody, cardCss, centerBox, chipNeutral, clearBtnCss, colCss, dateFieldCss, dateRowCss,
+  emptyTextCss, errorTextCss, filterBtn, filterNew, filterRowCss, gridCellCss, gridCss, h5Css,
+  headRowCss, headWrapCss, listBtn, listCss, metaMonoCss, metaMutedCss, metaRowCss, priceCss,
+  rightColCss, startIconCss, statusChipCss, subCss, titleCss, titleRowCss,
+} from "@/components/dashboard/orderListKit";
 
 const toYmd = (d: Date | null) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : "");
 
@@ -157,90 +165,73 @@ export default function OrdersContent() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
-        <CircularProgress />
-      </Box>
+      <div className={centerBox}>
+        <Spinner size={40} style={{ color: "#1976d2" }} />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
-        <Typography color="error">{error}</Typography>
-      </Box>
+      <div className={centerBox}>
+        <p className={errorTextCss}>{error}</p>
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box mb={3}>
-        <Typography variant="h5" fontWeight={600} mb={0.5}>
+    <div>
+      <div className={headWrapCss}>
+        <h5 className={h5Css}>
           My Orders
-        </Typography>
-        <Typography variant="body2" color="text.secondary">
+        </h5>
+        <p className={subCss}>
           Track your orders, custom requests and offers
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Filters */}
-      <Stack direction="row" spacing={1} mb={3} flexWrap="wrap" useFlexGap>
+      <div className={filterRowCss}>
         {(["all", "requests", "pending", "active", "delivered", "revision_requested", "disputed", "completed", "cancelled"] as const).map(filter => (
-          <Button
+          <button
             key={filter}
+            type="button"
             onClick={() => setActiveFilter(filter)}
-            sx={{
-              fontSize: 12,
-              textTransform: "capitalize",
-              borderRadius: 10,
-              px: 2,
-              ...(activeFilter === filter
-                ? {
-                    bgcolor: "black",
-                    color: "white",
-                    "&:hover": { bgcolor: "black" },
-                  }
-                : {
-                    bgcolor: "rgba(0,0,0,0.05)",
-                    color: "rgba(0,0,0,0.6)",
-                    "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
-                  }),
-            }}>
+            className={filterBtn({ on: activeFilter === filter })}>
             {filter}
             {filter === "requests" && newOfferCount > 0 && (
-              <Box component="span"
-                sx={{ ml: 0.75, px: 0.75, py: 0.1, borderRadius: 8, fontSize: 10.5, fontWeight: 700, bgcolor: activeFilter === filter ? "rgba(255,255,255,0.25)" : "rgba(37, 99, 235, 0.12)", color: activeFilter === filter ? "white" : "#1e40af" }}>
+              <span className={filterNew({ look: activeFilter === filter ? "blueOn" : "blueOff" })}>
                 {newOfferCount} new
-              </Box>
+              </span>
             )}
-          </Button>
+          </button>
         ))}
-      </Stack>
+      </div>
 
       {/* Date range */}
-      <Stack direction="row" spacing={1.5} mb={3} alignItems="flex-end" flexWrap="wrap" useFlexGap>
-        <Box sx={{ width: 190 }}>
+      <div className={dateRowCss}>
+        <div className={dateFieldCss}>
           <DatePicker label="From" placeholder="Any date" value={fromDate} onChange={setFromDate} maxDate={toDate ?? undefined} />
-        </Box>
-        <Box sx={{ width: 190 }}>
+        </div>
+        <div className={dateFieldCss}>
           <DatePicker label="To" placeholder="Any date" value={toDate} onChange={setToDate} minDate={fromDate ?? undefined} />
-        </Box>
+        </div>
         {(fromDate || toDate) && (
-          <Button onClick={() => { setFromDate(null); setToDate(null); }}
-            sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.6)", mb: 0.5 }}>
+          <button type="button" onClick={() => { setFromDate(null); setToDate(null); }} className={clearBtnCss}>
             Clear dates
-          </Button>
+          </button>
         )}
-      </Stack>
+      </div>
 
       {/* Unified list — orders and custom requests/offers interleaved by date */}
       {rows.length === 0 ? (
-        <Box textAlign="center" py={6}>
-          <Typography color="text.secondary">
+        <div className={emptyTextCss}>
+          <p>
             {activeFilter === "requests" ? "No custom requests or offers found" : "No orders found"}
-          </Typography>
-        </Box>
+          </p>
+        </div>
       ) : (
-        <Stack spacing={2}>
+        <div className={listCss}>
           {rows.map(row => {
             if (row.kind === "request") {
               const r = row.request;
@@ -251,165 +242,102 @@ export default function OrdersContent() {
               const timelineDays = hasOffer && r.offer ? r.offer.delivery_days : r.desired_timeline_days;
 
               return (
-                <Card
-                  elevation={0}
-                  key={`req-${r.id}`}
-                  sx={{
-                    borderRadius: 3,
-                    border: "1px solid",
-                    borderColor: "rgba(0,0,0,0.08)",
-                    transition: "all 0.2s",
-                    "&:hover": {
-                      borderColor: "rgba(0,0,0,0.2)",
-                    },
-                  }}>
-                  <CardContent sx={{ p: 3 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                      <Stack direction="row" spacing={2} flex={1}>
-                        <Box sx={{ position: "relative", alignSelf: "flex-start" }}>
-                          <Avatar sx={{ width: 50, height: 50, bgcolor: "black", fontSize: 15, fontWeight: 600 }}>
-                            {initials(r.freelancer.name)}
-                          </Avatar>
-                          {isNewOffer(r) && (
-                            <Box sx={{ position: "absolute", top: 0, right: 0, width: 10, height: 10, borderRadius: "50%", bgcolor: "#0071e3", boxShadow: "0 0 0 2px #fff" }} />
-                          )}
-                        </Box>
-                        <Box flex={1}>
-                          <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
-                            <Typography variant="body1" fontWeight={600}>
+                <div key={`req-${r.id}`} className={cardCss}>
+                  <div className={cardBody}>
+                    <div className={headRowCss}>
+                      <div className={avatarStackCss}>
+                        <div className={css({ position: "relative", alignSelf: "flex-start" })}>
+                          <ListAvatar initials={initials(r.freelancer.name)} />
+                          {isNewOffer(r) && <span className={blueDotCss} />}
+                        </div>
+                        <div className={colCss}>
+                          <div className={titleRowCss}>
+                            <p className={titleCss}>
                               {r.service.title ?? "Custom request"}
-                            </Typography>
-                            <Chip label="Request" size="small" sx={{ height: 20, fontSize: 11, fontWeight: 600, bgcolor: "rgba(0,0,0,0.06)" }} />
-                          </Stack>
-                          <Typography variant="body2" color="text.secondary" mb={1}>
+                            </p>
+                            <span className={chipNeutral}>Request</span>
+                          </div>
+                          <p className={byline}>
                             by {r.freelancer.name ?? "Unknown"}
-                          </Typography>
-                          <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-                            <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "rgba(0,0,0,0.55)" }}>
+                          </p>
+                          <div className={metaRowCss}>
+                            <span className={metaMonoCss}>
                               {`REQ-${String(r.id).padStart(6, "0")}`}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            </span>
+                            <span className={metaMutedCss}>
                               •
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            </span>
+                            <span className={metaMutedCss}>
                               Request Date: {formatDate(r.created_at)}
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            </span>
+                            <span className={metaMutedCss}>
                               •
-                            </Typography>
-                            <Typography variant="caption" color="text.secondary">
+                            </span>
+                            <span className={metaMutedCss}>
                               Timeline: {timelineDays ? `${timelineDays} days` : "Custom scope"}
-                            </Typography>
-                          </Stack>
-                        </Box>
-                      </Stack>
-                      <Box textAlign="right">
-                        <Typography variant="h6" fontWeight={600} mb={1}>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      <div className={rightColCss}>
+                        <h6 className={priceCss}>
                           ${Number(price).toLocaleString()}
-                        </Typography>
-                        <Chip
-                          label={chip.label}
-                          size="small"
-                          sx={{
-                            fontSize: 11,
-                            height: 24,
-                            bgcolor: chip.bgcolor,
-                            color: chip.color,
-                          }}
-                        />
-                      </Box>
-                    </Stack>
+                        </h6>
+                        <span className={statusChipCss} style={{ backgroundColor: chip.bgcolor, color: chip.color }}>
+                          {chip.label}
+                        </span>
+                      </div>
+                    </div>
 
                     {/* Offer received banner */}
                     {r.status === "offered" && (
-                      <Alert
-                        icon={<ActionIcon sx={{ fontSize: 16 }} />}
-                        severity="info"
-                        sx={{ mb: 2, py: 0.5, fontSize: 12, borderRadius: 2, bgcolor: "rgba(0, 113, 227, 0.06)", color: "#1e40af", border: "1px solid rgba(0, 113, 227, 0.2)", "& .MuiAlert-icon": { color: "#0071e3" } }}>
-                        Custom offer received — review and accept to start the order
-                      </Alert>
+                      <div className={alertInfoCss}>
+                        <span className={alertIconCss} style={{ color: "#0071e3" }}><BellRing size={16} /></span>
+                        <div className={alertMsgCss}>Custom offer received — review and accept to start the order</div>
+                      </div>
                     )}
 
                     {/* Actions */}
-                    <Grid
-                      container
-                      spacing={1}
-                      sx={{
-                        pt: 2,
-                        borderTop: "1px solid",
-                        borderColor: "rgba(0,0,0,0.08)",
-                      }}>
+                    <div className={gridCss}>
                       {/* View Details - always visible; opens the request/offer detail */}
-                      <Grid size={r.status === "pending" || r.status === "offered" ? 6 : 12}>
-                        <Button
-                          fullWidth
-                          variant="contained"
+                      <div className={gridCellCss} style={{ gridColumn: r.status === "pending" || r.status === "offered" ? "span 6" : "span 12" }}>
+                        <button
+                          type="button"
                           onClick={() => router.push(`/dashboard/custom-orders/${r.id}`)}
-                          sx={{
-                            fontSize: 12,
-                            textTransform: "none",
-                            borderRadius: 10,
-                            bgcolor: "rgba(0,0,0,0.05)",
-                            color: "black",
-                            boxShadow: "none",
-                            "&:hover": {
-                              bgcolor: "rgba(0,0,0,0.1)",
-                              boxShadow: "none",
-                            },
-                          }}>
+                          className={listBtn({ tone: "grey" })}>
                           View Details
-                        </Button>
-                      </Grid>
+                        </button>
+                      </div>
 
                       {/* Offered: Review offer (accept / decline happens on the detail page) */}
                       {r.status === "offered" && (
-                        <Grid size={6}>
-                          <Button
-                            fullWidth
-                            variant="contained"
-                            startIcon={<OfferIcon sx={{ fontSize: 14 }} />}
+                        <div className={gridCellCss} style={{ gridColumn: "span 6" }}>
+                          <button
+                            type="button"
                             onClick={() => router.push(`/dashboard/custom-orders/${r.id}`)}
-                            sx={{
-                              fontSize: 12,
-                              textTransform: "none",
-                              borderRadius: 10,
-                              bgcolor: "#0071e3",
-                              color: "white",
-                              "&:hover": {
-                                bgcolor: "#0077ED",
-                              },
-                            }}>
+                            className={listBtn({ tone: "blue" })}>
+                            <span className={startIconCss}><Handshake size={20} /></span>
                             Review offer
-                          </Button>
-                        </Grid>
+                          </button>
+                        </div>
                       )}
 
                       {/* Pending: Withdraw the request */}
                       {r.status === "pending" && (
-                        <Grid size={6}>
-                          <Button
-                            fullWidth
-                            variant="contained"
+                        <div className={gridCellCss} style={{ gridColumn: "span 6" }}>
+                          <button
+                            type="button"
                             disabled={isLoading}
-                            startIcon={isLoading ? <CircularProgress size={14} /> : <CancelIcon sx={{ fontSize: 14 }} />}
                             onClick={() => handleWithdrawRequest(r.id)}
-                            sx={{
-                              fontSize: 12,
-                              textTransform: "none",
-                              borderRadius: 10,
-                              bgcolor: "#ef4444",
-                              color: "white",
-                              "&:hover": {
-                                bgcolor: "#dc2626",
-                              },
-                            }}>
+                            className={listBtn({ tone: "red" })}>
+                            <span className={startIconCss}>{isLoading ? <Spinner size={14} /> : <XCircle size={20} />}</span>
                             Withdraw
-                          </Button>
-                        </Grid>
+                          </button>
+                        </div>
                       )}
-                    </Grid>
-                  </CardContent>
-                </Card>
+                    </div>
+                  </div>
+                </div>
               );
             }
 
@@ -426,138 +354,86 @@ export default function OrdersContent() {
                 : `${order.pricing_option?.delivery_time ?? "N/A"} days`;
 
             return (
-            <Card
-              elevation={0}
-              key={order.id}
-              sx={{
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "rgba(0,0,0,0.08)",
-                transition: "all 0.2s",
-                "&:hover": {
-                  borderColor: "rgba(0,0,0,0.2)",
-                },
-              }}>
-              <CardContent sx={{ p: 3 }}>
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={2}>
-                  <Stack direction="row" spacing={2} flex={1}>
-                    <Avatar
-                      src={freelancer?.user?.avatar_url || undefined}
-                      alt={freelancer?.user?.name || "Freelancer"}
-                      sx={{ width: 50, height: 50 }}
-                    />
-                    <Box flex={1}>
-                      <Stack direction="row" spacing={1} alignItems="center" mb={0.5}>
-                        <Typography variant="body1" fontWeight={600}>
+            <div key={order.id} className={cardCss}>
+              <div className={cardBody}>
+                <div className={headRowCss}>
+                  <div className={avatarStackCss}>
+                    <ListAvatar src={freelancer?.user?.avatar_url || undefined} alt={freelancer?.user?.name || "Freelancer"} />
+                    <div className={colCss}>
+                      <div className={titleRowCss}>
+                        <p className={titleCss}>
                           {orderTitle}
-                        </Typography>
-                        {isCustom && <Chip label="Custom" size="small" sx={{ height: 20, fontSize: 11, fontWeight: 600, bgcolor: "rgba(0,0,0,0.06)" }} />}
-                      </Stack>
-                      <Typography variant="body2" color="text.secondary" mb={1}>
+                        </p>
+                        {isCustom && <span className={chipNeutral}>Custom</span>}
+                      </div>
+                      <p className={byline}>
                         by {freelancer?.user?.name || "Unknown"}
-                      </Typography>
-                      <Stack direction="row" spacing={1.5} alignItems="center" flexWrap="wrap">
-                        <Typography variant="caption" sx={{ fontFamily: "monospace", fontWeight: 700, color: "rgba(0,0,0,0.55)" }}>
+                      </p>
+                      <div className={metaRowCss}>
+                        <span className={metaMonoCss}>
                           {order.reference ?? `ORD-${String(order.id).padStart(6, "0")}`}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        </span>
+                        <span className={metaMutedCss}>
                           •
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        </span>
+                        <span className={metaMutedCss}>
                           Order Date: {formatDate(order.created_at)}
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        </span>
+                        <span className={metaMutedCss}>
                           •
-                        </Typography>
-                        <Typography variant="caption" color="text.secondary">
+                        </span>
+                        <span className={metaMutedCss}>
                           {isJobBased ? "Timeline" : "Delivery"}: {deliveryLabel}
-                        </Typography>
-                      </Stack>
-                    </Box>
-                  </Stack>
-                  <Box textAlign="right">
-                    <Typography variant="h6" fontWeight={600} mb={1}>
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className={rightColCss}>
+                    <h6 className={priceCss}>
                       ${orderPrice}
-                    </Typography>
-                    <Chip
-                      label={getStatusLabel(order.status)}
-                      size="small"
-                      sx={{
-                        fontSize: 11,
-                        height: 24,
-                        ...getStatusColor(order.status),
-                      }}
-                    />
-                  </Box>
-                </Stack>
+                    </h6>
+                    <span className={statusChipCss} style={{ backgroundColor: getStatusColor(order.status).bgcolor, color: getStatusColor(order.status).color }}>
+                      {getStatusLabel(order.status)}
+                    </span>
+                  </div>
+                </div>
 
                 {/* Delivery received banner */}
                 {order.status === "delivered" && (
-                  <Alert
-                    icon={<ActionIcon sx={{ fontSize: 16 }} />}
-                    severity="info"
-                    sx={{ mb: 2, py: 0.5, fontSize: 12, borderRadius: 2, bgcolor: "rgba(0, 113, 227, 0.06)", color: "#1e40af", border: "1px solid rgba(0, 113, 227, 0.2)", "& .MuiAlert-icon": { color: "#0071e3" } }}>
-                    Work delivered — please review and approve or request a revision
-                  </Alert>
+                  <div className={alertInfoCss}>
+                    <span className={alertIconCss} style={{ color: "#0071e3" }}><BellRing size={16} /></span>
+                    <div className={alertMsgCss}>Work delivered — please review and approve or request a revision</div>
+                  </div>
                 )}
 
                 {/* Actions */}
-                <Grid
-                  container
-                  spacing={1}
-                  sx={{
-                    pt: 2,
-                    borderTop: "1px solid",
-                    borderColor: "rgba(0,0,0,0.08)",
-                  }}>
-                  <Grid size={6}>
-                    <Button
-                      fullWidth
-                      variant="contained"
+                <div className={gridCss}>
+                  <div className={gridCellCss} style={{ gridColumn: "span 6" }}>
+                    <button
+                      type="button"
                       onClick={() => handleViewDetails(order)}
-                      sx={{
-                        fontSize: 12,
-                        textTransform: "none",
-                        borderRadius: 10,
-                        bgcolor: "rgba(0,0,0,0.05)",
-                        color: "black",
-                        boxShadow: "none",
-                        "&:hover": {
-                          bgcolor: "rgba(0,0,0,0.1)",
-                          boxShadow: "none",
-                        },
-                      }}>
+                      className={listBtn({ tone: "grey" })}>
                       View Details
-                    </Button>
-                  </Grid>
-                  <Grid size={6}>
-                    <Button
-                      fullWidth
-                      variant="contained"
-                      startIcon={<MessageCircleIcon sx={{ fontSize: 14 }} />}
+                    </button>
+                  </div>
+                  <div className={gridCellCss} style={{ gridColumn: "span 6" }}>
+                    <button
+                      type="button"
                       onClick={() => order.conversation_id && router.push(`/dashboard/client/messages?id=${order.conversation_id}`)}
                       disabled={!order.conversation_id}
-                      sx={{
-                        fontSize: 12,
-                        textTransform: "none",
-                        borderRadius: 10,
-                        bgcolor: "#0071e3",
-                        color: "white",
-                        "&:hover": {
-                          bgcolor: "#0077ED",
-                        },
-                      }}>
+                      className={listBtn({ tone: "blue" })}>
+                      <span className={startIconCss}><MessageCircle size={20} /></span>
                       Message Freelancer
-                    </Button>
-                  </Grid>
-                </Grid>
-              </CardContent>
-            </Card>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           );
           })}
-        </Stack>
+        </div>
       )}
 
-    </Box>
+    </div>
   );
 }

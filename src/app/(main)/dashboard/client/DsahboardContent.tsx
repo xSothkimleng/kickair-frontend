@@ -1,17 +1,18 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { Box, Typography, Button, Avatar, Chip, Card, CardContent, Grid, Stack, Badge, Paper, CircularProgress } from "@mui/material";
 import {
-  LocationOn as MapPinIcon,
-  CalendarToday as CalendarIcon,
-  Work as BriefcaseIcon,
-  Message as MessageCircleIcon,
-  AccountBalanceWallet as WalletIcon,
-  AttachMoney as DollarSignIcon,
+  MapPin as MapPinIcon,
+  Calendar as CalendarIcon,
+  Briefcase as BriefcaseIcon,
+  MessageCircle as MessageCircleIcon,
+  Wallet as WalletIcon,
+  DollarSign as DollarSignIcon,
   TrendingUp as ArrowUpRightIcon,
   Shield as ShieldIcon,
-} from "@mui/icons-material";
+} from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Avatar, Spinner } from "@/components/ds";
 import { ProfileAvatar } from "@/components/profile/profileKit";
 import { useClientDashboard } from "@/hooks/useClientDashboard";
 import { DashboardNotification, DashboardConversation } from "@/types/dashboard";
@@ -79,6 +80,157 @@ const getNotificationColor = (type: DashboardNotification["type"]) => {
   }
 };
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const centerBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "400px" });
+const errorText = css({ fontSize: "16px", lineHeight: 1.5, color: "#d32f2f" });
+
+const card = css({
+  bg: "surface", color: "rgba(0,0,0,0.87)", borderRadius: "12px",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.08)",
+});
+const cardBody24 = css({ p: "24px" });
+// MUI CardContent default: 16px, with 24px bottom padding on the last child.
+const cardBody16 = css({ p: "16px", pb: "24px" });
+const profileCard = css({ mb: "32px" });
+const stack24 = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const stack16 = css({ display: "flex", flexDirection: "column", gap: "16px" });
+const stack12 = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const stack8 = css({ display: "flex", flexDirection: "column", gap: "8px" });
+
+const identityRow = css({ display: "flex", alignItems: "center", gap: "16px" });
+const minW0 = css({ minW: 0 });
+const nameRow = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
+const nameCss = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.6, letterSpacing: "-0.02em", color: "rgba(0,0,0,0.87)" });
+const verifiedChip = css({
+  display: "inline-flex", alignItems: "center", gap: "4px", h: "20px", pl: "6px", pr: "8px",
+  borderRadius: "pill", bg: "rgba(37, 99, 235, 0.1)", color: "#2563eb",
+  fontSize: "10px", fontWeight: 500, whiteSpace: "nowrap",
+  "& svg": { display: "block" },
+});
+const companyCss = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)" });
+const metaRow = css({ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap", mt: "8px" });
+const metaItem = css({ display: "flex", alignItems: "center", gap: "4px", color: "rgba(0,0,0,0.6)" });
+const metaText = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)" });
+
+const statsInner = css({
+  display: "grid", gap: "16px", gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+  pt: "24px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0,0,0,0.08)",
+});
+const statValue = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.334, color: "rgba(0,0,0,0.87)" });
+const statLabel = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)" });
+
+const statsGrid = css({
+  display: "grid", gap: "16px", mb: "32px",
+  gridTemplateColumns: { base: "repeat(1, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" },
+});
+const statCard = css({
+  cursor: "pointer", transition: "all 0.2s",
+  _hover: { borderColor: "rgba(0,0,0,0.2)", "& .arrow-icon": { opacity: 1 } },
+});
+const statCardRelative = css({ position: "relative" });
+const statTopRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "16px" });
+const arrowIcon = css({ color: "rgba(0,0,0,0.4)", opacity: 0, transition: "opacity 0.2s", display: "block" });
+const bigValue = css({ fontSize: "34px", fontWeight: 600, lineHeight: 1.235, color: "rgba(0,0,0,0.87)" });
+const unreadDot = css({ position: "absolute", top: "16px", right: "16px", w: "8px", h: "8px", bg: "#9333ea", borderRadius: "50%" });
+
+// MUI Grid v2 is flex + gap with calc() widths — reproduced exactly so the
+// 8/4 split keeps its 760/368 columns inside the 1152px container.
+const mainGrid = css({ display: "flex", flexWrap: "wrap", gap: "24px" });
+const mainCol = css({ w: { base: "100%", lg: "calc(66.6667% - 8px)" }, minW: 0 });
+const sideCol = css({ w: { base: "100%", lg: "calc(33.3333% - 16px)" }, minW: 0 });
+
+const sectionHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "24px" });
+const sectionHeadTight = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "16px" });
+const sectionTitle = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.6, color: "rgba(0,0,0,0.87)" });
+
+// MUI text Button metrics (6px/8px padding, 64px min width, 4px radius).
+const muiTextBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  minW: "64px", px: "8px", py: "6px", border: "none", borderRadius: "4px", bg: "transparent",
+  fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
+  color: "rgba(0,0,0,0.6)", cursor: "pointer",
+  _hover: { color: "black", bg: "rgba(0,0,0,0.04)" },
+});
+const linkBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  minW: "auto", p: 0, border: "none", borderRadius: "4px", bg: "transparent",
+  fontFamily: "inherit", fontSize: "11px", fontWeight: 500, lineHeight: 1.75,
+  color: "#0071e3", cursor: "pointer",
+  _hover: { textDecoration: "underline", bg: "transparent" },
+});
+const wideBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  w: "100%", boxSizing: "border-box", mt: "12px", px: "8px", py: "6px",
+  border: "none", borderRadius: "4px", bg: "transparent",
+  fontFamily: "inherit", fontSize: "11px", fontWeight: 500, lineHeight: 1.75,
+  color: "rgba(0,0,0,0.6)", cursor: "pointer",
+  _hover: { color: "black", bg: "rgba(0,0,0,0.04)" },
+});
+
+const emptyText = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)", textAlign: "center", py: "24px" });
+
+const orderRow = css({
+  p: "16px", borderRadius: "8px", bg: "surface",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.08)",
+  transition: "all 0.2s", _hover: { bg: "rgba(0,0,0,0.02)" },
+});
+const orderRowInner = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
+const orderTitle = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.43, color: "rgba(0,0,0,0.87)" });
+const orderSub = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)", mb: "4px" });
+const chipRow = css({ display: "flex", alignItems: "center", gap: "8px" });
+const smallChip = css({
+  display: "inline-flex", alignItems: "center", h: "20px", px: "8px", borderRadius: "pill",
+  fontSize: "10px", fontWeight: 400, whiteSpace: "nowrap",
+});
+const dueText = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.38)" });
+const amountText = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.43, color: "rgba(0,0,0,0.87)" });
+
+const activityRow = css({
+  display: "flex", gap: "12px", p: "12px", borderRadius: "8px",
+  transition: "all 0.2s", _hover: { bg: "rgba(0,0,0,0.02)" },
+});
+const activityDot = css({ w: "8px", h: "8px", borderRadius: "50%", mt: "8px", flexShrink: 0 });
+const activityTitle = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.43, color: "rgba(0,0,0,0.87)" });
+const activityDesc = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)", mb: "4px" });
+const activityTime = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.38)" });
+
+const convBtn = css({
+  display: "flex", alignItems: "center", w: "100%", boxSizing: "border-box",
+  p: "12px", borderRadius: "8px", border: "none", bg: "transparent",
+  textAlign: "left", justifyContent: "flex-start", color: "inherit",
+  fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75, cursor: "pointer",
+  _hover: { bg: "rgba(0,0,0,0.04)" },
+});
+const convInner = css({ display: "flex", gap: "12px", w: "100%" });
+const convHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "4px" });
+const convName = css({ flex: 1, fontSize: "14px", fontWeight: 600, lineHeight: 1.43, color: "rgba(0,0,0,0.87)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const convBadge = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  minW: "18px", h: "18px", px: "5px", borderRadius: "pill",
+  bg: "#9333ea", color: "white", fontSize: "9px", fontWeight: 500, flexShrink: 0,
+});
+const convOrder = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)", mb: "4px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const convFoot = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
+const convPreview = css({ flex: 1, fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const convTime = css({ ml: "8px", flexShrink: 0, fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.38)" });
+
+const newChip = css({
+  display: "inline-flex", alignItems: "center", h: "20px", px: "8px", borderRadius: "pill",
+  bg: "#ea580c", color: "white", fontSize: "9px", fontWeight: 500, whiteSpace: "nowrap",
+});
+const notifRow = css({
+  p: "12px", borderRadius: "8px", cursor: "pointer", transition: "background 0.15s",
+  bg: "rgba(0,0,0,0.02)", borderWidth: "1px", borderStyle: "solid", borderColor: "transparent",
+  _hover: { bg: "rgba(0,0,0,0.05)" },
+  "&[data-unread]": { bg: "rgba(234, 88, 12, 0.05)", borderColor: "rgba(234, 88, 12, 0.2)" },
+});
+const notifInner = css({ display: "flex", gap: "8px" });
+const notifDot = css({ w: "8px", h: "8px", borderRadius: "50%", mt: "6px", flexShrink: 0 });
+const notifTitle = css({ display: "block", fontSize: "12px", fontWeight: 600, lineHeight: 1.66, color: "rgba(0,0,0,0.87)", mb: "2px" });
+const notifBody = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)", mb: "4px" });
+const notifTime = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.38)" });
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 interface Props {
@@ -97,664 +249,304 @@ export default function DashboardContent({ onTabChange }: Props) {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
-        <CircularProgress />
-      </Box>
+      <div className={centerBlock}>
+        <Spinner size={40} style={{ color: "#1976d2" }} />
+      </div>
     );
   }
 
   if (error || !data) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight={400}>
-        <Typography color="error">{error ?? "Failed to load dashboard."}</Typography>
-      </Box>
+      <div className={centerBlock}>
+        <p className={errorText}>{error ?? "Failed to load dashboard."}</p>
+      </div>
     );
   }
 
   const { profile, stats, activeOrders, recentActivity, recentConversations, recentNotifications } = data;
 
   return (
-    <Box>
+    <div>
       {/* Profile Overview Card */}
-      <Card
-        elevation={0}
-        sx={{
-          borderRadius: 3,
-          border: "1px solid",
-          borderColor: "rgba(0,0,0,0.08)",
-          mb: 4,
-        }}>
-        <CardContent sx={{ p: 3 }}>
-          <Stack spacing={3}>
+      <div className={cx(card, profileCard)}>
+        <div className={cardBody24}>
+          <div className={stack24}>
             {/* No public client profile route exists, so there is no "View Public Profile" button here. */}
-            <Stack direction='row' spacing={2} alignItems='center'>
+            <div className={identityRow}>
               <ProfileAvatar name={profile.name} src={profile.avatarUrl} size={80} />
-              <Box sx={{ minWidth: 0 }}>
-                <Stack direction='row' spacing={1} alignItems='center' flexWrap='wrap'>
-                  <Typography variant='h6' fontWeight={600} sx={{ letterSpacing: "-0.02em" }}>
-                    {profile.name}
-                  </Typography>
+              <div className={minW0}>
+                <div className={nameRow}>
+                  <h6 className={nameCss}>{profile.name}</h6>
                   {profile.verified && (
-                    <Chip
-                      icon={<ShieldIcon sx={{ fontSize: 12 }} />}
-                      label='Verified'
-                      size='small'
-                      sx={{
-                        height: 20,
-                        fontSize: 10,
-                        fontWeight: 500,
-                        bgcolor: "rgba(37, 99, 235, 0.1)",
-                        color: "#2563eb",
-                        "& .MuiChip-icon": { color: "#2563eb" },
-                      }}
-                    />
+                    <span className={verifiedChip}>
+                      <ShieldIcon size={12} />
+                      Verified
+                    </span>
                   )}
-                </Stack>
-                {profile.company && (
-                  <Typography variant='body2' color='text.secondary' sx={{ mt: 0.25 }}>
-                    {profile.company}
-                  </Typography>
-                )}
-                <Stack direction='row' spacing={2} alignItems='center' flexWrap='wrap' sx={{ mt: 1 }}>
+                </div>
+                {profile.company && <p className={companyCss}>{profile.company}</p>}
+                <div className={metaRow}>
                   {profile.location && (
-                    <Stack direction='row' spacing={0.5} alignItems='center'>
-                      <MapPinIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                      <Typography variant='caption' color='text.secondary'>
-                        {profile.location}
-                      </Typography>
-                    </Stack>
+                    <div className={metaItem}>
+                      <MapPinIcon size={12} />
+                      <span className={metaText}>{profile.location}</span>
+                    </div>
                   )}
-                  <Stack direction='row' spacing={0.5} alignItems='center'>
-                    <CalendarIcon sx={{ fontSize: 12, color: "text.secondary" }} />
-                    <Typography variant='caption' color='text.secondary'>
-                      Member since {formatMemberSince(profile.memberSince)}
-                    </Typography>
-                  </Stack>
-                </Stack>
-              </Box>
-            </Stack>
+                  <div className={metaItem}>
+                    <CalendarIcon size={12} />
+                    <span className={metaText}>Member since {formatMemberSince(profile.memberSince)}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             {/* Profile Stats */}
-            <Grid
-              container
-              spacing={2}
-              sx={{
-                pt: 3,
-                borderTop: "1px solid",
-                borderColor: "rgba(0,0,0,0.08)",
-              }}>
-              <Grid size={3}>
-                <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  {formatCurrency(stats.totalSpent)}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Total Spent
-                </Typography>
-              </Grid>
-              <Grid size={3}>
-                <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  {stats.activeProjectsCount}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Active Projects
-                </Typography>
-              </Grid>
-              <Grid size={3}>
-                <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  {stats.completedProjectsCount}
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Completed Projects
-                </Typography>
-              </Grid>
-              <Grid size={3}>
-                <Typography variant='h5' fontWeight={600} mb={0.5}>
-                  {profile.profileCompleteness}%
-                </Typography>
-                <Typography variant='caption' color='text.secondary'>
-                  Profile Completeness
-                </Typography>
-              </Grid>
-            </Grid>
-          </Stack>
-        </CardContent>
-      </Card>
+            <div className={statsInner}>
+              <div>
+                <p className={statValue}>{formatCurrency(stats.totalSpent)}</p>
+                <span className={statLabel}>Total Spent</span>
+              </div>
+              <div>
+                <p className={statValue}>{stats.activeProjectsCount}</p>
+                <span className={statLabel}>Active Projects</span>
+              </div>
+              <div>
+                <p className={statValue}>{stats.completedProjectsCount}</p>
+                <span className={statLabel}>Completed Projects</span>
+              </div>
+              <div>
+                <p className={statValue}>{profile.profileCompleteness}%</p>
+                <span className={statLabel}>Profile Completeness</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Stats Overview */}
-      <Grid container spacing={2} mb={4}>
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              "&:hover": {
-                borderColor: "rgba(0,0,0,0.2)",
-                "& .arrow-icon": { opacity: 1 },
-              },
-            }}>
-            <CardContent>
-              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                <BriefcaseIcon sx={{ fontSize: 20, color: "#2563eb" }} />
-                <ArrowUpRightIcon
-                  className='arrow-icon'
-                  sx={{
-                    fontSize: 16,
-                    color: "rgba(0,0,0,0.4)",
-                    opacity: 0,
-                    transition: "opacity 0.2s",
-                  }}
-                />
-              </Stack>
-              <Typography variant='h4' fontWeight={600} mb={0.5}>
-                {stats.activeProjectsCount}
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                Active Orders
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+      <div className={statsGrid}>
+        <div className={cx(card, statCard)}>
+          <div className={cardBody16}>
+            <div className={statTopRow}>
+              <BriefcaseIcon size={20} color="#2563eb" />
+              <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
+            </div>
+            <p className={bigValue}>{stats.activeProjectsCount}</p>
+            <span className={statLabel}>Active Orders</span>
+          </div>
+        </div>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              position: "relative",
-              "&:hover": {
-                borderColor: "rgba(0,0,0,0.2)",
-                "& .arrow-icon": { opacity: 1 },
-              },
-            }}
-            onClick={() => router.push("/dashboard/client/messages")}>
-            <CardContent>
-              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                <MessageCircleIcon sx={{ fontSize: 20, color: "#9333ea" }} />
-                <ArrowUpRightIcon
-                  className='arrow-icon'
-                  sx={{
-                    fontSize: 16,
-                    color: "rgba(0,0,0,0.4)",
-                    opacity: 0,
-                    transition: "opacity 0.2s",
-                  }}
-                />
-              </Stack>
-              <Typography variant='h4' fontWeight={600} mb={0.5}>
-                {stats.unreadMessagesCount}
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                Unread Messages
-              </Typography>
-              {stats.unreadMessagesCount > 0 && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 16,
-                    right: 16,
-                    width: 8,
-                    height: 8,
-                    bgcolor: "#9333ea",
-                    borderRadius: "50%",
-                  }}
-                />
-              )}
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className={cx(card, statCard, statCardRelative)} onClick={() => router.push("/dashboard/client/messages")}>
+          <div className={cardBody16}>
+            <div className={statTopRow}>
+              <MessageCircleIcon size={20} color="#9333ea" />
+              <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
+            </div>
+            <p className={bigValue}>{stats.unreadMessagesCount}</p>
+            <span className={statLabel}>Unread Messages</span>
+            {stats.unreadMessagesCount > 0 && <span className={unreadDot} />}
+          </div>
+        </div>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              "&:hover": {
-                borderColor: "rgba(0,0,0,0.2)",
-                "& .arrow-icon": { opacity: 1 },
-              },
-            }}>
-            <CardContent>
-              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                <WalletIcon sx={{ fontSize: 20, color: "#2563eb" }} />
-                <ArrowUpRightIcon
-                  className='arrow-icon'
-                  sx={{
-                    fontSize: 16,
-                    color: "rgba(0,0,0,0.4)",
-                    opacity: 0,
-                    transition: "opacity 0.2s",
-                  }}
-                />
-              </Stack>
-              <Typography variant='h4' fontWeight={600} mb={0.5}>
-                {formatCurrency(stats.availableBalance)}
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                Available Balance
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
+        <div className={cx(card, statCard)}>
+          <div className={cardBody16}>
+            <div className={statTopRow}>
+              <WalletIcon size={20} color="#2563eb" />
+              <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
+            </div>
+            <p className={bigValue}>{formatCurrency(stats.availableBalance)}</p>
+            <span className={statLabel}>Available Balance</span>
+          </div>
+        </div>
 
-        <Grid size={{ xs: 12, md: 3 }}>
-          <Card
-            elevation={0}
-            sx={{
-              borderRadius: 3,
-              border: "1px solid",
-              borderColor: "rgba(0,0,0,0.08)",
-              cursor: "pointer",
-              transition: "all 0.2s",
-              "&:hover": {
-                borderColor: "rgba(0,0,0,0.2)",
-                "& .arrow-icon": { opacity: 1 },
-              },
-            }}>
-            <CardContent>
-              <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                <DollarSignIcon sx={{ fontSize: 20, color: "#16a34a" }} />
-                <ArrowUpRightIcon
-                  className='arrow-icon'
-                  sx={{
-                    fontSize: 16,
-                    color: "rgba(0,0,0,0.4)",
-                    opacity: 0,
-                    transition: "opacity 0.2s",
-                  }}
-                />
-              </Stack>
-              <Typography variant='h4' fontWeight={600} mb={0.5}>
-                {formatCurrency(stats.inEscrow)}
-              </Typography>
-              <Typography variant='caption' color='text.secondary'>
-                In Escrow
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
+        <div className={cx(card, statCard)}>
+          <div className={cardBody16}>
+            <div className={statTopRow}>
+              <DollarSignIcon size={20} color="#16a34a" />
+              <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
+            </div>
+            <p className={bigValue}>{formatCurrency(stats.inEscrow)}</p>
+            <span className={statLabel}>In Escrow</span>
+          </div>
+        </div>
+      </div>
 
-      <Grid container spacing={3}>
+      <div className={mainGrid}>
         {/* Main Column */}
-        <Grid size={{ xs: 12, lg: 8 }}>
-          <Stack spacing={3}>
+        <div className={mainCol}>
+          <div className={stack24}>
             {/* Active Orders */}
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "rgba(0,0,0,0.08)",
-              }}>
-              <CardContent sx={{ p: 3 }}>
-                <Stack direction='row' justifyContent='space-between' alignItems='center' mb={3}>
-                  <Typography variant='h6' fontWeight={600}>
-                    Active Orders
-                  </Typography>
-                  <Button
-                    sx={{
-                      fontSize: 12,
-                      color: "text.secondary",
-                      textTransform: "none",
-                      "&:hover": { color: "black" },
-                    }}>
-                    View All
-                  </Button>
-                </Stack>
+            <div className={card}>
+              <div className={cardBody24}>
+                <div className={sectionHead}>
+                  <h6 className={sectionTitle}>Active Orders</h6>
+                  <button type="button" className={muiTextBtn}>View All</button>
+                </div>
 
-                <Stack spacing={1.5}>
+                <div className={stack12}>
                   {activeOrders.length === 0 ? (
-                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
-                      No active orders
-                    </Typography>
+                    <p className={emptyText}>No active orders</p>
                   ) : (
                     activeOrders.map(order => {
                       const statusColors = getStatusColors(order.status);
                       return (
-                        <Paper
-                          elevation={0}
-                          key={order.id}
-                          sx={{
-                            p: 2,
-                            borderRadius: 2,
-                            border: "1px solid",
-                            borderColor: "rgba(0,0,0,0.08)",
-                            transition: "all 0.2s",
-                            "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                          }}>
-                          <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                            <Box flex={1}>
-                              <Typography variant='body2' fontWeight={500} mb={0.5}>
-                                {order.title}
-                              </Typography>
-                              <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                                by {order.freelancerName}
-                              </Typography>
-                              <Stack direction='row' spacing={1} alignItems='center'>
-                                <Chip
-                                  label={getStatusLabel(order.status)}
-                                  size='small'
-                                  sx={{
-                                    height: 20,
-                                    fontSize: 10,
-                                    bgcolor: statusColors.bg,
-                                    color: statusColors.color,
-                                  }}
-                                />
-                                <Chip
-                                  label={order.type === "job" ? "Job" : "Service"}
-                                  size='small'
-                                  sx={{
-                                    height: 20,
-                                    fontSize: 10,
-                                    bgcolor: order.type === "job" ? "rgba(99,102,241,0.1)" : "rgba(16,185,129,0.1)",
+                        <div key={order.id} className={orderRow}>
+                          <div className={orderRowInner}>
+                            <div className={css({ flex: 1 })}>
+                              <p className={orderTitle}>{order.title}</p>
+                              <span className={orderSub}>by {order.freelancerName}</span>
+                              <div className={chipRow}>
+                                <span className={smallChip} style={{ background: statusColors.bg, color: statusColors.color }}>
+                                  {getStatusLabel(order.status)}
+                                </span>
+                                <span
+                                  className={smallChip}
+                                  style={{
+                                    background: order.type === "job" ? "rgba(99,102,241,0.1)" : "rgba(16,185,129,0.1)",
                                     color: order.type === "job" ? "#6366f1" : "#059669",
-                                  }}
-                                />
+                                  }}>
+                                  {order.type === "job" ? "Job" : "Service"}
+                                </span>
                                 {order.dueDate ? (
-                                  <Typography variant='caption' color='text.disabled'>
+                                  <span className={dueText}>
                                     Due: {new Date(order.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                                  </Typography>
+                                  </span>
                                 ) : (
-                                  <Typography variant='caption' color='text.disabled'>
-                                    Due: TBD
-                                  </Typography>
+                                  <span className={dueText}>Due: TBD</span>
                                 )}
-                              </Stack>
-                            </Box>
-                            <Typography variant='body2' fontWeight={600}>
-                              ${order.amount}
-                            </Typography>
-                          </Stack>
-                        </Paper>
+                              </div>
+                            </div>
+                            <p className={amountText}>${order.amount}</p>
+                          </div>
+                        </div>
                       );
                     })
                   )}
-                </Stack>
-              </CardContent>
-            </Card>
+                </div>
+              </div>
+            </div>
 
             {/* Recent Activity */}
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "rgba(0,0,0,0.08)",
-              }}>
-              <CardContent sx={{ p: 3 }}>
-                <Typography variant='h6' fontWeight={600} mb={3}>
-                  Recent Activity
-                </Typography>
+            <div className={card}>
+              <div className={cardBody24}>
+                {/* MUI's `mb` on this <h6> never rendered (globals.css resets h* margins) — dropped. */}
+                <h6 className={sectionTitle}>Recent Activity</h6>
 
-                <Stack spacing={2}>
+                <div className={stack16}>
                   {recentActivity.length === 0 ? (
-                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
-                      No recent activity
-                    </Typography>
+                    <p className={emptyText}>No recent activity</p>
                   ) : (
                     recentActivity.map(activity => (
-                      <Stack
-                        key={activity.id}
-                        direction='row'
-                        spacing={1.5}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: 2,
-                          transition: "all 0.2s",
-                          "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                        }}>
-                        <Box
-                          sx={{
-                            width: 8,
-                            height: 8,
-                            borderRadius: "50%",
-                            bgcolor: getActivityColor(activity.type),
-                            mt: 1,
-                            flexShrink: 0,
-                          }}
-                        />
-                        <Box flex={1}>
-                          <Typography variant='body2' fontWeight={500} mb={0.25}>
-                            {activity.title}
-                          </Typography>
-                          {activity.description && (
-                            <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                              {activity.description}
-                            </Typography>
-                          )}
-                          <Typography variant='caption' color='text.disabled'>
-                            {timeAgo(activity.createdAt)}
-                          </Typography>
-                        </Box>
-                      </Stack>
+                      <div key={activity.id} className={activityRow}>
+                        <span className={activityDot} style={{ background: getActivityColor(activity.type) }} />
+                        <div className={css({ flex: 1 })}>
+                          <p className={activityTitle}>{activity.title}</p>
+                          {activity.description && <span className={activityDesc}>{activity.description}</span>}
+                          <span className={activityTime}>{timeAgo(activity.createdAt)}</span>
+                        </div>
+                      </div>
                     ))
                   )}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Stack>
-        </Grid>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
 
         {/* Sidebar */}
-        <Grid size={{ xs: 12, lg: 4 }}>
-          <Stack spacing={3}>
+        <div className={sideCol}>
+          <div className={stack24}>
             {/* Recent Messages */}
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "rgba(0,0,0,0.08)",
-              }}>
-              <CardContent sx={{ p: 3 }}>
-                <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                  <Typography variant='h6' fontWeight={600}>
-                    Recent Messages
-                  </Typography>
-                  <Button
-                    onClick={() => router.push("/dashboard/client/messages")}
-                    sx={{
-                      fontSize: 11,
-                      color: "#0071e3",
-                      textTransform: "none",
-                      minWidth: "auto",
-                      p: 0,
-                      "&:hover": { textDecoration: "underline", bgcolor: "transparent" },
-                    }}>
+            <div className={card}>
+              <div className={cardBody24}>
+                <div className={sectionHeadTight}>
+                  <h6 className={sectionTitle}>Recent Messages</h6>
+                  <button type="button" className={linkBtn} onClick={() => router.push("/dashboard/client/messages")}>
                     View All
-                  </Button>
-                </Stack>
+                  </button>
+                </div>
 
-                <Stack spacing={1.5}>
+                <div className={stack12}>
                   {recentConversations.length === 0 ? (
-                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
-                      No messages yet
-                    </Typography>
+                    <p className={emptyText}>No messages yet</p>
                   ) : (
                     recentConversations.map((conv: DashboardConversation) => (
-                      <Button
+                      <button
                         key={conv.conversationId}
-                        onClick={() => router.push("/dashboard/client/messages")}
-                        sx={{
-                          width: "100%",
-                          p: 1.5,
-                          borderRadius: 2,
-                          textAlign: "left",
-                          textTransform: "none",
-                          color: "inherit",
-                          justifyContent: "flex-start",
-                          "&:hover": { bgcolor: "rgba(0,0,0,0.04)" },
-                        }}>
-                        <Stack direction='row' spacing={1.5} width='100%'>
-                          <Avatar src={conv.otherParticipant.avatarUrl ?? undefined} alt={conv.otherParticipant.name} sx={{ width: 40, height: 40 }} />
-                          <Box flex={1} minWidth={0}>
-                            <Stack direction='row' justifyContent='space-between' alignItems='center' mb={0.5}>
-                              <Typography variant='body2' fontWeight={600} noWrap sx={{ flex: 1 }}>
-                                {conv.otherParticipant.name}
-                              </Typography>
-                              {conv.unreadCount > 0 && (
-                                <Badge
-                                  badgeContent={conv.unreadCount}
-                                  sx={{
-                                    "& .MuiBadge-badge": {
-                                      bgcolor: "#9333ea",
-                                      color: "white",
-                                      fontSize: 9,
-                                      height: 18,
-                                      minWidth: 18,
-                                    },
-                                  }}
-                                />
-                              )}
-                            </Stack>
-                            <Typography variant='caption' color='text.secondary' display='block' noWrap mb={0.5}>
-                              {conv.orderTitle}
-                            </Typography>
+                        type="button"
+                        className={convBtn}
+                        onClick={() => router.push("/dashboard/client/messages")}>
+                        <span className={convInner}>
+                          <Avatar name={conv.otherParticipant.name} src={conv.otherParticipant.avatarUrl ?? undefined} px={40} />
+                          <span className={css({ flex: 1, minW: 0 })}>
+                            <span className={convHead}>
+                              <span className={convName}>{conv.otherParticipant.name}</span>
+                              {conv.unreadCount > 0 && <span className={convBadge}>{conv.unreadCount}</span>}
+                            </span>
+                            <span className={convOrder}>{conv.orderTitle}</span>
                             {conv.lastMessage && (
-                              <Stack direction='row' justifyContent='space-between' alignItems='center'>
-                                <Typography variant='caption' color='text.secondary' noWrap sx={{ flex: 1 }}>
-                                  {conv.lastMessage.body}
-                                </Typography>
-                                <Typography variant='caption' color='text.disabled' sx={{ ml: 1, flexShrink: 0 }}>
-                                  {timeAgo(conv.lastMessage.sentAt)}
-                                </Typography>
-                              </Stack>
+                              <span className={convFoot}>
+                                <span className={convPreview}>{conv.lastMessage.body}</span>
+                                <span className={convTime}>{timeAgo(conv.lastMessage.sentAt)}</span>
+                              </span>
                             )}
-                          </Box>
-                        </Stack>
-                      </Button>
+                          </span>
+                        </span>
+                      </button>
                     ))
                   )}
-                </Stack>
-              </CardContent>
-            </Card>
+                </div>
+              </div>
+            </div>
 
             {/* Notifications */}
-            <Card
-              elevation={0}
-              sx={{
-                borderRadius: 3,
-                border: "1px solid",
-                borderColor: "rgba(0,0,0,0.08)",
-              }}>
-              <CardContent sx={{ p: 3 }}>
-                <Stack direction='row' justifyContent='space-between' alignItems='center' mb={2}>
-                  <Stack direction='row' spacing={1} alignItems='center'>
-                    <Typography variant='h6' fontWeight={600}>
-                      Notifications
-                    </Typography>
+            <div className={card}>
+              <div className={cardBody24}>
+                <div className={sectionHeadTight}>
+                  <div className={css({ display: "flex", alignItems: "center", gap: "8px" })}>
+                    <h6 className={sectionTitle}>Notifications</h6>
                     {stats.unreadNotificationsCount > 0 && (
-                      <Chip
-                        label={`${stats.unreadNotificationsCount} new`}
-                        size='small'
-                        sx={{
-                          height: 20,
-                          fontSize: 9,
-                          fontWeight: 500,
-                          bgcolor: "#ea580c",
-                          color: "white",
-                        }}
-                      />
+                      <span className={newChip}>{stats.unreadNotificationsCount} new</span>
                     )}
-                  </Stack>
-                  <Button
-                    onClick={() => router.push("/notifications")}
-                    sx={{
-                      fontSize: 11,
-                      color: "#0071e3",
-                      textTransform: "none",
-                      minWidth: "auto",
-                      p: 0,
-                      "&:hover": { textDecoration: "underline", bgcolor: "transparent" },
-                    }}>
+                  </div>
+                  <button type="button" className={linkBtn} onClick={() => router.push("/notifications")}>
                     View All
-                  </Button>
-                </Stack>
+                  </button>
+                </div>
 
-                <Stack spacing={1}>
+                <div className={stack8}>
                   {recentNotifications.length === 0 ? (
-                    <Typography variant='body2' color='text.secondary' textAlign='center' py={3}>
-                      No notifications
-                    </Typography>
+                    <p className={emptyText}>No notifications</p>
                   ) : (
                     recentNotifications.map((notification: DashboardNotification) => (
-                      <Paper
-                        elevation={0}
+                      <div
                         key={notification.id}
                         role="button"
                         tabIndex={0}
                         onClick={() => openNotification(notification)}
-                        sx={{
-                          p: 1.5,
-                          borderRadius: 2,
-                          cursor: "pointer",
-                          transition: "background 0.15s",
-                          bgcolor: notification.readAt === null ? "rgba(234, 88, 12, 0.05)" : "rgba(0,0,0,0.02)",
-                          border: "1px solid",
-                          borderColor: notification.readAt === null ? "rgba(234, 88, 12, 0.2)" : "transparent",
-                          "&:hover": { bgcolor: "rgba(0,0,0,0.05)" },
-                        }}>
-                        <Stack direction='row' spacing={1}>
-                          <Box
-                            sx={{
-                              width: 8,
-                              height: 8,
-                              borderRadius: "50%",
-                              bgcolor: getNotificationColor(notification.type),
-                              mt: 0.75,
-                              flexShrink: 0,
-                            }}
-                          />
-                          <Box flex={1} minWidth={0}>
-                            <Typography variant='caption' fontWeight={600} display='block' mb={0.25}>
-                              {notification.title}
-                            </Typography>
-                            <Typography variant='caption' color='text.secondary' display='block' mb={0.5}>
-                              {notification.body}
-                            </Typography>
-                            <Typography variant='caption' color='text.disabled'>
-                              {timeAgo(notification.createdAt)}
-                            </Typography>
-                          </Box>
-                        </Stack>
-                      </Paper>
+                        className={notifRow}
+                        data-unread={notification.readAt === null ? "" : undefined}>
+                        <div className={notifInner}>
+                          <span className={notifDot} style={{ background: getNotificationColor(notification.type) }} />
+                          <div className={css({ flex: 1, minW: 0 })}>
+                            <span className={notifTitle}>{notification.title}</span>
+                            <span className={notifBody}>{notification.body}</span>
+                            <span className={notifTime}>{timeAgo(notification.createdAt)}</span>
+                          </div>
+                        </div>
+                      </div>
                     ))
                   )}
-                </Stack>
+                </div>
 
-                <Button
-                  fullWidth
-                  onClick={() => router.push("/notifications")}
-                  sx={{
-                    mt: 1.5,
-                    fontSize: 11,
-                    color: "text.secondary",
-                    textTransform: "none",
-                    "&:hover": {
-                      color: "black",
-                      bgcolor: "rgba(0,0,0,0.04)",
-                    },
-                  }}>
+                <button type="button" className={wideBtn} onClick={() => router.push("/notifications")}>
                   View All Notifications
-                </Button>
-              </CardContent>
-            </Card>
-          </Stack>
-        </Grid>
-      </Grid>
-    </Box>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
