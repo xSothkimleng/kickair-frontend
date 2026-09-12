@@ -1,13 +1,13 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Box, Paper, Typography, Button, Stack, CircularProgress, Alert } from "@mui/material";
-import { AddOutlined, WorkOutlined, EditOutlined, ReplayOutlined, CloseOutlined, InfoOutlined } from "@mui/icons-material";
+import { Plus, Briefcase, Pencil, RotateCcw, X, Info } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Alert, Spinner } from "@/components/ds";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { JobPost, JobPostStatus } from "@/types/job";
-import { tokens } from "@/theme";
-import { StatusPill, KebabMenu, Facts, Banner, Chevron, mgCardSx, type CardTone, type Fact, type MenuAction } from "@/components/dashboard/ManagementCard";
+import { StatusPill, KebabMenu, Facts, Banner, Chevron, mgCard, type CardTone, type Fact, type MenuAction } from "@/components/dashboard/ManagementCard";
 import JobPostForm from "@/components/jobs/JobPostForm";
 import JobDraftCard from "@/components/jobs/JobDraftCard";
 
@@ -40,6 +40,66 @@ function daysLeft(dateStr: string) {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000);
 }
 
+/* ── static styles ── */
+const cardLayout = css({ display: "flex", alignItems: "center", gap: "16px", p: "20px 22px" });
+const cardBody = css({ display: "flex", flexDirection: "column", gap: "13px", flex: 1, minW: 0 });
+const cardTop = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" });
+const cardTitle = css({ fontSize: "18px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 });
+
+const page = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const header = css({ display: "flex", alignItems: "center", justifyContent: "space-between" });
+const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
+const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const createBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  boxSizing: "border-box", m: 0, px: "24px", h: "44px", minW: "64px",
+  border: "none", borderRadius: "40px",
+  bg: "ink", color: "white",
+  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.8)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const alertBox = css({ borderRadius: "8px", fontSize: "13px" });
+const sectionCard = css({
+  bg: "surface", borderRadius: "card",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  p: "24px",
+});
+/* globals.css zeroes `p` margins outside any layer, so the old Typography `mb` never applied. */
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const centreBlock = css({ textAlign: "center", py: "48px" });
+const errorText = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(239,68,68,0.8)" });
+const retryBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, p: "6px 8px", minW: "64px", border: "none", borderRadius: "4px",
+  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.04)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const emptyIcon = css({ display: "inline-block", color: "rgba(0,0,0,0.2)", mb: "16px" });
+const emptyText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const firstJobBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, p: "6px 16px", minW: "64px",
+  border: "none", borderRadius: "40px",
+  bg: "accent", color: "white",
+  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
+  _hover: { bg: "accentHover" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const cardList = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const draftsHeader = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
+const draftsCount = css({
+  px: "8px", py: "2px", bg: "rgba(0,0,0,0.05)", color: "ink2",
+  fontSize: "11px", fontWeight: 600, borderRadius: "4px",
+});
+const draftsSub = css({ lineHeight: 1.5, fontSize: "12px", color: "rgba(0,0,0,0.5)" });
+
 interface JobRowProps {
   job: JobPost;
   onEdit: () => void;
@@ -63,45 +123,45 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
 
   const facts: Fact[] = [
     { label: "Budget · USD", mono: true, value: `${formatCurrency(job.budget_min)} – ${formatCurrency(job.budget_max)}` },
-    { label: "Proposals", value: job.proposal_count ? `${job.proposal_count} proposal${job.proposal_count === 1 ? "" : "s"}` : "None yet", color: job.proposal_count ? undefined : tokens.text3 },
+    { label: "Proposals", value: job.proposal_count ? `${job.proposal_count} proposal${job.proposal_count === 1 ? "" : "s"}` : "None yet", color: job.proposal_count ? undefined : "rgba(0, 0, 0, 0.4)" },
   ];
   if ((job.status === "open" || job.status === "in_progress") && job.deadline) {
     facts.push({
       label: "Deadline",
       value: dl !== null && dl <= 0 ? "Overdue" : dl !== null && dl <= 7 ? `In ${dl} day${dl === 1 ? "" : "s"}` : formatDate(job.deadline),
-      color: dl !== null && dl <= 3 ? tokens.errorText : undefined,
+      color: dl !== null && dl <= 3 ? "#b91c1c" : undefined,
     });
   }
 
-  const edit: MenuAction = { icon: <EditOutlined sx={{ fontSize: 18 }} />, label: "Edit job", onClick: onEdit };
+  const edit: MenuAction = { icon: <Pencil size={18} />, label: "Edit job", onClick: onEdit };
   const menu: MenuAction[] =
     job.status === "rejected"
-      ? [edit, { icon: <ReplayOutlined sx={{ fontSize: 18 }} />, label: "Resubmit for review", onClick: onEdit }]
+      ? [edit, { icon: <RotateCcw size={18} />, label: "Resubmit for review", onClick: onEdit }]
       : job.status === "open" || job.status === "in_progress"
-        ? [edit, { sep: true, label: "" }, { icon: <CloseOutlined sx={{ fontSize: 18 }} />, label: "Cancel job", danger: true, onClick: handleCancel }]
+        ? [edit, { sep: true, label: "" }, { icon: <X size={18} />, label: "Cancel job", danger: true, onClick: handleCancel }]
         : job.status === "pending_review"
           ? [edit]
           : [];
 
   return (
-    <Box
+    <div
       role="button"
       tabIndex={0}
       onClick={() => router.push(`/dashboard/jobs/${job.id}/proposals`)}
-      sx={{ ...mgCardSx, display: "flex", alignItems: "center", gap: 2, p: "20px 22px" }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.625, flex: 1, minWidth: 0 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.5 }}>
+      className={cx(mgCard, cardLayout)}>
+      <div className={cardBody}>
+        <div className={cardTop}>
           <StatusPill tone={cfg.tone} label={cfg.label} />
           <KebabMenu items={menu} />
-        </Box>
-        <Typography sx={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 }}>{job.title}</Typography>
+        </div>
+        <p className={cardTitle}>{job.title}</p>
         <Facts items={facts} />
         {job.status === "rejected" && (
-          <Banner tone="error" icon={<InfoOutlined sx={{ fontSize: 16 }} />} label="Rejected by admin" text={job.rejection_reason || "No reason provided. Use Resubmit to send it for review again."} />
+          <Banner tone="error" icon={<Info size={16} />} label="Rejected by admin" text={job.rejection_reason || "No reason provided. Use Resubmit to send it for review again."} />
         )}
-      </Box>
+      </div>
       <Chevron />
-    </Box>
+    </div>
   );
 }
 
@@ -214,101 +274,80 @@ export default function PostServiceContent() {
   const liveJobs = jobs.filter(j => j.status !== "draft");
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className={page}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>My Jobs</Typography>
-          <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+      <div className={header}>
+        <div>
+          <p className={pageTitle}>My Jobs</p>
+          <p className={pageSub}>
             Post job opportunities and manage incoming proposals
-          </Typography>
-        </Box>
-        <Button
-          onClick={() => setView("create")}
-          startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
-          sx={{
-            px: 3,
-            height: 44,
-            fontSize: 13,
-            color: "white",
-            bgcolor: "black",
-            borderRadius: 10,
-            textTransform: "none",
-            "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-          }}>
+          </p>
+        </div>
+        <button type="button" onClick={() => setView("create")} className={createBtn}>
+          <Plus size={16} />
           Post a Job
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Draft publish / delete feedback (incl. publish-gate messages) */}
       {actionMsg && (
-        <Alert severity={actionMsg.type} onClose={() => setActionMsg(null)} sx={{ borderRadius: 2, fontSize: 13 }}>
+        <Alert tone={actionMsg.type === "success" ? "success" : "error"} onClose={() => setActionMsg(null)} className={alertBox}>
           {actionMsg.text}
         </Alert>
       )}
 
       {/* Job List */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>All Jobs</Typography>
+      <div className={sectionCard}>
+        <p className={sectionTitle}>All Jobs</p>
 
         {loading ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <CircularProgress size={32} sx={{ color: "rgba(0,0,0,0.4)" }} />
-          </Box>
+          <div className={centreBlock}>
+            <Spinner size={32} className={css({ color: "rgba(0,0,0,0.4)" })} />
+          </div>
         ) : error ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <Typography sx={{ fontSize: 13, color: "rgba(239,68,68,0.8)", mb: 2 }}>{error}</Typography>
-            <Button onClick={fetchJobs} sx={{ fontSize: 12, textTransform: "none" }}>
+          <div className={centreBlock}>
+            <p className={errorText}>{error}</p>
+            <button type="button" onClick={fetchJobs} className={retryBtn}>
               Try again
-            </Button>
-          </Box>
+            </button>
+          </div>
         ) : liveJobs.length > 0 ? (
-          <Stack spacing={1.5}>
+          <div className={cardList}>
             {liveJobs.map(job => (
               <JobRow key={job.id} job={job} onEdit={() => handleEdit(job)} onCancelled={handleCancelled} />
             ))}
-          </Stack>
+          </div>
         ) : drafts.length > 0 ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <WorkOutlined sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
-            <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+          <div className={centreBlock}>
+            <Briefcase size={48} className={emptyIcon} />
+            <p className={emptyText}>
               No published jobs yet — publish a draft below to start receiving proposals.
-            </Typography>
-          </Box>
+            </p>
+          </div>
         ) : (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <WorkOutlined sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
-            <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)", mb: 2 }}>No job posts yet</Typography>
-            <Button
-              onClick={() => setView("create")}
-              variant='contained'
-              sx={{
-                fontSize: 13,
-                textTransform: "none",
-                borderRadius: 10,
-                bgcolor: "#0071e3",
-                color: "white",
-                "&:hover": { bgcolor: "#0077ED" },
-              }}>
+          <div className={centreBlock}>
+            <Briefcase size={48} className={emptyIcon} />
+            <p className={emptyText}>No job posts yet</p>
+            <button type="button" onClick={() => setView("create")} className={firstJobBtn}>
               Post your first job
-            </Button>
-          </Box>
+            </button>
+          </div>
         )}
-      </Paper>
+      </div>
 
       {/* Drafts — private, never reviewed or public until published */}
       {drafts.length > 0 && (
-        <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Drafts</Typography>
-            <Box sx={{ px: 1, py: 0.25, bgcolor: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", fontSize: 11, fontWeight: 600, borderRadius: 1 }}>
+        <div className={sectionCard}>
+          <div className={draftsHeader}>
+            <p className={sectionTitle}>Drafts</p>
+            <div className={draftsCount}>
               {drafts.length}
-            </Box>
-          </Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)", mb: 2 }}>
+            </div>
+          </div>
+          <p className={draftsSub}>
             Only you can see these. Continue editing and publish when you&apos;re ready for admin review.
-          </Typography>
-          <Stack spacing={1.5}>
+          </p>
+          <div className={cardList}>
             {drafts.map(draft => (
               <JobDraftCard
                 key={draft.id}
@@ -320,9 +359,9 @@ export default function PostServiceContent() {
                 deleting={deletingId === draft.id}
               />
             ))}
-          </Stack>
-        </Paper>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

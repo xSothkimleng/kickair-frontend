@@ -1,16 +1,114 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Card, CardContent, Typography, IconButton, Avatar } from "@mui/material";
-import { FavoriteBorder, Favorite, ShoppingBag, StarRounded } from "@mui/icons-material";
+import { Heart, ShoppingBag, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { css, cx } from "styled-system/css";
+import { Avatar } from "@/components/ds";
 import { Service } from "@/types/service";
 import { serviceCoverUrl } from "@/lib/serviceCover";
 
 interface ServiceCardProps {
   service: Service;
 }
+
+const linkCss = css({ textDecoration: "none" });
+
+const cardCss = css({
+  bg: "surface",
+  borderRadius: "8px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  overflow: "hidden",
+  cursor: "pointer",
+  transition: "all 0.3s",
+  _hover: {
+    borderColor: "rgba(0, 0, 0, 0.2)",
+    boxShadow: "0px 3px 3px -2px rgba(0,0,0,0.2), 0px 3px 4px 0px rgba(0,0,0,0.14), 0px 1px 8px 0px rgba(0,0,0,0.12)",
+    "& .service-image": { transform: "scale(1.05)" },
+    "& .favorite-button": { opacity: 1 },
+  },
+});
+
+const mediaCss = css({ position: "relative", aspectRatio: "4/3", bg: "rgba(0, 0, 0, 0.05)" });
+const noImageCss = css({
+  w: "100%",
+  h: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bg: "rgba(0, 0, 0, 0.05)",
+  fontSize: "13px",
+  color: "ink3",
+});
+const categoryBadgeCss = css({
+  position: "absolute",
+  top: "12px",
+  left: "12px",
+  px: "12px",
+  py: "4px",
+  bg: "rgba(0, 0, 0, 0.7)",
+  color: "white",
+  fontSize: "10px",
+  fontWeight: 500,
+  borderRadius: "100px",
+});
+const favBtnCss = css({
+  position: "absolute",
+  top: "12px",
+  right: "12px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  w: "32px",
+  h: "32px",
+  p: 0,
+  m: 0,
+  border: "none",
+  borderRadius: "50%",
+  bg: "rgba(255, 255, 255, 0.9)",
+  backdropFilter: "blur(4px)",
+  color: "ink2",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  opacity: { base: 1, md: 0 },
+  transition: "all 0.3s",
+  _hover: { bg: "white" },
+  "& svg": { display: "block" },
+});
+
+const contentCss = css({ p: "16px 16px 24px" });
+const sellerRowCss = css({ display: "flex", alignItems: "center", gap: "8px", mb: "12px" });
+const sellerNameCss = css({ fontSize: "11px", fontWeight: 500, lineHeight: 1.5 });
+const titleCss = css({
+  fontSize: "14px",
+  fontWeight: 500,
+  lineClamp: 2,
+  lineHeight: 1.4,
+  color: "ink",
+});
+const statsRowCss = css({ display: "flex", alignItems: "center", gap: "12px", mb: "12px" });
+const statCss = css({ display: "flex", alignItems: "center", gap: "4px" });
+const ratingValueCss = css({ fontSize: "11px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
+const mutedSmCss = css({ fontSize: "11px", color: "rgba(0, 0, 0, 0.5)", lineHeight: 1.5 });
+const footerCss = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  pt: "12px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+});
+const footerLabelCss = css({ fontSize: "11px", color: "ink2", lineHeight: 1.5 });
+const priceCss = css({ fontSize: "17px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
+const deliveryCss = css({ fontSize: "13px", fontWeight: 500, color: "ink", lineHeight: 1.5 });
+const rightCss = css({ textAlign: "right" });
+const starCss = css({ color: "#f59e0b", fill: "#f59e0b" });
+const mutedIconCss = css({ color: "rgba(0, 0, 0, 0.5)" });
 
 export default function ServiceCard({ service }: ServiceCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);
@@ -31,28 +129,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
     : 0;
 
   return (
-    <Link href={`/explore-services/${service.id}`} style={{ textDecoration: "none" }}>
-      <Card
-        sx={{
-          borderRadius: 2,
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-          overflow: "hidden",
-          cursor: "pointer",
-          transition: "all 0.3s",
-          "&:hover": {
-            border: "1px solid rgba(0, 0, 0, 0.2)",
-            boxShadow: 3,
-            "& .service-image": {
-              transform: "scale(1.05)",
-            },
-            "& .favorite-button": {
-              opacity: 1,
-            },
-          },
-        }}
-        elevation={0}>
+    <Link href={`/explore-services/${service.id}`} className={linkCss}>
+      <div className={cardCss}>
         {/* Service Image */}
-        <Box sx={{ position: "relative", aspectRatio: "4/3", bgcolor: "rgba(0, 0, 0, 0.05)" }}>
+        <div className={mediaCss}>
           {image && !imageError ? (
             <Image
               unoptimized={true}
@@ -65,132 +145,72 @@ export default function ServiceCard({ service }: ServiceCardProps) {
               sizes='(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 33vw'
             />
           ) : (
-            <Box
-              sx={{
-                width: "100%",
-                height: "100%",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                bgcolor: "rgba(0, 0, 0, 0.05)",
-              }}>
-              <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.4)" }}>No image</Typography>
-            </Box>
+            <div className={noImageCss}>No image</div>
           )}
 
           {/* Category Badge */}
-          <Box
-            sx={{
-              position: "absolute",
-              top: 12,
-              left: 12,
-              px: 1.5,
-              py: 0.5,
-              bgcolor: "rgba(0, 0, 0, 0.7)",
-              color: "white",
-              fontSize: 10,
-              fontWeight: 500,
-              borderRadius: 25,
-            }}>
-            {categoryName}
-          </Box>
+          <div className={categoryBadgeCss}>{categoryName}</div>
 
-          <IconButton
-            className='favorite-button'
+          <button
+            type='button'
+            aria-label={isFavorited ? "Remove from favourites" : "Add to favourites"}
+            className={cx("favorite-button", favBtnCss)}
             onClick={e => {
               e.preventDefault();
               e.stopPropagation();
               setIsFavorited(!isFavorited);
-            }}
-            sx={{
-              position: "absolute",
-              top: 12,
-              right: 12,
-              width: 32,
-              height: 32,
-              bgcolor: "rgba(255, 255, 255, 0.9)",
-              backdropFilter: "blur(4px)",
-              opacity: { xs: 1, md: 0 },
-              transition: "all 0.3s",
-              "&:hover": {
-                bgcolor: "white",
-              },
             }}>
             {isFavorited ? (
-              <Favorite sx={{ fontSize: 16, color: "red" }} />
+              <Heart size={16} className={css({ color: "red", fill: "red" })} />
             ) : (
-              <FavoriteBorder sx={{ fontSize: 16, color: "rgba(0, 0, 0, 0.6)" }} />
+              <Heart size={16} />
             )}
-          </IconButton>
-        </Box>
+          </button>
+        </div>
 
         {/* Service Info */}
-        <CardContent sx={{ p: 2 }}>
+        <div className={contentCss}>
           {/* Freelancer */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1.5 }}>
-            <Avatar src={freelancerAvatar} alt={freelancerName} sx={{ width: 24, height: 24 }}>
-              {freelancerName.charAt(0)}
-            </Avatar>
-            <Typography sx={{ fontSize: 11, fontWeight: 500 }}>{freelancerName}</Typography>
-          </Box>
+          <div className={sellerRowCss}>
+            <Avatar name={freelancerName} src={freelancerAvatar || null} px={24} />
+            <span className={sellerNameCss}>{freelancerName}</span>
+          </div>
 
           {/* Title */}
-          <Typography
-            sx={{
-              fontSize: 14,
-              fontWeight: 500,
-              mb: 1.5,
-              display: "-webkit-box",
-              WebkitLineClamp: 2,
-              WebkitBoxOrient: "vertical",
-              overflow: "hidden",
-              lineHeight: 1.4,
-              color: "black",
-            }}>
-            {service.title}
-          </Typography>
+          <p className={titleCss}>{service.title}</p>
 
           {/* Rating & Orders */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+          <div className={statsRowCss}>
             {service.rating_count > 0 && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <StarRounded sx={{ fontSize: 13, color: "#f59e0b" }} />
-                <Typography sx={{ fontSize: 11, fontWeight: 600, color: "black" }}>
-                  {parseFloat(service.rating_average!).toFixed(1)}
-                </Typography>
-                <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)" }}>({service.rating_count})</Typography>
-              </Box>
+              <div className={statCss}>
+                <Star size={13} className={starCss} />
+                <span className={ratingValueCss}>{parseFloat(service.rating_average!).toFixed(1)}</span>
+                <span className={mutedSmCss}>({service.rating_count})</span>
+              </div>
             )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <ShoppingBag sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.5)" }} />
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)" }}>{service.orders_count} orders</Typography>
-            </Box>
-          </Box>
+            <div className={statCss}>
+              <ShoppingBag size={12} className={mutedIconCss} />
+              <span className={mutedSmCss}>{service.orders_count} orders</span>
+            </div>
+          </div>
 
           {/* Price & Delivery */}
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              pt: 1.5,
-              borderTop: "1px solid rgba(0, 0, 0, 0.08)",
-            }}>
-            <Box>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.25 }}>Starting at</Typography>
-              <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>${lowestPrice}</Typography>
-            </Box>
+          <div className={footerCss}>
+            <div>
+              <p className={footerLabelCss}>Starting at</p>
+              <p className={priceCss}>${lowestPrice}</p>
+            </div>
             {fastestDelivery > 0 && (
-              <Box sx={{ textAlign: "right" }}>
-                <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)", mb: 0.25 }}>Delivery</Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 500, color: "black" }}>
+              <div className={rightCss}>
+                <p className={footerLabelCss}>Delivery</p>
+                <p className={deliveryCss}>
                   {fastestDelivery} day{fastestDelivery !== 1 ? "s" : ""}
-                </Typography>
-              </Box>
+                </p>
+              </div>
             )}
-          </Box>
-        </CardContent>
-      </Card>
+          </div>
+        </div>
+      </div>
     </Link>
   );
 }

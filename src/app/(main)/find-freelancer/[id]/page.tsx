@@ -1,11 +1,47 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useParams } from "next/navigation";
-import { Box, CircularProgress, Typography, Button } from "@mui/material";
+import { css } from "styled-system/css";
+import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { FreelancerProfile } from "@/types/user";
 import { FreelancerProfilePage } from "@/components/ui/freelancerProfilePage";
+
+const screen = css({
+  minH: "100vh",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  bg: "#F5F5F7",
+});
+const spinnerAccent = css({ color: "#0071e3" });
+const errorBox = css({ textAlign: "center" });
+// The MUI Typography's `mb` never applied (globals.css `p { margin: 0 }` is unlayered).
+const errorText = css({ fontSize: "15px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const backLink = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  px: "32px",
+  h: "40px",
+  minW: "64px",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  bg: "#0071e3",
+  // globals.css sets an unlayered `a { color: inherit }`, which beats utilities.
+  color: "white !important",
+  borderRadius: "100px",
+  border: "none",
+  cursor: "pointer",
+  textDecoration: "none",
+  boxSizing: "border-box",
+  _hover: { bg: "#0077ED" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
 
 export default function FreelancerProfileRoute() {
   const params = useParams();
@@ -36,30 +72,22 @@ export default function FreelancerProfileRoute() {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#F5F5F7" }}>
-        <CircularProgress sx={{ color: "#0071e3" }} />
-      </Box>
+      <div className={screen}>
+        <Spinner size={40} className={spinnerAccent} />
+      </div>
     );
   }
 
   if (error || !profile) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "#F5F5F7" }}>
-        <Box sx={{ textAlign: "center" }}>
-          <Typography sx={{ fontSize: 15, color: "rgba(0, 0, 0, 0.6)", mb: 2 }}>
-            {error || "Freelancer not found"}
-          </Typography>
-          <Button
-            href="/find-freelancer"
-            sx={{
-              px: 4, height: 40, fontSize: 13, fontWeight: 500,
-              bgcolor: "#0071e3", color: "white", borderRadius: 25, textTransform: "none",
-              "&:hover": { bgcolor: "#0077ED" },
-            }}>
+      <div className={screen}>
+        <div className={errorBox}>
+          <p className={errorText}>{error || "Freelancer not found"}</p>
+          <Link href="/find-freelancer" className={backLink}>
             Back to Freelancers
-          </Button>
-        </Box>
-      </Box>
+          </Link>
+        </div>
+      </div>
     );
   }
 

@@ -2,37 +2,20 @@
 
 import { useState, useEffect, useCallback } from "react";
 import {
-  Box,
-  Container,
-  Button,
-  Typography,
-  Checkbox,
-  FormControlLabel,
-  Chip,
-  Fab,
-  CircularProgress,
-  Alert,
-  Pagination,
-  Stack,
-  Collapse,
-  Divider,
-  ToggleButtonGroup,
-  ToggleButton,
-  Badge,
-} from "@mui/material";
-import {
-  TuneOutlined,
-  KeyboardArrowUp,
-  KeyboardArrowDown,
-  Close as CloseIcon,
-  GridView as GridViewIcon,
-  ViewList as ViewListIcon,
-} from "@mui/icons-material";
+  ChevronDown,
+  ChevronUp,
+  LayoutGrid,
+  List as ListIcon,
+  SlidersHorizontal,
+  X,
+} from "lucide-react";
+import { css, cva } from "styled-system/css";
+import { Alert, Pager, Spinner } from "@/components/ds";
 import { FreelancerCard } from "@/components/layout/card/FreelancerCard";
 import { FreelancerListCard } from "@/components/layout/card/FreelancerListCard";
 import { api } from "@/lib/api";
 import { FreelancerProfile } from "@/types/user";
-import { SearchInput, SelectInput } from "@/components/ui/inputs";
+import { Checkbox, SearchInput, SelectInput } from "@/components/ui/inputs";
 
 // ─── shared tokens ────────────────────────────────────────────────────────────
 
@@ -42,23 +25,85 @@ const SORT_OPTIONS = [
   { value: "name-desc", label: "Name: Z–A" },
 ];
 
-const activeChipSx = {
-  height: 26,
+// MUI <Chip> with a delete icon: 26px pill, 10px label padding, the delete glyph
+// pulled 6px left (MUI's default) and 4px off the right edge.
+const activeChip = css({
+  display: "inline-flex",
+  alignItems: "center",
+  h: "26px",
+  pl: "10px",
+  pr: "4px",
   borderRadius: "999px",
-  backgroundColor: "#F1F5F9",
+  bg: "#F1F5F9",
   color: "#0F172A",
-  fontSize: 12,
+  fontSize: "12px",
   fontWeight: 500,
-  "& .MuiChip-label": { px: 1.25 },
-  "& .MuiChip-deleteIcon": {
-    fontSize: 14,
-    color: "#94A3B8",
-    mr: 0.5,
-    "&:hover": { color: "#0F172A" },
-  },
-};
+  lineHeight: "18px",
+  maxW: "100%",
+  boxSizing: "border-box",
+});
+const activeChipLabel = css({
+  pr: "10px",
+  overflow: "hidden",
+  textOverflow: "ellipsis",
+  whiteSpace: "nowrap",
+});
+const activeChipRemove = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  p: 0,
+  border: "none",
+  bg: "transparent",
+  color: "#94A3B8",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  ml: "-6px",
+  _hover: { color: "#0F172A" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing", borderRadius: "999px" },
+  "& svg": { display: "block" },
+});
+const chipRow = css({ display: "flex", flexWrap: "wrap", gap: "6px", mb: "20px" });
 
 // ─── FilterSection ─────────────────────────────────────────────────────────────
+
+const sectionWrap = css({ py: "4px" });
+const sectionHeader = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  cursor: "pointer",
+  py: "6px",
+  userSelect: "none",
+});
+// MUI's Stack `spacing` put a margin-left on the meta <p>, which globals.css's
+// unlayered `p { margin: 0 }` already suppressed — so there is no gap here.
+const sectionTitleRow = css({ display: "flex", alignItems: "center", minW: 0 });
+const sectionTitle = css({
+  fontSize: "13px",
+  fontWeight: 600,
+  lineHeight: 1.5,
+  letterSpacing: "-0.005em",
+  color: "ink",
+});
+const sectionMeta = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.38)" });
+const sectionChevron = css({
+  color: "rgba(0, 0, 0, 0.38)",
+  flexShrink: 0,
+  transition: "transform 0.2s ease",
+  transform: "rotate(-90deg)",
+  "&[data-open]": { transform: "rotate(0deg)" },
+});
+// Pure-CSS collapse (0fr → 1fr) so the section still animates like MUI <Collapse>.
+const collapse = css({
+  display: "grid",
+  gridTemplateRows: "0fr",
+  transition: "grid-template-rows 0.3s ease",
+  "&[data-open]": { gridTemplateRows: "1fr" },
+});
+const collapseInner = css({ overflow: "hidden", minH: 0 });
+const collapseBody = css({ pt: "8px" });
 
 function FilterSection({
   title,
@@ -74,44 +119,54 @@ function FilterSection({
   children: React.ReactNode;
 }) {
   return (
-    <Box sx={{ py: 0.5 }}>
-      <Box
-        role="button"
-        onClick={onToggle}
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          cursor: "pointer",
-          py: 0.75,
-          userSelect: "none",
-        }}
-      >
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography sx={{ fontSize: 13, fontWeight: 600, letterSpacing: "-0.005em" }}>
-            {title}
-          </Typography>
-          {meta && (
-            <Typography sx={{ fontSize: 12, color: "text.disabled" }}>{meta}</Typography>
-          )}
-        </Stack>
-        <KeyboardArrowDown
-          sx={{
-            fontSize: 18,
-            color: "text.disabled",
-            transform: open ? "rotate(0deg)" : "rotate(-90deg)",
-            transition: "transform 0.2s ease",
-          }}
-        />
-      </Box>
-      <Collapse in={open}>
-        <Box sx={{ pt: 1 }}>{children}</Box>
-      </Collapse>
-    </Box>
+    <div className={sectionWrap}>
+      <div role="button" onClick={onToggle} className={sectionHeader}>
+        <div className={sectionTitleRow}>
+          <p className={sectionTitle}>{title}</p>
+          {meta && <p className={sectionMeta}>{meta}</p>}
+        </div>
+        <ChevronDown size={18} className={sectionChevron} data-open={open ? "" : undefined} />
+      </div>
+      <div className={collapse} data-open={open ? "" : undefined}>
+        <div className={collapseInner}>
+          <div className={collapseBody}>{children}</div>
+        </div>
+      </div>
+    </div>
   );
 }
 
 // ─── CheckboxFacet ─────────────────────────────────────────────────────────────
+
+const facetSearchWrap = css({ mb: "8px" });
+const facetScroll = css({
+  maxH: "200px",
+  overflowY: "auto",
+  mx: "-8px",
+  px: "8px",
+  "&::-webkit-scrollbar": { width: "6px" },
+  "&::-webkit-scrollbar-thumb": { backgroundColor: "#E2E8F0", borderRadius: "4px" },
+});
+const facetEmpty = css({
+  fontSize: "12px",
+  lineHeight: 1.5,
+  color: "rgba(0, 0, 0, 0.38)",
+  px: "8px",
+  py: "8px",
+});
+// The row look (padding / radius / hover) and MUI's ink-coloured tick live on the
+// wrapper: the kit Checkbox has no className, so the label is stretched from here.
+const facetRow = css({
+  borderRadius: "6px",
+  _hover: { bg: "#F1F5F9" },
+  "& > label": { py: "7px", px: "8px", borderRadius: "6px", fontSize: "13px", lineHeight: 1.5 },
+  "& [data-part=control]": { mt: 0 },
+  "& [data-part=control][data-state=checked]": { bg: "#0F172A", borderColor: "#0F172A" },
+  // The kit label is 14.5px; the facet rows are 13px/1.5 like the MUI original.
+  "& [data-part=label]": { fontSize: "13px", lineHeight: 1.5 },
+});
+const facetLabel = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", fontWeight: 400 });
+const facetLabelOn = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.87)", fontWeight: 500 });
 
 function CheckboxFacet({
   options,
@@ -138,79 +193,302 @@ function CheckboxFacet({
 
   return (
     <>
-      <Box sx={{ mb: 1 }}>
+      <div className={facetSearchWrap}>
         <SearchInput
           size="sm"
           placeholder={searchPlaceholder}
           value={searchValue}
           onChange={onSearchChange}
         />
-      </Box>
-      <Box
-        sx={{
-          maxHeight: 200,
-          overflowY: "auto",
-          mx: -1,
-          px: 1,
-          "&::-webkit-scrollbar": { width: 6 },
-          "&::-webkit-scrollbar-thumb": { backgroundColor: "#E2E8F0", borderRadius: 4 },
-        }}
-      >
+      </div>
+      <div className={facetScroll}>
         {filtered.length === 0 ? (
-          <Typography sx={{ fontSize: 12, color: "text.disabled", px: 1, py: 1 }}>
-            {loading ? "Loading…" : emptyText}
-          </Typography>
+          <p className={facetEmpty}>{loading ? "Loading…" : emptyText}</p>
         ) : (
           filtered.map((o) => {
             const checked = selected.includes(o);
             return (
-              <FormControlLabel
-                key={o}
-                onClick={(e) => {
-                  e.preventDefault();
-                  onToggle(o);
-                }}
-                control={
-                  <Checkbox
-                    checked={checked}
-                    disableRipple
-                    sx={{
-                      p: 0,
-                      mr: 1.25,
-                      color: "#CBD5E1",
-                      "&.Mui-checked": { color: "#0F172A" },
-                      "& .MuiSvgIcon-root": { fontSize: 18 },
-                    }}
-                  />
-                }
-                label={
-                  <Typography
-                    sx={{
-                      fontSize: 13,
-                      color: checked ? "text.primary" : "text.secondary",
-                      fontWeight: checked ? 500 : 400,
-                    }}
-                  >
-                    {o}
-                  </Typography>
-                }
-                sx={{
-                  display: "flex",
-                  m: 0,
-                  py: 0.875,
-                  px: 1,
-                  borderRadius: "6px",
-                  cursor: "pointer",
-                  "&:hover": { backgroundColor: "#F1F5F9" },
-                }}
-              />
+              <div key={o} className={facetRow}>
+                <Checkbox
+                  checked={checked}
+                  onChange={() => onToggle(o)}
+                  label={<span className={checked ? facetLabelOn : facetLabel}>{o}</span>}
+                />
+              </div>
             );
           })
         )}
-      </Box>
+      </div>
     </>
   );
 }
+
+// ─── Page chrome ───────────────────────────────────────────────────────────────
+
+const page = css({ minH: "100vh", bg: "#F8FAFC" });
+const hero = css({
+  textAlign: "center",
+  bg: "#fff",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "rgba(15,23,42,0.08)",
+  py: "40px",
+});
+const heroInner = css({ maxW: "900px", mx: "auto", w: "100%", px: { base: "16px", sm: "24px" }, boxSizing: "border-box" });
+// The MUI h1's `mb` never applied (globals.css `h1 { margin: 0 }` is unlayered).
+const heroTitle = css({
+  fontSize: { base: "32px", md: "48px" },
+  fontWeight: 600,
+  lineHeight: 1.167,
+  color: "#0F172A",
+  letterSpacing: "-0.02em",
+});
+const heroSub = css({ fontSize: "17px", lineHeight: 1.5, color: "#64748B" });
+
+const container = css({
+  maxW: "1200px",
+  mx: "auto",
+  w: "100%",
+  px: { base: "16px", sm: "24px" },
+  py: { base: "32px", md: "40px" },
+  boxSizing: "border-box",
+});
+
+const mobileFilterRow = css({ display: { base: "flex", lg: "none" }, justifyContent: "center", mb: "24px" });
+const pillButton = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  h: "40px",
+  px: "20px",
+  minW: "64px",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  color: "#0F172A",
+  bg: "white",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#E2E8F0",
+  borderRadius: "999px",
+  cursor: "pointer",
+  boxSizing: "border-box",
+  whiteSpace: "nowrap",
+  _hover: { borderColor: "#CBD5E1", bg: "white" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { display: "block" },
+});
+// MUI Button startIcon metrics for a medium button.
+const startIcon = css({ ml: "-4px", mr: "8px", flexShrink: 0 });
+const countBubble = css({
+  ml: "8px",
+  px: "7px",
+  h: "18px",
+  display: "inline-flex",
+  alignItems: "center",
+  bg: "#0F172A",
+  color: "white",
+  borderRadius: "999px",
+  fontSize: "11px",
+  fontWeight: 600,
+});
+const errorWrap = css({ mb: "24px" });
+const retryBtn = css({
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  color: "inherit",
+  bg: "transparent",
+  border: "none",
+  borderRadius: "4px",
+  px: "5px",
+  py: "4px",
+  minW: "64px",
+  cursor: "pointer",
+  flexShrink: 0,
+  _hover: { bg: "rgba(0,0,0,0.06)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+
+const mainGrid = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", lg: "280px 1fr" },
+  gap: "32px",
+  pb: "32px",
+});
+const sidebarHidden = css({ display: "none", lg: { display: "block" } });
+const sidebarShown = css({ display: "block" });
+const asideCss = css({
+  position: { lg: "sticky" },
+  top: { lg: "96px" },
+  bg: "#FFFFFF",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#E2E8F0",
+  borderRadius: "14px",
+  boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
+  overflow: "hidden",
+});
+const asideScroll = css({
+  maxH: { lg: "calc(100vh - 128px)" },
+  overflowY: "auto",
+  p: "20px 20px 24px",
+  "&::-webkit-scrollbar": { width: "6px" },
+  "&::-webkit-scrollbar-thumb": { backgroundColor: "#E2E8F0", borderRadius: "4px" },
+});
+const sidebarHead = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  mb: "16px",
+});
+const sidebarHeadLeft = css({ display: "flex", alignItems: "center", gap: "8px" });
+const sidebarTitle = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.01em", color: "ink" });
+const sidebarCount = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  h: "18px",
+  minW: "18px",
+  px: "6px",
+  bg: "#0F172A",
+  color: "#FFF",
+  fontSize: "11px",
+  fontWeight: 600,
+  lineHeight: 1,
+  borderRadius: "999px",
+  boxSizing: "border-box",
+});
+const resetBtn = css({
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  color: "rgba(0, 0, 0, 0.6)",
+  bg: "transparent",
+  border: "none",
+  borderRadius: "4px",
+  minW: 0,
+  p: "2px 4px",
+  cursor: "pointer",
+  _hover: { color: "rgba(0, 0, 0, 0.87)", bg: "transparent" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const facetDivider = css({ my: "12px", h: "1px", bg: "#F1F5F9", border: "none" });
+
+const toolbar = css({ display: "flex", gap: "12px", mb: "16px" });
+const sortWrap = css({ minW: "180px" });
+const countRow = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "20px" });
+const countText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const countStrong = css({ color: "rgba(0, 0, 0, 0.87)", fontWeight: 600 });
+
+const viewGroup = css({
+  display: "flex",
+  bg: "#FFFFFF",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#E2E8F0",
+  borderRadius: "8px",
+  flexShrink: 0,
+});
+const viewBtn = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    w: "32px",
+    h: "32px",
+    p: 0,
+    border: "none",
+    bg: "transparent",
+    color: "#94A3B8",
+    cursor: "pointer",
+    fontFamily: "inherit",
+    transition: "background-color .15s, color .15s",
+    _hover: { bg: "rgba(0, 0, 0, 0.04)" },
+    _focusVisible: { outline: "none", boxShadow: "focusRing" },
+    "& svg": { display: "block" },
+  },
+  variants: {
+    side: {
+      left: { borderRadius: "4px 0 0 4px" },
+      right: { borderRadius: "0 4px 4px 0" },
+    },
+    active: {
+      true: { bg: "#F1F5F9", color: "#0F172A", _hover: { bg: "#F1F5F9" } },
+    },
+  },
+});
+
+const loadingWrap = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "400px" });
+const spinnerInk = css({ color: "#0F172A" });
+const listWrap = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const gridMin = css({ minH: "800px" });
+const cardsGrid = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+  gap: "24px",
+});
+const emptyWrap = css({ textAlign: "center", py: "80px" });
+const emptyText = css({ fontSize: "15px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const clearBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  h: "40px",
+  px: "24px",
+  minW: "64px",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  color: "#0F172A",
+  bg: "white",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#E2E8F0",
+  borderRadius: "999px",
+  cursor: "pointer",
+  boxSizing: "border-box",
+  _hover: { borderColor: "#CBD5E1", bg: "white" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+// MUI Pagination size="large": 40px circular items with the selected pill in ink.
+const pagerWrap = css({
+  display: "flex",
+  justifyContent: "center",
+  mt: "48px",
+  "& button": { minW: "40px", h: "40px", borderRadius: "999px", fontSize: "14px" },
+  "& [aria-current=page]": {
+    bg: "#0F172A",
+    color: "white",
+    _hover: { bg: "#1E293B", color: "white" },
+  },
+});
+const fab = css({
+  position: "fixed",
+  bottom: "32px",
+  right: "32px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  w: "56px",
+  h: "56px",
+  p: 0,
+  border: "none",
+  borderRadius: "50%",
+  bg: "#0F172A",
+  color: "white",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12)",
+  transition: "all 0.2s",
+  _hover: { bg: "#1E293B", transform: "scale(1.08)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { display: "block" },
+});
 
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
@@ -355,103 +633,96 @@ export default function FindFreelancersPage() {
     selectedLanguages.length +
     selectedExpertises.length;
 
-  const handlePageChange = (_: React.ChangeEvent<unknown>, page: number) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
-  return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC" }}>
-      {/* Hero */}
-      <Box
-        sx={{
-          textAlign: "center",
-          bgcolor: "#fff",
-          borderBottom: "1px solid rgba(15,23,42,0.08)",
-          py: 5,
-        }}
-      >
-        <Container maxWidth="md">
-          <Typography
-            variant="h1"
-            sx={{
-              fontSize: { xs: 32, md: 48 },
-              fontWeight: 600,
-              color: "#0F172A",
-              letterSpacing: "-0.02em",
-              mb: 1.5,
-            }}
+  const renderChips = () => (
+    <>
+      {selectedExpertises.map((v) => (
+        <span key={`e-${v}`} className={activeChip}>
+          <span className={activeChipLabel}>{v}</span>
+          <button
+            type="button"
+            aria-label={`Remove ${v} filter`}
+            onClick={() => toggleFilter(setSelectedExpertises, v)}
+            className={activeChipRemove}
           >
-            Find Freelancers
-          </Typography>
-          <Typography sx={{ fontSize: 17, color: "#64748B" }}>
-            Discover talented professionals ready to bring your project to life
-          </Typography>
-        </Container>
-      </Box>
+            <X size={14} />
+          </button>
+        </span>
+      ))}
+      {selectedLocations.map((v) => (
+        <span key={`l-${v}`} className={activeChip}>
+          <span className={activeChipLabel}>{v}</span>
+          <button
+            type="button"
+            aria-label={`Remove ${v} filter`}
+            onClick={() => toggleFilter(setSelectedLocations, v)}
+            className={activeChipRemove}
+          >
+            <X size={14} />
+          </button>
+        </span>
+      ))}
+      {selectedLanguages.map((v) => (
+        <span key={`g-${v}`} className={activeChip}>
+          <span className={activeChipLabel}>{v}</span>
+          <button
+            type="button"
+            aria-label={`Remove ${v} filter`}
+            onClick={() => toggleFilter(setSelectedLanguages, v)}
+            className={activeChipRemove}
+          >
+            <X size={14} />
+          </button>
+        </span>
+      ))}
+    </>
+  );
 
-      <Container sx={{ py: { xs: 4, md: 5 } }}>
+  return (
+    <div className={page}>
+      {/* Hero */}
+      <div className={hero}>
+        <div className={heroInner}>
+          <h1 className={heroTitle}>Find Freelancers</h1>
+          <p className={heroSub}>
+            Discover talented professionals ready to bring your project to life
+          </p>
+        </div>
+      </div>
+
+      <div className={container}>
         {/* Mobile filter toggle */}
-        <Box
-          sx={{
-            display: { xs: "flex", lg: "none" },
-            justifyContent: "center",
-            mb: 3,
-          }}
-        >
-          <Button
+        <div className={mobileFilterRow}>
+          <button
+            type="button"
             onClick={() => setShowFilters(!showFilters)}
-            variant="outlined"
-            startIcon={<TuneOutlined />}
-            sx={{
-              px: 2.5,
-              height: 40,
-              fontSize: 13,
-              fontWeight: 500,
-              color: "#0F172A",
-              bgcolor: "white",
-              border: "1px solid #E2E8F0",
-              borderRadius: "999px",
-              textTransform: "none",
-              "&:hover": { border: "1px solid #CBD5E1", bgcolor: "white" },
-            }}
+            className={pillButton}
           >
+            <SlidersHorizontal size={20} className={startIcon} />
             Filters
             {activeFiltersCount > 0 && (
-              <Box
-                component="span"
-                sx={{
-                  ml: 1,
-                  px: 0.875,
-                  height: 18,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  bgcolor: "#0F172A",
-                  color: "white",
-                  borderRadius: "999px",
-                  fontSize: 11,
-                  fontWeight: 600,
-                }}
-              >
-                {activeFiltersCount}
-              </Box>
+              <span className={countBubble}>{activeFiltersCount}</span>
             )}
-          </Button>
-        </Box>
+          </button>
+        </div>
 
         {/* Error */}
         {error && (
           <Alert
-            severity="error"
-            sx={{ mb: 3 }}
+            tone="error"
+            className={errorWrap}
             action={
-              <Button
-                color="inherit"
-                size="small"
+              <button
+                type="button"
+                className={retryBtn}
                 onClick={() => fetchProfiles(currentPage)}
               >
                 Retry
-              </Button>
+              </button>
             }
           >
             {error}
@@ -459,134 +730,28 @@ export default function FindFreelancersPage() {
         )}
 
         {/* Main grid */}
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: { xs: "1fr", lg: "280px 1fr" },
-            gap: 4,
-            pb: 4,
-          }}
-        >
+        <div className={mainGrid}>
           {/* ── Sidebar ── */}
-          <Box sx={{ display: { xs: showFilters ? "block" : "none", lg: "block" } }}>
-            <Box
-              component="aside"
-              sx={{
-                position: { lg: "sticky" },
-                top: { lg: 96 },
-                backgroundColor: "#FFFFFF",
-                border: "1px solid #E2E8F0",
-                borderRadius: "14px",
-                boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
-                overflow: "hidden",
-              }}
-            >
-              <Box
-                sx={{
-                  maxHeight: { lg: "calc(100vh - 128px)" },
-                  overflowY: "auto",
-                  p: "20px 20px 24px",
-                  "&::-webkit-scrollbar": { width: 6 },
-                  "&::-webkit-scrollbar-thumb": {
-                    backgroundColor: "#E2E8F0",
-                    borderRadius: 4,
-                  },
-                }}
-              >
+          <div className={showFilters ? sidebarShown : sidebarHidden}>
+            <aside className={asideCss}>
+              <div className={asideScroll}>
                 {/* Sidebar header */}
-                <Stack
-                  direction="row"
-                  alignItems="center"
-                  justifyContent="space-between"
-                  sx={{ mb: 2 }}
-                >
-                  <Stack direction="row" alignItems="center" spacing={1}>
-                    <Typography
-                      sx={{
-                        fontSize: 15,
-                        fontWeight: 600,
-                        letterSpacing: "-0.01em",
-                      }}
-                    >
-                      Filters
-                    </Typography>
+                <div className={sidebarHead}>
+                  <div className={sidebarHeadLeft}>
+                    <p className={sidebarTitle}>Filters</p>
                     {activeFiltersCount > 0 && (
-                      <Badge
-                        badgeContent={activeFiltersCount}
-                        sx={{
-                          "& .MuiBadge-badge": {
-                            position: "static",
-                            transform: "none",
-                            backgroundColor: "#0F172A",
-                            color: "#FFF",
-                            fontSize: 11,
-                            fontWeight: 600,
-                            height: 18,
-                            minWidth: 18,
-                            borderRadius: "999px",
-                            px: 0.75,
-                          },
-                        }}
-                      />
+                      <span className={sidebarCount}>{activeFiltersCount}</span>
                     )}
-                  </Stack>
+                  </div>
                   {activeFiltersCount > 0 && (
-                    <Button
-                      onClick={clearAllFilters}
-                      variant="text"
-                      size="small"
-                      sx={{
-                        textTransform: "none",
-                        fontSize: 13,
-                        fontWeight: 500,
-                        color: "text.secondary",
-                        minWidth: 0,
-                        p: "2px 4px",
-                        "&:hover": {
-                          color: "text.primary",
-                          backgroundColor: "transparent",
-                        },
-                      }}
-                    >
+                    <button type="button" onClick={clearAllFilters} className={resetBtn}>
                       Reset
-                    </Button>
+                    </button>
                   )}
-                </Stack>
+                </div>
 
                 {/* Active filter chips */}
-                {activeFiltersCount > 0 && (
-                  <Box
-                    sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 2.5 }}
-                  >
-                    {selectedExpertises.map((v) => (
-                      <Chip
-                        key={`e-${v}`}
-                        label={v}
-                        onDelete={() => toggleFilter(setSelectedExpertises, v)}
-                        deleteIcon={<CloseIcon />}
-                        sx={activeChipSx}
-                      />
-                    ))}
-                    {selectedLocations.map((v) => (
-                      <Chip
-                        key={`l-${v}`}
-                        label={v}
-                        onDelete={() => toggleFilter(setSelectedLocations, v)}
-                        deleteIcon={<CloseIcon />}
-                        sx={activeChipSx}
-                      />
-                    ))}
-                    {selectedLanguages.map((v) => (
-                      <Chip
-                        key={`g-${v}`}
-                        label={v}
-                        onDelete={() => toggleFilter(setSelectedLanguages, v)}
-                        deleteIcon={<CloseIcon />}
-                        sx={activeChipSx}
-                      />
-                    ))}
-                  </Box>
-                )}
+                {activeFiltersCount > 0 && <div className={chipRow}>{renderChips()}</div>}
 
                 {/* Expertise */}
                 <FilterSection
@@ -611,7 +776,7 @@ export default function FindFreelancersPage() {
                   />
                 </FilterSection>
 
-                <Divider sx={{ my: 1.5, borderColor: "#F1F5F9" }} />
+                <hr className={facetDivider} />
 
                 {/* Location */}
                 <FilterSection
@@ -636,7 +801,7 @@ export default function FindFreelancersPage() {
                   />
                 </FilterSection>
 
-                <Divider sx={{ my: 1.5, borderColor: "#F1F5F9" }} />
+                <hr className={facetDivider} />
 
                 {/* Language */}
                 <FilterSection
@@ -660,14 +825,14 @@ export default function FindFreelancersPage() {
                     emptyText="No languages available"
                   />
                 </FilterSection>
-              </Box>
-            </Box>
-          </Box>
+              </div>
+            </aside>
+          </div>
 
           {/* ── Results ── */}
-          <Box>
+          <div>
             {/* Results toolbar */}
-            <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+            <div className={toolbar}>
               {/* Keyword search */}
               <SearchInput
                 id="find-freelancer-search"
@@ -677,227 +842,120 @@ export default function FindFreelancersPage() {
               />
 
               {/* Sort */}
-              <Box sx={{ minWidth: 180 }}>
+              <div className={sortWrap}>
                 <SelectInput
                   value={sortBy}
                   onChange={(v) => setSortBy(String(v))}
                   options={SORT_OPTIONS}
                 />
-              </Box>
-            </Stack>
+              </div>
+            </div>
 
             {/* Count + view toggle row */}
-            <Stack
-              direction="row"
-              alignItems="center"
-              justifyContent="space-between"
-              sx={{ mb: 2.5 }}
-            >
-              <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+            <div className={countRow}>
+              <p className={countText}>
                 {loading ? (
                   "Loading…"
                 ) : (
                   <>
                     Showing{" "}
-                    <Box
-                      component="span"
-                      sx={{ color: "text.primary", fontWeight: 600 }}
-                    >
-                      {sorted.length}
-                    </Box>{" "}
-                    of {total.toLocaleString()}{" "}
+                    <span className={countStrong}>{sorted.length}</span> of{" "}
+                    {total.toLocaleString()}{" "}
                     {total === 1 ? "freelancer" : "freelancers"}
                   </>
                 )}
-              </Typography>
+              </p>
 
-              <ToggleButtonGroup
-                value={view}
-                exclusive
-                onChange={(_, v) => v && setView(v)}
-                sx={{
-                  backgroundColor: "#FFFFFF",
-                  border: "1px solid #E2E8F0",
-                  borderRadius: "8px",
-                  "& .MuiToggleButton-root": {
-                    border: "none",
-                    width: 32,
-                    height: 32,
-                    p: 0,
-                    color: "#94A3B8",
-                    "&.Mui-selected": {
-                      backgroundColor: "#F1F5F9",
-                      color: "#0F172A",
-                      "&:hover": { backgroundColor: "#F1F5F9" },
-                    },
-                  },
-                }}
-              >
-                <ToggleButton value="grid">
-                  <GridViewIcon sx={{ fontSize: 16 }} />
-                </ToggleButton>
-                <ToggleButton value="list">
-                  <ViewListIcon sx={{ fontSize: 16 }} />
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Stack>
+              <div className={viewGroup}>
+                <button
+                  type="button"
+                  value="grid"
+                  aria-label="Grid view"
+                  aria-pressed={view === "grid"}
+                  onClick={() => setView("grid")}
+                  className={viewBtn({ side: "left", active: view === "grid" })}
+                >
+                  <LayoutGrid size={16} />
+                </button>
+                <button
+                  type="button"
+                  value="list"
+                  aria-label="List view"
+                  aria-pressed={view === "list"}
+                  onClick={() => setView("list")}
+                  className={viewBtn({ side: "right", active: view === "list" })}
+                >
+                  <ListIcon size={16} />
+                </button>
+              </div>
+            </div>
 
             {/* Active filter chips above results */}
             {(selectedLocations.length > 0 ||
               selectedLanguages.length > 0 ||
               selectedExpertises.length > 0) && (
-              <Box
-                sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 2.5 }}
-              >
-                {selectedExpertises.map((v) => (
-                  <Chip
-                    key={`e-${v}`}
-                    label={v}
-                    onDelete={() => toggleFilter(setSelectedExpertises, v)}
-                    deleteIcon={<CloseIcon />}
-                    sx={activeChipSx}
-                  />
-                ))}
-                {selectedLocations.map((v) => (
-                  <Chip
-                    key={`l-${v}`}
-                    label={v}
-                    onDelete={() => toggleFilter(setSelectedLocations, v)}
-                    deleteIcon={<CloseIcon />}
-                    sx={activeChipSx}
-                  />
-                ))}
-                {selectedLanguages.map((v) => (
-                  <Chip
-                    key={`g-${v}`}
-                    label={v}
-                    onDelete={() => toggleFilter(setSelectedLanguages, v)}
-                    deleteIcon={<CloseIcon />}
-                    sx={activeChipSx}
-                  />
-                ))}
-              </Box>
+              <div className={chipRow}>{renderChips()}</div>
             )}
 
             {/* Loading */}
             {loading ? (
-              <Box
-                sx={{
-                  display: "flex",
-                  justifyContent: "center",
-                  alignItems: "center",
-                  minHeight: 400,
-                }}
-              >
-                <CircularProgress sx={{ color: "#0F172A" }} />
-              </Box>
+              <div className={loadingWrap}>
+                <Spinner size={40} className={spinnerInk} />
+              </div>
             ) : (
               <>
                 {view === "list" ? (
-                  <Stack spacing={1.5}>
+                  <div className={listWrap}>
                     {sorted.map((profile) => (
                       <FreelancerListCard key={profile.id} profile={profile} />
                     ))}
-                  </Stack>
+                  </div>
                 ) : (
-                  <Box sx={{ minHeight: 800 }}>
-                    <Box
-                      sx={{
-                        display: "grid",
-                        gridTemplateColumns: {
-                          xs: "1fr",
-                          sm: "repeat(2, 1fr)",
-                          lg: "repeat(3, 1fr)",
-                        },
-                        gap: 3,
-                      }}
-                    >
+                  <div className={gridMin}>
+                    <div className={cardsGrid}>
                       {sorted.map((profile) => (
                         <FreelancerCard key={profile.id} profile={profile} />
                       ))}
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
                 )}
 
                 {sorted.length === 0 && (
-                  <Box sx={{ textAlign: "center", py: 10 }}>
-                    <Typography
-                      sx={{ fontSize: 15, color: "text.secondary", mb: 2 }}
-                    >
+                  <div className={emptyWrap}>
+                    <p className={emptyText}>
                       No freelancers found matching your filters.
-                    </Typography>
+                    </p>
                     {(activeFiltersCount > 0 || query) && (
-                      <Button
-                        onClick={clearAllFilters}
-                        variant="outlined"
-                        sx={{
-                          px: 3,
-                          height: 40,
-                          fontSize: 13,
-                          color: "#0F172A",
-                          bgcolor: "white",
-                          border: "1px solid #E2E8F0",
-                          borderRadius: "999px",
-                          textTransform: "none",
-                          "&:hover": {
-                            border: "1px solid #CBD5E1",
-                            bgcolor: "white",
-                          },
-                        }}
-                      >
+                      <button type="button" onClick={clearAllFilters} className={clearBtn}>
                         Clear Filters
-                      </Button>
+                      </button>
                     )}
-                  </Box>
+                  </div>
                 )}
 
                 {/* Pagination */}
                 {lastPage > 1 && (
-                  <Box
-                    sx={{ display: "flex", justifyContent: "center", mt: 6 }}
-                  >
-                    <Pagination
-                      count={lastPage}
-                      page={currentPage}
-                      onChange={handlePageChange}
-                      size="large"
-                      sx={{
-                        "& .MuiPaginationItem-root": {
-                          fontSize: 14,
-                          "&.Mui-selected": {
-                            bgcolor: "#0F172A",
-                            color: "white",
-                            "&:hover": { bgcolor: "#1E293B" },
-                          },
-                        },
-                      }}
-                    />
-                  </Box>
+                  <div className={pagerWrap}>
+                    <Pager count={lastPage} page={currentPage} onChange={handlePageChange} />
+                  </div>
                 )}
               </>
             )}
-          </Box>
-        </Box>
-      </Container>
+          </div>
+        </div>
+      </div>
 
       {/* Scroll to top */}
       {showScrollTop && (
-        <Fab
+        <button
+          type="button"
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          sx={{
-            position: "fixed",
-            bottom: 32,
-            right: 32,
-            bgcolor: "#0F172A",
-            color: "white",
-            "&:hover": { bgcolor: "#1E293B", transform: "scale(1.08)" },
-            transition: "all 0.2s",
-          }}
+          className={fab}
           aria-label="Scroll to top"
         >
-          <KeyboardArrowUp />
-        </Fab>
+          <ChevronUp size={24} />
+        </button>
       )}
-    </Box>
+    </div>
   );
 }

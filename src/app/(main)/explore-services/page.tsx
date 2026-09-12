@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Box, Container, Button, Typography, Fab, CircularProgress, Pagination, Alert } from "@mui/material";
-import { ChevronLeft, KeyboardArrowUp } from "@mui/icons-material";
+import { ChevronLeft, ChevronUp } from "lucide-react";
+import { css } from "styled-system/css";
+import { Alert, Pager, Spinner } from "@/components/ds";
 import FiltersSidebar, { Filters, FilterCategory } from "./FiltersSidebar";
 import ResultsToolbar, { SortValue } from "./ResultsToolbar";
 import ServiceGrid from "./ServiceGrid";
@@ -21,6 +22,100 @@ const defaultFilters = (budgetMax: number): Filters => ({
   budget: [0, budgetMax],
   delivery: "any",
   rating: "any",
+});
+
+const pageCss = css({ minH: "100vh", bg: "page" });
+const topBarCss = css({
+  bg: "#fff",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "hairline",
+  mb: "32px",
+  py: "16px",
+});
+const containerCss = css({
+  w: "100%",
+  boxSizing: "border-box",
+  maxW: "1200px",
+  mx: "auto",
+  px: { base: "16px", sm: "24px" },
+});
+const backLinkCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  minW: "64px",
+  p: "6px 8px",
+  ml: "-4px",
+  borderRadius: "4px",
+  color: "ink2",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  textDecoration: "none",
+  transition: "color .25s",
+  _hover: { color: "black", bg: "transparent" },
+  "& svg": { display: "block", flexShrink: 0 },
+});
+const heroCss = css({ textAlign: "center", mb: "32px", py: "16px" });
+const heroTitleCss = css({
+  fontSize: { base: "32px", md: "48px" },
+  fontWeight: 600,
+  lineHeight: 1.167,
+  color: "black",
+  letterSpacing: "-0.02em",
+});
+const heroSubCss = css({ fontSize: "17px", lineHeight: 1.5, color: "ink2" });
+const alertWrapCss = css({ mb: "24px" });
+const retryBtnCss = css({
+  boxSizing: "border-box",
+  minW: "64px",
+  p: "4px 5px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "inherit",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  _hover: { bg: "rgba(0,0,0,0.04)" },
+});
+const layoutCss = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", lg: "280px 1fr" },
+  gap: "32px",
+  pb: "32px",
+});
+const loadingCss = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "400px", color: "accent" });
+const pagerWrapCss = css({ display: "flex", justifyContent: "center", mt: "48px" });
+const fabCss = css({
+  position: "fixed",
+  bottom: "32px",
+  right: "32px",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  w: "56px",
+  h: "56px",
+  p: 0,
+  m: 0,
+  border: "none",
+  borderRadius: "50%",
+  bg: "black",
+  color: "white",
+  fontFamily: "inherit",
+  cursor: "pointer",
+  boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12)",
+  transition: "all 0.3s",
+  _hover: { bg: "black", transform: "scale(1.1)" },
+  "& svg": { display: "block" },
 });
 
 export default function ServicesPage() {
@@ -116,40 +211,39 @@ export default function ServicesPage() {
     }
   });
 
-  const handlePageChange = (_: React.ChangeEvent<unknown>, page: number) => {
+  const handlePageChange = (page: number) => {
     setCurrentPage(page);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
+    <div className={pageCss}>
       {/* Top bar */}
-      <Box sx={{ bgcolor: "#fff", borderBottom: "1px solid rgba(0,0,0,0.08)", mb: 4, py: 2 }}>
-        <Container>
-          <Link href="/" passHref>
-            <Button startIcon={<ChevronLeft />} sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)", textTransform: "none", "&:hover": { color: "black", bgcolor: "transparent" } }}>
-              Back to Home
-            </Button>
+      <div className={topBarCss}>
+        <div className={containerCss}>
+          <Link href="/" className={backLinkCss}>
+            <ChevronLeft size={20} />
+            Back to Home
           </Link>
-          <Box sx={{ textAlign: "center", mb: 4, py: 2 }}>
-            <Typography variant="h1" sx={{ fontSize: { xs: 32, md: 48 }, fontWeight: 600, color: "black", letterSpacing: "-0.02em", mb: 2 }}>
-              Explore Services
-            </Typography>
-            <Typography sx={{ fontSize: 17, color: "rgba(0,0,0,0.6)" }}>
-              Browse ready-to-buy services from talented freelancers
-            </Typography>
-          </Box>
-        </Container>
-      </Box>
+          <div className={heroCss}>
+            <h1 className={heroTitleCss}>Explore Services</h1>
+            <p className={heroSubCss}>Browse ready-to-buy services from talented freelancers</p>
+          </div>
+        </div>
+      </div>
 
-      <Container>
+      <div className={containerCss}>
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }} action={<Button color="inherit" size="small" onClick={() => fetchServices()}>Retry</Button>}>
-            {error}
-          </Alert>
+          <div className={alertWrapCss}>
+            <Alert
+              tone='error'
+              action={<button type='button' className={retryBtnCss} onClick={() => fetchServices()}>Retry</button>}>
+              {error}
+            </Alert>
+          </div>
         )}
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "280px 1fr" }, gap: 4, pb: 4 }}>
+        <div className={layoutCss}>
           {/* Sidebar */}
           <FiltersSidebar
             filters={filters}
@@ -159,7 +253,7 @@ export default function ServicesPage() {
           />
 
           {/* Results */}
-          <Box>
+          <div>
             <ResultsToolbar
               query={filters.query}
               onQueryChange={q => setFilters(f => ({ ...f, query: q }))}
@@ -172,39 +266,37 @@ export default function ServicesPage() {
             />
 
             {loading ? (
-              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-                <CircularProgress sx={{ color: "#0071e3" }} />
-              </Box>
+              <div className={loadingCss}>
+                <Spinner size={40} />
+              </div>
             ) : (
               <>
                 <ServiceGrid services={sorted} searchQuery={filters.query} clearAllFilters={() => setFilters(defaultFilters(budgetMax))} view={view} />
 
                 {pagination && pagination.last_page > 1 && (
-                  <Box sx={{ display: "flex", justifyContent: "center", mt: 6 }}>
-                    <Pagination
+                  <div className={pagerWrapCss}>
+                    <Pager
                       count={pagination.last_page}
                       page={pagination.current_page}
                       onChange={handlePageChange}
-                      color="primary"
-                      size="large"
-                      sx={{ "& .MuiPaginationItem-root": { fontSize: 14, "&.Mui-selected": { bgcolor: "#0071e3", color: "white" } } }}
                     />
-                  </Box>
+                  </div>
                 )}
               </>
             )}
-          </Box>
-        </Box>
-      </Container>
+          </div>
+        </div>
+      </div>
 
       {showScrollTop && (
-        <Fab
+        <button
+          type='button'
           onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
-          sx={{ position: "fixed", bottom: 32, right: 32, bgcolor: "black", color: "white", "&:hover": { bgcolor: "black", transform: "scale(1.1)" }, transition: "all 0.3s" }}
+          className={fabCss}
           aria-label="Scroll to top">
-          <KeyboardArrowUp />
-        </Fab>
+          <ChevronUp size={24} />
+        </button>
       )}
-    </Box>
+    </div>
   );
 }

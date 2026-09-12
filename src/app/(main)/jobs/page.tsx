@@ -2,41 +2,152 @@
 
 import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import { Box, Container, Typography, CircularProgress, Pagination, Alert, Skeleton, Drawer, Button } from "@mui/material";
-import { TuneOutlined, SearchOutlined, CloseOutlined } from "@mui/icons-material";
+import { SlidersHorizontal, Search, X } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Alert, Pager, Skeleton } from "@/components/ds";
+import { BottomSheet } from "@/components/ds/BottomSheet";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { useMarketplaceLive } from "@/hooks/useMarketplaceLive";
 import { JobPostFilters } from "@/types/job";
-import { tokens } from "@/theme";
 import JobCard from "@/components/jobs/JobCard";
 import JobFilters from "@/components/jobs/JobFilters";
 
+/* ── static styles ── */
+const pageRoot = css({ minH: "100vh", bg: "canvas" });
+const container = css({
+  w: "100%", boxSizing: "border-box", maxW: "1180px", mx: "auto",
+  px: { base: "16px", sm: "24px" }, py: { base: "24px", md: "32px" },
+});
+const errorAlert = css({ mb: "24px" });
+const retryBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, p: "4px 5px", minW: "64px", border: "none", borderRadius: "4px",
+  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _hover: { bg: "rgba(0,0,0,0.06)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const column = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const header = css({ display: "flex", flexDirection: "column", gap: { base: "14px", md: "18px" } });
+const pageTitle = css({ lineHeight: 1.5, fontSize: { base: "28px", md: "36px" }, fontWeight: 600, letterSpacing: "-0.025em" });
+const pageSub = css({ lineHeight: 1.5, fontSize: { base: "14px", md: "15px" }, color: "ink2", maxW: "560px" });
+const countRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" });
+const countText = css({ lineHeight: 1.5, fontSize: "13.5px", fontWeight: 500, color: "ink2" });
+const countStrong = css({ color: "ink", fontWeight: 600 });
+const filtersBtn = css({
+  display: { base: "inline-flex", md: "none" }, alignItems: "center", justifyContent: "center", gap: "8px",
+  boxSizing: "border-box", m: 0, h: "40px", px: "14px", minW: "64px",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong", borderRadius: "input",
+  bg: "surface", color: "ink", fontFamily: "inherit", fontSize: "13.5px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _hover: { bg: "surface2" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const boardGrid = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", md: "280px minmax(0,1fr)" },
+  gap: "24px",
+  alignItems: "start",
+});
+const sidebar = css({
+  display: { base: "none", md: "block" },
+  position: "sticky", top: "24px",
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card",
+  p: "22px",
+});
+const cardList = css({ display: "flex", flexDirection: "column", gap: "14px" });
+const pagerRow = css({ display: "flex", justifyContent: "center", mt: "24px" });
+
+const skeletonCard = css({
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card",
+  p: "24px", display: "flex", flexDirection: "column", gap: "14px",
+});
+const skelTopRow = css({ display: "flex", justifyContent: "space-between" });
+const skelChipRow = css({ display: "flex", gap: "7px" });
+const skelFooterRow = css({ display: "flex", gap: "18px" });
+const skelHairline = css({ h: "1px", bg: "hairline" });
+const roundedSkel = css({ borderRadius: "4px" });
+const pillSkel = css({ borderRadius: "pill" });
+
+const emptyCard = css({
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card",
+  p: { base: "48px", md: "72px" },
+  display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "16px",
+});
+const emptyIconWrap = css({
+  w: "76px", h: "76px", borderRadius: "50%", bg: "canvas",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  display: "flex", alignItems: "center", justifyContent: "center", color: "ink3",
+});
+const emptyTextWrap = css({ maxW: "380px" });
+const emptyTitle = css({ lineHeight: 1.5, fontSize: "19px", fontWeight: 600, letterSpacing: "-0.015em" });
+const emptyBody = css({ fontSize: "14px", lineHeight: 1.55, color: "ink2" });
+const pillBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, h: "38px", px: "16px", minW: "64px", border: "none", borderRadius: "pill",
+  bg: "rgba(0,0,0,0.05)", color: "#000", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _hover: { bg: "rgba(0,0,0,0.1)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+
+/* ── mobile filter sheet ── */
+const sheetHead = css({
+  display: "flex", justifyContent: "space-between", alignItems: "center",
+  p: "16px 18px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline",
+  flex: "none",
+});
+const sheetTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600 });
+const sheetClose = css({
+  w: "34px", h: "34px", p: 0, m: 0, borderRadius: "50%", border: "none",
+  bg: "rgba(0,0,0,0.05)", color: "ink2", cursor: "pointer", fontFamily: "inherit",
+  display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { display: "block" },
+});
+const sheetBody = css({ p: "18px", overflowY: "auto" });
+const sheetFoot = css({
+  display: "flex", gap: "10px", p: "14px 18px",
+  borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline",
+  flex: "none",
+});
+const sheetBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, w: "100%", h: "44px", minW: "64px", border: "none", borderRadius: "pill",
+  fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const sheetClear = css({ bg: "rgba(0,0,0,0.05)", color: "#000" });
+const sheetApply = css({ bg: "#000", color: "#fff", _hover: { bg: "rgba(0,0,0,0.8)" } });
+
 function JobCardSkeleton() {
   return (
-    <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 3, display: "flex", flexDirection: "column", gap: 1.75 }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between" }}><Skeleton variant="rounded" width={150} height={20} /><Skeleton variant="text" width={90} height={24} /></Box>
+    <div className={skeletonCard}>
+      <div className={skelTopRow}><Skeleton variant="rect" width={150} height={20} className={roundedSkel} /><Skeleton variant="text" width={90} height={24} /></div>
       <Skeleton variant="text" width="62%" height={26} />
       <Skeleton variant="text" width="100%" /><Skeleton variant="text" width="80%" />
-      <Box sx={{ display: "flex", gap: 0.875 }}>{[70, 88, 64].map((w, i) => <Skeleton key={i} variant="rounded" width={w} height={28} sx={{ borderRadius: "999px" }} />)}</Box>
-      <Box sx={{ height: "1px", bgcolor: tokens.border }} />
-      <Box sx={{ display: "flex", gap: 2.25 }}>{[110, 90, 100].map((w, i) => <Skeleton key={i} variant="text" width={w} />)}</Box>
-    </Box>
+      <div className={skelChipRow}>{[70, 88, 64].map((w, i) => <Skeleton key={i} variant="rect" width={w} height={28} className={pillSkel} />)}</div>
+      <div className={skelHairline} />
+      <div className={skelFooterRow}>{[110, 90, 100].map((w, i) => <Skeleton key={i} variant="text" width={w} />)}</div>
+    </div>
   );
 }
 
 function EmptyBoard({ onClear }: { onClear: () => void }) {
   return (
-    <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 6, md: 9 }, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 2 }}>
-      <Box sx={{ width: 76, height: 76, borderRadius: "50%", bgcolor: tokens.canvas, border: `1px solid ${tokens.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <SearchOutlined sx={{ fontSize: 30, color: tokens.text3 }} />
-      </Box>
-      <Box sx={{ maxWidth: 380 }}>
-        <Typography sx={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.015em" }}>No jobs match your filters</Typography>
-        <Typography sx={{ fontSize: 14, lineHeight: 1.55, color: tokens.text2, mt: 0.875 }}>Try widening your budget range, removing a skill, or choosing a different category.</Typography>
-      </Box>
-      <Button onClick={onClear} sx={{ height: 38, px: 2, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 500, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>Clear all filters</Button>
-    </Box>
+    <div className={emptyCard}>
+      <div className={emptyIconWrap}>
+        <Search size={30} />
+      </div>
+      <div className={emptyTextWrap}>
+        <p className={emptyTitle}>No jobs match your filters</p>
+        <p className={emptyBody}>Try widening your budget range, removing a skill, or choosing a different category.</p>
+      </div>
+      <button type="button" onClick={onClear} className={pillBtn}>Clear all filters</button>
+    </div>
   );
 }
 
@@ -71,74 +182,74 @@ export default function JobBoardPage() {
   const activeCount = (filters.category_id ? 1 : 0) + (filters.budget_min || filters.budget_max ? 1 : 0) + (filters.skill_ids?.length ?? 0);
 
   const results = isLoading ? (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>{[0, 1, 2, 3].map(i => <JobCardSkeleton key={i} />)}</Box>
+    <div className={cardList}>{[0, 1, 2, 3].map(i => <JobCardSkeleton key={i} />)}</div>
   ) : jobs.length === 0 ? (
     <EmptyBoard onClear={clear} />
   ) : (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.75 }}>
+    <div className={cardList}>
       {jobs.map(j => <JobCard key={j.id} job={j} />)}
       {lastPage > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-          <Pagination count={lastPage} page={filters.page ?? 1} onChange={(_, p) => { setFilters(f => ({ ...f, page: p })); window.scrollTo({ top: 0, behavior: "smooth" }); }} shape="rounded" />
-        </Box>
+        <div className={pagerRow}>
+          <Pager count={lastPage} page={filters.page ?? 1} onChange={(p) => { setFilters(f => ({ ...f, page: p })); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+        </div>
       )}
-    </Box>
+    </div>
   );
 
-  const header = (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 1.75, md: 2.25 } }}>
-      <Box>
-        <Typography sx={{ fontSize: { xs: 28, md: 36 }, fontWeight: 600, letterSpacing: "-0.025em" }}>Job Board</Typography>
-        <Typography sx={{ fontSize: { xs: 14, md: 15 }, color: tokens.text2, maxWidth: 560, mt: 0.75 }}>
+  const header_ = (
+    <div className={header}>
+      <div>
+        <p className={pageTitle}>Job Board</p>
+        <p className={pageSub}>
           Browse open projects from clients across Cambodia. Find work that fits, then submit a proposal.
-        </Typography>
-      </Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-        <Typography sx={{ fontSize: 13.5, fontWeight: 500, color: tokens.text2 }}>
-          {isLoading ? "Loading jobs…" : <><Box component="span" sx={{ color: tokens.text, fontWeight: 600 }}>{total}</Box> {total === 1 ? "job" : "jobs"} found</>}
-        </Typography>
-        <Button onClick={() => setSheet(true)} startIcon={<TuneOutlined sx={{ fontSize: 16 }} />}
-          sx={{ display: { xs: "inline-flex", md: "none" }, height: 40, px: 1.75, borderRadius: `${tokens.radius.input}px`, border: `1px solid ${tokens.borderStrong}`, bgcolor: tokens.surface, color: tokens.text, textTransform: "none", fontSize: 13.5, fontWeight: 500 }}>
+        </p>
+      </div>
+      <div className={countRow}>
+        <p className={countText}>
+          {isLoading ? "Loading jobs…" : <><span className={countStrong}>{total}</span> {total === 1 ? "job" : "jobs"} found</>}
+        </p>
+        <button type="button" onClick={() => setSheet(true)} className={filtersBtn}>
+          <SlidersHorizontal size={16} />
           Filters{activeCount > 0 ? ` · ${activeCount}` : ""}
-        </Button>
-      </Box>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
-      <Container sx={{ py: { xs: 3, md: 4 }, maxWidth: "1180px !important" }}>
+    <div className={pageRoot}>
+      <div className={container}>
         {errMsg && (
-          <Alert severity="error" sx={{ mb: 3 }} action={<Button color="inherit" size="small" onClick={() => refetch()}>Retry</Button>}>{errMsg}</Alert>
+          <Alert tone="error" className={errorAlert} action={<button type="button" className={retryBtn} onClick={() => refetch()}>Retry</button>}>{errMsg}</Alert>
         )}
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          {header}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "280px minmax(0,1fr)" }, gap: 3, alignItems: "start" }}>
-            <Box sx={{ display: { xs: "none", md: "block" }, position: "sticky", top: 24, bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.75 }}>
+        <div className={column}>
+          {header_}
+          <div className={boardGrid}>
+            <div className={sidebar}>
               <JobFilters categories={categories} expertises={expertises} filters={filters} onChange={setFilters} />
-            </Box>
+            </div>
             {results}
-          </Box>
-        </Box>
-      </Container>
+          </div>
+        </div>
+      </div>
 
       {/* Mobile filter sheet */}
-      <Drawer anchor="bottom" open={sheet} onClose={() => setSheet(false)} PaperProps={{ sx: { borderRadius: "20px 20px 0 0", maxHeight: "88%" } }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", p: "16px 18px", borderBottom: `1px solid ${tokens.border}` }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 600 }}>Filters</Typography>
-          <Box component="button" onClick={() => setSheet(false)} sx={{ width: 34, height: 34, borderRadius: "50%", border: 0, bgcolor: "rgba(0,0,0,0.05)", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <CloseOutlined sx={{ fontSize: 17, color: tokens.text2 }} />
-          </Box>
-        </Box>
-        <Box sx={{ p: 2.25, overflowY: "auto" }}>
+      <BottomSheet open={sheet} onOpenChange={(o) => setSheet(o)} maxH="88%">
+        <div className={sheetHead}>
+          <p className={sheetTitle}>Filters</p>
+          <button type="button" onClick={() => setSheet(false)} aria-label="Close filters" className={sheetClose}>
+            <X size={17} />
+          </button>
+        </div>
+        <div className={sheetBody}>
           <JobFilters categories={categories} expertises={expertises} filters={filters} onChange={setFilters} />
-        </Box>
-        <Box sx={{ display: "flex", gap: 1.25, p: "14px 18px", borderTop: `1px solid ${tokens.border}` }}>
-          <Button fullWidth onClick={clear} sx={{ height: 44, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 14 }}>Clear all</Button>
-          <Button fullWidth onClick={() => setSheet(false)} sx={{ height: 44, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 14, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>Show {total} jobs</Button>
-        </Box>
-      </Drawer>
-    </Box>
+        </div>
+        <div className={sheetFoot}>
+          <button type="button" onClick={clear} className={cx(sheetBtn, sheetClear)}>Clear all</button>
+          <button type="button" onClick={() => setSheet(false)} className={cx(sheetBtn, sheetApply)}>Show {total} jobs</button>
+        </div>
+      </BottomSheet>
+    </div>
   );
 }

@@ -1,9 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Box, Stack, Typography, ToggleButtonGroup, ToggleButton } from "@mui/material";
-import GridViewIcon from "@mui/icons-material/GridView";
-import ViewListIcon from "@mui/icons-material/ViewList";
+import { LayoutGrid, List } from "lucide-react";
+import { css } from "styled-system/css";
 import { SearchInput, SelectInput } from "@/components/ui/inputs";
 
 export type SortValue = "relevant" | "price_asc" | "price_desc" | "rating" | "newest";
@@ -27,20 +26,62 @@ interface ResultsToolbarProps {
   totalAll: number;
 }
 
+const kbdCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  minW: "20px",
+  h: "20px",
+  px: "6px",
+  borderRadius: "4px",
+  bg: "fill",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border",
+  color: "ink2",
+  fontSize: "11px",
+  fontWeight: 500,
+  lineHeight: 1,
+});
+
 function Kbd({ children }: { children: React.ReactNode }) {
-  return (
-    <Box
-      component="span"
-      sx={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center",
-        minWidth: 20, height: 20, px: 0.75, borderRadius: "4px",
-        backgroundColor: "#F1F5F9", border: "1px solid #E2E8F0",
-        color: "text.secondary", fontSize: 11, fontWeight: 500, lineHeight: 1,
-      }}>
-      {children}
-    </Box>
-  );
+  return <span className={kbdCss}>{children}</span>;
 }
+
+const searchRowCss = css({ display: "flex", gap: "12px", mb: "16px" });
+const sortWrapCss = css({ minW: "180px" });
+const metaRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "16px" });
+const metaTextCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const metaStrongCss = css({ color: "rgba(0,0,0,0.87)", fontWeight: 600 });
+const toggleGroupCss = css({
+  display: "inline-flex",
+  bg: "field",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border",
+  borderRadius: "8px",
+  overflow: "hidden",
+});
+const toggleBtnCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  w: "32px",
+  h: "32px",
+  p: 0,
+  m: 0,
+  border: "none",
+  bg: "transparent",
+  color: "placeholder",
+  fontFamily: "inherit",
+  cursor: "pointer",
+  transition: "background-color .15s, color .15s",
+  _hover: { bg: "rgba(0, 0, 0, 0.04)" },
+  "& svg": { display: "block" },
+  "&[data-selected]": { bg: "fill", color: "heading", _hover: { bg: "fill" } },
+});
 
 export default function ResultsToolbar({ query, onQueryChange, sort, onSortChange, view, onViewChange, totalShown, totalAll }: ResultsToolbarProps) {
   React.useEffect(() => {
@@ -55,44 +96,48 @@ export default function ResultsToolbar({ query, onQueryChange, sort, onSortChang
   }, []);
 
   return (
-    <Box>
-      <Stack direction="row" spacing={1.5} sx={{ mb: 2 }}>
+    <div>
+      <div className={searchRowCss}>
         <SearchInput
           id="results-toolbar-search"
           value={query}
           onChange={onQueryChange}
           placeholder="Search services, skills, or freelancers…"
         />
-        <Box sx={{ minWidth: 180 }}>
+        <div className={sortWrapCss}>
           <SelectInput
             value={sort}
             onChange={v => onSortChange(v as SortValue)}
             options={SORT_OPTIONS}
           />
-        </Box>
-      </Stack>
+        </div>
+      </div>
 
-      <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 2 }}>
-        <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
-          Showing{" "}
-          <Box component="span" sx={{ color: "text.primary", fontWeight: 600 }}>{totalShown}</Box>
-          {" "}of {totalAll.toLocaleString()} services
-        </Typography>
-        <ToggleButtonGroup
-          value={view}
-          exclusive
-          onChange={(_, v) => v && onViewChange(v)}
-          sx={{
-            backgroundColor: "#FFFFFF", border: "1px solid #E2E8F0", borderRadius: "8px",
-            "& .MuiToggleButton-root": {
-              border: "none", width: 32, height: 32, p: 0, color: "#94A3B8",
-              "&.Mui-selected": { backgroundColor: "#F1F5F9", color: "#0F172A", "&:hover": { backgroundColor: "#F1F5F9" } },
-            },
-          }}>
-          <ToggleButton value="grid"><GridViewIcon sx={{ fontSize: 16 }} /></ToggleButton>
-          <ToggleButton value="list"><ViewListIcon sx={{ fontSize: 16 }} /></ToggleButton>
-        </ToggleButtonGroup>
-      </Stack>
-    </Box>
+      <div className={metaRowCss}>
+        <p className={metaTextCss}>
+          Showing <span className={metaStrongCss}>{totalShown}</span> of {totalAll.toLocaleString()} services
+        </p>
+        <div className={toggleGroupCss}>
+          <button
+            type="button"
+            aria-label="Grid view"
+            aria-pressed={view === "grid"}
+            data-selected={view === "grid" ? "" : undefined}
+            onClick={() => onViewChange("grid")}
+            className={toggleBtnCss}>
+            <LayoutGrid size={16} />
+          </button>
+          <button
+            type="button"
+            aria-label="List view"
+            aria-pressed={view === "list"}
+            data-selected={view === "list" ? "" : undefined}
+            onClick={() => onViewChange("list")}
+            className={toggleBtnCss}>
+            <List size={16} />
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

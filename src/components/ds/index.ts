@@ -32,3 +32,8 @@ export { AppToaster, toast, toaster, type ToastInput } from "./Toast";
 export { EmptyState, Loading, ErrorState } from "./States";
 export { Rating } from "./Rating";
 export { Accordion, AccordionPrimitive, type AccordionItemDef } from "./Accordion";
+
+// Added in the 2026-09-12 waves (explore filters): Ark-backed range slider and radio group.
+export { Slider, type SliderProps } from "./Slider";
+export { RadioGroup, RadioGroupPrimitive, radioControl, radioItem, type RadioGroupProps, type RadioOption } from "./RadioGroup";
+export { BottomSheet, type BottomSheetProps } from "./BottomSheet";

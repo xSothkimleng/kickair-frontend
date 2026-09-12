@@ -2,28 +2,18 @@
 
 import * as React from "react";
 import {
-  Box,
-  Container,
-  Stack,
-  Typography,
-  Avatar,
-  Button,
-  Chip,
-  Alert,
-  Dialog,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  CircularProgress,
-} from "@mui/material";
-import FileUploadOutlinedIcon from "@mui/icons-material/FileUploadOutlined";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
-import WarningAmberOutlinedIcon from "@mui/icons-material/WarningAmberOutlined";
-import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
-import DesktopWindowsOutlinedIcon from "@mui/icons-material/DesktopWindowsOutlined";
-import SmartphoneOutlinedIcon from "@mui/icons-material/SmartphoneOutlined";
-import VerifiedUserOutlinedIcon from "@mui/icons-material/VerifiedUserOutlined";
+  AlertTriangle,
+  ArrowRight,
+  CheckCircle2,
+  Info,
+  Monitor,
+  ShieldCheck,
+  Smartphone,
+  Upload,
+} from "lucide-react";
+import { css, cva } from "styled-system/css";
+import { Alert, Avatar, Spinner, alert } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
@@ -31,101 +21,228 @@ import { TextInput, PasswordInput, PhoneInput, OtpInput } from "@/components/ui/
 
 // ─── Style tokens ──────────────────────────────────────────────────────────────
 
-const sectionSx = {
+const sectionCss = css({
   backgroundColor: "#FFFFFF",
-  border: "1px solid rgba(15, 23, 42, 0.08)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(15, 23, 42, 0.08)",
   borderRadius: "14px",
-  p: { xs: 3, sm: "28px 32px" },
-};
+  p: { base: "24px", sm: "28px 32px" },
+  boxSizing: "border-box",
+});
 
-const fieldLabelSx = {
-  fontSize: 12,
+const fieldLabelCss = css({
+  fontSize: "12px",
   fontWeight: 500,
+  lineHeight: 1.5,
   color: "#334155",
-  mb: 0.75,
   display: "block",
-} as const;
+});
 
-const primaryBtnSx = {
-  textTransform: "none",
-  fontSize: 13,
-  fontWeight: 600,
-  letterSpacing: "-0.005em",
-  borderRadius: "8px",
-  height: 38,
-  px: 2,
-  boxShadow: "none",
-  backgroundColor: "#0F172A",
-  color: "#FFFFFF",
-  "&:hover": { backgroundColor: "#1E293B", boxShadow: "none" },
-} as const;
+/**
+ * The three MUI Button looks this page used (`primaryBtnSx`, `secondaryBtnSx`,
+ * `ghostBtnSx`) plus the danger flavours, on MUI's own base metrics
+ * (min-width 64px, line-height 1.75) and disabled palette.
+ */
+const btn = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
+    minW: "64px",
+    fontFamily: "inherit",
+    lineHeight: 1.75,
+    cursor: "pointer",
+    userSelect: "none",
+    textDecoration: "none",
+    transition: "background-color .15s, border-color .15s, color .15s",
+    _focusVisible: { outline: "none", boxShadow: "focusRing" },
+    "& svg": { display: "block" },
+  },
+  variants: {
+    tone: {
+      primary: {
+        fontSize: "13px",
+        fontWeight: 600,
+        letterSpacing: "-0.005em",
+        borderRadius: "8px",
+        h: "38px",
+        px: "16px",
+        border: "none",
+        boxShadow: "none",
+        backgroundColor: "#0F172A",
+        color: "#FFFFFF",
+        _hover: { backgroundColor: "#1E293B", boxShadow: "none" },
+        _disabled: {
+          backgroundColor: "rgba(0, 0, 0, 0.12)",
+          color: "rgba(0, 0, 0, 0.26)",
+          cursor: "default",
+          pointerEvents: "none",
+        },
+      },
+      secondary: {
+        fontSize: "13px",
+        fontWeight: 600,
+        letterSpacing: "-0.005em",
+        borderRadius: "8px",
+        h: "38px",
+        px: "16px",
+        backgroundColor: "#FFFFFF",
+        color: "#0F172A",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "#E2E8F0",
+        _hover: { backgroundColor: "#F1F5F9", borderColor: "#CBD5E1" },
+        _disabled: {
+          color: "rgba(0, 0, 0, 0.26)",
+          borderColor: "rgba(0, 0, 0, 0.12)",
+          backgroundColor: "#FFFFFF",
+          cursor: "default",
+          pointerEvents: "none",
+        },
+      },
+      // Same look, but MUI rendered it as a *text* button (no `variant="outlined"`),
+      // so the borderColor from the sx never drew a border.
+      secondaryFlat: {
+        fontSize: "13px",
+        fontWeight: 600,
+        letterSpacing: "-0.005em",
+        borderRadius: "8px",
+        h: "38px",
+        px: "16px",
+        backgroundColor: "#FFFFFF",
+        color: "#0F172A",
+        border: "none",
+        _hover: { backgroundColor: "#F1F5F9" },
+        _disabled: { color: "rgba(0, 0, 0, 0.26)", cursor: "default", pointerEvents: "none" },
+      },
+      ghost: {
+        fontSize: "13px",
+        fontWeight: 500,
+        color: "rgba(0, 0, 0, 0.6)",
+        borderRadius: "8px",
+        px: "12px",
+        py: "4px",
+        border: "none",
+        backgroundColor: "transparent",
+        _hover: { backgroundColor: "#F1F5F9", color: "rgba(0, 0, 0, 0.87)" },
+        _disabled: { color: "rgba(0, 0, 0, 0.26)", cursor: "default", pointerEvents: "none" },
+      },
+      ghostDanger: {
+        fontSize: "13px",
+        fontWeight: 500,
+        color: "#DC2626",
+        borderRadius: "8px",
+        px: "12px",
+        py: "4px",
+        border: "none",
+        backgroundColor: "transparent",
+        _hover: { backgroundColor: "#FEF2F2", color: "#DC2626" },
+        _disabled: { color: "rgba(0, 0, 0, 0.26)", cursor: "default", pointerEvents: "none" },
+      },
+      dangerOutline: {
+        fontSize: "13px",
+        fontWeight: 600,
+        borderRadius: "8px",
+        h: "38px",
+        px: "16px",
+        color: "#DC2626",
+        backgroundColor: "transparent",
+        borderWidth: "1px",
+        borderStyle: "solid",
+        borderColor: "rgba(220, 38, 38, 0.3)",
+        _hover: { backgroundColor: "#FEF2F2", borderColor: "#DC2626" },
+      },
+      dangerSolid: {
+        fontSize: "13px",
+        fontWeight: 600,
+        letterSpacing: "-0.005em",
+        borderRadius: "8px",
+        h: "38px",
+        px: "16px",
+        border: "none",
+        boxShadow: "none",
+        backgroundColor: "#DC2626",
+        color: "#FFFFFF",
+        _hover: { backgroundColor: "#B91C1C", boxShadow: "none" },
+      },
+    },
+    grow: { true: { flex: 1 } },
+    wide: { true: { minW: "100px", flexShrink: 0 } },
+    nowrap: { true: { whiteSpace: "nowrap" } },
+  },
+  defaultVariants: { tone: "primary" },
+});
 
-const secondaryBtnSx = {
-  textTransform: "none",
-  fontSize: 13,
-  fontWeight: 600,
-  letterSpacing: "-0.005em",
-  borderRadius: "8px",
-  height: 38,
-  px: 2,
-  backgroundColor: "#FFFFFF",
-  color: "#0F172A",
-  borderColor: "#E2E8F0",
-  "&:hover": { backgroundColor: "#F1F5F9", borderColor: "#CBD5E1" },
-} as const;
-
-const ghostBtnSx = {
-  textTransform: "none",
-  fontSize: 13,
-  fontWeight: 500,
-  color: "text.secondary",
-  borderRadius: "8px",
-  px: 1.5,
-  "&:hover": { backgroundColor: "#F1F5F9", color: "text.primary" },
-} as const;
+// MUI Button startIcon metrics for a small button.
+const btnStartIcon = css({ ml: "-2px", mr: "8px", flexShrink: 0 });
+const btnEndIcon = css({ ml: "8px", mr: "-2px", flexShrink: 0 });
+const spinnerWhite = css({ color: "#FFFFFF" });
+// MUI's default CircularProgress colour is `primary.main`.
+const spinnerPrimary = css({ color: "#1976d2" });
+const spinnerDanger = css({ color: "#DC2626" });
 
 // ─── Sub-components ────────────────────────────────────────────────────────────
 
 type StatusChipVariant = "success" | "warn" | "info" | "neutral" | "danger";
 
+// MUI <Chip icon>: the 6px dot sits 8px in and its -6px margin-right is cancelled
+// by the label's 6px padding-left, so the dot touches the text.
+const statusChip = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    flexShrink: 0,
+    boxSizing: "border-box",
+    h: "22px",
+    pl: "8px",
+    pr: "6px",
+    borderRadius: "999px",
+    fontSize: "11px",
+    fontWeight: 600,
+    lineHeight: "16.5px",
+    letterSpacing: "0.01em",
+    whiteSpace: "nowrap",
+  },
+  variants: {
+    variant: {
+      success: { backgroundColor: "#ECFDF5", color: "#047857" },
+      warn: { backgroundColor: "#FFFBEB", color: "#B45309" },
+      info: { backgroundColor: "#EFF6FF", color: "#1D4ED8" },
+      neutral: { backgroundColor: "#F1F5F9", color: "#334155" },
+      danger: { backgroundColor: "#FEF2F2", color: "#DC2626" },
+    },
+  },
+  defaultVariants: { variant: "neutral" },
+});
+const statusDot = css({
+  width: "6px",
+  height: "6px",
+  borderRadius: "50%",
+  backgroundColor: "currentColor",
+  flexShrink: 0,
+});
+
 function StatusChip({ label, variant }: { label: string; variant: StatusChipVariant }) {
-  const palette: Record<StatusChipVariant, { bg: string; color: string }> = {
-    success: { bg: "#ECFDF5", color: "#047857" },
-    warn: { bg: "#FFFBEB", color: "#B45309" },
-    info: { bg: "#EFF6FF", color: "#1D4ED8" },
-    neutral: { bg: "#F1F5F9", color: "#334155" },
-    danger: { bg: "#FEF2F2", color: "#DC2626" },
-  };
-  const c = palette[variant];
   return (
-    <Chip
-      label={label}
-      icon={
-        <Box
-          component="span"
-          sx={{
-            width: 6,
-            height: 6,
-            borderRadius: "50%",
-            backgroundColor: "currentColor",
-            ml: "8px !important",
-          }}
-        />
-      }
-      sx={{
-        height: 22,
-        backgroundColor: c.bg,
-        color: c.color,
-        fontSize: 11,
-        fontWeight: 600,
-        letterSpacing: "0.01em",
-        borderRadius: "999px",
-        "& .MuiChip-label": { px: 0.75 },
-        "& .MuiChip-icon": { color: "currentColor" },
-      }}
-    />
+    <span className={statusChip({ variant })}>
+      <span className={statusDot} />
+      {label}
+    </span>
   );
 }
+
+const sectionHead = css({ mb: "20px" });
+// `mb` on the <h2> / <p> never applied (globals.css zeroes those margins unlayered).
+const sectionTitleCss = css({
+  fontSize: "15px",
+  fontWeight: 600,
+  lineHeight: 1.5,
+  letterSpacing: "-0.01em",
+  color: "ink",
+});
+const sectionDescCss = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
 
 function Section({
   title,
@@ -137,24 +254,47 @@ function Section({
   children: React.ReactNode;
 }) {
   return (
-    <Box component="section" sx={sectionSx}>
-      <Box sx={{ mb: 2.5 }}>
-        <Typography
-          component="h2"
-          sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em", mb: 0.5 }}
-        >
-          {title}
-        </Typography>
-        {description && (
-          <Typography sx={{ fontSize: 13, color: "text.secondary" }}>{description}</Typography>
-        )}
-      </Box>
+    <section className={sectionCss}>
+      <div className={sectionHead}>
+        <h2 className={sectionTitleCss}>{title}</h2>
+        {description && <p className={sectionDescCss}>{description}</p>}
+      </div>
       {children}
-    </Box>
+    </section>
   );
 }
 
 type KycStatus = "not_submitted" | "pending" | "verified" | "rejected";
+
+const kycCard = css({
+  display: "flex",
+  alignItems: "flex-start",
+  gap: "16px",
+  p: "20px",
+  backgroundColor: "#F1F5F9",
+  borderRadius: "10px",
+});
+const kycTile = css({
+  width: "40px",
+  height: "40px",
+  boxSizing: "border-box",
+  backgroundColor: "#FFFFFF",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(15, 23, 42, 0.08)",
+  borderRadius: "10px",
+  display: "grid",
+  placeItems: "center",
+  color: "rgba(0, 0, 0, 0.87)",
+  flexShrink: 0,
+});
+const kycBody = css({ flex: 1, minW: 0 });
+const kycTitleRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "6px" });
+const kycTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
+const kycText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", maxW: "480px", mb: "14px" });
+// MUI's Stack spacing was a margin-left on the <p>, which globals.css already killed.
+const kycDoneRow = css({ display: "flex", alignItems: "center", color: "#047857" });
+const kycDoneText = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5 });
 
 function KycCard({ status, onSubmit }: { status: KycStatus; onSubmit: () => void }) {
   const config: Record<
@@ -169,55 +309,212 @@ function KycCard({ status, onSubmit }: { status: KycStatus; onSubmit: () => void
   const c = config[status];
 
   return (
-    <Stack
-      direction="row"
-      spacing={2}
-      sx={{ p: 2.5, backgroundColor: "#F1F5F9", borderRadius: "10px", alignItems: "flex-start" }}
-    >
-      <Box
-        sx={{
-          width: 40,
-          height: 40,
-          backgroundColor: "#FFFFFF",
-          border: "1px solid rgba(15, 23, 42, 0.08)",
-          borderRadius: "10px",
-          display: "grid",
-          placeItems: "center",
-          color: "text.primary",
-          flexShrink: 0,
-        }}
-      >
-        <VerifiedUserOutlinedIcon sx={{ fontSize: 20 }} />
-      </Box>
-      <Box sx={{ flex: 1 }}>
-        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
-          <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Identity verification</Typography>
+    <div className={kycCard}>
+      <div className={kycTile}>
+        <ShieldCheck size={20} />
+      </div>
+      <div className={kycBody}>
+        <div className={kycTitleRow}>
+          <p className={kycTitle}>Identity verification</p>
           <StatusChip label={c.label} variant={c.variant} />
-        </Stack>
-        <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 1.75, maxWidth: 480 }}>
+        </div>
+        <p className={kycText}>
           Verified identity builds trust with clients and unlocks higher earning limits and faster payouts.
-        </Typography>
+        </p>
 
         {c.ctaVariant === "done" ? (
-          <Stack direction="row" alignItems="center" spacing={1} sx={{ color: "#047857" }}>
-            <CheckCircleOutlinedIcon sx={{ fontSize: 18 }} />
-            <Typography sx={{ fontSize: 13, fontWeight: 600 }}>Your identity is verified</Typography>
-          </Stack>
+          <div className={kycDoneRow}>
+            <CheckCircle2 size={18} />
+            <p className={kycDoneText}>Your identity is verified</p>
+          </div>
         ) : (
-          <Button
-            variant={c.ctaVariant === "primary" ? "contained" : "outlined"}
-            size="small"
-            endIcon={c.ctaVariant === "primary" ? <ArrowForwardIcon sx={{ fontSize: 14 }} /> : undefined}
+          <button
+            type="button"
             onClick={onSubmit}
-            sx={c.ctaVariant === "primary" ? primaryBtnSx : secondaryBtnSx}
+            className={btn({ tone: c.ctaVariant === "primary" ? "primary" : "secondary" })}
           >
             {c.cta}
-          </Button>
+            {c.ctaVariant === "primary" && <ArrowRight size={14} className={btnEndIcon} />}
+          </button>
         )}
-      </Box>
-    </Stack>
+      </div>
+    </div>
   );
 }
+
+// ─── Page chrome ───────────────────────────────────────────────────────────────
+
+const pageContainer = css({
+  maxW: "900px",
+  mx: "auto",
+  w: "100%",
+  px: { base: "16px", sm: "24px" },
+  // `pb: 12` lost to `py` in the original sx — the rendered padding is symmetric.
+  py: { base: "32px", sm: "56px" },
+  boxSizing: "border-box",
+});
+const pageHeader = css({ mb: "40px" });
+const pageKicker = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const pageTitle = css({ fontSize: "28px", fontWeight: 700, lineHeight: 1.5, letterSpacing: "-0.025em", color: "ink" });
+const pageSub = css({ fontSize: "14px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const sectionsStack = css({ display: "flex", flexDirection: "column", gap: "20px" });
+const fieldStack = css({ display: "flex", flexDirection: "column", gap: "16px" });
+
+const bootLoading = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "60vh" });
+
+const photoRow = css({ display: "flex", alignItems: "center", gap: "20px", flexWrap: "wrap" });
+const avatarWrap = css({ position: "relative" });
+const avatarStyle = {
+  background: "linear-gradient(135deg, #1E293B, #0F172A)",
+  color: "#FFF",
+  fontSize: 28,
+  fontWeight: 600,
+  letterSpacing: "-0.02em",
+} as const;
+const avatarBusy = css({
+  position: "absolute",
+  inset: 0,
+  borderRadius: "50%",
+  backgroundColor: "rgba(0,0,0,0.4)",
+  display: "grid",
+  placeItems: "center",
+});
+const photoSide = css({ flex: 1, minW: "200px" });
+// The hidden <input> was a Stack child, so MUI's spacing indented the first button by 8px.
+const photoButtons = css({ display: "flex", gap: "8px", pl: "8px", mb: "6px" });
+const hiddenInput = css({ display: "none" });
+const photoHint = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+
+const infoGrid = cva({
+  base: { display: "grid", gap: "16px" },
+  variants: { twoUp: { true: { gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" } }, false: { gridTemplateColumns: "1fr" } } },
+});
+const labelRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "6px" });
+const requiredMark = css({ color: "#DC2626" });
+const hintRow = css({ display: "flex", alignItems: "flex-start", mt: "12px" });
+const hintIcon = css({ color: "rgba(0, 0, 0, 0.38)", mt: "2px", flexShrink: 0 });
+const hintText = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const alertSpaced = css({ mt: "12px" });
+const actionsRight = css({ display: "flex", justifyContent: "flex-end", mt: "20px" });
+
+const addEmailBlock = css({
+  mt: "24px",
+  pt: "24px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "#F1F5F9",
+});
+const addEmailHead = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
+const addEmailTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
+const addEmailText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", maxW: "480px", mb: "14px" });
+const stackRow = css({
+  display: "flex",
+  flexDirection: { base: "column", sm: "row" },
+  alignItems: { base: "stretch", sm: "flex-start" },
+  gap: "12px",
+});
+const stackRowCentered = css({
+  display: "flex",
+  flexDirection: { base: "column", sm: "row" },
+  alignItems: { base: "stretch", sm: "center" },
+  gap: "12px",
+});
+const flexOne = css({ flex: 1, minW: 0 });
+const alertPhone = css({ mb: "16px" });
+
+// The unverified-phone banner kept its own amber palette, so it overrides the ds tones.
+const phoneWarning = css(alert.raw({ tone: "warning" }), {
+  mt: "16px",
+  px: "16px",
+  py: "8px",
+  gap: "12px",
+  borderRadius: "8px",
+  backgroundColor: "#FFFBEB",
+  borderColor: "rgba(245, 158, 11, 0.25)",
+  color: "#92400E",
+  fontSize: "13px",
+  lineHeight: "20px",
+  "& > svg": { color: "#F59E0B", mt: "2px" },
+});
+
+const phoneWarningMsg = css({ flex: 1, minW: 0, py: "4px" });
+
+const dialogPaper = css({
+  // BareModal's panel radius is 16px; MUI's was 14px.
+  borderRadius: "14px !important",
+  p: "8px",
+  boxSizing: "border-box",
+  color: "rgba(0, 0, 0, 0.87)",
+});
+const dialogContent = css({ p: "20px 24px" });
+const dialogTitle = css({ fontSize: "16px", fontWeight: 600, lineHeight: 1.5 });
+const dialogDesc = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const dialogActions = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  gap: "16px",
+  px: "24px",
+  pt: "8px",
+  pb: "20px",
+});
+const dialogActionsTight = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "flex-end",
+  gap: "16px",
+  px: "24px",
+  pt: "8px",
+  pb: "16px",
+});
+// MUI Stack spacing: the margin lands on every child but <p>, where globals.css kills it.
+const dialogStack = css({ "& > * + *": { mt: "12px" } });
+const dialogPhoneRow = css({ display: "flex", alignItems: "flex-start", gap: "8px" });
+const otpHint = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+
+const sessionsEmpty = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const sessionsLoadingWrap = css({ display: "flex", justifyContent: "center", py: "24px" });
+const sessionDivider = css({ height: "1px", backgroundColor: "#F1F5F9" });
+const sessionRow = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "14px",
+  py: "14px",
+  "&:first-of-type": { pt: 0 },
+  "&:last-of-type": { pb: 0 },
+});
+const sessionIcon = css({
+  width: "36px",
+  height: "36px",
+  backgroundColor: "#F1F5F9",
+  borderRadius: "8px",
+  display: "grid",
+  placeItems: "center",
+  color: "rgba(0, 0, 0, 0.87)",
+  flexShrink: 0,
+});
+const sessionBody = css({ flex: 1, minW: 0 });
+const sessionNameRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "2px" });
+const sessionName = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.5 });
+const sessionMeta = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const signOutRow = css({ display: "flex", justifyContent: "flex-end", mt: "16px" });
+
+const dangerBox = css({
+  backgroundColor: "#FFFFFF",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(220, 38, 38, 0.2)",
+  borderRadius: "14px",
+  p: { base: "24px", sm: "24px 28px" },
+  display: "flex",
+  flexDirection: { base: "column", sm: "row" },
+  alignItems: { base: "stretch", sm: "flex-start" },
+  justifyContent: "space-between",
+  gap: "16px",
+  boxSizing: "border-box",
+});
+const dangerTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5, color: "#DC2626", mb: "4px" });
+const dangerText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", maxW: "460px" });
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 
@@ -486,111 +783,69 @@ export default function SettingsPage() {
 
   if (!user) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "60vh" }}>
-        <CircularProgress />
-      </Box>
+      <div className={bootLoading}>
+        <Spinner size={40} className={spinnerPrimary} />
+      </div>
     );
   }
 
-  const avatarInitials = user.name
-    .split(" ")
-    .map((w) => w[0])
-    .slice(0, 2)
-    .join("")
-    .toUpperCase();
-
   return (
-    <Container maxWidth="md" sx={{ py: { xs: 4, sm: 7 }, pb: 12 }}>
+    <div className={pageContainer}>
       {/* Page header */}
-      <Box sx={{ mb: 5 }}>
-        <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 500, mb: 0.75 }}>
-          Account
-        </Typography>
-        <Typography
-          component="h1"
-          sx={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.025em", mb: 0.75 }}
-        >
-          Settings
-        </Typography>
-        <Typography sx={{ fontSize: 14, color: "text.secondary" }}>
-          Manage your profile, security, and account preferences.
-        </Typography>
-      </Box>
+      <div className={pageHeader}>
+        <p className={pageKicker}>Account</p>
+        <h1 className={pageTitle}>Settings</h1>
+        <p className={pageSub}>Manage your profile, security, and account preferences.</p>
+      </div>
 
-      <Stack spacing={2.5}>
+      <div className={sectionsStack}>
         {/* 1. Profile photo */}
         <Section title="Profile photo" description="This is how clients will see you across Kickair.">
-          <Stack direction="row" alignItems="center" spacing={2.5} flexWrap="wrap" useFlexGap>
-            <Box sx={{ position: "relative" }}>
-              <Avatar
-                src={user.avatar_url ?? undefined}
-                sx={{
-                  width: 80,
-                  height: 80,
-                  background: "linear-gradient(135deg, #1E293B, #0F172A)",
-                  color: "#FFF",
-                  fontSize: 28,
-                  fontWeight: 600,
-                  letterSpacing: "-0.02em",
-                }}
-              >
-                {avatarInitials}
-              </Avatar>
+          <div className={photoRow}>
+            <div className={avatarWrap}>
+              <Avatar name={user.name} src={user.avatar_url ?? undefined} px={80} style={avatarStyle} />
               {avatarUploading && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    inset: 0,
-                    borderRadius: "50%",
-                    backgroundColor: "rgba(0,0,0,0.4)",
-                    display: "grid",
-                    placeItems: "center",
-                  }}
-                >
-                  <CircularProgress size={24} sx={{ color: "#fff" }} />
-                </Box>
+                <div className={avatarBusy}>
+                  <Spinner size={24} className={spinnerWhite} />
+                </div>
               )}
-            </Box>
-            <Box sx={{ flex: 1, minWidth: 200 }}>
-              <Stack direction="row" spacing={1} sx={{ mb: 0.75 }}>
+            </div>
+            <div className={photoSide}>
+              <div className={photoButtons}>
                 <input
                   ref={avatarInputRef}
                   type="file"
                   accept="image/jpg,image/jpeg,image/png,image/webp"
-                  style={{ display: "none" }}
+                  className={hiddenInput}
                   onChange={(e) => {
                     const file = e.target.files?.[0];
                     if (file) handleAvatarUpload(file);
                     e.target.value = "";
                   }}
                 />
-                <Button
-                  variant="outlined"
-                  size="small"
-                  startIcon={<FileUploadOutlinedIcon sx={{ fontSize: 16 }} />}
+                <button
+                  type="button"
                   disabled={avatarUploading}
                   onClick={() => avatarInputRef.current?.click()}
-                  sx={secondaryBtnSx}
+                  className={btn({ tone: "secondary" })}
                 >
+                  <Upload size={18} className={btnStartIcon} />
                   Upload photo
-                </Button>
+                </button>
                 {user.avatar_url && (
-                  <Button
-                    variant="text"
-                    size="small"
+                  <button
+                    type="button"
                     disabled={avatarUploading}
                     onClick={handleAvatarRemove}
-                    sx={ghostBtnSx}
+                    className={btn({ tone: "ghost" })}
                   >
                     Remove
-                  </Button>
+                  </button>
                 )}
-              </Stack>
-              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                JPG or PNG, max 5&nbsp;MB.
-              </Typography>
-            </Box>
-          </Stack>
+              </div>
+              <p className={photoHint}>JPG or PNG, max 5&nbsp;MB.</p>
+            </div>
+          </div>
         </Section>
 
         {/* 2. Personal information */}
@@ -598,73 +853,61 @@ export default function SettingsPage() {
           title="Personal information"
           description={hasEmail ? "Your name and contact email." : "Your name and account contacts."}
         >
-          <Box
-            sx={{
-              display: "grid",
-              gridTemplateColumns: { xs: "1fr", sm: hasEmail ? "1fr 1fr" : "1fr" },
-              gap: 2,
-            }}
-          >
+          <div className={infoGrid({ twoUp: hasEmail })}>
             <TextInput label="Full name" required value={name} onChange={setName} />
             {hasEmail && (
-              <Box>
-                <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.75 }}>
-                  <Typography component="label" sx={{ ...fieldLabelSx, mb: 0 }}>
-                    Email <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
-                  </Typography>
+              <div>
+                <div className={labelRow}>
+                  <label className={fieldLabelCss}>
+                    Email <span className={requiredMark}>*</span>
+                  </label>
                   <StatusChip
                     label={emailVerified ? "Verified" : "Unverified"}
                     variant={emailVerified ? "success" : "warn"}
                   />
-                </Stack>
+                </div>
                 <TextInput type="email" value={email} onChange={setEmail} />
-              </Box>
+              </div>
             )}
-          </Box>
+          </div>
 
           {hasEmail && emailChanged && (
-            <Stack direction="row" spacing={1} alignItems="flex-start" sx={{ mt: 1.5 }}>
-              <InfoOutlinedIcon sx={{ fontSize: 14, color: "text.disabled", mt: "2px" }} />
-              <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                A verification link will be sent to your new email.
-              </Typography>
-            </Stack>
+            <div className={hintRow}>
+              <Info size={14} className={hintIcon} />
+              <p className={hintText}>A verification link will be sent to your new email.</p>
+            </div>
           )}
 
           {profileMsg && (
-            <Alert severity={profileMsg.type} sx={{ mt: 1.5, borderRadius: "8px", py: 0.5 }}>
+            <Alert tone={profileMsg.type} className={alertSpaced}>
               {profileMsg.text}
             </Alert>
           )}
 
-          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-            <Button
-              variant="contained"
+          <div className={actionsRight}>
+            <button
+              type="button"
               disabled={savingProfile}
               onClick={handleSaveProfile}
-              sx={primaryBtnSx}
+              className={btn({ tone: "primary" })}
             >
-              {savingProfile ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Save changes"}
-            </Button>
-          </Stack>
+              {savingProfile ? <Spinner size={16} className={spinnerWhite} /> : "Save changes"}
+            </button>
+          </div>
 
           {/* Add email — phone-only accounts add their email here as a second contact */}
           {!hasEmail && (
-            <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid #F1F5F9" }}>
-              <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.5 }}>
-                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>Email address</Typography>
+            <div className={addEmailBlock}>
+              <div className={addEmailHead}>
+                <p className={addEmailTitle}>Email address</p>
                 <StatusChip label="Not added" variant="neutral" />
-              </Stack>
-              <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 1.75, maxWidth: 480 }}>
+              </div>
+              <p className={addEmailText}>
                 Add an email as a second way to sign in and to receive order notifications. We&apos;ll
                 send a verification link to confirm it.
-              </Typography>
-              <Stack
-                direction={{ xs: "column", sm: "row" }}
-                spacing={1.5}
-                alignItems={{ xs: "stretch", sm: "flex-start" }}
-              >
-                <Box sx={{ flex: 1 }}>
+              </p>
+              <div className={stackRow}>
+                <div className={flexOne}>
                   <TextInput
                     type="email"
                     placeholder="you@example.com"
@@ -672,17 +915,17 @@ export default function SettingsPage() {
                     onChange={setEmail}
                     disabled={addingEmail}
                   />
-                </Box>
-                <Button
-                  variant="contained"
+                </div>
+                <button
+                  type="button"
                   onClick={handleAddEmail}
                   disabled={addingEmail || !email.trim()}
-                  sx={{ ...primaryBtnSx, whiteSpace: "nowrap" }}
+                  className={btn({ tone: "primary", nowrap: true })}
                 >
-                  {addingEmail ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Add email"}
-                </Button>
-              </Stack>
-            </Box>
+                  {addingEmail ? <Spinner size={16} className={spinnerWhite} /> : "Add email"}
+                </button>
+              </div>
+            </div>
           )}
         </Section>
 
@@ -692,31 +935,23 @@ export default function SettingsPage() {
           description="Used for two-factor authentication and order alerts."
         >
           {phoneMsg && (
-            <Alert
-              severity={phoneMsg.type}
-              onClose={() => setPhoneMsg(null)}
-              sx={{ mb: 2, borderRadius: "8px", fontSize: 13 }}
-            >
+            <Alert tone={phoneMsg.type} onClose={() => setPhoneMsg(null)} className={alertPhone}>
               {phoneMsg.text}
             </Alert>
           )}
 
-          <Stack
-            direction={{ xs: "column", sm: "row" }}
-            spacing={1.5}
-            alignItems={{ xs: "stretch", sm: "center" }}
-          >
-            <Box sx={{ flex: 1 }}>
+          <div className={stackRowCentered}>
+            <div className={flexOne}>
               <TextInput type="tel" value={phone || ""} placeholder="No phone number added" disabled />
-            </Box>
+            </div>
             {phone && (
               <StatusChip
                 label={phoneVerified ? "Verified" : "Unverified"}
                 variant={phoneVerified ? "success" : "warn"}
               />
             )}
-            <Button
-              variant="outlined"
+            <button
+              type="button"
               onClick={() => {
                 setNewPhone("");
                 setPhoneCode("");
@@ -724,64 +959,49 @@ export default function SettingsPage() {
                 setPhoneMsg(null);
                 setPhoneDialogOpen(true);
               }}
-              sx={{ ...secondaryBtnSx, whiteSpace: "nowrap" }}
+              className={btn({ tone: "secondary", nowrap: true })}
             >
               {phone ? (phoneVerified ? "Change" : "Verify") : "Add phone"}
-            </Button>
-          </Stack>
+            </button>
+          </div>
 
           {phone && !phoneVerified && (
-            <Alert
-              icon={<WarningAmberOutlinedIcon sx={{ fontSize: 18 }} />}
-              severity="warning"
-              sx={{
-                mt: 2,
-                backgroundColor: "#FFFBEB",
-                border: "1px solid rgba(245, 158, 11, 0.25)",
-                color: "#92400E",
-                borderRadius: "8px",
-                py: 1,
-                "& .MuiAlert-icon": { color: "#F59E0B", py: 0.25 },
-                "& .MuiAlert-message": { fontSize: 13, py: 0.5 },
-              }}
-            >
-              Verify your phone to increase trust with clients and unlock 2FA.
-            </Alert>
+            <div role="alert" className={phoneWarning}>
+              <AlertTriangle size={18} />
+              <div className={phoneWarningMsg}>
+                Verify your phone to increase trust with clients and unlock 2FA.
+              </div>
+            </div>
           )}
         </Section>
 
         {/* Phone OTP dialog */}
-        <Dialog
+        <BareModal
           open={phoneDialogOpen}
-          onClose={() => !savingPhone && setPhoneDialogOpen(false)}
-          maxWidth="xs"
-          fullWidth
-          PaperProps={{ sx: { borderRadius: "14px", p: 1 } }}
+          onOpenChange={(open) => { if (!open && !savingPhone) setPhoneDialogOpen(false); }}
+          maxW="460px"
+          className={dialogPaper}
         >
-          <DialogContent>
-            <Typography sx={{ fontWeight: 600, fontSize: 16, mb: 1 }}>
+          <div className={dialogContent}>
+            <p className={dialogTitle}>
               {phone ? (phoneVerified ? "Change phone number" : "Verify phone number") : "Add phone number"}
-            </Typography>
-            <DialogContentText sx={{ fontSize: 13, color: "text.secondary", mb: 2 }}>
+            </p>
+            <p className={dialogDesc}>
               {phone && !phoneVerified
                 ? "Enter your Cambodian mobile number below — we'll send a verification code to it via Telegram."
                 : "Enter your Cambodian mobile number. We'll send a verification code via Telegram."}
-            </DialogContentText>
+            </p>
 
             {phoneMsg?.type === "error" && (
-              <Alert
-                severity="error"
-                onClose={() => setPhoneMsg(null)}
-                sx={{ mb: 2, borderRadius: "8px", fontSize: 13 }}
-              >
+              <Alert tone="error" onClose={() => setPhoneMsg(null)} className={alertPhone}>
                 {phoneMsg.text}
               </Alert>
             )}
 
-            <Stack spacing={1.5}>
+            <div className={dialogStack}>
               {/* Phone input + send code */}
-              <Stack direction="row" spacing={1} alignItems="flex-start">
-                <Box sx={{ flex: 1 }}>
+              <div className={dialogPhoneRow}>
+                <div className={flexOne}>
                   <PhoneInput
                     placeholder="12 345 678"
                     value={newPhone}
@@ -790,58 +1010,59 @@ export default function SettingsPage() {
                     size="sm"
                     helper="Cambodian number — digits only, we add the +855 for you."
                   />
-                </Box>
-                <Button
-                  variant="outlined"
+                </div>
+                <button
+                  type="button"
                   onClick={() => handleSendPhoneOtp()}
                   disabled={sendingPhoneOtp || !newPhone.replace(/\D/g, "") || savingPhone}
-                  sx={{ ...secondaryBtnSx, minWidth: 100, flexShrink: 0 }}
+                  className={btn({ tone: "secondary", wide: true })}
                 >
                   {sendingPhoneOtp
-                    ? <CircularProgress size={14} />
+                    ? <Spinner size={14} className={spinnerPrimary} />
                     : phoneOtpSent ? "Resend" : "Send code"}
-                </Button>
-              </Stack>
+                </button>
+              </div>
 
               {/* Code input — shown after OTP sent */}
               {phoneOtpSent && (
                 <>
-                  <Typography sx={{ fontSize: 13, color: "text.secondary" }}>
+                  <p className={otpHint}>
                     We sent a 6-digit code to <strong>{e164NewPhone()}</strong> via{" "}
                     <strong>Telegram</strong>. Check your Telegram app.
-                  </Typography>
+                  </p>
                   <OtpInput value={phoneCode} onChange={setPhoneCode} disabled={savingPhone} autoFocus />
                 </>
               )}
-            </Stack>
-          </DialogContent>
-          <DialogActions sx={{ px: 3, pb: 2.5, gap: 1 }}>
-            <Button
+            </div>
+          </div>
+          <div className={dialogActions}>
+            <button
+              type="button"
               onClick={() => setPhoneDialogOpen(false)}
               disabled={savingPhone}
-              sx={{ ...secondaryBtnSx, flex: 1 }}
+              className={btn({ tone: "secondaryFlat", grow: true })}
             >
               Cancel
-            </Button>
-            <Button
-              variant="contained"
+            </button>
+            <button
+              type="button"
               onClick={handleUpdatePhone}
               disabled={!phoneOtpSent || phoneCode.length < 6 || savingPhone}
-              sx={{ ...primaryBtnSx, flex: 1 }}
+              className={btn({ tone: "primary", grow: true })}
             >
               {savingPhone
-                ? <CircularProgress size={16} sx={{ color: "#fff" }} />
+                ? <Spinner size={16} className={spinnerWhite} />
                 : "Confirm"}
-            </Button>
-          </DialogActions>
-        </Dialog>
+            </button>
+          </div>
+        </BareModal>
 
         {/* 4. Password */}
         <Section
           title="Password"
           description="Use at least 8 characters with a mix of letters, numbers, and symbols."
         >
-          <Stack spacing={2}>
+          <div className={fieldStack}>
             <PasswordInput
               label="Current password"
               placeholder="Enter current password"
@@ -866,24 +1087,24 @@ export default function SettingsPage() {
               required
               error={pwErrors.confirm}
             />
-          </Stack>
+          </div>
 
           {passwordMsg && (
-            <Alert severity={passwordMsg.type} sx={{ mt: 1.5, borderRadius: "8px", py: 0.5 }}>
+            <Alert tone={passwordMsg.type} className={alertSpaced}>
               {passwordMsg.text}
             </Alert>
           )}
 
-          <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2.5 }}>
-            <Button
-              variant="contained"
+          <div className={actionsRight}>
+            <button
+              type="button"
               disabled={savingPassword}
               onClick={handleChangePassword}
-              sx={primaryBtnSx}
+              className={btn({ tone: "primary" })}
             >
-              {savingPassword ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Update password"}
-            </Button>
-          </Stack>
+              {savingPassword ? <Spinner size={16} className={spinnerWhite} /> : "Update password"}
+            </button>
+          </div>
         </Section>
 
         {/* 5. Identity verification (KYC) */}
@@ -900,172 +1121,113 @@ export default function SettingsPage() {
           description="Devices currently signed in to your account."
         >
           {sessionsLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-              <CircularProgress size={24} />
-            </Box>
+            <div className={sessionsLoadingWrap}>
+              <Spinner size={24} className={spinnerPrimary} />
+            </div>
           ) : sessions.length === 0 ? (
-            <Typography sx={{ fontSize: 13, color: "text.secondary" }}>No active sessions found.</Typography>
+            <p className={sessionsEmpty}>No active sessions found.</p>
           ) : (
-            <Stack divider={<Box sx={{ height: "1px", backgroundColor: "#F1F5F9" }} />}>
-              {sessions.map((s) => (
-                <Stack
-                  key={s.id}
-                  direction="row"
-                  alignItems="center"
-                  spacing={1.75}
-                  sx={{
-                    py: 1.75,
-                    "&:first-of-type": { pt: 0 },
-                    "&:last-of-type": { pb: 0 },
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 36,
-                      height: 36,
-                      backgroundColor: "#F1F5F9",
-                      borderRadius: "8px",
-                      display: "grid",
-                      placeItems: "center",
-                      color: "text.primary",
-                      flexShrink: 0,
-                    }}
-                  >
-                    {guessDevice(s.name) === "desktop" ? (
-                      <DesktopWindowsOutlinedIcon sx={{ fontSize: 18 }} />
-                    ) : (
-                      <SmartphoneOutlinedIcon sx={{ fontSize: 18 }} />
+            <div>
+              {sessions.map((s, i) => (
+                <React.Fragment key={s.id}>
+                  {i > 0 && <div className={sessionDivider} />}
+                  <div className={sessionRow}>
+                    <div className={sessionIcon}>
+                      {guessDevice(s.name) === "desktop" ? (
+                        <Monitor size={18} />
+                      ) : (
+                        <Smartphone size={18} />
+                      )}
+                    </div>
+                    <div className={sessionBody}>
+                      <div className={sessionNameRow}>
+                        <p className={sessionName}>{displaySessionName(s.name)}</p>
+                        {s.current && <StatusChip label="This device" variant="success" />}
+                      </div>
+                      <p className={sessionMeta}>
+                        {(() => {
+                          const rel = formatSessionTime(s.last_used_at || s.created_at);
+                          return rel === "Active now"
+                            ? rel
+                            : `Last active ${rel.charAt(0).toLowerCase()}${rel.slice(1)}`;
+                        })()}
+                      </p>
+                    </div>
+                    {!s.current && (
+                      <button
+                        type="button"
+                        onClick={() => handleRevokeSession(s.id)}
+                        className={btn({ tone: "secondary" })}
+                      >
+                        Revoke
+                      </button>
                     )}
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 0.25 }}>
-                      <Typography sx={{ fontSize: 14, fontWeight: 500 }}>
-                        {displaySessionName(s.name)}
-                      </Typography>
-                      {s.current && <StatusChip label="This device" variant="success" />}
-                    </Stack>
-                    <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                      {(() => {
-                        const rel = formatSessionTime(s.last_used_at || s.created_at);
-                        return rel === "Active now"
-                          ? rel
-                          : `Last active ${rel.charAt(0).toLowerCase()}${rel.slice(1)}`;
-                      })()}
-                    </Typography>
-                  </Box>
-                  {!s.current && (
-                    <Button
-                      variant="outlined"
-                      size="small"
-                      onClick={() => handleRevokeSession(s.id)}
-                      sx={secondaryBtnSx}
-                    >
-                      Revoke
-                    </Button>
-                  )}
-                </Stack>
+                  </div>
+                </React.Fragment>
               ))}
-            </Stack>
+            </div>
           )}
 
           {sessions.length > 1 && (
-            <Stack direction="row" justifyContent="flex-end" sx={{ mt: 2 }}>
-              <Button
-                variant="text"
-                size="small"
+            <div className={signOutRow}>
+              <button
+                type="button"
                 disabled={revokingOther}
                 onClick={handleRevokeOther}
-                sx={{
-                  ...ghostBtnSx,
-                  color: "#DC2626",
-                  "&:hover": { backgroundColor: "#FEF2F2", color: "#DC2626" },
-                }}
+                className={btn({ tone: "ghostDanger" })}
               >
                 {revokingOther ? (
-                  <CircularProgress size={14} sx={{ color: "#DC2626" }} />
+                  <Spinner size={14} className={spinnerDanger} />
                 ) : (
                   "Sign out of all other sessions"
                 )}
-              </Button>
-            </Stack>
+              </button>
+            </div>
           )}
         </Section>
 
         {/* 7. Danger zone */}
-        <Box
-          sx={{
-            backgroundColor: "#FFFFFF",
-            border: "1px solid rgba(220, 38, 38, 0.2)",
-            borderRadius: "14px",
-            p: { xs: 3, sm: "24px 28px" },
-            display: "flex",
-            flexDirection: { xs: "column", sm: "row" },
-            alignItems: { xs: "stretch", sm: "flex-start" },
-            justifyContent: "space-between",
-            gap: 2,
-            mt: 1,
-          }}
-        >
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#DC2626", mb: 0.5 }}>
-              Deactivate account
-            </Typography>
-            <Typography sx={{ fontSize: 13, color: "text.secondary", maxWidth: 460 }}>
+        <div className={dangerBox}>
+          <div className={flexOne}>
+            <p className={dangerTitle}>Deactivate account</p>
+            <p className={dangerText}>
               Your profile will be hidden and all active orders must be completed first. This action
               can be reversed within 30 days.
-            </Typography>
-          </Box>
-          <Button
-            variant="outlined"
+            </p>
+          </div>
+          <button
+            type="button"
             onClick={() => setDeactivateOpen(true)}
-            sx={{
-              textTransform: "none",
-              fontSize: 13,
-              fontWeight: 600,
-              borderRadius: "8px",
-              height: 38,
-              px: 2,
-              color: "#DC2626",
-              borderColor: "rgba(220, 38, 38, 0.3)",
-              "&:hover": { backgroundColor: "#FEF2F2", borderColor: "#DC2626" },
-            }}
+            className={btn({ tone: "dangerOutline" })}
           >
             Deactivate account
-          </Button>
-        </Box>
-      </Stack>
+          </button>
+        </div>
+      </div>
 
       {/* Deactivate confirmation dialog */}
-      <Dialog
+      <BareModal
         open={deactivateOpen}
-        onClose={() => setDeactivateOpen(false)}
-        PaperProps={{ sx: { borderRadius: "14px", p: 1, maxWidth: 420 } }}
+        onOpenChange={(open) => { if (!open) setDeactivateOpen(false); }}
+        maxW="436px"
+        className={dialogPaper}
       >
-        <DialogContent>
-          <Typography sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>
-            Deactivate your account?
-          </Typography>
-          <DialogContentText sx={{ fontSize: 13, color: "text.secondary" }}>
+        <div className={dialogContent}>
+          <p className={dialogTitle}>Deactivate your account?</p>
+          <p className={dialogDesc}>
             Your profile will be hidden from clients and you&apos;ll be signed out everywhere. You
             can reactivate within 30 days by signing back in.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2 }}>
-          <Button onClick={() => setDeactivateOpen(false)} sx={ghostBtnSx}>
+          </p>
+        </div>
+        <div className={dialogActionsTight}>
+          <button type="button" onClick={() => setDeactivateOpen(false)} className={btn({ tone: "ghost" })}>
             Cancel
-          </Button>
-          <Button
-            variant="contained"
-            sx={{
-              ...primaryBtnSx,
-              backgroundColor: "#DC2626",
-              "&:hover": { backgroundColor: "#B91C1C" },
-            }}
-          >
+          </button>
+          <button type="button" className={btn({ tone: "dangerSolid" })}>
             Deactivate
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Container>
+          </button>
+        </div>
+      </BareModal>
+    </div>
   );
 }

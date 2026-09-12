@@ -184,18 +184,3 @@ export const mgCard = css({
     "& .mg-chev": { color: "ink2", transform: "translateX(2px)" },
   },
 });
-
-/**
- * @deprecated MUI `sx` twin of `mgCard`, kept (as a plain object — no MUI import) only until
- * `client/PostServiceContent.tsx` (its last caller) is on Panda; delete it with that migration.
- */
-export const mgCardSx = {
-  position: "relative" as const,
-  bgcolor: "#FFFFFF",
-  border: "1px solid rgba(0, 0, 0, 0.08)",
-  borderRadius: "16px",
-  cursor: "pointer",
-  transition: "border-color .15s ease, box-shadow .15s ease",
-  "&:hover": { borderColor: "rgba(0, 0, 0, 0.14)", boxShadow: "0 1px 2px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.05)" },
-  "&:hover .mg-chev": { color: "rgba(0, 0, 0, 0.6)", transform: "translateX(2px)" },
-};

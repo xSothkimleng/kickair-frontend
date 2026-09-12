@@ -1,6 +1,69 @@
-import { Box, Typography, Button, IconButton, CircularProgress } from "@mui/material";
-import { DeleteOutlined, SendOutlined } from "@mui/icons-material";
+import { Send, Trash2 } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Spinner, iconButton } from "@/components/ds";
 import { JobPost } from "@/types/job";
+
+const cardBox = css({
+  p: "16px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0, 0, 0, 0.1)",
+  borderRadius: "cardSm",
+  transition: "border-color 0.3s",
+  _hover: { borderColor: "rgba(0, 0, 0, 0.2)" },
+});
+const row = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" });
+const main = css({ flex: 1, minW: 0 });
+const titleRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
+const title = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 500, color: "ink", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const draftPill = css({
+  px: "8px",
+  py: "2px",
+  bg: "rgba(245, 158, 11, 0.1)",
+  color: "pendingText",
+  fontSize: "10px",
+  fontWeight: 600,
+  borderRadius: "4px",
+  flexShrink: 0,
+});
+const category = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const edited = css({ lineHeight: 1.5, fontSize: "11px", color: "ink3" });
+const sideActions = css({ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 });
+
+/* MUI `Button` metrics (min-width 64, line-height 1.75, 500 weight) with this card's tones. */
+const actionBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  m: 0,
+  px: "16px",
+  h: "32px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "8px",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  whiteSpace: "nowrap",
+  cursor: "pointer",
+  transition: "background-color .25s, color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  _disabled: { pointerEvents: "none" },
+  "& svg": { flexShrink: 0 },
+});
+const continueBtn = css({ bg: "rgba(0, 0, 0, 0.05)", color: "ink", _hover: { bg: "rgba(0, 0, 0, 0.1)" }, _disabled: { color: "rgba(0, 0, 0, 0.26)" } });
+const publishBtn = css({ bg: "accent", color: "white", _hover: { bg: "accentHover" }, _disabled: { bg: "rgba(0,113,227,0.4)", color: "white" } });
+const deleteBtn = css(iconButton.raw({ shape: "square" }), {
+  w: "32px",
+  h: "32px",
+  borderRadius: "8px",
+  color: "rgba(239, 68, 68, 0.6)",
+  _hover: { color: "#ef4444", bg: "rgba(239, 68, 68, 0.05)" },
+  _disabled: { pointerEvents: "none", color: "rgba(0, 0, 0, 0.26)" },
+});
 
 interface JobDraftCardProps {
   draft: JobPost;
@@ -33,79 +96,36 @@ export default function JobDraftCard({
   const busy = publishing || deleting;
 
   return (
-    <Box
-      sx={{
-        p: 2,
-        border: "1px solid rgba(0, 0, 0, 0.1)",
-        borderRadius: 3,
-        transition: "border-color 0.3s",
-        "&:hover": { borderColor: "rgba(0, 0, 0, 0.2)" },
-      }}>
-      <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", gap: 1.5 }}>
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 500, color: "black", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+    <div className={cardBox}>
+      <div className={row}>
+        <div className={main}>
+          <div className={titleRow}>
+            <p className={title}>
               {draft.title?.trim() || "Untitled job"}
-            </Typography>
-            <Box sx={{ px: 1, py: 0.25, bgcolor: "rgba(245, 158, 11, 0.1)", color: "#b45309", fontSize: 10, fontWeight: 600, borderRadius: 1, flexShrink: 0 }}>
+            </p>
+            <div className={draftPill}>
               DRAFT
-            </Box>
-          </Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 1 }}>
+            </div>
+          </div>
+          <p className={category}>
             {draft.category?.category_name ?? "No category yet"}
-          </Typography>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)" }}>
+          </p>
+          <p className={edited}>
             Last edited {timeAgo(draft.updated_at)}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexShrink: 0 }}>
-          <Button
-            onClick={onContinueEditing}
-            disabled={busy}
-            sx={{
-              px: 2,
-              height: 32,
-              fontSize: 12,
-              color: "black",
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              borderRadius: 2,
-              textTransform: "none",
-              whiteSpace: "nowrap",
-              "&:hover": { bgcolor: "rgba(0, 0, 0, 0.1)" },
-            }}>
+          </p>
+        </div>
+        <div className={sideActions}>
+          <button type="button" onClick={onContinueEditing} disabled={busy} className={cx(actionBtn, continueBtn)}>
             Continue Editing
-          </Button>
-          <Button
-            onClick={onPublish}
-            disabled={busy}
-            startIcon={publishing ? undefined : <SendOutlined sx={{ fontSize: 14 }} />}
-            sx={{
-              px: 2,
-              height: 32,
-              fontSize: 12,
-              color: "white",
-              bgcolor: "#0071e3",
-              borderRadius: 2,
-              textTransform: "none",
-              whiteSpace: "nowrap",
-              "&:hover": { bgcolor: "#0077ED" },
-              "&.Mui-disabled": { bgcolor: "rgba(0,113,227,0.4)", color: "white" },
-            }}>
-            {publishing ? <CircularProgress size={14} sx={{ color: "white" }} /> : "Publish"}
-          </Button>
-          <IconButton
-            onClick={onDelete}
-            disabled={busy}
-            sx={{
-              p: 1,
-              color: "rgba(239, 68, 68, 0.6)",
-              borderRadius: 2,
-              "&:hover": { color: "#ef4444", bgcolor: "rgba(239, 68, 68, 0.05)" },
-            }}>
-            {deleting ? <CircularProgress size={16} sx={{ color: "#ef4444" }} /> : <DeleteOutlined sx={{ fontSize: 16 }} />}
-          </IconButton>
-        </Box>
-      </Box>
-    </Box>
+          </button>
+          <button type="button" onClick={onPublish} disabled={busy} className={cx(actionBtn, publishBtn)}>
+            {publishing ? <Spinner size={14} className={css({ color: "white" })} /> : (<><Send size={14} />Publish</>)}
+          </button>
+          <button type="button" onClick={onDelete} disabled={busy} aria-label="Delete draft" className={deleteBtn}>
+            {deleting ? <Spinner size={16} className={css({ color: "#ef4444" })} /> : <Trash2 size={16} />}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

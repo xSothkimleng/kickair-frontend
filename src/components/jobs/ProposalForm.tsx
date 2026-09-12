@@ -1,8 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, Button, Stack, CircularProgress, Alert } from "@mui/material";
-import { ScheduleOutlined } from "@mui/icons-material";
+import { Clock } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Alert, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { Proposal, CreateProposalRequest } from "@/types/job";
 import RichTextEditor from "@/components/ui/RichTextEditor";
@@ -14,6 +15,37 @@ interface ProposalFormProps {
   onSaved: (proposal: Proposal) => void;
   onCancel: () => void;
 }
+
+const stack = css({ display: "flex", flexDirection: "column", gap: "20px" });
+const heading = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 700 });
+const subHeading = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const alertTweak = css({ borderRadius: "12px", fontSize: "12px", py: "4px" });
+const endAdornment = css({ display: "inline-flex", alignItems: "center", gap: "4px", "& svg": { flexShrink: 0 } });
+const endAdornmentText = css({ lineHeight: 1.5, fontSize: "12px" });
+const fieldLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "#334155" });
+const actions = css({ display: "flex", gap: "8px" });
+
+/* MUI `Button` medium metrics (line-height 1.75, min-width 64, 6px/16px padding). */
+const btnBase = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  boxSizing: "border-box", m: 0, minW: "64px", borderRadius: "12px",
+  fontFamily: "inherit", fontSize: "13px", lineHeight: 1.75, cursor: "pointer",
+  transition: "background-color .25s, border-color .25s, color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  _disabled: { pointerEvents: "none" },
+});
+const cancelBtn = css({
+  flex: 1, p: "5px 15px", fontWeight: 500,
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.12)",
+  bg: "transparent", color: "ink2",
+  _hover: { borderColor: "rgba(0,0,0,0.3)", bg: "transparent", color: "rgba(0, 0, 0, 0.87)" },
+});
+const submitBtn = css({
+  flex: 2, p: "6px 16px", fontWeight: 600, border: "none",
+  bg: "#1976d2", color: "white",
+  _hover: { bg: "#1565c0" },
+  _disabled: { bg: "rgba(0, 0, 0, 0.12)", color: "rgba(0, 0, 0, 0.26)" },
+});
 
 export default function ProposalForm({ jobPostId, existing, onSaved, onCancel }: ProposalFormProps) {
   const isEditing = !!existing;
@@ -60,16 +92,16 @@ export default function ProposalForm({ jobPostId, existing, onSaved, onCancel }:
   };
 
   return (
-    <Stack spacing={2.5}>
-      <Box>
-        <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.25 }}>
+    <div className={stack}>
+      <div>
+        <p className={heading}>
           {isEditing ? "Edit Your Proposal" : "Submit a Proposal"}
-        </Typography>
-        <Typography sx={{ fontSize: 12, color: "text.secondary" }}>Fill in your terms for this project.</Typography>
-      </Box>
+        </p>
+        <p className={subHeading}>Fill in your terms for this project.</p>
+      </div>
 
       {error && (
-        <Alert severity="error" sx={{ borderRadius: 1.5, fontSize: 12, py: 0.5 }} onClose={() => setError(null)}>
+        <Alert tone="error" className={alertTweak} onClose={() => setError(null)}>
           {error}
         </Alert>
       )}
@@ -92,38 +124,31 @@ export default function ProposalForm({ jobPostId, existing, onSaved, onCancel }:
         onChange={setTimelineDays}
         placeholder="14"
         endIcon={(
-          <Stack direction="row" spacing={0.5} alignItems="center">
-            <ScheduleOutlined sx={{ fontSize: 14 }} />
-            <Typography sx={{ fontSize: 12 }}>days</Typography>
-          </Stack>
+          <span className={endAdornment}>
+            <Clock size={14} />
+            <span className={endAdornmentText}>days</span>
+          </span>
         )}
       />
 
-      <Box>
-        <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#334155", mb: 0.875 }}>Cover Letter</Typography>
+      <div>
+        <p className={fieldLabel}>Cover Letter</p>
         <RichTextEditor
           value={coverLetter}
           onChange={setCoverLetter}
           placeholder="Explain your relevant experience and approach…"
           minHeight={130}
         />
-      </Box>
+      </div>
 
-      <Stack direction="row" spacing={1}>
-        <Button
-          variant="outlined"
-          onClick={onCancel}
-          sx={{ flex: 1, fontSize: 13, fontWeight: 500, textTransform: "none", borderRadius: 1.5, borderColor: "divider", color: "text.secondary", "&:hover": { borderColor: "rgba(0,0,0,0.3)", bgcolor: "transparent", color: "text.primary" } }}>
+      <div className={actions}>
+        <button type="button" onClick={onCancel} className={cx(btnBase, cancelBtn)}>
           Cancel
-        </Button>
-        <Button
-          variant="contained"
-          disabled={submitting}
-          onClick={handleSubmit}
-          sx={{ flex: 2, fontSize: 13, fontWeight: 600, textTransform: "none", borderRadius: 1.5, boxShadow: "none", color: "white", "&:hover": { boxShadow: "none" } }}>
-          {submitting ? <CircularProgress size={16} sx={{ color: "white" }} /> : isEditing ? "Save Changes" : "Submit Proposal"}
-        </Button>
-      </Stack>
-    </Stack>
+        </button>
+        <button type="button" disabled={submitting} onClick={handleSubmit} className={cx(btnBase, submitBtn)}>
+          {submitting ? <Spinner size={16} className={css({ color: "white" })} /> : isEditing ? "Save Changes" : "Submit Proposal"}
+        </button>
+      </div>
+    </div>
   );
 }
