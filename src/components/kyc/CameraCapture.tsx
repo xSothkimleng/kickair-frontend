@@ -12,12 +12,12 @@ const viewportCss = css({ position: "relative", w: "100%", aspectRatio: "1 / 1",
 const videoCss = css({ position: "absolute", inset: 0, w: "100%", h: "100%", objectFit: "cover", transform: "scaleX(-1)" });
 const guideWrapCss = css({ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" });
 const guideCss = css({ w: "66%", aspectRatio: "0.8 / 1", borderRadius: "50%", border: "2.5px dashed rgba(255,255,255,.85)", boxShadow: "0 0 0 1000px rgba(8,12,22,.46)" });
-const liveChipCss = css({ position: "absolute", top: "12px", left: "12px", display: "inline-flex", alignItems: "center", gap: "4.8px", h: "22px", px: "8.8px", borderRadius: "7px", bg: "rgba(220,38,38,.92)", color: "#fff", fontSize: "10.5px", fontWeight: 700, letterSpacing: ".04em" });
+const liveChipCss = css({ position: "absolute", top: "12px", left: "12px", display: "inline-flex", alignItems: "center", gap: "4.8px", h: "22px", px: "8.8px", borderRadius: "7px", bg: "rgba(220,38,38,.92)", color: "#fff", textStyle: "micro", fontWeight: 700 });
 const liveDotCss = css({ w: "6px", h: "6px", borderRadius: "50%", bg: "#fff" });
 const instructionWrapCss = css({ position: "absolute", top: "12px", left: 0, right: 0, display: "flex", justifyContent: "center", px: "16px" });
 // The pill's own `px`/`py` are dropped: globals.css's unlayered `p { padding: 0 }`
 // outranks any layered rule, so they never applied here either.
-const instructionCss = css({ maxW: "260px", textAlign: "center", color: "#fff", fontSize: "13.5px", fontWeight: 500, bg: "rgba(8,12,22,.62)", borderRadius: "999px", lineHeight: 1.35 });
+const instructionCss = css({ maxW: "260px", textAlign: "center", color: "#fff", textStyle: "ui", fontWeight: 500, bg: "rgba(8,12,22,.62)", borderRadius: "999px" });
 const shutterWrapCss = css({ display: "flex", justifyContent: "center", mt: "16px" });
 const shutterCss = css({ w: "72px", h: "72px", boxSizing: "border-box", borderRadius: "50%", border: "4px solid #cbd5e1", bg: "#fff", p: "4.8px", cursor: "pointer", transition: "border-color .15s", _hover: { borderColor: "accent" } });
 const shutterInnerCss = css({ w: "100%", h: "100%", borderRadius: "50%", bg: "accent" });

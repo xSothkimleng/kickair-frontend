@@ -12,9 +12,9 @@ const sectionCard = css({
   p: "32px",
 });
 const header = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "24px" });
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
-const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
-/* MUI text `Button` base metrics (500 weight, 1.75 line-height, 64px min-width, 6px/8px padding). */
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
+const sectionSub = css({ textStyle: "micro", color: "ink2" });
+/* Text button base metrics (500 weight, 64px min-width, 6px/8px padding). */
 const addBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -28,10 +28,8 @@ const addBtn = css({
   borderRadius: "4px",
   bg: "transparent",
   color: "ink2",
-  fontFamily: "inherit",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "color .25s",
   _hover: { color: "ink", bg: "transparent" },
@@ -41,7 +39,7 @@ const addBtn = css({
 const list = css({ display: "flex", flexDirection: "column", gap: "16px" });
 const empty = css({ textAlign: "center", py: "32px", bg: "rgba(0, 0, 0, 0.02)", borderRadius: "cardSm" });
 const emptyIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.2)", mb: "8px" });
-const emptyText = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const emptyText = css({ textStyle: "meta", color: "ink2" });
 
 interface RequirementsSectionProps {
   formData: ServiceFormData;

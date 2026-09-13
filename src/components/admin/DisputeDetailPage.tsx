@@ -18,12 +18,12 @@ import { ago, dateTime, errorMessage, money, shortDate } from "./format";
 import { outcomeLabel } from "./labels";
 import { DisputeStatus } from "./DisputesPage";
 
-const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
+const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
 const banner = css({ display: "flex", alignItems: "center", gap: "12px", p: "12px 16px", borderRadius: "12px", mb: "20px", bg: "var(--td-amber-soft)", color: "var(--td-amber)", "&[data-kind=info]": { bg: "var(--td-blue-soft)", color: "var(--td-blue)" } });
-const fileChip = css({ display: "inline-flex", alignItems: "center", gap: "6px", h: "26px", px: "8px", borderRadius: "7px", bg: "var(--td-hover)", fontSize: "12px", fontWeight: 500, color: "var(--td-ink-2) !important", maxW: "100%", "& span": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, _hover: { bg: "var(--td-line)" } });
+const fileChip = css({ display: "inline-flex", alignItems: "center", gap: "6px", h: "26px", px: "8px", borderRadius: "7px", bg: "var(--td-hover)", textStyle: "meta", fontWeight: 500, color: "var(--td-ink-2) !important", maxW: "100%", "& span": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, _hover: { bg: "var(--td-line)" } });
 const bubbleRow = css({ display: "flex", gap: "10px", alignItems: "flex-end", "&[data-me=true]": { flexDirection: "row-reverse" } });
 const bubble = css({
-  maxW: "78%", px: "12px", py: "8px", borderRadius: "14px", bg: "var(--td-hover)", fontSize: "13.5px", lineHeight: 1.45, borderBottomLeftRadius: "4px", whiteSpace: "pre-wrap", overflowWrap: "anywhere",
+  maxW: "78%", px: "12px", py: "8px", borderRadius: "14px", bg: "var(--td-hover)", textStyle: "ui", borderBottomLeftRadius: "4px", whiteSpace: "pre-wrap", overflowWrap: "anywhere",
   "&[data-me=true]": { bg: "var(--td-ink)", color: "#fff", borderBottomLeftRadius: "14px", borderBottomRightRadius: "4px" },
   "& a": { textDecoration: "underline" },
 });
@@ -34,7 +34,7 @@ const optionCard = css({
   "& .radio": { w: "16px", h: "16px", borderRadius: "999px", border: "1.5px solid var(--td-line-2)", flexShrink: 0, mt: "2px", display: "grid", placeItems: "center", color: "#fff" },
   "&[data-on=true] .radio": { bg: "var(--td-ink)", borderColor: "var(--td-ink)" },
 });
-// The shared OrderRecord is an MUI component; keep its own spacing inside our panel.
+// The shared OrderRecord keeps its own spacing inside our panel.
 const recordWrap = css({ p: "4px 20px 12px" });
 
 const OPTIONS: { value: DisputeOutcome; label: string; help: string }[] = [
@@ -48,10 +48,10 @@ function Evidence({ title, name, statement, files }: { title: string; name: stri
   return (
     <div className={cx(stack({ gap: 2 }), css({ p: "14px", borderRadius: "10px", bg: "var(--td-surface-2)", border: "1px solid var(--td-line)", minW: 0 }))}>
       <div>
-        <p className={text({ weight: 600, size: "sm" })}>{title}</p>
-        <p className={text({ size: "xs", tone: 3 })}>{name}</p>
+        <p className={text({ weight: 600, size: "meta" })}>{title}</p>
+        <p className={text({ size: "micro", tone: 3 })}>{name}</p>
       </div>
-      {statement ? <p className={cx(text({ size: "sm", tone: 2 }), css({ whiteSpace: "pre-wrap" }))}>{statement}</p> : <p className={text({ size: "sm", tone: 3 })}>No statement submitted.</p>}
+      {statement ? <p className={cx(text({ size: "meta", tone: 2 }), css({ whiteSpace: "pre-wrap" }))}>{statement}</p> : <p className={text({ size: "meta", tone: 3 })}>No statement submitted.</p>}
       {files?.length ? (
         <div className={row({ gap: 2, wrap: true })}>
           {files.map((f, i) => (
@@ -160,7 +160,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
         <div className={stack({ gap: 1 })}>
           <Eyebrow>Order #{d.order.id} · {isCustom ? "Custom offer" : "Service order"} · {money(amount)}</Eyebrow>
           <div className={row({ gap: 3 })}>
-            <h1 className={text({ size: "2xl", weight: 600 })}>Dispute #{d.sequence}</h1>
+            <h1 className={text({ size: "heading", weight: 600 })}>Dispute #{d.sequence}</h1>
             <DisputeStatus status={d.status} outcome={d.outcome} />
           </div>
           <p className={cx(text({ tone: 2 }), css({ maxW: "720px", mt: "2px" }))}>
@@ -172,7 +172,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
       {d.newer_dispute ? (
         <div className={banner} data-kind={d.newer_dispute.status === "open" ? "warn" : "info"}>
           <div className={css({ flex: 1 })}>
-            <p className={text({ weight: 600, size: "sm" })}>
+            <p className={text({ weight: 600, size: "meta" })}>
               {d.newer_dispute.status === "open"
                 ? `Dispute #${d.newer_dispute.sequence} was opened on this order ${ago(d.newer_dispute.opened_at)} and is waiting for a decision.`
                 : `This order has a later dispute (#${d.newer_dispute.sequence}, opened ${ago(d.newer_dispute.opened_at)}), already resolved.`}
@@ -195,7 +195,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
           <Panel>
             <PanelHead title="Conversation" meta="visible to both parties" />
             <div className={cx(stack({ gap: 3 }), css({ p: "20px", maxH: "420px", overflowY: "auto" }))}>
-              {!conversationId ? <p className={text({ size: "sm", tone: 3 })}>No conversation exists for this order.</p> : messages.length === 0 ? <p className={text({ size: "sm", tone: 3 })}>No messages yet.</p> : null}
+              {!conversationId ? <p className={text({ size: "meta", tone: 3 })}>No conversation exists for this order.</p> : messages.length === 0 ? <p className={text({ size: "meta", tone: 3 })}>No messages yet.</p> : null}
               {messages.map((m) => {
                 const p = partyOf(m.sender_id);
                 const me = m.is_mine;
@@ -204,7 +204,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
                   <div key={m.id} className={bubbleRow} data-me={me}>
                     <Avatar name={m.sender?.name ?? p?.name ?? "?"} size="sm" seed={m.sender_id} src={m.sender?.avatar_url ?? p?.avatar_url} />
                     <div className={cx(stack({ gap: 1 }), css({ alignItems: me ? "flex-end" : "flex-start", maxW: "100%" }))}>
-                      <span className={text({ size: "xs", tone: 3 })}>{label} · {ago(m.created_at)}</span>
+                      <span className={text({ size: "micro", tone: 3 })}>{label} · {ago(m.created_at)}</span>
                       <div className={bubble} data-me={me}>
                         {m.type === "file" && m.file_url ? <a href={m.file_url} target="_blank" rel="noreferrer"><Paperclip size={12} className={css({ display: "inline", verticalAlign: "-1px" })} /> {m.file_name ?? "Attachment"}</a> : m.body}
                       </div>
@@ -265,23 +265,23 @@ export default function DisputeDetailPage({ id }: { id: number }) {
                   <div key={o.value} className={optionCard} data-on={outcome === o.value} onClick={() => setOutcome(o.value)} role="radio" aria-checked={outcome === o.value}>
                     <span className="radio">{outcome === o.value ? <Check size={10} strokeWidth={3} /> : null}</span>
                     <div>
-                      <p className={text({ weight: 600, size: "sm" })}>{o.label}</p>
-                      <p className={text({ size: "xs", tone: 2 })}>{o.help}</p>
+                      <p className={text({ weight: 600, size: "meta" })}>{o.label}</p>
+                      <p className={text({ size: "micro", tone: 2 })}>{o.help}</p>
                     </div>
                   </div>
                 ))}
                 {outcome === "partial" ? (
                   <div className={cx(stack({ gap: 2 }), css({ p: "12px", borderRadius: "10px", bg: "var(--td-surface-2)", border: "1px solid var(--td-line)" }))}>
-                    <label className={text({ size: "sm", weight: 600, tone: 2 })}>Freelancer receives</label>
+                    <label className={text({ size: "meta", weight: 600, tone: 2 })}>Freelancer receives</label>
                     <div className={row({ gap: 2 })}>
                       <span className={text({ tone: 3 })}>$</span>
                       <Input type="number" min={1} max={Math.max(1, amount - 1)} step="0.01" value={partial} onChange={(e) => setPartial(e.target.value)} placeholder="0.00" />
                     </div>
-                    <p className={text({ size: "xs", tone: 3 })}>Client is refunded {money(Math.max(0, amount - partialNum))} of {money(amount)}.</p>
+                    <p className={text({ size: "micro", tone: 3 })}>Client is refunded {money(Math.max(0, amount - partialNum))} of {money(amount)}.</p>
                   </div>
                 ) : null}
                 <div className={stack({ gap: 1 })}>
-                  <label className={text({ size: "sm", weight: 600, tone: 2 })}>Note to both parties</label>
+                  <label className={text({ size: "meta", weight: 600, tone: 2 })}>Note to both parties</label>
                   <Textarea value={note} onChange={(e) => setNote(e.target.value)} maxLength={2000} placeholder={outcome === "continue" ? "What needs to happen next, and by when." : "Explain the decision in one or two sentences."} />
                 </div>
                 <Btn variant="primary" size="lg" full disabled={!canResolve || resolving} onClick={resolve}>
@@ -294,10 +294,10 @@ export default function DisputeDetailPage({ id }: { id: number }) {
               <PanelHead title="Decision" />
               <div className={cx(stack({ gap: 2 }), css({ p: "16px" }))}>
                 <p className={text({ weight: 600 })}>{d.outcome ? outcomeLabel[d.outcome].long : "Resolved"}</p>
-                {d.outcome === "partial" && d.partial_freelancer_amount ? <p className={text({ size: "sm", tone: 2 })}>Freelancer received {money(d.partial_freelancer_amount)}, client refunded {money(amount - Number(d.partial_freelancer_amount))}.</p> : null}
-                {d.outcome === "continue" ? <p className={text({ size: "sm", tone: 2 })}>No funds moved. The order went back to in progress so the freelancer can deliver again.</p> : null}
-                {d.admin_note ? <div className={cx(text({ size: "sm", tone: 2 }), css({ p: "10px 12px", bg: "var(--td-surface-2)", borderRadius: "8px", borderLeft: "3px solid var(--td-line-2)", whiteSpace: "pre-wrap" }))}>{d.admin_note}</div> : null}
-                <p className={text({ size: "xs", tone: 3 })}>{d.resolved_at ? dateTime(d.resolved_at) : ""}</p>
+                {d.outcome === "partial" && d.partial_freelancer_amount ? <p className={text({ size: "meta", tone: 2 })}>Freelancer received {money(d.partial_freelancer_amount)}, client refunded {money(amount - Number(d.partial_freelancer_amount))}.</p> : null}
+                {d.outcome === "continue" ? <p className={text({ size: "meta", tone: 2 })}>No funds moved. The order went back to in progress so the freelancer can deliver again.</p> : null}
+                {d.admin_note ? <div className={cx(text({ size: "meta", tone: 2 }), css({ p: "10px 12px", bg: "var(--td-surface-2)", borderRadius: "8px", borderLeft: "3px solid var(--td-line-2)", whiteSpace: "pre-wrap" }))}>{d.admin_note}</div> : null}
+                <p className={text({ size: "micro", tone: 3 })}>{d.resolved_at ? dateTime(d.resolved_at) : ""}</p>
               </div>
             </Panel>
           )}
@@ -309,7 +309,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
                 <Avatar name={p.name} seed={p.id} src={p.avatar_url} />
                 <div className={css({ minW: 0, flex: 1 })}>
                   <p className={text({ weight: 600, truncate: true })}>{p.name}</p>
-                  <p className={text({ size: "sm", tone: 3, truncate: true })}>{role}{p.email ? ` · ${p.email}` : ""}</p>
+                  <p className={text({ size: "meta", tone: 3, truncate: true })}>{role}{p.email ? ` · ${p.email}` : ""}</p>
                 </div>
               </Link>
             ))}
@@ -320,13 +320,13 @@ export default function DisputeDetailPage({ id }: { id: number }) {
             {earlier.length ? earlier.map((x) => (
               <Link key={x.id} href={`/admin/disputes/${x.id}`} className={cx(stack({ gap: 1 }), css({ px: "16px", py: "12px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)", _hover: { bg: "var(--td-surface-2)" }, "&:last-child": { borderBottom: "none" } }))}>
                 <div className={row({ gap: 3, between: true })}>
-                  <p className={text({ weight: 600, size: "sm" })}>Dispute #{x.sequence}</p>
+                  <p className={text({ weight: 600, size: "meta" })}>Dispute #{x.sequence}</p>
                   <DisputeStatus status={x.status} outcome={x.outcome} />
                 </div>
-                <p className={text({ size: "xs", tone: 3 })}>{x.resolved_at ? `resolved ${shortDate(x.resolved_at)}` : `opened ${shortDate(x.opened_at)}`}</p>
-                {x.admin_note ? <p className={text({ size: "sm", tone: 2 })}>Admin: {x.admin_note}</p> : null}
+                <p className={text({ size: "micro", tone: 3 })}>{x.resolved_at ? `resolved ${shortDate(x.resolved_at)}` : `opened ${shortDate(x.opened_at)}`}</p>
+                {x.admin_note ? <p className={text({ size: "meta", tone: 2 })}>Admin: {x.admin_note}</p> : null}
               </Link>
-            )) : <div className={cx(text({ size: "sm", tone: 3 }), css({ p: "16px" }))}>This is the first dispute on order #{d.order.id}.</div>}
+            )) : <div className={cx(text({ size: "meta", tone: 3 }), css({ p: "16px" }))}>This is the first dispute on order #{d.order.id}.</div>}
           </Panel>
 
           <Panel>

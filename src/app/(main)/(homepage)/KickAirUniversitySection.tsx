@@ -14,9 +14,8 @@ const ctaSolid = css({
   borderWidth: "0",
   bg: "white",
   color: "accent",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   cursor: "pointer",
   boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
   transition: "background-color .15s",
@@ -31,7 +30,7 @@ const badgePill = css({
   bg: "rgba(255, 255, 255, 0.2)",
   backdropFilter: "blur(8px)",
   color: "white",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 600,
   py: "1",
   px: "3",
@@ -53,9 +52,8 @@ export default function KickAirUniversitySection() {
         <Box
           as="h2"
           className={css({
-            fontSize: { base: "28px", md: "40px" },
+            textStyle: { base: "stat", md: "display" },
             fontWeight: 600,
-            letterSpacing: "-0.02em",
             mb: "4",
           })}
         >
@@ -65,7 +63,7 @@ export default function KickAirUniversitySection() {
           <Box
             as="p"
             className={css({
-              fontSize: { base: "16px", md: "19px" },
+              textStyle: { base: "lead", md: "title" },
               color: "rgba(255, 255, 255, 0.8)",
               maxW: "672px",
               mx: "auto",

@@ -60,9 +60,9 @@ function fromJob(j: JobPost): Listing {
 }
 
 const cover = css({ w: "44px", h: "32px", borderRadius: "7px", flexShrink: 0, objectFit: "cover", display: "block", "&[data-lg=true]": { w: "100%", h: "180px", borderRadius: "12px" } });
-const suggest = css({ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12.5px", color: "var(--td-amber)", fontWeight: 500 });
-const linkBtn = css({ bg: "none", border: "none", p: 0, cursor: "pointer", fontSize: "12.5px", fontWeight: 600, color: "var(--td-accent)", _hover: { textDecoration: "underline" } });
-const desc = css({ fontSize: "13px", color: "var(--td-ink-2)", lineHeight: 1.55, whiteSpace: "pre-wrap", "& p": { margin: "0 0 8px" }, "& ul, & ol": { paddingLeft: "18px", margin: "0 0 8px" } });
+const suggest = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "meta", color: "var(--td-amber)", fontWeight: 500 });
+const linkBtn = css({ bg: "none", border: "none", p: 0, cursor: "pointer", textStyle: "meta", fontWeight: 600, color: "var(--td-accent)", _hover: { textDecoration: "underline" } });
+const desc = css({ textStyle: "ui", color: "var(--td-ink-2)", whiteSpace: "pre-wrap", "& p": { margin: "0 0 8px" }, "& ul, & ol": { paddingLeft: "18px", margin: "0 0 8px" } });
 
 function Cover({ src, id, lg }: { src: string | null; id: number; lg?: boolean }) {
   const hue = (id * 47) % 360;
@@ -186,7 +186,7 @@ export default function ListingsPage() {
       </div>
       <div className={cx(row({ between: true }), css({ mb: "14px" }))}>
         <Segmented value={status} onChange={changeStatus} items={statusItems} />
-        {status === "pending" && rows.length ? <span className={text({ size: "sm", tone: 3 })}>Oldest first</span> : null}
+        {status === "pending" && rows.length ? <span className={text({ size: "meta", tone: 3 })}>Oldest first</span> : null}
       </div>
 
       <Panel>
@@ -201,7 +201,7 @@ export default function ListingsPage() {
                       <Cover src={l.cover} id={l.id} />
                       <div className={css({ minW: 0 })}>
                         <p className={cx(text({ weight: 600, truncate: true }), css({ maxW: "440px" }))}>{l.title}</p>
-                        <p className={text({ size: "sm", tone: 3 })}>{l.owner.name}</p>
+                        <p className={text({ size: "meta", tone: 3 })}>{l.owner.name}</p>
                       </div>
                     </div>
                   </td>
@@ -214,7 +214,7 @@ export default function ListingsPage() {
                     )}
                   </td>
                   <td className="num"><span className={text({ weight: 600, mono: true })}>{l.price != null ? money(l.price) : l.budget ?? "—"}</span></td>
-                  <td>{status === "pending" ? <><p className={text({ weight: 500 })}>{waiting(l.submitted)}</p><p className={text({ size: "sm", tone: 3 })}>{ago(l.submitted)}</p></> : <p className={text({ tone: 2 })}>{ago(l.submitted)}</p>}</td>
+                  <td>{status === "pending" ? <><p className={text({ weight: 500 })}>{waiting(l.submitted)}</p><p className={text({ size: "meta", tone: 3 })}>{ago(l.submitted)}</p></> : <p className={text({ tone: 2 })}>{ago(l.submitted)}</p>}</td>
                   <td className="actions"><span className={row({ gap: 2 })}>{actionsFor(l)}</span></td>
                 </tr>
               ))}
@@ -233,12 +233,12 @@ export default function ListingsPage() {
               <Pill tone={listingLabel[current.status].tone} dot>{listingLabel[current.status].label}</Pill>
               {current.category ? <Pill outline>{current.category}</Pill> : <Pill tone="amber">No category</Pill>}
             </div>
-            {current.reason ? <div className={cx(text({ size: "sm" }), css({ p: "12px", bg: "var(--td-red-soft)", color: "var(--td-red)", borderRadius: "10px" }))}>{current.reason}</div> : null}
+            {current.reason ? <div className={cx(text({ size: "meta" }), css({ p: "12px", bg: "var(--td-red-soft)", color: "var(--td-red)", borderRadius: "10px" }))}>{current.reason}</div> : null}
             <Link href={current.owner.id ? `/admin/people/${current.owner.id}` : "#"} className={cx(row({ gap: 3 }), css({ p: "12px", borderRadius: "10px", border: "1px solid var(--td-line)", _hover: { bg: "var(--td-surface-2)" } }))}>
               <Avatar name={current.owner.name} seed={current.owner.id ?? current.id} src={current.owner.avatar} />
               <div className={css({ minW: 0 })}>
                 <p className={text({ weight: 600 })}>{current.owner.name}</p>
-                {current.owner.sub ? <p className={text({ size: "sm", tone: 3, truncate: true })}>{current.owner.sub}</p> : null}
+                {current.owner.sub ? <p className={text({ size: "meta", tone: 3, truncate: true })}>{current.owner.sub}</p> : null}
               </div>
             </Link>
             <dl className={kvList}>
@@ -250,8 +250,8 @@ export default function ListingsPage() {
               {current.suggested && !current.category ? <><dt>Owner suggested</dt><dd>{current.suggested}</dd></> : null}
             </dl>
             <div>
-              <p className={cx(text({ size: "sm", weight: 600, tone: 2 }), css({ mb: "6px" }))}>Description</p>
-              {current.description ? (current.kind === "service" ? <RichTextDisplay value={current.description} className={desc} /> : <p className={desc}>{current.description}</p>) : <p className={text({ size: "sm", tone: 3 })}>No description.</p>}
+              <p className={cx(text({ size: "meta", weight: 600, tone: 2 }), css({ mb: "6px" }))}>Description</p>
+              {current.description ? (current.kind === "service" ? <RichTextDisplay value={current.description} className={desc} /> : <p className={desc}>{current.description}</p>) : <p className={text({ size: "meta", tone: 3 })}>No description.</p>}
             </div>
             {!current.category ? <Btn onClick={() => openAssign(current, false)}><Tag size={14} /> Assign a category</Btn> : null}
           </div>
@@ -274,7 +274,7 @@ export default function ListingsPage() {
           <div className={stack({ gap: 4 })}>
             {rows.find((l) => l.id === assign.id)?.suggested ? (
               <div className={cx(row({ between: true }), css({ p: "10px 12px", borderRadius: "10px", bg: "var(--td-amber-soft)" }))}>
-                <span className={cx(text({ size: "sm" }), css({ color: "var(--td-amber)" }))}>Owner suggested <b>{rows.find((l) => l.id === assign.id)?.suggested}</b></span>
+                <span className={cx(text({ size: "meta" }), css({ color: "var(--td-amber)" }))}>Owner suggested <b>{rows.find((l) => l.id === assign.id)?.suggested}</b></span>
                 <Btn size="xs" onClick={useSuggestion}>Use it</Btn>
               </div>
             ) : null}
@@ -286,7 +286,7 @@ export default function ListingsPage() {
                 ))}
               </Select>
             </Field>
-            <div className={cx(row({ gap: 3 }), css({ color: "var(--td-ink-3)", fontSize: "12px", "&::before, &::after": { content: '""', flex: 1, h: "1px", bg: "var(--td-line)" } }))}>or create new</div>
+            <div className={cx(row({ gap: 3 }), css({ color: "var(--td-ink-3)", textStyle: "meta", "&::before, &::after": { content: '""', flex: 1, h: "1px", bg: "var(--td-line)" } }))}>or create new</div>
             <div className={css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" })}>
               <Field label="New subcategory"><Input value={assign.newName} onChange={(e) => setAssign({ ...assign, newName: e.target.value, categoryId: "" })} placeholder="e.g. Podcast editing" /></Field>
               <Field label="Under"><Select value={assign.parentId} onChange={(e) => setAssign({ ...assign, parentId: e.target.value })}>{parents.map((p) => <option key={p.id} value={p.id}>{p.category_name}</option>)}</Select></Field>

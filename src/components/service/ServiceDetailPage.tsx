@@ -49,7 +49,7 @@ const headerPadCss = css({ py: "16px" });
 const mainPadCss = css({ py: "32px" });
 const errorPadCss = css({ py: "32px" });
 
-/** MUI text Button (medium) with a 20px start icon. */
+/** Text button (medium) with a 20px start icon. */
 const textBtnCss = css({
   display: "inline-flex",
   alignItems: "center",
@@ -61,10 +61,7 @@ const textBtnCss = css({
   border: "none",
   borderRadius: "4px",
   bg: "transparent",
-  fontFamily: "inherit",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "background-color .25s, color .25s",
   "& svg": { display: "block", flexShrink: 0 },
@@ -73,12 +70,12 @@ const backBtnCss = css({
   ml: "-4px",
   gap: "8px",
   color: "ink2",
-  fontSize: "12px",
+  textStyle: "meta",
   _hover: { color: "black", bg: "transparent" },
 });
-const viewProfileCss = css({ color: "accent", fontSize: "13px", _hover: { bg: "rgba(0, 113, 227, 0.04)" } });
+const viewProfileCss = css({ color: "accent", textStyle: "ui", _hover: { bg: "rgba(0, 113, 227, 0.04)" } });
 
-/** MUI contained/outlined Button, pill radius, 44px tall (the sidebar CTAs). */
+/** Contained/outlined button, pill radius, 44px tall (the sidebar CTAs). */
 const ctaCss = css({
   display: "inline-flex",
   alignItems: "center",
@@ -91,11 +88,8 @@ const ctaCss = css({
   m: 0,
   border: "none",
   borderRadius: "112px",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "background-color .25s, box-shadow .25s, border-color .25s",
   _disabled: { cursor: "default", pointerEvents: "none" },
@@ -144,12 +138,12 @@ const bannerWarnCss = css({ bg: "rgba(245, 158, 11, 0.08)", borderColor: "rgba(2
 const bannerErrCss = css({ bg: "rgba(220, 38, 38, 0.06)", borderColor: "rgba(220, 38, 38, 0.25)" });
 const bannerIconWarnCss = css({ color: "#b45309", mt: "1px", flexShrink: 0 });
 const bannerIconErrCss = css({ color: "#dc2626", mt: "1px", flexShrink: 0 });
-const bannerTitleWarnCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#b45309" });
-const bannerTitleErrCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#dc2626" });
-const bannerBodyCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
+const bannerTitleWarnCss = css({ textStyle: "ui", fontWeight: 600, color: "#b45309" });
+const bannerTitleErrCss = css({ textStyle: "ui", fontWeight: 600, color: "#dc2626" });
+const bannerBodyCss = css({ textStyle: "meta", color: "ink2" });
 
 /* ── grid ──────────────────────────────────────────────────────────────────── */
-// MUI Grid `container spacing={4}` with 8/4 items: the columns lose a share of
+// The old 8/4 grid with 8/4 items: the columns lose a share of
 // the 32px gutter, so reproduce its exact widths instead of a plain `2fr 1fr`.
 const layoutCss = css({
   display: "grid",
@@ -163,7 +157,7 @@ const stickyColCss = css({ position: "sticky", top: "96px", minW: 0 });
 /* ── gallery ───────────────────────────────────────────────────────────────── */
 const galleryCardCss = css({ overflow: "hidden" });
 const galleryMainCss = css({ position: "relative", aspectRatio: "16/9", bg: "rgba(0,0,0,0.05)" });
-const galleryEmptyCss = css({ w: "100%", h: "100%", display: "flex", alignItems: "center", justifyContent: "center", bg: "#e0e0e0", color: "ink2", fontSize: "16px" });
+const galleryEmptyCss = css({ w: "100%", h: "100%", display: "flex", alignItems: "center", justifyContent: "center", bg: "#e0e0e0", color: "ink2", textStyle: "lead" });
 const thumbsCss = css({ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", p: "16px" });
 const thumbCss = css({
   position: "relative",
@@ -184,13 +178,13 @@ const thumbFallbackCss = css({ w: "100%", h: "100%", bg: "#e0e0e0" });
 /* ── title block ───────────────────────────────────────────────────────────── */
 const titleRowCss = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" });
 const breadcrumbCss = css({ display: "flex", alignItems: "center", gap: "4px", mb: "8px", flexWrap: "wrap" });
-const crumbCss = css({ fontSize: "13px", fontWeight: 500, color: "accent" });
-const crumbSepCss = css({ fontSize: "13px", color: "rgba(0,0,0,0.35)" });
-const serviceTitleCss = css({ fontSize: "32px", fontWeight: 600, lineHeight: 1.167 });
-const metaRowCss = css({ display: "flex", alignItems: "center", gap: "16px", fontSize: "13px", flexWrap: "wrap" });
+const crumbCss = css({ textStyle: "ui", fontWeight: 500, color: "accent" });
+const crumbSepCss = css({ textStyle: "ui", color: "ink3" });
+const serviceTitleCss = css({ textStyle: "stat", fontWeight: 600 });
+const metaRowCss = css({ display: "flex", alignItems: "center", gap: "16px", textStyle: "ui", flexWrap: "wrap" });
 const metaItemCss = css({ display: "flex", alignItems: "center", gap: "4px" });
-const body2MutedCss = css({ fontSize: "14px", lineHeight: 1.43, color: "ink2" });
-const body2StrongCss = css({ fontSize: "14px", lineHeight: 1.43, fontWeight: 600, color: "black" });
+const body2MutedCss = css({ textStyle: "body", color: "ink2" });
+const body2StrongCss = css({ textStyle: "body", fontWeight: 600, color: "black" });
 const iconMutedCss = css({ color: "ink2", flexShrink: 0 });
 const starCss = css({ color: "#f59e0b", fill: "#f59e0b", flexShrink: 0 });
 const actionsCss = css({ display: "flex", gap: "8px", flexShrink: 0 });
@@ -210,7 +204,6 @@ const roundBtnCss = css({
   bg: "white",
   color: "ink3",
   cursor: "pointer",
-  fontFamily: "inherit",
   transition: "background-color .25s, border-color .25s, color .25s",
   _hover: { bg: "rgba(0,0,0,0.02)" },
   "& svg": { display: "block" },
@@ -222,7 +215,7 @@ const flRowCss = css({ display: "flex", gap: "16px" });
 const flMainCss = css({ flex: 1, minW: 0 });
 const flHeadCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" });
 const flNameRowCss = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
-const flNameCss = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.6 });
+const flNameCss = css({ textStyle: "lead", fontWeight: 600 });
 const statsGridCss = css({
   display: "grid",
   gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
@@ -232,15 +225,15 @@ const statsGridCss = css({
   borderTopStyle: "solid",
   borderTopColor: "hairline",
 });
-const captionCss = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "ink2" });
-const statCaptionCss = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "ink2", mb: "2px" });
-const statValueCss = css({ fontSize: "14px", lineHeight: 1.43, fontWeight: 500 });
+const captionCss = css({ display: "block", textStyle: "meta", color: "ink2" });
+const statCaptionCss = css({ display: "block", textStyle: "meta", color: "ink2", mb: "2px" });
+const statValueCss = css({ textStyle: "body", fontWeight: 500 });
 
 /* ── sections ──────────────────────────────────────────────────────────────── */
-const sectionHeadingCss = css({ fontSize: "21px", fontWeight: 600, lineHeight: 1.334 });
-const descBodyCss = css({ fontSize: "15px", color: "rgba(0,0,0,0.8)", lineHeight: 1.7 });
+const sectionHeadingCss = css({ textStyle: "title", fontWeight: 600 });
+const descBodyCss = css({ textStyle: "body", color: "ink" });
 const tagsWrapCss = css({ mt: "24px" });
-const tagsLabelCss = css({ fontWeight: 500, fontSize: "14px", lineHeight: 1.5, mb: "12px" });
+const tagsLabelCss = css({ fontWeight: 500, textStyle: "body", mb: "12px" });
 const tagsRowCss = css({ display: "flex", flexWrap: "wrap", gap: "8px" });
 const tagCss = css({
   display: "inline-flex",
@@ -250,8 +243,8 @@ const tagCss = css({
   px: "8px",
   borderRadius: "16px",
   bg: "rgba(0, 0, 0, 0.05)",
-  color: "rgba(0, 0, 0, 0.7)",
-  fontSize: "13px",
+  color: "ink2",
+  textStyle: "ui",
   whiteSpace: "nowrap",
 });
 
@@ -271,8 +264,8 @@ const docRowCss = css({
   _hover: { borderColor: "rgba(0,0,0,0.2)", bg: "rgba(0,0,0,0.02)" },
 });
 const docIconCss = css({ w: "38px", h: "38px", borderRadius: "12px", bg: "rgba(220,38,38,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#dc2626" });
-const docNameCss = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
-const docMetaCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.5)" });
+const docNameCss = css({ textStyle: "body", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const docMetaCss = css({ textStyle: "meta", color: "ink2" });
 
 const faqListCss = css({ display: "flex", flexDirection: "column", gap: "12px", mt: "16px" });
 const faqCardCss = css({ bg: "surface", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.12)", overflow: "hidden" });
@@ -288,32 +281,29 @@ const faqBtnCss = css({
   borderRadius: "4px",
   bg: "transparent",
   color: "black",
-  fontFamily: "inherit",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   textAlign: "left",
   cursor: "pointer",
   transition: "background-color .25s",
   _hover: { bg: "rgba(0,0,0,0.02)" },
   "& svg": { display: "block", flexShrink: 0 },
 });
-const faqQuestionCss = css({ fontSize: "15px", fontWeight: 500, lineHeight: 1.5 });
+const faqQuestionCss = css({ textStyle: "body", fontWeight: 500 });
 const faqAnswerWrapCss = css({ px: "16px", pb: "16px" });
-const faqAnswerCss = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.7)" });
+const faqAnswerCss = css({ textStyle: "body", color: "ink2" });
 
 const reviewsHeadCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "24px" });
 const reviewsScoreCss = css({ display: "flex", alignItems: "center", gap: "6px" });
-const reviewsScoreValueCss = css({ fontSize: "18px", fontWeight: 700, lineHeight: 1.5, color: "black" });
+const reviewsScoreValueCss = css({ textStyle: "title", fontWeight: 700, color: "black" });
 const reviewListCss = css({ display: "flex", flexDirection: "column", gap: "24px" });
 const reviewDividerCss = css({ h: "1px", bg: "border", mb: "24px", border: "none" });
 const reviewRowCss = css({ display: "flex", gap: "16px" });
 const reviewHeadCss = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", mb: "4px" });
-const reviewNameCss = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
+const reviewNameCss = css({ textStyle: "body", fontWeight: 600 });
 const reviewRightCss = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" });
 const reviewStarsCss = css({ display: "flex" });
-const reviewCommentCss = css({ fontSize: "14px", color: "rgba(0,0,0,0.8)", lineHeight: 1.6, mt: "8px" });
+const reviewCommentCss = css({ textStyle: "body", color: "ink", mt: "8px" });
 const starOffCss = css({ color: "rgba(0,0,0,0.15)", fill: "rgba(0,0,0,0.15)", flexShrink: 0 });
 
 /* ── pricing panel ─────────────────────────────────────────────────────────── */
@@ -328,41 +318,38 @@ const tierTabCss = css({
   border: "none",
   borderRadius: 0,
   bg: "transparent",
-  color: "rgba(0,0,0,0.5)",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  color: "ink2",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "background-color .25s, color .25s",
   borderBottomWidth: "2px",
   borderBottomStyle: "solid",
   borderBottomColor: "transparent",
-  _hover: { bg: "rgba(0,0,0,0.02)", color: "rgba(0,0,0,0.7)" },
+  _hover: { bg: "rgba(0,0,0,0.02)", color: "ink2" },
   "&[data-selected]": { color: "black", borderBottomColor: "accent" },
 });
-const priceCss = css({ fontSize: "32px", fontWeight: 600, lineHeight: 1.167, mb: "4px" });
-const priceMetaRowCss = css({ display: "flex", gap: "16px", fontSize: "13px", color: "ink2", mb: "16px" });
+const priceCss = css({ textStyle: "stat", fontWeight: 600, mb: "4px" });
+const priceMetaRowCss = css({ display: "flex", gap: "16px", textStyle: "ui", color: "ink2", mb: "16px" });
 const priceMetaItemCss = css({ display: "flex", alignItems: "center", gap: "4px" });
-const priceMetaTextCss = css({ fontSize: "12px", lineHeight: 1.66 });
+const priceMetaTextCss = css({ textStyle: "meta" });
 const priceBlockCss = css({ mb: "24px" });
-const tierDescCss = css({ fontSize: "14px", color: "rgba(0,0,0,0.7)", mb: "24px" });
+const tierDescCss = css({ textStyle: "body", color: "ink2", mb: "24px" });
 const ctaColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const ownNoticeCss = css({ textAlign: "center", py: "10px", px: "16px", bg: "rgba(0,0,0,0.04)", borderRadius: "112px" });
-const ownNoticeTextCss = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0,0,0,0.5)", fontWeight: 500 });
-const noPricingTextCss = css({ color: "ink2", textAlign: "center", fontSize: "16px", lineHeight: 1.5, mb: "16px" });
+const ownNoticeTextCss = css({ textStyle: "ui", color: "ink2", fontWeight: 500 });
+const noPricingTextCss = css({ color: "ink2", textAlign: "center", textStyle: "lead", mb: "16px" });
 
 const trustColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const trustRowCss = css({ display: "flex", gap: "12px" });
 const trustIconCss = css({ color: "accent", mt: "4px", flexShrink: 0 });
-const trustTitleCss = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.43 });
+const trustTitleCss = css({ textStyle: "ui", fontWeight: 500 });
 
 /* ── live-edit guard dialog ────────────────────────────────────────────────── */
 const guardPanelCss = css({ borderRadius: "12px" });
 const guardBodyCss = css({ p: "24px 24px 20px" });
-const guardTitleCss = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5 });
-const guardTextCss = css({ fontSize: "13.5px", lineHeight: 1.6, color: "rgba(0,0,0,0.7)" });
+const guardTitleCss = css({ textStyle: "lead", fontWeight: 600 });
+const guardTextCss = css({ textStyle: "ui", color: "ink2" });
 const guardActionsCss = css({ display: "flex", p: "8px 24px 20px" });
 
 export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
@@ -482,7 +469,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
           <div className={css({ mb: "24px" })}>
             <Alert tone='error'>{error || "Service not found"}</Alert>
           </div>
-          <button type='button' onClick={() => router.push("/explore-services")} className={cx(ctaCss, ctaAccentCss, css({ w: "auto", h: "36.5px", borderRadius: "4px", fontSize: "14px" }))}>
+          <button type='button' onClick={() => router.push("/explore-services")} className={cx(ctaCss, ctaAccentCss, css({ w: "auto", h: "36.5px", borderRadius: "4px", textStyle: "body" }))}>
             Browse Services
           </button>
         </div>
@@ -721,7 +708,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                 {service.description ? (
                   <RichTextDisplay value={service.description} />
                 ) : (
-                  <p className={css({ fontSize: "15px", lineHeight: 1.5, color: "rgba(0,0,0,0.8)" })}>No description available.</p>
+                  <p className={css({ textStyle: "body", color: "ink" })}>No description available.</p>
                 )}
               </div>
 
@@ -759,7 +746,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                           PDF{doc.file_size ? ` · ${(doc.file_size / 1024 / 1024).toFixed(1)} MB` : ""}
                         </p>
                       </div>
-                      <ExternalLink size={16} className={css({ color: "rgba(0,0,0,0.35)", flexShrink: 0 })} />
+                      <ExternalLink size={16} className={css({ color: "ink3", flexShrink: 0 })} />
                     </a>
                   ))}
                 </div>

@@ -12,9 +12,9 @@ const sectionCard = css({
   p: "32px",
 });
 const header = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "24px" });
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
-const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
-/* MUI `Button` base metrics (500 weight, 1.75 line-height, 64px min-width, 6px/8px padding). */
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
+const sectionSub = css({ textStyle: "micro", color: "ink2" });
+/* Button base metrics (500 weight, 64px min-width, 6px/8px padding). */
 const addBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -30,10 +30,8 @@ const addBtn = css({
   borderColor: "rgba(0, 0, 0, 0.1)",
   bg: "transparent",
   color: "ink",
-  fontFamily: "inherit",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "background-color .25s, border-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)", borderColor: "rgba(0, 0, 0, 0.2)" },
@@ -42,7 +40,7 @@ const addBtn = css({
 });
 const list = css({ display: "flex", flexDirection: "column", gap: "16px" });
 const footer = css({ mt: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" });
-const countText = css({ lineHeight: 1.5, fontSize: "11px", color: "ink3" });
+const countText = css({ textStyle: "micro", color: "ink3" });
 const addMoreBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -52,10 +50,8 @@ const addMoreBtn = css({
   border: "none",
   bg: "transparent",
   color: "ink2",
-  fontFamily: "inherit",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "color .25s",
   _hover: { color: "ink" },
@@ -72,8 +68,8 @@ const empty = css({
   borderColor: "rgba(0, 0, 0, 0.1)",
 });
 const emptyIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.15)", mb: "8px" });
-const emptyTitle = css({ lineHeight: 1.5, fontSize: "12px", color: "rgba(0, 0, 0, 0.5)" });
-const emptySub = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0, 0, 0, 0.35)" });
+const emptyTitle = css({ textStyle: "meta", color: "ink2" });
+const emptySub = css({ textStyle: "micro", color: "ink3" });
 
 interface FAQsSectionProps {
   formData: ServiceFormData;

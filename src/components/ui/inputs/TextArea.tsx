@@ -18,7 +18,7 @@ export interface TextAreaProps extends FieldBaseProps {
   showCounter?: boolean;
 }
 
-/** Grows the textarea with its content between minRows and maxRows (MUI TextareaAutosize parity). */
+/** Grows the textarea with its content between minRows and maxRows (auto-grow). */
 function useAutosize(ref: React.RefObject<HTMLTextAreaElement | null>, value: string, minRows: number, maxRows?: number) {
   useLayoutEffect(() => {
     const el = ref.current;

@@ -6,10 +6,9 @@ import { Box, Grid } from "styled-system/jsx";
 const readAllBtn = css({
   bg: "transparent",
   border: "none",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
   color: "accent",
-  fontFamily: "inherit",
   cursor: "pointer",
   _hover: { textDecoration: "underline" },
 });
@@ -41,23 +40,22 @@ export default function ReviewsSection() {
           <Box
             as="h2"
             className={css({
-              fontSize: { base: "28px", md: "40px" },
+              textStyle: { base: "stat", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
               mb: "3",
             })}
           >
             Trusted by Thousands
           </Box>
-          <Box as="p" className={css({ fontSize: { base: "16px", md: "19px" }, color: "ink2", mb: "6" })}>
+          <Box as="p" className={css({ textStyle: { base: "lead", md: "title" }, color: "ink2", mb: "6" })}>
             See what freelancers and clients are saying
           </Box>
           <Box display="flex" alignItems="center" justifyContent="center" gap="2" mb="8">
             {[...Array(5)].map((_, i) => (
               <Star key={i} size={32} fill="black" color="black" />
             ))}
-            <Box as="span" className={css({ fontSize: "28px", fontWeight: 600, color: "ink", ml: "3" })}>
+            <Box as="span" className={css({ textStyle: "stat", fontWeight: 600, color: "ink", ml: "3" })}>
               4.9/5
             </Box>
           </Box>
@@ -83,17 +81,17 @@ export default function ReviewsSection() {
               </Box>
               <Box
                 as="p"
-                className={css({ fontSize: "14px", color: "rgba(0, 0, 0, 0.8)", lineHeight: 1.6, mb: "4" })}
+                className={css({ textStyle: "body", color: "ink", mb: "4" })}
               >
                 {review.text}
               </Box>
               <Box display="flex" alignItems="center" gap="3">
                 <Box w="40px" h="40px" borderRadius="50%" bg="rgba(0, 0, 0, 0.1)" flexShrink={0} />
                 <Box>
-                  <Box as="p" className={css({ fontSize: "13px", fontWeight: 600, color: "ink" })}>
+                  <Box as="p" className={css({ textStyle: "ui", fontWeight: 600, color: "ink" })}>
                     {review.name}
                   </Box>
-                  <Box as="p" className={css({ fontSize: "11px", color: "ink2" })}>
+                  <Box as="p" className={css({ textStyle: "micro", color: "ink2" })}>
                     {review.role}
                   </Box>
                 </Box>

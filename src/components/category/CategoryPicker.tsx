@@ -15,7 +15,7 @@ export interface CategoryValue {
 const NEW = "__new__";
 
 // Owner-facing review hint under a "new category" field.
-const hintCss = css({ fontSize: "12px", lineHeight: 1.5, color: "pendingText" });
+const hintCss = css({ textStyle: "meta", color: "pendingText" });
 
 function findAisleId(tree: ServiceCategory[], categoryId: number | null): number | null {
   if (!categoryId) return null;

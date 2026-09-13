@@ -75,10 +75,9 @@ const fileRemoveCss = css({
   border: "none",
   borderRadius: "50%",
   bg: "transparent",
-  color: "rgba(0,0,0,0.4)",
+  color: "ink3",
   cursor: "pointer",
   appearance: "none",
-  fontFamily: "inherit",
   _hover: { color: "#dc2626" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
@@ -129,7 +128,7 @@ export default function FreelancerOrderDetailModal({
       case "cancelled":
         return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "#ef4444" };
       default:
-        return { bgcolor: "rgba(0, 0, 0, 0.05)", color: "rgba(0, 0, 0, 0.6)" };
+        return { bgcolor: "rgba(0, 0, 0, 0.05)", color: "ink2" };
     }
   };
 
@@ -310,13 +309,13 @@ export default function FreelancerOrderDetailModal({
                 Your delivery is awaiting client approval. You will be notified when they respond.
                 {order.delivery_note && (
                   <div className={mt1}>
-                    <p className={css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5 })}>Your delivery note:</p>
+                    <p className={css({ textStyle: "meta", fontWeight: 600 })}>Your delivery note:</p>
                     <p className={`${t12} ${mt05}`}>{order.delivery_note}</p>
                   </div>
                 )}
                 {order.delivery_attachments?.length > 0 && (
                   <div className={`${stack05Css} ${mt1}`}>
-                    <p className={css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: "0.4px" })}>
+                    <p className={css({ textStyle: "eyebrow", fontWeight: 600, color: "ink2" })}>
                       Attachments sent
                     </p>
                     {order.delivery_attachments.map((f, i) => (
@@ -430,7 +429,7 @@ export default function FreelancerOrderDetailModal({
               </div>
               <div className={css({ textAlign: "right" })}>
                 <p className={`${t11muted} ${mb05}`}>Earnings</p>
-                <p className={css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, color: "#16a34a" })}>
+                <p className={css({ textStyle: "title", fontWeight: 600, color: "#16a34a" })}>
                   ${pricingOption?.price ?? order.price ?? "0"}
                 </p>
               </div>
@@ -445,7 +444,7 @@ export default function FreelancerOrderDetailModal({
             <div className={statRow}>
               <div className={pillStatCss}>
                 <DeliveryIcon size={14} style={{ color: "rgba(0, 0, 0, 0.5)", flexShrink: 0 }} />
-                <p className={css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.7)" })}>
+                <p className={css({ textStyle: "meta", color: "ink2" })}>
                   {isJobBased
                     ? `${order.proposal?.timeline_days ?? "N/A"} day${order.proposal?.timeline_days !== 1 ? "s" : ""} (timeline)`
                     : (() => { const d = parseInt(String(pricingOption?.delivery_time ?? "")); return isNaN(d) ? "N/A" : `${d} day${d !== 1 ? "s" : ""}`; })()}
@@ -454,7 +453,7 @@ export default function FreelancerOrderDetailModal({
               {!isJobBased && (
                 <div className={pillStatCss}>
                   <RevisionIcon size={14} style={{ color: "rgba(0, 0, 0, 0.5)", flexShrink: 0 }} />
-                  <p className={css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.7)" })}>
+                  <p className={css({ textStyle: "meta", color: "ink2" })}>
                     {Number(pricingOption?.revisions) === -1 ? "Unlimited" : pricingOption?.revisions || "N/A"} revision
                     {Number(pricingOption?.revisions) !== 1 ? "s" : ""}
                   </p>
@@ -647,7 +646,7 @@ export default function FreelancerOrderDetailModal({
             {/* Disputed: Submit evidence (files) */}
             {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && (
               <div>
-                <p className={`${css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.6)" })} ${mb1}`}>
+                <p className={`${css({ textStyle: "meta", fontWeight: 600, color: "ink2" })} ${mb1}`}>
                   Submit your evidence
                 </p>
                 <input

@@ -6,7 +6,7 @@ import { css, cx } from "styled-system/css";
 
 /**
  * Dropdown menu on Ark UI (accessible: roving focus, typeahead, ESC) styled with
- * Panda. Replaces MUI <Menu>/<MenuItem>. Convenience API takes a `trigger` +
+ * Panda. Convenience API takes a `trigger` +
  * `items`; raw Ark parts re-exported as `Menu` for custom content.
  */
 export { Ark as MenuPrimitive };
@@ -30,7 +30,7 @@ const itemCss = css({
   gap: "2.5",
   px: "3.5",
   py: "2",
-  fontSize: "14px",
+  textStyle: "body",
   color: "body",
   cursor: "pointer",
   userSelect: "none",

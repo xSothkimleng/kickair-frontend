@@ -8,23 +8,23 @@ const rowCss = cva({
 });
 
 const labelCss = cva({
-  base: { lineHeight: 1.5 },
+  base: {},
   variants: {
     strong: {
-      true: { fontSize: "17px", fontWeight: 600, color: "ink" },
-      false: { fontSize: "15px", fontWeight: 400, color: "ink2" },
+      true: { textStyle: "lead", fontWeight: 600, color: "ink" },
+      false: { textStyle: "body", fontWeight: 400, color: "ink2" },
     },
   },
 });
 
-const subCss = css({ fontSize: "11.5px", fontWeight: 500, letterSpacing: "0.02em", color: "ink2", lineHeight: 1.5 });
+const subCss = css({ textStyle: "micro", fontWeight: 500, color: "ink2" });
 
 const valueCss = cva({
-  base: { fontFamily: "mono", whiteSpace: "nowrap", lineHeight: 1.5 },
+  base: { fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
   variants: {
     strong: {
-      true: { fontSize: "20px", fontWeight: 600, letterSpacing: "-0.02em" },
-      false: { fontSize: "15px", fontWeight: 500, letterSpacing: "0" },
+      true: { textStyle: "title", fontWeight: 600 },
+      false: { textStyle: "body", fontWeight: 500 },
     },
   },
 });

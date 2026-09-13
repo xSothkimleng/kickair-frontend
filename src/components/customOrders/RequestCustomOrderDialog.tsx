@@ -25,18 +25,18 @@ interface Props {
 const panel = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
 const header = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" });
 
-const dlgTitle = css({ fontSize: "21px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
+const dlgTitle = css({ textStyle: "title", fontWeight: 600, color: "ink" });
 
 const sentBox = css({ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", p: "24px 36px 32px", gap: "16px" });
 const sentIcon = css({ width: "64px", height: "64px", borderRadius: "50%", bg: "successTint", display: "grid", placeItems: "center" });
-const sentLead = css({ fontSize: "15px", fontWeight: 500, lineHeight: 1.5, color: "ink" });
-const sentBody = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.5 });
+const sentLead = css({ textStyle: "body", fontWeight: 500, color: "ink" });
+const sentBody = css({ textStyle: "ui", color: "ink2" });
 
 const body = css({ display: "flex", flexDirection: "column", gap: "20px", p: "20px 24px" });
 const contextCard = css({ p: "16px", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", bg: "surface2" });
 const contextRow = css({ display: "flex", alignItems: "center", gap: "12px" });
-const contextName = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5, color: "ink" });
-const contextMeta = css({ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", lineHeight: 1.5, color: "ink2" });
+const contextName = css({ fontWeight: 600, textStyle: "body", color: "ink" });
+const contextMeta = css({ display: "flex", alignItems: "center", gap: "4px", textStyle: "meta", color: "ink2" });
 const contextBudget = css({ textAlign: "right" });
 
 const instrBox = css({
@@ -52,14 +52,13 @@ const instrBox = css({
 });
 const instrIcon = css({ color: "ink3", flex: "none", mt: "2px" });
 const instrText = css({
-  fontSize: "12.5px",
+  textStyle: "meta",
   color: "ink2",
-  lineHeight: 1.45,
   "& p": { margin: 0 },
   "& ul, & ol": { margin: 0, paddingLeft: "20px" },
 });
 
-const labelCss = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "ink" });
+const labelCss = css({ textStyle: "meta", fontWeight: 600, color: "ink" });
 const twoCol = css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" });
 
 const footer = css({
@@ -73,7 +72,7 @@ const footer = css({
   borderTopColor: "hairline",
   bg: "surface2",
 });
-const footNote = css({ display: "flex", alignItems: "center", gap: "6px", color: "ink3", fontSize: "11.5px" });
+const footNote = css({ display: "flex", alignItems: "center", gap: "6px", color: "ink3", textStyle: "micro" });
 const actions = css({ display: "flex", gap: "10px" });
 
 export default function RequestCustomOrderDialog({ open, onClose, serviceId, freelancerName, minBudget, instructions, responds }: Props) {
@@ -166,7 +165,7 @@ export default function RequestCustomOrderDialog({ open, onClose, serviceId, fre
                 {minBudget != null && (
                   <div className={contextBudget}>
                     <p className={coLabel}>Min budget</p>
-                    <Money value={minBudget} size={15} weight={600} />
+                    <Money value={minBudget} size="body" weight={600} />
                   </div>
                 )}
               </div>

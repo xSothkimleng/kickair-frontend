@@ -5,6 +5,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import { Bell, ChevronRight } from "lucide-react";
 import { css } from "styled-system/css";
+import { tapTarget } from "@/components/ds/tap";
 import { registerBellRefresh } from "@/components/layout/GlobalNotificationToast";
 import { Indicator, PopoverPrimitive, Portal, Skeleton } from "@/components/ds";
 import { api } from "@/lib/api";
@@ -20,25 +21,25 @@ type RoleFilterValue = "all" | "freelancer" | "client";
 
 // ── Popover shell ──
 const positionerCss = css({ zIndex: 1400 });
-const popCss = css({ w: `${POPUP_W}px`, bg: "white", color: "rgba(0,0,0,0.87)", borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.16)", outline: "none", animation: "pop .16s ease-out" });
+const popCss = css({ w: `${POPUP_W}px`, bg: "white", color: "ink", borderRadius: "16px", overflow: "hidden", boxShadow: "0 16px 48px rgba(0,0,0,0.16)", outline: "none", animation: "pop .16s ease-out" });
 const headerCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", p: "14px 14px 12px 16px" });
 const titleRowCss = css({ display: "flex", alignItems: "center", gap: "9px" });
-const titleCss = css({ fontSize: "16px", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.5 });
-const bubbleCss = css({ display: "inline-flex", justifyContent: "center", alignItems: "center", minW: "20px", h: "20px", px: "6px", borderRadius: "999px", bg: "accent", color: "#fff", fontSize: "11px", fontWeight: 700 });
-const markAllCss = css({ appearance: "none", border: 0, bg: "transparent", p: "6px 8px", cursor: "pointer", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 600, color: "accent", borderRadius: "8px", whiteSpace: "nowrap", _hover: { bg: "accentFill" } });
+const titleCss = css({ textStyle: "lead", fontWeight: 600 });
+const bubbleCss = css({ display: "inline-flex", justifyContent: "center", alignItems: "center", minW: "20px", h: "20px", px: "6px", borderRadius: "999px", bg: "accent", color: "#fff", textStyle: "micro", fontWeight: 700 });
+const markAllCss = css({ appearance: "none", border: 0, bg: "transparent", p: "6px 8px", cursor: "pointer", textStyle: "meta", fontWeight: 600, color: "accent", borderRadius: "8px", whiteSpace: "nowrap", _hover: { bg: "accentFill" } });
 const bodyCss = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", h: "396px", overflowY: "auto", overflowX: "hidden" });
 const emptyCss = css({ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", h: "100%", gap: "12px", px: "28px" });
 const emptyCircleCss = css({ w: "60px", h: "60px", borderRadius: "50%", bg: "canvas", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", display: "flex", alignItems: "center", justifyContent: "center", color: "ink3" });
-const emptyTitleCss = css({ fontSize: "16px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.5 });
-const emptyBodyCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2", mt: "4px" });
+const emptyTitleCss = css({ textStyle: "lead", fontWeight: 600 });
+const emptyBodyCss = css({ textStyle: "ui", color: "ink2", mt: "4px" });
 const nothingCss = css({ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", gap: "4px", py: "56px", px: "28px" });
-const nothingTitleCss = css({ fontSize: "13.5px", fontWeight: 600 });
-const nothingBodyCss = css({ fontSize: "12.5px", color: "ink2" });
-const footerCss = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", w: "100%", h: "48px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", fontSize: "13.5px", fontWeight: 600, _hover: { bg: "surface2" }, "& svg": { color: "var(--colors-ink3)" } });
+const nothingTitleCss = css({ textStyle: "ui", fontWeight: 600 });
+const nothingBodyCss = css({ textStyle: "meta", color: "ink2" });
+const footerCss = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "6px", w: "100%", h: "48px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", textStyle: "ui", fontWeight: 600, _hover: { bg: "surface2" }, "& svg": { color: "var(--colors-ink3)" } });
 
 // ── Role filter ──
 const filterWrapCss = css({ display: "flex", gap: "2px", p: "3px", m: "0 14px 4px", bg: "rgba(0,0,0,0.04)", borderRadius: "999px" });
-const filterBtnRaw = css.raw({ appearance: "none", flex: 1, h: "28px", px: "6px", py: 0, border: 0, borderRadius: "999px", cursor: "pointer", fontFamily: "inherit", fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap" });
+const filterBtnRaw = css.raw({ ...tapTarget, appearance: "none", flex: 1, h: "28px", px: "6px", py: 0, border: 0, borderRadius: "999px", cursor: "pointer", textStyle: "meta", fontWeight: 600, whiteSpace: "nowrap" });
 const filterOnCss = css(filterBtnRaw, { bg: "surface", color: "ink", boxShadow: "0 1px 2px rgba(0,0,0,0.08)" });
 const filterOffCss = css(filterBtnRaw, { bg: "transparent", color: "ink2", boxShadow: "none" });
 
@@ -48,14 +49,14 @@ const rowUnreadCss = css(rowRaw, { borderLeftColor: "accent", bg: "rgba(0,113,22
 const rowReadCss = css(rowRaw, { borderLeftColor: "transparent", bg: "transparent", _hover: { bg: "surface2" } });
 const rowColCss = css({ display: "flex", flexDirection: "column", gap: "3px", minW: 0, flex: 1 });
 const rowTitleRowCss = css({ display: "flex", gap: "7px", alignItems: "flex-start" });
-const rowTitleRaw = css.raw({ flex: 1, minW: 0, fontSize: "13px", letterSpacing: "-0.01em", lineHeight: 1.3, color: "ink", lineClamp: 1 });
+const rowTitleRaw = css.raw({ flex: 1, minW: 0, textStyle: "ui", color: "ink", lineClamp: 1 });
 const rowTitleUnreadCss = css(rowTitleRaw, { fontWeight: 600 });
 const rowTitleReadCss = css(rowTitleRaw, { fontWeight: 500 });
 const dotWrapCss = css({ mt: "5px" });
-const rowBodyCss = css({ fontSize: "12px", lineHeight: 1.4, color: "ink2", lineClamp: 2 });
+const rowBodyCss = css({ textStyle: "meta", color: "ink2", lineClamp: 2 });
 const rowMetaCss = css({ display: "flex", alignItems: "center", gap: "8px", mt: "1px" });
-const rowTimeCss = css({ fontSize: "11px", color: "ink3", fontWeight: 500, whiteSpace: "nowrap" });
-const rowViewCss = css({ display: "inline-flex", alignItems: "center", gap: "2px", ml: "auto", fontSize: "11.5px", fontWeight: 600, color: "ink3" });
+const rowTimeCss = css({ textStyle: "micro", color: "ink3", fontWeight: 500, whiteSpace: "nowrap" });
+const rowViewCss = css({ display: "inline-flex", alignItems: "center", gap: "2px", ml: "auto", textStyle: "micro", fontWeight: 600, color: "ink3" });
 const skRowCss = css({ display: "flex", gap: "11px", p: "11px 14px 11px 12px", borderLeft: "2px solid transparent" });
 const skColCss = css({ flex: 1, pt: "1px" });
 

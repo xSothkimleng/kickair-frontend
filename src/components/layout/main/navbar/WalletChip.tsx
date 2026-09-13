@@ -3,10 +3,11 @@
 import { useRouter } from "next/navigation";
 import { Wallet } from "lucide-react";
 import { css } from "styled-system/css";
+import { tapTarget } from "@/components/ds/tap";
 import { useAuth } from "@/components/context/AuthContext";
 import { useWalletSummary } from "@/hooks/useWalletSummary";
 
-const chipCss = css({
+const chipCss = css(tapTarget, {
   appearance: "none",
   display: "flex",
   alignItems: "center",
@@ -19,10 +20,9 @@ const chipCss = css({
   borderRadius: "999px",
   bg: "transparent",
   cursor: "pointer",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 600,
-  color: "rgba(0,0,0,0.8)",
+  color: "ink",
   whiteSpace: "nowrap",
   transition: "border-color .15s, color .15s",
   _hover: { color: "black", borderColor: "rgba(0,0,0,0.3)" },

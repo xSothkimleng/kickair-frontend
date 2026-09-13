@@ -15,10 +15,9 @@ const SHOW = process.env.NEXT_PUBLIC_SHOW_PAYMENT_ANNOTATIONS === "true";
 const wrapCss = css({ display: "flex", gap: "6px", flexWrap: "wrap" });
 
 const tagCss = css({
-  fontFamily: "mono",
-  fontSize: "10.5px",
+  fontVariantNumeric: "tabular-nums",
+  textStyle: "micro",
   fontWeight: 600,
-  letterSpacing: "0.02em",
   color: "accent",
   bg: "accentFill",
   borderWidth: "1px",

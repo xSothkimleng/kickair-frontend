@@ -47,8 +47,8 @@ const getStatusColors = (status: string) => {
     case "pending": return { bg: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
     case "active": return { bg: "rgba(37, 99, 235, 0.1)", color: "rgb(29, 78, 216)" };
     case "completed": return { bg: "rgba(34, 197, 94, 0.1)", color: "rgb(21, 128, 61)" };
-    case "cancelled": return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
-    default: return { bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)" };
+    case "cancelled": return { bg: "rgba(0,0,0,0.06)", color: "ink3" };
+    default: return { bg: "rgba(0,0,0,0.06)", color: "ink3" };
   }
 };
 
@@ -68,10 +68,10 @@ const getNotificationColor = (type: DashboardNotification["type"]) => {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const centerBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "400px" });
-const errorText = css({ fontSize: "16px", lineHeight: 1.5, color: "#d32f2f" });
+const errorText = css({ textStyle: "lead", color: "#d32f2f" });
 
 const paper = css({
-  bg: "surface", color: "rgba(0,0,0,0.87)", borderRadius: "16px",
+  bg: "surface", color: "ink", borderRadius: "16px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.08)",
 });
 const paper24 = css({ p: "24px" });
@@ -80,19 +80,18 @@ const profileCard = css({ mb: "32px" });
 const headRow = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px", flexWrap: "wrap", mb: "24px" });
 const identity = css({ display: "flex", alignItems: "center", gap: "16px", minW: 0 });
 const nameRow = css({ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap" });
-const nameCss = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, color: "black", letterSpacing: "-0.02em" });
-const taglineCss = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const nameCss = css({ textStyle: "title", fontWeight: 600, color: "black" });
+const taglineCss = css({ textStyle: "ui", color: "ink2" });
 const metaRow = css({ display: "flex", alignItems: "center", gap: "8px", mt: "8px", flexWrap: "wrap" });
-const ratingValue = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const metaText = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const ratingValue = css({ textStyle: "ui", fontWeight: 600, color: "black" });
+const metaText = css({ textStyle: "meta", color: "ink2" });
 const metaDot = css({ w: "3px", h: "3px", borderRadius: "50%", bg: "rgba(0,0,0,0.25)", flexShrink: 0 });
-const memberText = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.5)" });
+const memberText = css({ textStyle: "meta", color: "ink2" });
 
 const publicBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   minW: "64px", px: "16px", h: "36px", borderRadius: "40px", border: "none",
-  bg: "rgba(0, 0, 0, 0.05)", color: "black", fontFamily: "inherit",
-  fontSize: "12px", fontWeight: 500, lineHeight: 1.75, cursor: "pointer", flexShrink: 0,
+  bg: "rgba(0, 0, 0, 0.05)", color: "black", textStyle: "meta", fontWeight: 500, cursor: "pointer", flexShrink: 0,
   _hover: { bg: "rgba(0, 0, 0, 0.1)" },
   _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
   "& svg": { display: "block" },
@@ -102,9 +101,9 @@ const profileStats = css({
   display: "grid", gap: "16px", gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
   pt: "24px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0, 0, 0, 0.08)",
 });
-const profileStatValue = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const profileStatValueGreen = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, color: "#16a34a" });
-const profileStatLabel = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const profileStatValue = css({ textStyle: "title", fontWeight: 600, color: "black" });
+const profileStatValueGreen = css({ textStyle: "title", fontWeight: 600, color: "#16a34a" });
+const profileStatLabel = css({ textStyle: "micro", color: "ink2" });
 
 const statsGrid = css({
   display: "grid", gap: "16px", mb: "32px",
@@ -113,7 +112,7 @@ const statsGrid = css({
 // The green "Available balance" variant hangs off `data-green` so its colours
 // beat the base class by selector specificity (atomic order is not reliable).
 const statCard = css({
-  bg: "surface", color: "rgba(0,0,0,0.87)", borderRadius: "16px", p: "24px",
+  bg: "surface", color: "ink", borderRadius: "16px", p: "24px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.08)",
   cursor: "pointer", transition: "all 0.3s",
   _hover: { borderColor: "rgba(0, 0, 0, 0.2)", "& .arrow-icon": { opacity: 1 } },
@@ -126,14 +125,14 @@ const statCard = css({
 });
 const statCardRelative = css({ position: "relative" });
 const statTop = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "16px" });
-const arrowIcon = css({ color: "rgba(0, 0, 0, 0.4)", opacity: 0, transition: "opacity 0.3s", display: "block" });
-const statValue = css({ fontSize: "28px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const statValueGreen = css({ fontSize: "28px", fontWeight: 600, lineHeight: 1.5, color: "rgb(21, 128, 61)" });
-const statLabel = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
-const statLabelGreen = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(21, 128, 61, 0.7)" });
+const arrowIcon = css({ color: "ink3", opacity: 0, transition: "opacity 0.3s", display: "block" });
+const statValue = css({ textStyle: "stat", fontWeight: 600, color: "black" });
+const statValueGreen = css({ textStyle: "stat", fontWeight: 600, color: "rgb(21, 128, 61)" });
+const statLabel = css({ textStyle: "micro", color: "ink2" });
+const statLabelGreen = css({ textStyle: "micro", color: "rgba(21, 128, 61, 0.7)" });
 const unreadDot = css({ position: "absolute", top: "16px", right: "16px", w: "8px", h: "8px", bg: "#2563eb", borderRadius: "50%" });
 
-// MUI Grid v2 = flex + gap with calc() widths; reproduced so the 8/4 split keeps
+// The old grid = flex + gap with calc() widths; reproduced so the 8/4 split keeps
 // its 760/368 columns inside the 1152px container.
 const mainGrid = css({ display: "flex", flexWrap: "wrap", gap: "24px" });
 const mainCol = css({ w: { base: "100%", lg: "calc(66.6667% - 8px)" }, minW: 0 });
@@ -142,31 +141,28 @@ const colStack = css({ display: "flex", flexDirection: "column", gap: "24px" });
 
 const sectionHead = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "24px" });
 const sectionHeadTight = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "16px" });
-const sectionTitle = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "black" });
 const listStack = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const listStackTight = css({ display: "flex", flexDirection: "column", gap: "8px" });
-const emptyText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0,0,0,0.5)", textAlign: "center", py: "24px" });
+const emptyText = css({ textStyle: "ui", color: "ink2", textAlign: "center", py: "24px" });
 
 const viewAllBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   minW: "64px", px: "8px", py: "6px", border: "none", borderRadius: "4px", bg: "transparent",
-  fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
-  color: "rgba(0, 0, 0, 0.6)", cursor: "pointer",
+  textStyle: "meta", fontWeight: 500, color: "ink2", cursor: "pointer",
   _hover: { color: "black", bg: "transparent" },
 });
 const linkBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   minW: "auto", p: 0, border: "none", borderRadius: "4px", bg: "transparent",
-  fontFamily: "inherit", fontSize: "11px", fontWeight: 500, lineHeight: 1.75,
-  color: "#2563eb", cursor: "pointer",
+  textStyle: "micro", fontWeight: 500, color: "#2563eb", cursor: "pointer",
   _hover: { bg: "transparent", textDecoration: "underline" },
 });
 const wideBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   w: "100%", boxSizing: "border-box", mt: "12px", px: "16px", py: "8px",
   border: "none", borderRadius: "8px", bg: "transparent",
-  fontFamily: "inherit", fontSize: "11px", fontWeight: 500, lineHeight: 1.75,
-  color: "rgba(0, 0, 0, 0.6)", cursor: "pointer",
+  textStyle: "micro", fontWeight: 500, color: "ink2", cursor: "pointer",
   _hover: { color: "black", bg: "rgba(0, 0, 0, 0.04)" },
 });
 
@@ -175,43 +171,43 @@ const listRow = css({
   p: "16px", borderRadius: "12px", transition: "background-color 0.3s",
   _hover: { bg: "rgba(0, 0, 0, 0.02)" },
 });
-const rowTitle = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5, color: "black" });
-const rowSub = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
-const rowAmount = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const rowAmountFixed = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "black", w: "80px", textAlign: "right" });
+const rowTitle = css({ textStyle: "ui", fontWeight: 500, color: "black" });
+const rowSub = css({ textStyle: "micro", color: "ink2" });
+const rowAmount = css({ textStyle: "ui", fontWeight: 600, color: "black" });
+const rowAmountFixed = css({ textStyle: "ui", fontWeight: 600, color: "black", w: "80px", textAlign: "right" });
 const orderMetaRow = css({ display: "flex", alignItems: "center", gap: "6px", mt: "2px" });
 const typeChip = css({
   display: "inline-flex", alignItems: "center", h: "16px", px: "8px", borderRadius: "pill",
-  fontSize: "9px", whiteSpace: "nowrap",
+  textStyle: "micro", whiteSpace: "nowrap",
 });
-const dueText = css({ fontSize: "10px", lineHeight: 1.5, color: "rgba(0,0,0,0.4)" });
+const dueText = css({ textStyle: "micro", color: "ink3" });
 const orderRight = css({ display: "flex", alignItems: "center", gap: "16px" });
 const statusChip = css({
   display: "inline-flex", alignItems: "center", h: "24px", px: "12px", borderRadius: "pill",
-  fontSize: "11px", whiteSpace: "nowrap",
+  textStyle: "micro", whiteSpace: "nowrap",
 });
 
 const convBtn = css({
   display: "flex", alignItems: "flex-start", gap: "12px", w: "100%", boxSizing: "border-box",
   p: "12px", borderRadius: "12px", border: "none", bg: "transparent", textAlign: "left",
-  color: "inherit", fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75, cursor: "pointer",
+  color: "inherit", textStyle: "body", fontWeight: 500, cursor: "pointer",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
 });
 const convHead = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "4px" });
-const convName = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "black", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const convName = css({ textStyle: "meta", fontWeight: 600, color: "black", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 const convBadge = css({
   display: "flex", alignItems: "center", justifyContent: "center", ml: "8px",
   w: "20px", h: "20px", borderRadius: "50%", bg: "#2563eb", color: "white",
-  fontSize: "9px", fontWeight: 500, flexShrink: 0,
+  textStyle: "micro", fontWeight: 500, flexShrink: 0,
 });
-const convOrder = css({ display: "block", fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const convOrder = css({ display: "block", textStyle: "micro", color: "ink2", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 const convFoot = css({ display: "flex", alignItems: "center", justifyContent: "space-between" });
-const convPreview = css({ flex: 1, fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
-const convTime = css({ fontSize: "10px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.4)", ml: "8px", flexShrink: 0 });
+const convPreview = css({ flex: 1, textStyle: "micro", color: "ink2", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const convTime = css({ textStyle: "micro", color: "ink3", ml: "8px", flexShrink: 0 });
 
 const newChip = css({
   display: "inline-flex", alignItems: "center", h: "20px", px: "8px", borderRadius: "pill",
-  bg: "#ea580c", color: "white", fontSize: "9px", fontWeight: 500, whiteSpace: "nowrap",
+  bg: "#ea580c", color: "white", textStyle: "micro", fontWeight: 500, whiteSpace: "nowrap",
 });
 const notifRow = css({
   p: "12px", borderRadius: "12px", cursor: "pointer", transition: "background 0.15s",
@@ -224,12 +220,12 @@ const notifRow = css({
 });
 const notifInner = css({ display: "flex", alignItems: "flex-start", gap: "8px" });
 const notifDot = css({ w: "8px", h: "8px", borderRadius: "50%", mt: "6px", flexShrink: 0 });
-const notifTitle = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const notifBody = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
-const notifTime = css({ fontSize: "10px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.4)" });
+const notifTitle = css({ textStyle: "meta", fontWeight: 600, color: "black" });
+const notifBody = css({ textStyle: "micro", color: "ink2" });
+const notifTime = css({ textStyle: "micro", color: "ink3" });
 
 const flex1 = css({ flex: 1, minW: 0 });
-// MUI used a bare `flex: 1` here (min-width: auto), so the row never collapses below its content.
+// It used a bare `flex: 1` here (min-width: auto), so the row never collapses below its content.
 const flexAuto = css({ flex: 1 });
 
 // ─── Component ───────────────────────────────────────────────────────────────

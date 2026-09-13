@@ -7,7 +7,7 @@ const nav = css({ display: "flex", alignItems: "center", justifyContent: "center
 const pageBtn = cva({
   base: {
     display: "inline-flex", alignItems: "center", justifyContent: "center", minW: "34px", h: "34px", px: "6px",
-    border: "none", borderRadius: "8px", bg: "transparent", color: "body", fontFamily: "inherit", fontSize: "14px", fontWeight: 500,
+    border: "none", borderRadius: "8px", bg: "transparent", color: "body", textStyle: "body", fontWeight: 500,
     cursor: "pointer", transition: "background-color .12s, color .12s",
     _hover: { bg: "fill", color: "heading" },
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
@@ -16,7 +16,7 @@ const pageBtn = cva({
   },
   variants: { active: { true: { bg: "accent", color: "white", _hover: { bg: "accentHover", color: "white" } } } },
 });
-const ellipsis = css({ minW: "24px", textAlign: "center", color: "muted", fontSize: "14px" });
+const ellipsis = css({ minW: "24px", textAlign: "center", color: "muted", textStyle: "body" });
 
 function range(count: number, page: number, siblings: number): (number | "…")[] {
   const pages = new Set<number>([1, count, page]);
@@ -27,7 +27,7 @@ function range(count: number, page: number, siblings: number): (number | "…")[
   return out;
 }
 
-/** Replaces MUI <Pagination>. 1-based `page`. */
+/** 1-based `page`. */
 export function Pager({ count, page, onChange, siblings = 1, className }: { count: number; page: number; onChange: (page: number) => void; siblings?: number; className?: string }) {
   if (count <= 1) return null;
   return (

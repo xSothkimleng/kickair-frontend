@@ -146,7 +146,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
       case "cancelled":
         return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "#ef4444" };
       default:
-        return { bgcolor: "rgba(0, 0, 0, 0.05)", color: "rgba(0, 0, 0, 0.6)" };
+        return { bgcolor: "rgba(0, 0, 0, 0.05)", color: "ink2" };
     }
   };
 
@@ -333,7 +333,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
                 )}
                 {order.delivery_attachments?.length > 0 && (
                   <div className={`${stack05Css} ${mt05}`}>
-                    <p className={css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: "0.4px" })}>
+                    <p className={css({ textStyle: "eyebrow", fontWeight: 600, color: "ink2" })}>
                       Attachments
                     </p>
                     {order.delivery_attachments.map((f, i) => (
@@ -464,7 +464,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
               </div>
               <div className={css({ textAlign: "right" })}>
                 <p className={`${t11muted} ${mb05}`}>Total</p>
-                <p className={css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5 })}>
+                <p className={css({ textStyle: "title", fontWeight: 600 })}>
                   ${pricingOption?.price ?? order.price ?? "0"}
                 </p>
               </div>
@@ -477,7 +477,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             <div className={statRow}>
               <div className={pillStatCss}>
                 <DeliveryIcon size={14} style={{ color: "rgba(0, 0, 0, 0.5)", flexShrink: 0 }} />
-                <p className={css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.7)" })}>
+                <p className={css({ textStyle: "meta", color: "ink2" })}>
                   {isJobBased
                     ? `${order.proposal?.timeline_days ?? "N/A"} day${order.proposal?.timeline_days !== 1 ? "s" : ""} (timeline)`
                     : (() => { const d = parseInt(String(pricingOption?.delivery_time ?? "")); return isNaN(d) ? "N/A" : `${d} day${d !== 1 ? "s" : ""}`; })()}
@@ -486,7 +486,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
               {!isJobBased && (
                 <div className={pillStatCss}>
                   <RevisionIcon size={14} style={{ color: "rgba(0, 0, 0, 0.5)", flexShrink: 0 }} />
-                  <p className={css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.7)" })}>
+                  <p className={css({ textStyle: "meta", color: "ink2" })}>
                     {Number(pricingOption?.revisions) === -1 ? "Unlimited" : pricingOption?.revisions || "N/A"} revision
                     {Number(pricingOption?.revisions) !== 1 ? "s" : ""}
                   </p>
@@ -577,7 +577,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
           {/* Disputed: Submit evidence (files) */}
           {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_evidence?.length && (
             <div>
-              <p className={`${css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.6)" })} ${mb1}`}>
+              <p className={`${css({ textStyle: "meta", fontWeight: 600, color: "ink2" })} ${mb1}`}>
                 Submit your evidence
               </p>
               <input
@@ -696,17 +696,17 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             <div className={reviewCardCss}>
               <div className={`${iconTextRow8Css} ${mb15}`}>
                 <ReviewIcon size={16} style={{ color: "#16a34a", flexShrink: 0 }} />
-                <p className={css({ fontSize: "11px", lineHeight: 1.5, color: "#16a34a", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 })}>
+                <p className={css({ textStyle: "eyebrow", color: "#16a34a", fontWeight: 600 })}>
                   Your Review
                 </p>
               </div>
               <ReadonlyStars rating={order.review.rating} />
               {order.review.comment && (
-                <p className={`${css({ fontSize: "13px", color: "rgba(0,0,0,0.7)", lineHeight: 1.6 })} ${mt1}`}>
+                <p className={`${css({ textStyle: "ui", color: "ink2" })} ${mt1}`}>
                   {order.review.comment}
                 </p>
               )}
-              <p className={`${css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.4)" })} ${mt1}`}>
+              <p className={`${css({ textStyle: "micro", color: "ink3" })} ${mt1}`}>
                 {formatDate(order.review.created_at)}
               </p>
             </div>
@@ -716,12 +716,12 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
             <div className={leaveReviewCardCss}>
               <div className={`${iconTextRow8Css} ${mb2}`}>
                 <ReviewIcon size={16} style={{ color: "#0071e3", flexShrink: 0 }} />
-                <p className={css({ fontSize: "11px", lineHeight: 1.5, color: "#0071e3", textTransform: "uppercase", letterSpacing: "0.5px", fontWeight: 600 })}>
+                <p className={css({ textStyle: "eyebrow", color: "#0071e3", fontWeight: 600 })}>
                   Leave a Review
                 </p>
               </div>
 
-              <p className={`${css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0,0,0,0.6)" })} ${mb15}`}>
+              <p className={`${css({ textStyle: "ui", color: "ink2" })} ${mb15}`}>
                 How was your experience with this freelancer?
               </p>
 
@@ -740,7 +740,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
               </div>
 
               {submitError && (
-                <div className={`${alertCss({ tone: "error" })} ${mb15}`} style={{ fontSize: 13 }}>
+                <div className={`${alertCss({ tone: "error" })} ${mb15} ${css({ textStyle: "ui" })}`}>
                   <span className={alertIconCss({ tone: "error" })}><ErrorIcon size={22} /></span>
                   <div className={alertMsgCss}>{submitError}</div>
                 </div>

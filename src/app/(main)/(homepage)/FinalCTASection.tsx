@@ -13,9 +13,8 @@ const ctaBase = css({
   borderRadius: "pill",
   borderWidth: "2px",
   borderStyle: "solid",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   textDecoration: "none",
   cursor: "pointer",
   transition: "background-color .15s, color .15s, border-color .15s",
@@ -57,10 +56,9 @@ export default function FinalCtaSection() {
           <Box
             as="h2"
             className={css({
-              fontSize: { base: "28px", md: "40px" },
+              textStyle: { base: "stat", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
               mb: "4",
             })}
           >
@@ -69,7 +67,7 @@ export default function FinalCtaSection() {
           <Box
             as="p"
             className={css({
-              fontSize: { base: "16px", md: "19px" },
+              textStyle: { base: "lead", md: "title" },
               color: "ink2",
               maxW: "672px",
               mx: "auto",

@@ -27,9 +27,8 @@ const ctaPill = css({
   bg: "accent",
   color: "white",
   borderRadius: "pill",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   borderWidth: "0",
   cursor: "pointer",
   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
@@ -46,10 +45,9 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
           <Box
             as="h2"
             className={css({
-              fontSize: { base: "28px", md: "40px" },
+              textStyle: { base: "stat", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
               mb: "3",
             })}
           >
@@ -58,7 +56,7 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
           <Box
             as="p"
             className={css({
-              fontSize: { base: "16px", md: "19px" },
+              textStyle: { base: "lead", md: "title" },
               color: "ink2",
             })}
           >
@@ -109,7 +107,7 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
                   justifyContent="center"
                   flexShrink={0}
                 >
-                  <Box as="span" fontSize="32px" fontWeight={500} color="ink2">
+                  <Box as="span" textStyle="stat" fontWeight={500} color="ink2">
                     {freelancer.name.charAt(0)}
                   </Box>
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -120,17 +118,17 @@ export default function ExploreFreelancersSection({ freelancers }: ExploreFreela
                   />
                 </Box>
                 <Box display="flex" flexDirection="column" gap="2" w="100%">
-                  <Box as="h3" fontSize="18px" color="ink" fontWeight={500}>
+                  <Box as="h3" textStyle="title" color="ink" fontWeight={500}>
                     {freelancer.name}
                   </Box>
-                  <Box as="p" fontSize="14px" color="ink2">
+                  <Box as="p" textStyle="body" color="ink2">
                     {freelancer.role}
                   </Box>
                   <Box pt="2">
-                    <Box as="p" fontSize="12px" color="ink2">
+                    <Box as="p" textStyle="meta" color="ink2">
                       Starting at
                     </Box>
-                    <Box as="p" fontSize="18px" color="ink" fontWeight={500}>
+                    <Box as="p" textStyle="title" color="ink" fontWeight={500}>
                       ${freelancer.tiers[0].price}
                     </Box>
                   </Box>

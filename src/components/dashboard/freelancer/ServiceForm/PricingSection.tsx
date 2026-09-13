@@ -12,9 +12,9 @@ const sectionCard = css({
   borderColor: "hairline",
   p: "32px",
 });
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 const sectionSub = cva({
-  base: { fontSize: "11px", lineHeight: 1.5 },
+  base: { textStyle: "micro" },
   variants: {
     invalid: {
       true: { color: "#ef4444", fontWeight: 600 },
@@ -24,7 +24,7 @@ const sectionSub = cva({
 });
 const tierGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" }, gap: "16px" });
 const noteBox = css({ mt: "16px", p: "16px", bg: "rgba(37, 99, 235, 0.05)", borderRadius: "cardSm" });
-const noteText = css({ lineHeight: 1.5, fontSize: "11px", color: "rgb(29, 78, 216)" });
+const noteText = css({ textStyle: "micro", color: "rgb(29, 78, 216)" });
 
 interface PricingSectionProps {
   formData: ServiceFormData;

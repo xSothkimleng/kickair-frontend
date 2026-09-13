@@ -53,11 +53,8 @@ const backBtnCss = css({
   borderRadius: "4px",
   bg: "transparent",
   color: "ink2",
-  fontFamily: "inherit",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "color .25s",
   _hover: { color: "#000", bg: "transparent" },
@@ -66,7 +63,7 @@ const backBtnCss = css({
 const bodyCss = css({ px: { base: "16px", md: "32px" }, py: { base: "24px", md: "40px" } });
 const titleRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: { base: "20px", md: "28px" }, gap: "16px" });
 const titleColCss = css({ display: "flex", flexDirection: "column", gap: "8px" });
-const titleCss = css({ fontSize: { base: "28px", md: "40px" }, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.05 });
+const titleCss = css({ textStyle: { base: "stat", md: "display" }, fontWeight: 600 });
 const titleAsideCss = css({ display: { base: "none", md: "block" } });
 const gridCss = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "1fr 1fr" }, gap: { base: "16px", md: "24px" }, alignItems: "start" });
 const cardCss = css({
@@ -77,7 +74,7 @@ const cardCss = css({
   borderRadius: "card",
   p: { base: "22px", md: "28px" },
 });
-const labelCss = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const labelCss = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
 const summaryHeadCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "18px" });
 const sellerRowCss = css({ display: "flex", gap: "14px", mb: "18px", alignItems: "center" });
 const sellerAvatarCss = css({
@@ -97,19 +94,18 @@ const sellerAvatarCss = css({
   fontWeight: 600,
   color: "ink2",
 });
-const sellerNameCss = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5 });
-const sellerRatingCss = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, color: "ink2" });
-const serviceTitleCss = css({ fontSize: "16px", fontWeight: 500, lineHeight: 1.4 });
+const sellerNameCss = css({ fontWeight: 600, textStyle: "body" });
+const sellerRatingCss = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
+const serviceTitleCss = css({ textStyle: "lead", fontWeight: 500 });
 const tierBoxCss = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "tile", p: "16px", mb: "20px" });
 const tierHeadCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "12px", gap: "8px" });
-const tierTitleCss = css({ fontWeight: 600, fontSize: "14px", lineHeight: 1.5 });
+const tierTitleCss = css({ fontWeight: 600, textStyle: "body" });
 const tierMetaRowCss = css({ display: "flex", gap: "16px", flexWrap: "wrap" });
-const metaCss = css({ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 500, color: "ink2", "& svg": { color: "ink3", flexShrink: 0 } });
+const metaCss = css({ display: "flex", alignItems: "center", gap: "6px", textStyle: "meta", fontWeight: 500, color: "ink2", "& svg": { color: "ink3", flexShrink: 0 } });
 const tierDescCss = css({
   mt: "12px",
-  fontSize: "13.5px",
+  textStyle: "ui",
   color: "ink2",
-  lineHeight: 1.5,
   "& p": { m: 0 },
   "& ul, & ol": { m: 0, pl: "20px" },
 });
@@ -117,13 +113,13 @@ const priceColCss = css({ display: "flex", flexDirection: "column", gap: "12px" 
 const hairlineCss = css({ h: "1px", bg: "hairline" });
 const escrowCss = css({ display: "flex", gap: "8px", mt: "18px", p: "12px 14px", bg: "pendingTint", borderRadius: "tile" });
 const escrowIconCss = css({ color: "pendingText", flex: "none" });
-const escrowTextCss = css({ fontSize: "12.5px", color: "pendingText", lineHeight: 1.4 });
-const payHeadingCss = css({ fontSize: "22px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.015em" });
+const escrowTextCss = css({ textStyle: "meta", color: "pendingText" });
+const payHeadingCss = css({ textStyle: "title", fontWeight: 600 });
 const optionsColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const optionRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" });
 const optionLeftCss = css({ display: "flex", alignItems: "center", gap: "12px" });
-const optionTitleCss = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5 });
-const optionSubCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const optionTitleCss = css({ fontWeight: 600, textStyle: "body" });
+const optionSubCss = css({ textStyle: "ui", color: "ink2" });
 const payLogosCss = css({ display: "flex", gap: "6px", flexShrink: 0 });
 const iconTileCss = css({ w: "38px", h: "38px", borderRadius: "10px", bg: "rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", color: "ink" });
 const lowBalanceCss = css({
@@ -136,17 +132,17 @@ const lowBalanceCss = css({
   borderRadius: "cardSm",
 });
 const lowBalanceHeadCss = css({ display: "flex", gap: "8px", mb: "10px", alignItems: "center", color: "errorText" });
-const lowBalanceTitleCss = css({ fontSize: "13.5px", fontWeight: 600, lineHeight: 1.5, color: "errorText" });
-const lowBalanceTextCss = css({ fontSize: "13px", lineHeight: 1.5, color: "errorText" });
+const lowBalanceTitleCss = css({ textStyle: "ui", fontWeight: 600, color: "errorText" });
+const lowBalanceTextCss = css({ textStyle: "ui", color: "errorText" });
 const topUpBtnCss = css({ px: "16px", fontWeight: 500 });
 const abaWrapCss = css({ mt: "18px" });
 const ctaWrapCss = css({ mt: "22px" });
 const secureNoteCss = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", mt: "12px", color: "ink3" });
-const secureNoteTextCss = css({ fontSize: "12px", lineHeight: 1.5 });
+const secureNoteTextCss = css({ textStyle: "meta" });
 const footerCss = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", mt: "24px", pt: "24px" });
 const ownWrapCss = css({ minH: "100vh", bg: "canvas", display: "flex", alignItems: "center", justifyContent: "center" });
 const ownInnerCss = css({ textAlign: "center" });
-const ownTextCss = css({ fontSize: "16px", fontWeight: 600, lineHeight: 1.5 });
+const ownTextCss = css({ textStyle: "lead", fontWeight: 600 });
 const ownBtnCss = css({
   display: "inline-flex",
   alignItems: "center",
@@ -162,11 +158,8 @@ const ownBtnCss = css({
   borderStyle: "solid",
   borderColor: "rgba(25, 118, 210, 0.5)",
   borderRadius: "112px",
-  fontFamily: "inherit",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "background-color .25s, border-color .25s",
   _hover: { bg: "rgba(25, 118, 210, 0.04)", borderColor: "#1976d2" },

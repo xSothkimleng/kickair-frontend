@@ -7,9 +7,9 @@ import { Avatar, Spinner } from "@/components/ds";
 import { useConversations } from "@/hooks/useConversations";
 
 const headerRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "24px" });
-const titleCss = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.334, color: "ink" });
-const subtitleCss = css({ fontSize: "14px", lineHeight: 1.43, color: "ink2" });
-// Text button, ported from MUI's default text-button metrics (36.5px tall, 4px radius).
+const titleCss = css({ textStyle: "heading", fontWeight: 600, color: "ink" });
+const subtitleCss = css({ textStyle: "body", color: "ink2" });
+// Text button, text-button metrics (36.5px tall, 4px radius).
 const textBtnRaw = css.raw({
   display: "inline-flex",
   alignItems: "center",
@@ -21,17 +21,14 @@ const textBtnRaw = css.raw({
   borderRadius: "4px",
   bg: "transparent",
   color: "accent",
-  fontFamily: "inherit",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "background-color .25s",
   _hover: { bg: "accentFill" },
 });
-const viewAllCss = css(textBtnRaw, { gap: "8px", fontSize: "14px", "& svg": { mr: "-4px" } });
-const viewMoreCss = css(textBtnRaw, { fontSize: "13px" });
-// MUI <Card> = Paper elevation 1 + overflow hidden.
+const viewAllCss = css(textBtnRaw, { gap: "8px", textStyle: "body", "& svg": { mr: "-4px" } });
+const viewMoreCss = css(textBtnRaw, { textStyle: "ui" });
+// Card: 1px elevation shadow + overflow hidden.
 const cardCss = css({
   bg: "surface",
   borderRadius: "cardSm",
@@ -43,8 +40,8 @@ const cardCss = css({
 });
 const loadingCss = css({ display: "flex", justifyContent: "center", py: "48px", color: "accent" });
 const stateCss = css({ p: "32px", textAlign: "center" });
-const errorTextCss = css({ fontSize: "16px", lineHeight: 1.5, color: "error" });
-const emptyTextCss = css({ fontSize: "16px", lineHeight: 1.5, color: "ink2" });
+const errorTextCss = css({ textStyle: "lead", color: "error" });
+const emptyTextCss = css({ textStyle: "lead", color: "ink2" });
 const rowRaw = css.raw({ p: "16px", cursor: "pointer", transition: "background-color 0.2s", _hover: { bg: "rgba(0,0,0,0.02)" } });
 const rowCss = css(rowRaw, { borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)" });
 const rowLastCss = css(rowRaw);
@@ -53,8 +50,7 @@ const colCss = css({ flex: 1, minW: 0 });
 const nameRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "4px" });
 const nameRaw = css.raw({
   flex: 1,
-  fontSize: "14px",
-  lineHeight: 1.43,
+  textStyle: "body",
   color: "ink",
   overflow: "hidden",
   textOverflow: "ellipsis",
@@ -68,14 +64,14 @@ const unreadPillCss = css({
   borderRadius: "50%",
   bg: "#9333ea",
   color: "#fff",
-  fontSize: "10px",
+  textStyle: "micro",
   fontWeight: 600,
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   ml: "8px",
 });
-const captionRaw = css.raw({ fontSize: "12px", lineHeight: 1.66, letterSpacing: "0.03333em" });
+const captionRaw = css.raw({ textStyle: "meta" });
 const orderTitleCss = css(captionRaw, {
   display: "block",
   color: "ink2",

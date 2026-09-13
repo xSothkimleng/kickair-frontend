@@ -3,8 +3,8 @@ import { ServiceFormData } from "../types";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 const wrap = css({ mt: "24px", pt: "24px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
-const title = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 600, color: "ink" });
-const sub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+const title = css({ textStyle: "body", fontWeight: 600, color: "ink" });
+const sub = css({ textStyle: "micro", color: "ink2" });
 /* One column per enabled tier from `sm` up — the count is dynamic, so it has to be a recipe. */
 const tierGrid = cva({
   base: { display: "grid", gap: "12px", gridTemplateColumns: "1fr" },
@@ -19,15 +19,15 @@ const tierGrid = cva({
 });
 const COLS = ["one", "one", "two", "three"] as const;
 const tierBox = css({ p: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm" });
-const tierName = css({ lineHeight: 1.5, fontSize: "12px", fontWeight: 700, textTransform: "capitalize" });
+const tierName = css({ textStyle: "meta", fontWeight: 700, textTransform: "capitalize" });
 const rows = css({ display: "flex", flexDirection: "column", gap: "6px" });
 const row = css({ display: "flex", justifyContent: "space-between" });
-const rowLabel = css({ lineHeight: 1.5, fontSize: "12.5px", color: "ink2" });
-const rowValue = css({ lineHeight: 1.5, fontSize: "12.5px", fontFamily: "monospace", fontWeight: 600 });
-const feeValue = css({ lineHeight: 1.5, fontSize: "12.5px", fontFamily: "monospace", fontWeight: 600, color: "#B45309" });
+const rowLabel = css({ textStyle: "meta", color: "ink2" });
+const rowValue = css({ textStyle: "meta", fontVariantNumeric: "tabular-nums", fontWeight: 600 });
+const feeValue = css({ textStyle: "meta", fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "#B45309" });
 const rule = css({ height: "1px", bg: "hairline", my: "2px" });
-const netLabel = css({ lineHeight: 1.5, fontSize: "12.5px", fontWeight: 700 });
-const netValue = css({ lineHeight: 1.5, fontSize: "13px", fontFamily: "monospace", fontWeight: 700, color: "#166534" });
+const netLabel = css({ textStyle: "meta", fontWeight: 700 });
+const netValue = css({ textStyle: "ui", fontVariantNumeric: "tabular-nums", fontWeight: 700, color: "#166534" });
 
 /**
  * The transparent price breakdown at the foot of the Pricing Options card:

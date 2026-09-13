@@ -75,15 +75,15 @@ export default function PeoplePage() {
                         <Avatar name={u.name} size="sm" seed={u.id} src={u.avatar_url} />
                         <div className={css({ minW: 0 })}>
                           <p className={text({ weight: 600 })}>{u.name}</p>
-                          <p className={text({ size: "sm", tone: 3, truncate: true })}>{[u.email, u.telephone].filter(Boolean).join(" · ") || "No contact details"}</p>
+                          <p className={text({ size: "meta", tone: 3, truncate: true })}>{[u.email, u.telephone].filter(Boolean).join(" · ") || "No contact details"}</p>
                         </div>
                       </div>
                     </td>
                     <td><span className={row({ gap: 1 })}>{roleLabels(u).map((r) => <Pill key={r} outline>{r}</Pill>)}</span></td>
-                    <td>{u.is_freelancer || k !== "none" ? <Pill tone={kycLabel[k].tone}>{kycLabel[k].label}</Pill> : <span className={text({ size: "sm", tone: 3 })}>—</span>}</td>
+                    <td>{u.is_freelancer || k !== "none" ? <Pill tone={kycLabel[k].tone}>{kycLabel[k].label}</Pill> : <span className={text({ size: "meta", tone: 3 })}>—</span>}</td>
                     <td><Pill tone={accountLabel[st].tone} dot>{accountLabel[st].label}</Pill></td>
                     <td>
-                      {u.is_freelancer ? <p className={cx(row({ gap: 1 }), text({ size: "sm", tone: 2 }))}><Star size={12} /> {u.freelancer_rating ? Number(u.freelancer_rating).toFixed(1) : "—"} · {u.completed_orders ?? 0} completed</p> : <span className={text({ size: "sm", tone: 3 })}>—</span>}
+                      {u.is_freelancer ? <p className={cx(row({ gap: 1 }), text({ size: "meta", tone: 2 }))}><Star size={12} /> {u.freelancer_rating ? Number(u.freelancer_rating).toFixed(1) : "—"} · {u.completed_orders ?? 0} completed</p> : <span className={text({ size: "meta", tone: 3 })}>—</span>}
                     </td>
                     <td><span className={text({ tone: 2 })}>{shortDate(u.created_at)}</span></td>
                   </tr>

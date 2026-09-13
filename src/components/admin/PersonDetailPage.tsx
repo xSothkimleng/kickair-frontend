@@ -12,20 +12,20 @@ import { Avatar, Btn, ErrorState, Field, Input, Loading, Modal, Panel, PanelHead
 import { ago, dateTime, errorMessage, longDate, money, shortDate } from "./format";
 import { accountLabel, accountState, kycLabel, kycState } from "./labels";
 
-const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "13px", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
+const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
 const banner = css({ display: "flex", alignItems: "center", gap: "12px", p: "12px 16px", borderRadius: "12px", mb: "20px", bg: "var(--td-amber-soft)", color: "var(--td-amber)", "&[data-kind=banned]": { bg: "var(--td-red-soft)", color: "var(--td-red)" } });
-const chip = css({ display: "inline-flex", h: "26px", px: "10px", alignItems: "center", borderRadius: "999px", bg: "var(--td-hover)", fontSize: "12.5px", fontWeight: 500 });
+const chip = css({ display: "inline-flex", h: "26px", px: "10px", alignItems: "center", borderRadius: "999px", bg: "var(--td-hover)", textStyle: "meta", fontWeight: 500 });
 const statBox = css({ p: "14px 16px", borderRadius: "10px", bg: "var(--td-surface-2)", border: "1px solid var(--td-line)" });
-const statNum = css({ fontSize: "20px", fontWeight: 600, letterSpacing: "-0.02em", fontVariantNumeric: "tabular-nums", mt: "2px" });
-const prose = css({ fontSize: "13.5px", color: "var(--td-ink-2)", lineHeight: 1.55, "& p": { margin: "0 0 8px" }, "& ul, & ol": { paddingLeft: "18px", margin: "0 0 8px" } });
+const statNum = css({ textStyle: "title", fontWeight: 600, fontVariantNumeric: "tabular-nums", mt: "2px" });
+const prose = css({ textStyle: "ui", color: "var(--td-ink-2)", "& p": { margin: "0 0 8px" }, "& ul, & ol": { paddingLeft: "18px", margin: "0 0 8px" } });
 const docTile = css({
   display: "block", position: "relative", aspectRatio: "1.6", borderRadius: "12px", overflow: "hidden", bg: "var(--td-hover)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line)",
   "& img": { w: "100%", h: "100%", objectFit: "cover", display: "block" },
-  "& span": { position: "absolute", left: "10px", bottom: "10px", px: "8px", h: "22px", display: "inline-flex", alignItems: "center", gap: "5px", borderRadius: "999px", bg: "rgba(21,23,28,0.72)", color: "#fff", fontSize: "11.5px", fontWeight: 600 },
+  "& span": { position: "absolute", left: "10px", bottom: "10px", px: "8px", h: "22px", display: "inline-flex", alignItems: "center", gap: "5px", borderRadius: "999px", bg: "rgba(21,23,28,0.72)", color: "#fff", textStyle: "micro", fontWeight: 600 },
 });
 
 function Stat({ label, value }: { label: string; value: React.ReactNode }) {
-  return <div className={statBox}><p className={text({ size: "sm", tone: 2 })}>{label}</p><p className={statNum}>{value}</p></div>;
+  return <div className={statBox}><p className={text({ size: "meta", tone: 2 })}>{label}</p><p className={statNum}>{value}</p></div>;
 }
 
 export default function PersonDetailPage({ id }: { id: number }) {
@@ -87,12 +87,12 @@ export default function PersonDetailPage({ id }: { id: number }) {
           <Avatar name={p.name} size="xl" seed={p.id} src={p.avatar_url} />
           <div className={stack({ gap: 2 })}>
             <div className={row({ gap: 3 })}>
-              <h1 className={text({ size: "2xl", weight: 600 })}>{p.name}</h1>
+              <h1 className={text({ size: "heading", weight: 600 })}>{p.name}</h1>
               <Pill tone={accountLabel[status].tone} dot>{accountLabel[status].label}</Pill>
               {showVerification ? <Pill tone={kycLabel[k].tone}>{kycLabel[k].label}</Pill> : null}
             </div>
             <p className={text({ tone: 2 })}>{roles.join(" and ") || "No role yet"}{fp?.tagline ? ` · ${fp.tagline}` : cp?.company_name ? ` · ${cp.company_name}` : ""}</p>
-            <div className={cx(row({ gap: 4, wrap: true }), text({ size: "sm", tone: 3 }))}>
+            <div className={cx(row({ gap: 4, wrap: true }), text({ size: "meta", tone: 3 }))}>
               {p.email ? <span>{p.email}</span> : null}{p.telephone ? <span>{p.telephone}</span> : null}{p.location ? <span className={row({ gap: 1 })}><MapPin size={12} /> {p.location}</span> : null}
               <span>Joined {shortDate(p.created_at)}</span><span>Active {p.last_active_at ? ago(p.last_active_at) : "never"}</span>
             </div>
@@ -108,8 +108,8 @@ export default function PersonDetailPage({ id }: { id: number }) {
         <div className={banner} data-kind={status}>
           {status === "banned" ? <Ban size={16} /> : <PauseCircle size={16} />}
           <div className={css({ flex: 1 })}>
-            <p className={text({ weight: 600, size: "sm" })}>{status === "banned" ? `Banned ${p.account_status.banned_at ? ago(p.account_status.banned_at) : ""}. They cannot sign in.` : `Suspended ${p.account_status.suspended_at ? ago(p.account_status.suspended_at) : ""}. They cannot sign in or act until reinstated.`}</p>
-            {statusReason ? <p className={text({ size: "sm" })}>{statusReason}</p> : null}
+            <p className={text({ weight: 600, size: "meta" })}>{status === "banned" ? `Banned ${p.account_status.banned_at ? ago(p.account_status.banned_at) : ""}. They cannot sign in.` : `Suspended ${p.account_status.suspended_at ? ago(p.account_status.suspended_at) : ""}. They cannot sign in or act until reinstated.`}</p>
+            {statusReason ? <p className={text({ size: "meta" })}>{statusReason}</p> : null}
           </div>
         </div>
       ) : null}
@@ -125,7 +125,7 @@ export default function PersonDetailPage({ id }: { id: number }) {
                   <PanelHead title="Freelancer profile" meta={fp.level} />
                   <div className={cx(stack({ gap: 4 }), css({ p: "20px" }))}>
                     <div className={grid({ cols: 4 })}>
-                      <Stat label="Rating" value={<span className={row({ gap: 1 })}><Star size={16} /> {fp.rating != null ? fp.rating.toFixed(1) : "—"} <span className={text({ size: "sm", tone: 3, weight: 400 })}>({fp.rating_count})</span></span>} />
+                      <Stat label="Rating" value={<span className={row({ gap: 1 })}><Star size={16} /> {fp.rating != null ? fp.rating.toFixed(1) : "—"} <span className={text({ size: "meta", tone: 3, weight: 400 })}>({fp.rating_count})</span></span>} />
                       <Stat label="Completed orders" value={fp.completed_orders} />
                       <Stat label="Services" value={p.activity.services ?? 0} />
                       <Stat label="Earned" value={money(p.activity.total_earned ?? 0)} />
@@ -160,20 +160,20 @@ export default function PersonDetailPage({ id }: { id: number }) {
                   </div>
                 </Panel>
               ) : null}
-              {!fp && !cp ? <Panel><p className={cx(text({ size: "sm", tone: 3 }), css({ p: "20px" }))}>This account hasn&apos;t set up a profile yet.</p></Panel> : null}
+              {!fp && !cp ? <Panel><p className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>This account hasn&apos;t set up a profile yet.</p></Panel> : null}
             </>
           ) : null}
 
           {tab === "verification" ? (
             <Panel>
               <PanelHead title="Identity verification" meta={kyc ? kyc.document_type ?? "Document" : "nothing submitted"} />
-              {!kyc ? <div className={cx(text({ size: "sm", tone: 3 }), css({ p: "20px" }))}>{"They haven't uploaded a document yet."}</div> : (
+              {!kyc ? <div className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>{"They haven't uploaded a document yet."}</div> : (
                 <div className={cx(stack({ gap: 4 }), css({ p: "20px" }))}>
                   <div className={row({ gap: 2 })}>
                     <Pill tone={kyc.status === "approved" ? "green" : kyc.status === "rejected" ? "red" : "amber"} dot>{kyc.status === "approved" ? "Approved" : kyc.status === "rejected" ? "Rejected" : "Awaiting review"}</Pill>
-                    <span className={text({ size: "sm", tone: 3 })}>submitted {ago(kyc.submitted_at)}{kyc.reviewed_at ? ` · reviewed ${ago(kyc.reviewed_at)}${kyc.reviewer ? ` by ${kyc.reviewer}` : ""}` : ""}</span>
+                    <span className={text({ size: "meta", tone: 3 })}>submitted {ago(kyc.submitted_at)}{kyc.reviewed_at ? ` · reviewed ${ago(kyc.reviewed_at)}${kyc.reviewer ? ` by ${kyc.reviewer}` : ""}` : ""}</span>
                   </div>
-                  {kyc.admin_note ? <div className={cx(text({ size: "sm" }), css({ p: "12px", bg: "var(--td-red-soft)", color: "var(--td-red)", borderRadius: "10px" }))}>{kyc.admin_note}</div> : null}
+                  {kyc.admin_note ? <div className={cx(text({ size: "meta" }), css({ p: "12px", bg: "var(--td-red-soft)", color: "var(--td-red)", borderRadius: "10px" }))}>{kyc.admin_note}</div> : null}
                   {kyc.documents.length ? (
                     <div className={css({ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" })}>
                       {kyc.documents.map((d) => (
@@ -184,7 +184,7 @@ export default function PersonDetailPage({ id }: { id: number }) {
                         </a>
                       ))}
                     </div>
-                  ) : <p className={text({ size: "sm", tone: 3 })}>No documents on file.</p>}
+                  ) : <p className={text({ size: "meta", tone: 3 })}>No documents on file.</p>}
                   {kyc.status === "pending" ? (
                     <div className={stack({ gap: 3 })}>
                       {kycRejecting ? <Field label="Reason for rejecting" hint="They see this message and can submit again."><Textarea autoFocus value={kycReason} onChange={(e) => setKycReason(e.target.value)} /></Field> : null}

@@ -7,10 +7,10 @@ import { AlertCircle, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/components/context/AuthContext";
 import { Btn, Field, Input, stack, text } from "./ui";
 
-const wrap = css({ minH: "100vh", display: "grid", placeItems: "center", bg: "var(--td-canvas)", fontFamily: "var(--td-font)", px: "24px" });
+const wrap = css({ minH: "100vh", display: "grid", placeItems: "center", bg: "var(--td-canvas)", px: "24px" });
 const card = css({ w: "100%", boxSizing: "border-box", maxW: "400px", bg: "var(--td-surface)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line)", borderRadius: "16px", p: "28px", boxShadow: "var(--td-shadow-sm)" });
 const mark = css({ w: "40px", h: "40px", borderRadius: "11px", bg: "var(--td-ink)", color: "#fff", display: "grid", placeItems: "center", mb: "18px" });
-const errorBox = css({ display: "flex", gap: "8px", alignItems: "flex-start", p: "10px 12px", borderRadius: "10px", bg: "var(--td-red-soft)", color: "var(--td-red)", fontSize: "13px", "& svg": { flexShrink: 0, mt: "1px" } });
+const errorBox = css({ display: "flex", gap: "8px", alignItems: "flex-start", p: "10px 12px", borderRadius: "10px", bg: "var(--td-red-soft)", color: "var(--td-red)", textStyle: "ui", "& svg": { flexShrink: 0, mt: "1px" } });
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -46,8 +46,8 @@ export default function LoginPage() {
       <div className={css({ w: "100%", maxW: "400px" })}>
         <form className={card} onSubmit={submit}>
           <div className={mark}><ShieldCheck size={20} /></div>
-          <h1 className={text({ size: "xl", weight: 600 })}>Sign in to the admin console</h1>
-          <p className={cx(text({ size: "sm", tone: 2 }), css({ mt: "4px", mb: "20px" }))}>KickAir staff only.</p>
+          <h1 className={text({ size: "title", weight: 600 })}>Sign in to the admin console</h1>
+          <p className={cx(text({ size: "meta", tone: 2 }), css({ mt: "4px", mb: "20px" }))}>KickAir staff only.</p>
           <div className={stack({ gap: 4 })}>
             {error ? <div className={errorBox}><AlertCircle size={15} /> {error}</div> : null}
             <Field label="Email">
@@ -59,7 +59,7 @@ export default function LoginPage() {
             <Btn type="submit" variant="primary" size="lg" full disabled={busy}>{busy ? "Signing in…" : "Sign in"}</Btn>
           </div>
         </form>
-        <p className={cx(text({ size: "xs", tone: 3 }), css({ textAlign: "center", mt: "16px" }))}>Authorised personnel only.</p>
+        <p className={cx(text({ size: "micro", tone: 3 }), css({ textAlign: "center", mt: "16px" }))}>Authorised personnel only.</p>
       </div>
     </div>
   );

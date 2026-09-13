@@ -83,7 +83,7 @@ export function usePaymentProcessing(opts: UsePaymentProcessingOptions) {
 
   const fail = (reason: string) => setState(s => (s ? { ...s, stage: "failure", reason } : s));
 
-  // While "waiting" the old MUI dialog passed `onClose={undefined}` — backdrop
+  // While "waiting" the old dialog passed `onClose={undefined}` — backdrop
   // clicks and ESC are inert until the result lands.
   const dismissable = state != null && state.stage !== "waiting";
 

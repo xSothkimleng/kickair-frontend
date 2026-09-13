@@ -42,7 +42,6 @@ const navBtn = css({
   bg: "transparent",
   color: "body",
   cursor: "pointer",
-  fontFamily: "inherit",
   _hover: { bg: "fill" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
@@ -57,8 +56,7 @@ const headerBtn = css({
   border: "none",
   borderRadius: "8px",
   bg: "transparent",
-  fontFamily: "inherit",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 600,
   color: "heading",
   cursor: "pointer",
@@ -70,7 +68,7 @@ const headerBtn = css({
 
 const grid3 = css({ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "4px" });
 const grid7 = css({ display: "grid", gridTemplateColumns: "repeat(7, 1fr)", gap: "2px", justifyItems: "center" });
-const dowCell = css({ textAlign: "center", fontSize: "11px", fontWeight: 600, color: "muted", py: "4px", w: "100%" });
+const dowCell = css({ textAlign: "center", textStyle: "micro", fontWeight: 600, color: "muted", py: "4px", w: "100%" });
 
 const cell = cva({
   base: {
@@ -79,8 +77,7 @@ const cell = cva({
     border: "none",
     borderRadius: "8px",
     bg: "transparent",
-    fontFamily: "inherit",
-    fontSize: "13.5px",
+    textStyle: "ui",
     fontWeight: 400,
     color: "body",
     cursor: "pointer",

@@ -35,13 +35,13 @@ const doneIconWrap = css({
   justifyContent: "center",
   mx: "auto",
 });
-// MUI's SvgIcon carried `flex-shrink: 0`; lucide's svg does not.
+// The old icon set carried `flex-shrink: 0`; lucide's svg does not.
 const doneIcon = css({ color: "pending", flexShrink: 0 });
 // globals.css's unlayered `p, h1-h6 { margin: 0 }` already suppressed the
-// `mt`/`mb`/`mx` these three carried as MUI Typography, so they stay dropped.
-const doneTitle = css({ fontSize: { base: "24px", sm: "28px" }, fontWeight: 600, letterSpacing: "-0.025em", color: "ink" });
-const doneAmount = css({ fontFamily: "mono", fontSize: "36px", fontWeight: 600, letterSpacing: "-0.03em", color: "ink" });
-const doneCopy = css({ fontSize: "15px", color: "ink2", maxW: "340px" });
+// `mt`/`mb`/`mx` these three carried as Typography, so they stay dropped.
+const doneTitle = css({ textStyle: { base: "heading", sm: "stat" }, fontWeight: 600, color: "ink" });
+const doneAmount = css({ fontVariantNumeric: "tabular-nums", textStyle: "stat", fontWeight: 600, color: "ink" });
+const doneCopy = css({ textStyle: "body", color: "ink2", maxW: "340px" });
 const doneStrong = css({ color: "ink" });
 const doneCard = css({
   borderWidth: "1px",
@@ -54,8 +54,8 @@ const doneCard = css({
 });
 const spacer10 = css({ h: "10px" });
 const rowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
-const capCss = css({ fontSize: "12px", fontWeight: 500, letterSpacing: "0.02em", color: "ink2" });
-const rowValue = css({ fontSize: "13px", fontWeight: 600, color: "ink" });
+const capCss = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
+const rowValue = css({ textStyle: "ui", fontWeight: 600, color: "ink" });
 const backBtn = css(pillButton.raw({ tone: "black", size: "lg", full: true }), { mt: "24px" });
 
 /* ---- form view ---- */
@@ -68,7 +68,7 @@ const headerCss = css({
   borderBottomStyle: "solid",
   borderBottomColor: "hairline",
 });
-const titleCss = css({ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.015em", color: "ink" });
+const titleCss = css({ textStyle: "title", fontWeight: 600, color: "ink" });
 // Merged into one style object (Panda's `cx` only concatenates — it can't
 // resolve conflicting atomic classes), so these beat the recipe's own colours.
 const closeBtn = css(iconButton.raw({ size: "md", shape: "round", variant: "ghost", tone: "default" }), {
@@ -85,17 +85,17 @@ const availableRow = css({
   borderRadius: "cardSm",
   mb: "22px",
 });
-const availableLabel = css({ fontSize: "13.5px", color: "ink2" });
-const availableValue = css({ fontFamily: "mono", fontSize: "20px", fontWeight: 600, color: "ink" });
-const fieldLabelCss = css({ display: "block", fontSize: "13px", fontWeight: 500, color: "ink2", mb: "7px" });
+const availableLabel = css({ textStyle: "ui", color: "ink2" });
+const availableValue = css({ fontVariantNumeric: "tabular-nums", textStyle: "title", fontWeight: 600, color: "ink" });
+const fieldLabelCss = css({ display: "block", textStyle: "ui", fontWeight: 500, color: "ink2", mb: "7px" });
 const amountFieldTight = css({ mb: "6px" });
 const amountField = css({ mb: "20px" });
-const overspendText = css({ fontSize: "12px", color: "errorText" });
+const overspendText = css({ textStyle: "meta", color: "errorText" });
 const destList = css({ display: "flex", flexDirection: "column", gap: "10px", mb: "20px" });
 const destRow = css({ display: "flex", alignItems: "center", gap: "12px" });
 const destIcon = css({ color: "ink2", flexShrink: 0 });
-const destName = css({ fontSize: "14.5px", fontWeight: 600, color: "ink" });
-const destSub = css({ fontSize: "12px", color: "ink2" });
+const destName = css({ textStyle: "body", fontWeight: 600, color: "ink" });
+const destSub = css({ textStyle: "meta", color: "ink2" });
 const noteArea = css({
   w: "100%",
   boxSizing: "border-box",
@@ -105,9 +105,7 @@ const noteArea = css({
   borderColor: "hairlineStrong",
   borderRadius: "input",
   bg: "surface",
-  fontFamily: "inherit",
-  fontSize: "15px",
-  lineHeight: 1.5,
+  textStyle: "body",
   resize: "vertical",
   outline: "none",
   _focus: { borderColor: "accent", boxShadow: "0 0 0 3px rgba(0, 113, 227, 0.05)" },
@@ -121,8 +119,8 @@ const hintBox = css({
   borderRadius: "tile",
 });
 const hintIcon = css({ color: "pendingText", flex: "none" });
-const hintText = css({ fontSize: "12.5px", color: "pendingText", lineHeight: 1.45 });
-const errorText = css({ fontSize: "12.5px", color: "errorText" });
+const hintText = css({ textStyle: "meta", color: "pendingText" });
+const errorText = css({ textStyle: "meta", color: "errorText" });
 const submitBtn = css(pillButton.raw({ tone: "black", size: "lg", full: true }), { mt: "18px" });
 const startIcon = css({ ml: "-4px" });
 

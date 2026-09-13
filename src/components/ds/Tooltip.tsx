@@ -6,16 +6,15 @@ import { css } from "styled-system/css";
 
 /**
  * Tooltip on Ark UI (accessible: hover/focus, delay, aria) styled with Panda.
- * Replaces MUI <Tooltip>. `children` is the trigger; `content` is the bubble.
+ * `children` is the trigger; `content` is the bubble.
  */
 export { Ark as TooltipPrimitive };
 
 const contentCss = css({
   bg: "heading",
   color: "white",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.4,
   px: "2.5",
   py: "1.5",
   borderRadius: "8px",

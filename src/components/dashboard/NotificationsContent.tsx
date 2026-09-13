@@ -49,26 +49,26 @@ const getTypeLabel = (type: NotificationType) => {
 // ─── Styles ──────────────────────────────────────────────────────────────────
 
 const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "24px" });
-const titleCss = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.334, color: "rgba(0,0,0,0.87)" });
-const subCss = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)" });
+const titleCss = css({ textStyle: "heading", fontWeight: 600, color: "ink" });
+const subCss = css({ textStyle: "body", color: "ink2" });
 const markAllBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   minW: "64px", px: "8px", py: "6px", border: "none", borderRadius: "4px", bg: "transparent",
-  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75, color: "#0071e3",
+  textStyle: "ui", fontWeight: 500, color: "#0071e3",
   cursor: "pointer",
   _hover: { bg: "rgba(0, 113, 227, 0.05)" },
   _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
   "& svg": { display: "block" },
 });
 const centerBlock = css({ display: "flex", justifyContent: "center", py: "64px" });
-const errorText = css({ fontSize: "16px", lineHeight: 1.5, color: "#d32f2f" });
+const errorText = css({ textStyle: "lead", color: "#d32f2f" });
 const emptyCard = css({
   bg: "surface", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
   p: "64px", textAlign: "center",
 });
 const emptyIcon = css({ color: "rgba(0,0,0,0.2)", mb: "16px", display: "inline-block" });
-const emptyTitle = css({ fontSize: "16px", fontWeight: 500, lineHeight: 1.5, color: "rgba(0,0,0,0.87)" });
-const emptyBody = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)" });
+const emptyTitle = css({ textStyle: "lead", fontWeight: 500, color: "ink" });
+const emptyBody = css({ textStyle: "body", color: "ink2" });
 const list = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const row = css({
   p: "16px", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid",
@@ -80,19 +80,18 @@ const rowInner = css({ display: "flex", gap: "12px", alignItems: "flex-start" })
 const dot = css({ w: "10px", h: "10px", borderRadius: "50%", mt: "6px", flexShrink: 0 });
 const rowBody = css({ flex: 1, minW: 0 });
 const rowHead = css({ display: "flex", gap: "8px", alignItems: "center", flexWrap: "wrap", mb: "4px" });
-const rowTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.43, color: "rgba(0,0,0,0.87)" });
+const rowTitle = css({ textStyle: "body", fontWeight: 600, color: "ink" });
 const typeChip = css({
   display: "inline-flex", alignItems: "center", h: "18px", px: "8px", borderRadius: "999px",
-  fontSize: "9px", fontWeight: 500, whiteSpace: "nowrap",
+  textStyle: "micro", fontWeight: 500, whiteSpace: "nowrap",
 });
 const unreadDot = css({ w: "6px", h: "6px", borderRadius: "50%", bg: "#2563eb", flexShrink: 0 });
-const rowText = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.6)", mb: "6px" });
+const rowText = css({ textStyle: "body", color: "ink2", mb: "6px" });
 const rowFoot = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
-const stamp = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.38)" });
+const stamp = css({ textStyle: "meta", color: "ink3" });
 const markOneBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
-  minW: "auto", p: 0, border: "none", bg: "transparent", fontFamily: "inherit",
-  fontSize: "11px", fontWeight: 500, lineHeight: 1.75, color: "#0071e3", cursor: "pointer",
+  minW: "auto", p: 0, border: "none", bg: "transparent", textStyle: "micro", fontWeight: 500, color: "#0071e3", cursor: "pointer",
   _hover: { bg: "transparent", textDecoration: "underline" },
   _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
 });
@@ -101,8 +100,7 @@ const loadMoreBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   minW: "64px", h: "36.5px", px: "15px", borderRadius: "8px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.15)",
-  bg: "transparent", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  color: "rgba(0,0,0,0.6)", cursor: "pointer",
+  bg: "transparent", textStyle: "ui", fontWeight: 500, color: "ink2", cursor: "pointer",
   _hover: { borderColor: "rgba(0,0,0,0.3)", bg: "rgba(0,0,0,0.02)" },
   _disabled: { color: "rgba(0,0,0,0.26)", borderColor: "rgba(0,0,0,0.12)", cursor: "default", pointerEvents: "none" },
 });

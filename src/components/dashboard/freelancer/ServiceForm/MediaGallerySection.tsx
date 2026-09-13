@@ -31,10 +31,10 @@ const sectionCard = css({
   borderColor: "hairline",
   p: "32px",
 });
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 const requiredMark = css({ color: "#ef4444" });
-const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
-const errorText = css({ lineHeight: 1.5, fontSize: "12px", color: "#ef4444" });
+const sectionSub = css({ textStyle: "micro", color: "ink2" });
+const errorText = css({ textStyle: "meta", color: "#ef4444" });
 const hiddenInput = css({ display: "none" });
 const mediaGrid = css({
   display: "grid",
@@ -64,12 +64,11 @@ const filePreview = css({
   alignItems: "center",
   justifyContent: "center",
   bg: "rgba(0, 0, 0, 0.1)",
-  color: "rgba(0, 0, 0, 0.4)",
+  color: "ink3",
 });
 const pdfPreview = css({ flexDirection: "column" });
-const pdfName = css({ lineHeight: 1.5,
-  fontSize: "9px",
-  color: "rgba(0, 0, 0, 0.5)",
+const pdfName = css({ textStyle: "micro",
+  color: "ink2",
   px: "8px",
   textAlign: "center",
   maxW: "100%",
@@ -85,7 +84,7 @@ const coverBadge = css({
   py: "2px",
   bg: "accent",
   color: "white",
-  fontSize: "9px",
+  textStyle: "micro",
   fontWeight: 600,
   borderRadius: "4px",
   pointerEvents: "none",
@@ -109,7 +108,6 @@ const iconBtnBase = css({
   m: 0,
   border: "none",
   borderRadius: "pill",
-  fontFamily: "inherit",
   cursor: "pointer",
   _disabled: { pointerEvents: "none", opacity: 0.5 },
   "& svg": { display: "block" },
@@ -162,7 +160,6 @@ const uploadBtn = css({
   flexDirection: "column",
   alignItems: "center",
   justifyContent: "center",
-  fontFamily: "inherit",
   color: "ink",
   cursor: "pointer",
   transition: "background-color .25s",
@@ -171,21 +168,21 @@ const uploadBtn = css({
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const uploadDimmed = css({ opacity: 0.5 });
-const uploadIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.4)", mb: "8px" });
-const uploadLabel = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
-const uploadHint = css({ lineHeight: 1.5, fontSize: "10px", color: "ink3" });
+const uploadIcon = css({ display: "inline-block", color: "ink3", mb: "8px" });
+const uploadLabel = css({ textStyle: "micro", color: "ink2" });
+const uploadHint = css({ textStyle: "micro", color: "ink3" });
 const limitsRow = css({
   display: "flex",
   alignItems: "center",
   gap: "16px",
   mt: "16px",
-  fontSize: "11px",
+  textStyle: "micro",
   color: "ink2",
 });
 const limitItem = css({ display: "flex", alignItems: "center", gap: "4px" });
-const limitText = css({ lineHeight: 1.5, fontSize: "11px" });
+const limitText = css({ textStyle: "micro" });
 /* The old `ml: auto` sat on a <p>, where the unlayered `p { margin: 0 }` killed it — dropped. */
-const filesCount = css({ lineHeight: 1.5, fontSize: "11px" });
+const filesCount = css({ textStyle: "micro" });
 
 interface MediaGallerySectionProps {
   serviceId: number | null;
@@ -519,7 +516,7 @@ export default function MediaGallerySection({
             disabled={disabled || uploading || !canUpload || totalUploads >= MAX_FILES_PER_SERVICE}
             className={cx(uploadBtn, !canUpload && uploadDimmed)}>
             {uploading ? (
-              <Spinner size={24} className={css({ color: "rgba(0, 0, 0, 0.4)" })} />
+              <Spinner size={24} className={css({ color: "ink3" })} />
             ) : (
               <>
                 <CloudUpload size={24} className={uploadIcon} />

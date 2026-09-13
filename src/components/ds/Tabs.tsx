@@ -6,7 +6,7 @@ import { css } from "styled-system/css";
 
 /**
  * Tabs on Ark UI (accessible: arrow-key nav, aria-selected) styled with Panda.
- * Replaces MUI <Tabs>/<Tab>. Convenience API takes a `tabs` array; raw Ark parts
+ * Convenience API takes a `tabs` array; raw Ark parts
  * re-exported as `Tabs`.
  */
 export { Ark as TabsPrimitive };
@@ -27,9 +27,8 @@ const triggerCss = css({
   border: "none",
   px: "3",
   py: "3",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   color: "muted",
   cursor: "pointer",
   whiteSpace: "nowrap",

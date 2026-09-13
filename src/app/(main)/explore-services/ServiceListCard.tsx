@@ -44,13 +44,13 @@ const noImageCss = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "11px",
-  color: "rgba(0,0,0,0.3)",
+  textStyle: "micro",
+  color: "ink3",
 });
 const detailsCss = css({ flex: 1, minW: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" });
 const sellerRowCss = css({ display: "flex", alignItems: "center", gap: "8px", mb: "6px" });
-const sellerNameCss = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
-const dotCss = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.3)" });
+const sellerNameCss = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
+const dotCss = css({ textStyle: "micro", color: "ink3" });
 const chipCss = css({
   display: "inline-flex",
   alignItems: "center",
@@ -60,26 +60,25 @@ const chipCss = css({
   borderRadius: "pill",
   bg: "rgba(0,0,0,0.05)",
   color: "ink2",
-  fontSize: "10px",
+  textStyle: "micro",
   whiteSpace: "nowrap",
 });
 const titleCss = css({
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
   color: "ink",
   lineClamp: 2,
-  lineHeight: 1.4,
 });
 const bottomRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "8px" });
 const statsCss = css({ display: "flex", alignItems: "center", gap: "16px" });
 const statCss = css({ display: "flex", alignItems: "center", gap: "4px" });
-const ratingValueCss = css({ fontSize: "12px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
-const ratingCountCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.4)", lineHeight: 1.5 });
-const mutedSmCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.5)", lineHeight: 1.5 });
-const mutedIconCss = css({ color: "rgba(0,0,0,0.4)" });
+const ratingValueCss = css({ textStyle: "meta", fontWeight: 600, color: "ink" });
+const ratingCountCss = css({ textStyle: "micro", color: "ink3" });
+const mutedSmCss = css({ textStyle: "micro", color: "ink2" });
+const mutedIconCss = css({ color: "ink3" });
 const starCss = css({ color: "#f59e0b", fill: "#f59e0b" });
 const priceColCss = css({ textAlign: "right" });
-const priceCss = css({ fontSize: "16px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
+const priceCss = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 
 export default function ServiceListCard({ service }: ServiceListCardProps) {
   const [imageError, setImageError] = useState(false);

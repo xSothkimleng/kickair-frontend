@@ -58,10 +58,10 @@ const fileWrapCss = css({ mb: "8px" });
 // globals.css's unlayered `a { color: inherit; text-decoration: none }` beats every
 // layered rule, so the old sx `color`/`textDecoration` on this anchor never rendered —
 // the link has always inherited the bubble's colour. Kept as-is rather than "fixed".
-const fileLinkCss = css({ fontSize: "13px" });
-const bodyCss = css({ fontSize: "13px", lineHeight: 1.5, whiteSpace: "pre-wrap" });
+const fileLinkCss = css({ textStyle: "ui" });
+const bodyCss = css({ textStyle: "ui", whiteSpace: "pre-wrap" });
 // `mt`/`px` here were dead too: globals.css zeroes margin *and* padding on <p>.
-const timeCss = css({ fontSize: "10px", color: "ink3" });
+const timeCss = css({ textStyle: "micro", color: "ink3" });
 
 interface MessageBubbleProps {
   message: Message;

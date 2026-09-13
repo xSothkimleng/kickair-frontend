@@ -18,7 +18,6 @@ const faqTrigger = css({
   bg: "transparent",
   borderWidth: "0",
   textAlign: "left",
-  fontFamily: "inherit",
   cursor: "pointer",
   _hover: { bg: "rgba(0, 0, 0, 0.02)" },
 });
@@ -68,15 +67,14 @@ export default function FaqSection() {
         <Box textAlign="center" mb="12">
           <Box
             as="h2"
-            fontSize={{ base: "28px", md: "40px" }}
+            textStyle={{ base: "stat", md: "display" }}
             fontWeight={600}
             color="ink"
-            letterSpacing="-0.02em"
             mb="3"
           >
             Frequently Asked Questions
           </Box>
-          <Box as="p" fontSize={{ base: "16px", md: "19px" }} color="ink2">
+          <Box as="p" textStyle={{ base: "lead", md: "title" }} color="ink2">
             Everything you need to know about KickAir
           </Box>
         </Box>
@@ -101,12 +99,12 @@ export default function FaqSection() {
                   aria-expanded={isOpen}
                   className={faqTrigger}
                 >
-                  <Box as="span" fontSize="15px" fontWeight={600} color="ink">
+                  <Box as="span" textStyle="body" fontWeight={600} color="ink">
                     {faq.question}
                   </Box>
                   <ChevronDown
                     size={20}
-                    color="rgba(0, 0, 0, 0.6)"
+                    color="ink2"
                     style={{
                       flexShrink: 0,
                       transition: "transform .2s ease",
@@ -116,7 +114,7 @@ export default function FaqSection() {
                 </button>
                 {isOpen && (
                   <Box px="6" pb="6" pt="0">
-                    <Box as="p" fontSize="14px" color="rgba(0, 0, 0, 0.7)" lineHeight={1.6}>
+                    <Box as="p" textStyle="body" color="ink2">
                       {faq.answer}
                     </Box>
                   </Box>

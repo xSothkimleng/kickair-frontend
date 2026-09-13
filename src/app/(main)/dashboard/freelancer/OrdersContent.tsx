@@ -109,7 +109,7 @@ export default function OrdersContent() {
       case "cancelled":
         return { bgcolor: "rgba(239, 68, 68, 0.1)", color: "#b91c1c" };
       default:
-        return { bgcolor: "rgba(0,0,0,0.1)", color: "rgba(0,0,0,0.6)" };
+        return { bgcolor: "rgba(0,0,0,0.1)", color: "ink2" };
     }
   };
 
@@ -135,13 +135,13 @@ export default function OrdersContent() {
       case "accepted": // legacy milestone flow — work continues in the Workspace
         return { label: "Active", bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
       case "declined":
-        return { label: "Declined", bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
+        return { label: "Declined", bgcolor: "rgba(0,0,0,0.06)", color: "ink2" };
       case "withdrawn":
-        return { label: "Withdrawn", bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
+        return { label: "Withdrawn", bgcolor: "rgba(0,0,0,0.06)", color: "ink2" };
       case "expired":
-        return { label: "Expired", bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
+        return { label: "Expired", bgcolor: "rgba(0,0,0,0.06)", color: "ink2" };
       default:
-        return { label: r.status, bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.55)" };
+        return { label: r.status, bgcolor: "rgba(0,0,0,0.06)", color: "ink2" };
     }
   };
 

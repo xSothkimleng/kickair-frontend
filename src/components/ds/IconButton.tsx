@@ -1,7 +1,8 @@
 import { cva, cx, type RecipeVariantProps } from "styled-system/css";
+import { tapTargetIcon } from "./tap";
 import type { ButtonHTMLAttributes, Ref } from "react";
 
-/** Square/round icon-only button. Replaces MUI <IconButton>. Always pass aria-label. */
+/** Square/round icon-only button. Always pass aria-label. */
 export const iconButton = cva({
   base: {
     display: "inline-flex",
@@ -14,7 +15,7 @@ export const iconButton = cva({
     color: "muted",
     cursor: "pointer",
     appearance: "none",
-    fontFamily: "inherit",
+    ...tapTargetIcon,
     transition: "background-color .15s, color .15s, border-color .15s",
     _hover: { bg: "fill", color: "heading" },
     _focusVisible: { outline: "none", boxShadow: "focusRing" },

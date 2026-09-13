@@ -9,7 +9,7 @@ const row = css({ display: "flex", alignItems: "flex-start", gap: "12px" });
 const fields = css({ flex: 1, display: "flex", flexDirection: "column", gap: "12px" });
 const controls = css({ display: "flex", alignItems: "center", gap: "12px" });
 const typeSelect = css({ minW: "160px" });
-const checkboxLabel = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const checkboxLabel = css({ textStyle: "meta", color: "ink2" });
 const removeBtn = css(iconButton.raw({ shape: "square" }), {
   w: "32px",
   h: "32px",

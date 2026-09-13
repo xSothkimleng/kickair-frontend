@@ -47,8 +47,8 @@ const container = css({
 const backBtn = css({ mb: "16px" });
 const header = css({ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", mb: "16px" });
 
-const pageTitle = css({ fontSize: "28px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
-const pageSub = css({ fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+const pageTitle = css({ textStyle: "stat", fontWeight: 600, color: "ink" });
+const pageSub = css({ textStyle: "body", color: "ink2" });
 const headActions = css({ display: "flex", gap: "10px", alignItems: "flex-start" });
 const parties = css({ display: "flex", gap: "16px", flexWrap: "wrap", mb: "18px" });
 
@@ -63,7 +63,7 @@ const turnBanner = cva({
   },
 });
 const turnText = cva({
-  base: { fontSize: "13.5px", lineHeight: 1.5, fontWeight: 500 },
+  base: { textStyle: "ui", fontWeight: 500 },
   variants: { who: { you: { color: "pendingText" }, done: { color: "successText" }, them: { color: "ink2" } } },
 });
 const alertGap = css({ mb: "16px" });
@@ -88,8 +88,8 @@ const railNode = cva({
     display: "grid",
     placeItems: "center",
     zIndex: 1,
-    fontFamily: "mono",
-    fontSize: "12px",
+    fontVariantNumeric: "tabular-nums",
+    textStyle: "meta",
     fontWeight: 600,
     borderWidth: "1.5px",
     borderStyle: "solid",
@@ -126,27 +126,27 @@ const msCard = cva({
 const msHead = css({ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "flex-start" });
 const msTitleWrap = css({ minWidth: 0, flex: 1 });
 const msTitleRow = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" });
-const msTitle = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5, color: "ink" });
-const msDesc = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const msTitle = css({ fontWeight: 600, textStyle: "body", color: "ink" });
+const msDesc = css({ textStyle: "ui", color: "ink2" });
 const msAmount = css({ textAlign: "right", flex: "none" });
-const msStamp = css({ fontSize: "11px", lineHeight: 1.5, color: "ink3" });
+const msStamp = css({ textStyle: "micro", color: "ink3" });
 
 const noteBox = css({ mt: "12px", p: "10px", bg: "surface2", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "8px" });
-const noteLabel = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, color: "ink3" });
-const noteText = css({ fontSize: "13px", color: "ink2", lineHeight: 1.5, whiteSpace: "pre-wrap" });
+const noteLabel = css({ textStyle: "micro", fontWeight: 600, color: "ink3" });
+const noteText = css({ textStyle: "ui", color: "ink2", whiteSpace: "pre-wrap" });
 const filesRow = css({ display: "flex", gap: "8px", flexWrap: "wrap", mt: "12px" });
 const fileLink = css({ textDecoration: "none" });
 const revBox = css({ mt: "12px", p: "10px", bg: "pendingTint", borderRadius: "8px" });
-const revText = css({ fontSize: "12px", lineHeight: 1.5, color: "pendingText" });
+const revText = css({ textStyle: "meta", color: "pendingText" });
 const actionBar = css({ mt: "14px", pt: "14px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
 const actionRow = css({ display: "flex", gap: "10px", flexWrap: "wrap" });
 
 const partyRow = css({ display: "flex", alignItems: "center", gap: "8px" });
-const partyName = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const partyName = css({ textStyle: "meta", color: "ink2" });
 const partyRole = css({ color: "ink3" });
 
 const waitingRow = cva({
-  base: { display: "flex", alignItems: "center", gap: "7px", fontSize: "12.5px" },
+  base: { display: "flex", alignItems: "center", gap: "7px", textStyle: "meta" },
   variants: { muted: { true: { color: "ink3" }, false: { color: "pendingText" } } },
 });
 
@@ -154,9 +154,9 @@ const waitingRow = cva({
 const panel = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
 const dlgHeader = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" });
 
-const dlgTitle = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
+const dlgTitle = css({ textStyle: "title", fontWeight: 600, color: "ink" });
 const dlgContent = css({ p: "16px 24px 8px" });
-const dlgLabel = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "ink" });
+const dlgLabel = css({ textStyle: "meta", fontWeight: 600, color: "ink" });
 const dlgFooter = css({ display: "flex", justifyContent: "flex-end", gap: "10px", p: "8px 24px 22px" });
 
 const dropZone = css({
@@ -170,23 +170,23 @@ const dropZone = css({
   _hover: { borderColor: "ink3" },
 });
 const dropIcon = css({ color: "ink3", display: "block", mx: "auto", mb: "4px" });
-const dropText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const dropText = css({ textStyle: "meta", color: "ink2" });
 const fileList = css({ display: "flex", flexDirection: "column", gap: "6px", mt: "10px" });
 const fileRow = css({ display: "flex", alignItems: "center", gap: "8px", px: "10px", py: "6px", bg: "surface2", borderRadius: "8px" });
-const fileName = css({ flex: 1, fontSize: "12.5px", lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "ink" });
+const fileName = css({ flex: 1, textStyle: "meta", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "ink" });
 
 const endBody = css({ display: "flex", flexDirection: "column", gap: "12px", p: "16px 24px 24px" });
-const endIntro = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.5 });
+const endIntro = css({ textStyle: "ui", color: "ink2" });
 const endActions = css({ display: "flex", gap: "10px", mt: "4px" });
 const groupBox = css({ p: "16px", borderWidth: "1px", borderStyle: "solid", borderRadius: "12px" });
 const groupHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "12px" });
 const groupHeadLeft = css({ display: "flex", alignItems: "center", gap: "9px" });
 const groupIcon = css({ width: "28px", height: "28px", borderRadius: "8px", display: "grid", placeItems: "center", flex: "none" });
-const groupTitle = css({ fontWeight: 600, fontSize: "14px", lineHeight: 1.5, color: "ink" });
+const groupTitle = css({ fontWeight: 600, textStyle: "body", color: "ink" });
 const groupItems = css({ display: "flex", flexDirection: "column", gap: "7px" });
 const groupItem = css({ display: "flex", justifyContent: "space-between" });
-const groupItemLabel = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
-const groupNote = css({ fontSize: "11.5px", color: "ink3", lineHeight: 1.45 });
+const groupItemLabel = css({ textStyle: "ui", color: "ink2" });
+const groupNote = css({ textStyle: "micro", color: "ink3" });
 
 export default function Workspace({ order, role }: { order: CustomOrder; role: Role }) {
   const router = useRouter();
@@ -261,13 +261,13 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
           </div>
           <div className={headActions}>
             {order.order && (
-              <button type="button" onClick={openChat} className={coBtn({ tone: "grey", size: "px14", font: "13.5", strong: true })}>
+              <button type="button" onClick={openChat} className={coBtn({ tone: "grey", size: "px14", font: "ui", strong: true })}>
                 <MessageCircle size={16} className={coBtnStart} />
                 Message {(isClient ? order.freelancer.name : order.client.name)?.split(" ")[0] ?? "chat"}
               </button>
             )}
             {order.order?.status === "active" && (
-              <button type="button" onClick={() => setEndOpen(true)} className={coBtn({ tone: "quiet", font: "13.5", strong: true })}>End order</button>
+              <button type="button" onClick={() => setEndOpen(true)} className={coBtn({ tone: "quiet", font: "ui", strong: true })}>End order</button>
             )}
           </div>
         </div>
@@ -414,7 +414,7 @@ function MilestoneCard({
           {m.description && <p className={msDesc}>{m.description}</p>}
         </div>
         <div className={msAmount}>
-          <Money value={m.amount} size={16} weight={600} color={done ? "var(--colors-success-text)" : m.status === "upcoming" ? "var(--colors-ink3)" : "var(--colors-ink)"} />
+          <Money value={m.amount} size="lead" weight={600} color={done ? "var(--colors-success-text)" : m.status === "upcoming" ? "var(--colors-ink3)" : "var(--colors-ink)"} />
           <p className={msStamp}>{stamp}</p>
         </div>
       </div>
@@ -493,7 +493,7 @@ function NoteDialog({ open, title, annotation, label, placeholder, cta, busy, re
       </div>
       <div className={dlgContent}>
         <p className={dlgLabel}>{label}</p>
-        <CoTextArea font="13.5" hover="strong" focus="thick" minRows={3} value={note} onChange={setNote} placeholder={placeholder} />
+        <CoTextArea font="ui" hover="strong" focus="thick" minRows={3} value={note} onChange={setNote} placeholder={placeholder} />
       </div>
       <div className={dlgFooter}>
         <button type="button" onClick={onClose} disabled={busy} className={coBtn({ tone: "quiet", strong: true })}>Cancel</button>
@@ -546,7 +546,7 @@ function SubmitMilestoneDialog({ open, busy, onClose, onConfirm }: {
       </div>
       <div className={dlgContent}>
         <p className={dlgLabel}>Note to client · optional</p>
-        <CoTextArea font="13.5" hover="strong" focus="thick" minRows={3} value={note} onChange={setNote} placeholder="Summarise what you delivered…" />
+        <CoTextArea font="ui" hover="strong" focus="thick" minRows={3} value={note} onChange={setNote} placeholder="Summarise what you delivered…" />
 
         <p className={dlgLabel}>Deliverable files · optional</p>
         <input ref={inputRef} type="file" multiple hidden onChange={(e) => e.target.files && upload(e.target.files)} />
@@ -589,13 +589,13 @@ function Group({ icon, title, note, items, color, bg }: { icon: React.ReactNode;
           <div className={groupIcon} style={{ background: bg, color }}>{icon}</div>
           <p className={groupTitle}>{title}</p>
         </div>
-        <Money value={total} size={15} weight={600} color={color} />
+        <Money value={total} size="body" weight={600} color={color} />
       </div>
       <div className={groupItems}>
         {items.map((m) => (
           <div key={m.id} className={groupItem}>
             <p className={groupItemLabel}>{m.seq}. {m.title}</p>
-            <Money value={m.amount} size={13} weight={500} color="var(--colors-ink2)" />
+            <Money value={m.amount} size="ui" weight={500} color="var(--colors-ink2)" />
           </div>
         ))}
       </div>

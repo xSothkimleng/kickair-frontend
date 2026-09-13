@@ -28,16 +28,16 @@ const STEP_ROUTES: Record<string, string> = {
 // Modal body pads 24px/16px; this brings it to the original 22px top / 24px bottom.
 const bodyPad = css({ pt: "6px", pb: "8px" });
 const header = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: "16px" });
-const title = css({ m: 0, fontSize: "20px", fontWeight: 600, letterSpacing: "-0.02em", color: "ink" });
-const errorText = css({ fontSize: "13.5px", color: "ink2", py: "32px", textAlign: "center" });
+const title = css({ m: 0, textStyle: "title", fontWeight: 600, color: "ink" });
+const errorText = css({ textStyle: "ui", color: "ink2", py: "32px", textAlign: "center" });
 const spinnerWrap = css({ display: "flex", justifyContent: "center", py: "48px" });
 const levelCard = css({ p: "16px", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", bg: "surface2", mb: "18px" });
 const levelRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "10px" });
-const xpText = css({ fontSize: "13.5px", fontWeight: 600, fontFamily: "mono" });
+const xpText = css({ textStyle: "ui", fontWeight: 600, fontVariantNumeric: "tabular-nums" });
 // Nested selector (higher specificity) so the 8px/track colour win over the ds Progress defaults deterministically.
 const progressWrap = css({ "& [role=progressbar]": { h: "8px", bg: "rgba(0,0,0,0.07)" } });
-const nextText = css({ fontSize: "11.5px", color: "ink3", mt: "6px" });
-const stepsHeading = css({ fontSize: "10.5px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3", mb: "6px" });
+const nextText = css({ textStyle: "micro", color: "ink3", mt: "6px" });
+const stepsHeading = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3", mb: "6px" });
 const stepsList = css({ display: "flex", flexDirection: "column", mb: "16px" });
 const stepRow = cva({
   base: { display: "flex", alignItems: "center", gap: "10px", py: "8px", px: "8px", mx: "-8px", borderRadius: "8px" },
@@ -46,17 +46,17 @@ const stepRow = cva({
 const doneMark = css({ w: "18px", h: "18px", borderRadius: "50%", bg: "success", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" });
 const openMark = css({ w: "18px", h: "18px", borderRadius: "50%", borderWidth: "1.5px", borderStyle: "solid", borderColor: "hairlineStrong", flex: "none" });
 const stepLabel = cva({
-  base: { fontSize: "13.5px", flex: 1 },
+  base: { textStyle: "ui", flex: 1 },
   variants: { done: { true: { color: "ink3", textDecoration: "line-through" }, false: { color: "ink", textDecoration: "none" } } },
 });
 const stepXp = cva({
-  base: { fontSize: "11.5px", fontWeight: 600, fontFamily: "mono" },
+  base: { textStyle: "micro", fontWeight: 600, fontVariantNumeric: "tabular-nums" },
   variants: { done: { true: { color: "ink3" }, false: { color: "successText" } } },
 });
 const chevron = css({ color: "ink3" });
 const beyondBox = css({ p: "12px", borderRadius: "10px", bg: "surface2", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
-const beyondText = css({ fontSize: "12px", color: "ink2", lineHeight: 1.55 });
-const fullPageBtn = css(button.raw({ variant: "solid", size: "sm", full: true }), { mt: "16px", h: "40px", fontSize: "13.5px", borderRadius: "pill", color: "ink", bg: "rgba(0,0,0,0.05)", _hover: { bg: "rgba(0,0,0,0.09)" } });
+const beyondText = css({ textStyle: "meta", color: "ink2" });
+const fullPageBtn = css(button.raw({ variant: "solid", size: "sm", full: true }), { mt: "16px", h: "40px", textStyle: "ui", borderRadius: "pill", color: "ink", bg: "rgba(0,0,0,0.05)", _hover: { bg: "rgba(0,0,0,0.09)" } });
 
 /**
  * "Your level" popup: current level + XP progress, plus the complete

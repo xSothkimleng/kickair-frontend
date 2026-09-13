@@ -39,12 +39,12 @@ const START_EVENTS = new Set(["order_placed", "order_accepted", "custom_order_ac
 
 const titleFor = (t: string) => t.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
 
-/* ── Styles (MUI Paper/Typography/Chip metrics, measured against the MUI build) ── */
+/* ── Styles (card, text and chip metrics) ── */
 
 /** `Paper variant="outlined"`: white, 1px divider hairline, 8px radius, 16/20px pad. */
 const cardCss = css({
   bg: "#FFFFFF",
-  color: "rgba(0,0,0,0.87)",
+  color: "ink",
   borderWidth: "1px",
   borderStyle: "solid",
   borderColor: "rgba(0,0,0,0.12)",
@@ -53,27 +53,24 @@ const cardCss = css({
 });
 
 const eyebrowCss = css({
-  fontSize: "11px",
+  textStyle: "eyebrow",
   fontWeight: 600,
-  lineHeight: 1.5,
   color: "#94A3B8",
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
 });
-/** MUI `caption`: 12px / 1.66. */
-const captionCss = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)" });
+/** Caption: 12px. */
+const captionCss = css({ textStyle: "meta", color: "ink2" });
 
 const loadingWrapCss = css({ display: "flex", justifyContent: "center", py: "24px" });
-const emptyCss = css({ fontSize: "13px", lineHeight: 1.5, color: "#94A3B8" });
+const emptyCss = css({ textStyle: "ui", color: "#94A3B8" });
 
 const rowsCss = css({ mt: "20px" });
 const rowCss = css({ display: "flex", gap: "14px", position: "relative" });
 const whenCss = css({ width: "92px", flexShrink: 0, textAlign: "right", pt: "1px" });
-const whenDateCss = css({ fontSize: "12px", fontWeight: 600, color: "#334155", lineHeight: 1.35 });
-const whenTimeCss = css({ fontSize: "11.5px", lineHeight: 1.5, color: "#94A3B8" });
+const whenDateCss = css({ textStyle: "meta", fontWeight: 600, color: "#334155" });
+const whenTimeCss = css({ textStyle: "micro", color: "#94A3B8" });
 
 const railColCss = css({ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 });
-/** 20px content box + 2px border = the 24px dot MUI drew (preflight off → content-box). */
+/** 20px content box + 2px border = the 24px dot (preflight off → content-box). */
 const dotCss = css({
   width: "20px",
   height: "20px",
@@ -92,14 +89,13 @@ const bodyCss = cva({
   variants: { last: { true: { pb: 0 }, false: { pb: "20px" } } },
 });
 const headRowCss = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
-const titleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#0F172A" });
-const actorCss = css({ fontSize: "11.5px", lineHeight: 1.5, color: "#94A3B8" });
-const descCss = css({ fontSize: "13px", color: "#475569", lineHeight: 1.5 });
-/** The note is a `<p>`; `globals.css` zeroes its padding/margin, so MUI never drew either. */
+const titleCss = css({ textStyle: "ui", fontWeight: 600, color: "#0F172A" });
+const actorCss = css({ textStyle: "micro", color: "#94A3B8" });
+const descCss = css({ textStyle: "ui", color: "#475569" });
+/** The note is a `<p>`; `globals.css` zeroes its padding/margin, so nothing drew either. */
 const noteCss = css({
-  fontSize: "13px",
+  textStyle: "ui",
   color: "#334155",
-  lineHeight: 1.6,
   whiteSpace: "pre-wrap",
   bg: "#F8FAFC",
   borderWidth: "1px",
@@ -122,9 +118,8 @@ const badgeCss = cva({
     borderStyle: "solid",
     borderRadius: "16px",
     bg: "transparent",
-    fontSize: "10.5px",
+    textStyle: "micro",
     fontWeight: 700,
-    lineHeight: 1.5,
     whiteSpace: "nowrap",
     maxWidth: "100%",
     verticalAlign: "middle",
@@ -149,10 +144,10 @@ const fileRowCss = css({
   borderRadius: "6px",
   maxWidth: "420px",
 });
-const fileIconCss = css({ color: "rgba(0,0,0,0.54)", flexShrink: 0, "& svg": { display: "block" } });
-const fileNameCss = css({ flex: 1, fontSize: "12px", lineHeight: 1.66, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
-const fileErrCss = css({ fontSize: "12px", lineHeight: 1.66, color: "#d32f2f" });
-const fileOpenCss = css({ fontSize: "12px", lineHeight: 1.66, textDecoration: "none" });
+const fileIconCss = css({ color: "ink2", flexShrink: 0, "& svg": { display: "block" } });
+const fileNameCss = css({ flex: 1, textStyle: "meta", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const fileErrCss = css({ textStyle: "meta", color: "#d32f2f" });
+const fileOpenCss = css({ textStyle: "meta", textDecoration: "none" });
 const fileDlCss = css({
   display: "flex",
   alignItems: "center",
@@ -161,7 +156,7 @@ const fileDlCss = css({
   color: "#1976d2",
   _hover: { textDecoration: "underline" },
 });
-const fileDlTextCss = css({ fontSize: "12px", lineHeight: 1.66, color: "#1976d2" });
+const fileDlTextCss = css({ textStyle: "meta", color: "#1976d2" });
 
 function AttachmentRow({ file, orderId }: { file: Attachment; orderId: number }) {
   const [downloading, setDownloading] = useState(false);

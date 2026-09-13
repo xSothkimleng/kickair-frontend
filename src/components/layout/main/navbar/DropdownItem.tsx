@@ -12,8 +12,8 @@ export interface DropdownItemProps {
 }
 
 const iconCss = css({ flexShrink: 0, mt: "2px" });
-const titleCss = css({ fontSize: "13px", fontWeight: 600 });
-const descCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)" });
+const titleCss = css({ textStyle: "ui", fontWeight: 600 });
+const descCss = css({ textStyle: "micro", color: "ink2" });
 const extraCss = css({ mt: "8px" });
 
 export function DropdownItem({ icon, title, description, extra, href, onClick }: DropdownItemProps) {

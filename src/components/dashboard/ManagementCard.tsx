@@ -14,7 +14,7 @@ const TONE_CLASS: Record<CardTone, string> = {
   error: css({ bg: "errorTint", color: "errorText" }),
   neutral: css({ bg: "rgba(0,0,0,0.05)", color: "ink2" }),
 };
-const pillBase = css({ display: "inline-flex", alignItems: "center", gap: "6px", h: "24px", px: "10px", borderRadius: "pill", fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap", flex: "none" });
+const pillBase = css({ display: "inline-flex", alignItems: "center", gap: "6px", h: "24px", px: "10px", borderRadius: "pill", textStyle: "meta", fontWeight: 600, whiteSpace: "nowrap", flex: "none" });
 const pillDot = css({ w: "6px", h: "6px", borderRadius: "pill", bg: "currentColor" });
 export function StatusPill({ tone, label }: { tone: CardTone; label: string }) {
   return (
@@ -25,7 +25,7 @@ export function StatusPill({ tone, label }: { tone: CardTone; label: string }) {
 }
 
 /* ── Category pill ── */
-const categoryPill = css({ display: "inline-flex", alignItems: "center", h: "24px", px: "11px", borderRadius: "pill", fontSize: "11.5px", fontWeight: 600, letterSpacing: "0.01em", bg: "rgba(0,0,0,0.05)", color: "ink2", whiteSpace: "nowrap" });
+const categoryPill = css({ display: "inline-flex", alignItems: "center", h: "24px", px: "11px", borderRadius: "pill", textStyle: "micro", fontWeight: 600, bg: "rgba(0,0,0,0.05)", color: "ink2", whiteSpace: "nowrap" });
 export function CategoryPill({ children }: { children: ReactNode }) {
   return <span className={categoryPill}>{children}</span>;
 }
@@ -40,8 +40,7 @@ export interface MenuAction {
 }
 const kebabBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", w: "34px", h: "34px", p: 0,
-  border: "none", borderRadius: "9px", bg: "transparent", color: "ink3", cursor: "pointer", fontFamily: "inherit",
-  transition: "background-color .12s, color .12s",
+  border: "none", borderRadius: "9px", bg: "transparent", color: "ink3", cursor: "pointer", transition: "background-color .12s, color .12s",
   _hover: { bg: "rgba(0,0,0,0.05)", color: "ink" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
@@ -53,7 +52,7 @@ const kebabContent = css({
 });
 const kebabItem = css({
   display: "flex", alignItems: "center", gap: "11px", px: "11px", py: "9px", borderRadius: "8px",
-  fontSize: "13.5px", fontWeight: 500, color: "ink", cursor: "pointer", userSelect: "none",
+  textStyle: "ui", fontWeight: 500, color: "ink", cursor: "pointer", userSelect: "none",
   transition: "background-color .12s",
   _hover: { bg: "surface2" },
   "&[data-highlighted]": { bg: "surface2" },
@@ -102,8 +101,8 @@ export interface Fact {
   mono?: boolean;
 }
 const factsRow = css({ display: "flex", rowGap: "12px", alignItems: "stretch" });
-const factLabel = css({ fontSize: "10px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
-const factValue = css({ fontSize: "14.5px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.1, color: "ink", whiteSpace: "nowrap" });
+const factLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
+const factValue = css({ textStyle: "body", fontWeight: 600, color: "ink", whiteSpace: "nowrap" });
 const factSep = css({ w: "1px", bg: "hairline", alignSelf: "stretch", flex: "none" });
 export function Facts({ items, mobile }: { items: Fact[]; mobile?: boolean }) {
   return (
@@ -113,7 +112,7 @@ export function Facts({ items, mobile }: { items: Fact[]; mobile?: boolean }) {
           {i > 0 && <div aria-hidden className={cx(factSep, mobile ? css({ mx: "14px" }) : css({ mx: "18px" }))} />}
           <div className={css({ display: "flex", flexDirection: "column", gap: "3px", minW: 0 })}>
             <div className={factLabel}>{f.label}</div>
-            <div className={cx(factValue, f.mono && css({ fontFamily: "mono" }))} style={f.color ? { color: f.color } : undefined}>{f.value}</div>
+            <div className={cx(factValue, f.mono && css({ fontVariantNumeric: "tabular-nums" }))} style={f.color ? { color: f.color } : undefined}>{f.value}</div>
           </div>
         </div>
       ))}
@@ -125,14 +124,14 @@ export function Facts({ items, mobile }: { items: Fact[]; mobile?: boolean }) {
 const bannerBase = css({ display: "flex", gap: "10px", p: "11px 13px", borderRadius: "tile", borderWidth: "1px", borderStyle: "solid" });
 const bannerError = css({ bg: "errorTint", borderColor: "rgba(220,38,38,0.16)", color: "errorText", "& .mg-banner-icon": { color: "errorText" } });
 const bannerQuiet = css({ bg: "rgba(0,0,0,0.035)", borderColor: "hairline", color: "ink2", "& .mg-banner-icon": { color: "ink3" } });
-const bannerText = css({ fontSize: "12.5px", lineHeight: 1.5, lineClamp: 2 });
+const bannerText = css({ textStyle: "meta", lineClamp: 2 });
 export function Banner({ tone, icon, label, text }: { tone: "error" | "quiet"; icon: ReactNode; label: string; text?: string }) {
   const err = tone === "error";
   return (
     <div className={cx(bannerBase, err ? bannerError : bannerQuiet)}>
       <div className={cx("mg-banner-icon", css({ flex: "none", mt: "1px", display: "flex" }))}>{icon}</div>
       <div className={css({ minW: 0 })}>
-        <div className={css({ fontSize: "12.5px", fontWeight: 600 })}>{label}</div>
+        <div className={css({ textStyle: "meta", fontWeight: 600 })}>{label}</div>
         {text && <div className={bannerText} style={{ opacity: err ? 0.92 : 0.82 }}>{text}</div>}
       </div>
     </div>

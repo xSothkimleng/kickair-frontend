@@ -16,10 +16,10 @@ const mainCol = css({ display: "flex", flexDirection: "column", gap: "16px" });
 const offerCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
 const offerHead = css({ display: "flex", justifyContent: "space-between", gap: "12px", mb: "18px" });
 const who = css({ display: "flex", gap: "12px" });
-const whoName = css({ fontWeight: 600, fontSize: "15.5px", lineHeight: 1.5, color: "ink" });
-const whoMeta = css({ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", lineHeight: 1.5, color: "ink2" });
-const scopeText = css({ fontSize: "14px", lineHeight: 1.55, color: "ink" });
-const metaRow = css({ display: "flex", gap: "18px", flexWrap: "wrap", color: "ink2", fontSize: "12.5px" });
+const whoName = css({ fontWeight: 600, textStyle: "lead", color: "ink" });
+const whoMeta = css({ display: "flex", alignItems: "center", gap: "4px", textStyle: "meta", color: "ink2" });
+const scopeText = css({ textStyle: "body", color: "ink" });
+const metaRow = css({ display: "flex", gap: "18px", flexWrap: "wrap", color: "ink2", textStyle: "meta" });
 const metaItem = css({ display: "flex", alignItems: "center", gap: "6px" });
 
 // Same card, but on surface2 — written out rather than cx()'d over `coCard`
@@ -34,8 +34,8 @@ const shieldCard = css({
 });
 const shieldRow = css({ display: "flex", gap: "12px", alignItems: "flex-start" });
 const shieldIcon = css({ width: "38px", height: "38px", borderRadius: "10px", bg: "pendingTint", display: "grid", placeItems: "center", flex: "none" });
-const shieldTitle = css({ fontWeight: 600, fontSize: "14.5px", lineHeight: 1.5, color: "ink" });
-const shieldBody = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.5 });
+const shieldTitle = css({ fontWeight: 600, textStyle: "body", color: "ink" });
+const shieldBody = css({ textStyle: "ui", color: "ink2" });
 
 const aside = cx(coCard, css({ p: { base: "20px", md: "24px" }, position: { md: "sticky" }, top: "24px" }));
 const payBox = css({
@@ -50,17 +50,17 @@ const payBox = css({
 });
 
 const payValue = css({ mt: "6px" });
-const payNote = css({ fontSize: "11.5px", lineHeight: 1.5, color: "pendingText", opacity: 0.85 });
+const payNote = css({ textStyle: "micro", color: "pendingText", opacity: 0.85 });
 
 const laterList = css({ display: "flex", flexDirection: "column", gap: "10px", mb: "16px" });
 const betweenRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
-const betweenLabel = css({ fontSize: "13.5px", lineHeight: 1.5, color: "ink2" });
-const errorText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "errorText" });
+const betweenLabel = css({ textStyle: "ui", color: "ink2" });
+const errorText = css({ textStyle: "meta", color: "errorText" });
 
 const expiredBox = css({ display: "flex", gap: "8px", p: "12px 14px", bg: "rgba(0,0,0,0.04)", borderRadius: "10px" });
-const expiredText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const expiredText = css({ textStyle: "meta", color: "ink2" });
 const declineBtn = css({ mt: "10px" });
-const escrowNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", mt: "12px", color: "ink3", fontSize: "11.5px" });
+const escrowNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", mt: "12px", color: "ink3", textStyle: "micro" });
 
 export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; onChanged: () => void }) {
   const invalidate = useCoInvalidate();
@@ -149,13 +149,13 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
       <p className={coLabel}>To start the project</p>
       <div className={payBox}>
         <p className={coLabelPending}>You pay now</p>
-        <div className={payValue}><Money value={payNow} size={32} weight={600} color="var(--colors-pending-text)" cents /></div>
+        <div className={payValue}><Money value={payNow} size="stat" weight={600} color="var(--colors-pending-text)" cents /></div>
         <p className={payNote}>One-time payment → held in escrow</p>
       </div>
       {fundedLater > 0 && (
         <div className={laterList}>
-          <Between label="Total project value"><Money value={offer.total} size={14} weight={500} /></Between>
-          <Between label="Funded later"><Money value={fundedLater} size={14} weight={500} color="var(--colors-ink3)" /></Between>
+          <Between label="Total project value"><Money value={offer.total} size="body" weight={500} /></Between>
+          <Between label="Funded later"><Money value={fundedLater} size="body" weight={500} color="var(--colors-ink3)" /></Between>
         </div>
       )}
 
@@ -172,7 +172,7 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
             <Lock size={20} className={coBtnStart} />
             Accept &amp; Pay
           </button>
-          <button type="button" onClick={handleDecline} disabled={declining} className={cx(coBtn({ tone: "quiet", font: "13.5", strong: true, full: true }), declineBtn)}>
+          <button type="button" onClick={handleDecline} disabled={declining} className={cx(coBtn({ tone: "quiet", font: "ui", strong: true, full: true }), declineBtn)}>
             {declining ? <Spinner size={16} /> : "Decline"}
           </button>
           <div className={escrowNote}>

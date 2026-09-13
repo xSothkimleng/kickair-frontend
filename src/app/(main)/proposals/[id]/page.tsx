@@ -37,7 +37,7 @@ const STATUS_CLASS: Record<string, string> = {
   pending: css({ bg: "rgba(234,88,12,0.1)", color: "pendingText" }),
   accepted: css({ bg: "rgba(22,163,74,0.1)", color: "successText" }),
   rejected: css({ bg: "rgba(239,68,68,0.1)", color: "errorText" }),
-  withdrawn: css({ bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" }),
+  withdrawn: css({ bg: "rgba(0,0,0,0.06)", color: "ink2" }),
 };
 const statusClass = (status: string) => STATUS_CLASS[status] ?? STATUS_CLASS.withdrawn;
 
@@ -54,8 +54,7 @@ const centreLoading = css({ display: "flex", justifyContent: "center", alignItem
 const backBtn = css({
   display: "inline-flex", alignItems: "center", gap: "8px",
   m: 0, p: "6px 8px", border: "none", bg: "transparent",
-  color: "ink2", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "color .25s, background-color .25s",
+  color: "ink2", textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "color .25s, background-color .25s",
   _hover: { bg: "rgba(0,0,0,0.04)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
@@ -75,29 +74,27 @@ const paperSm = css({
   p: "24px",
 });
 const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", mb: "24px" });
-const eyebrow = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const eyebrow = css({ textStyle: "ui", color: "ink2" });
 const jobLink = css({ textDecoration: "none", display: "inline-block" });
-const jobTitle = css({ lineHeight: 1.5,
-  fontSize: "20px", fontWeight: 700, color: "ink", transition: "color 0.15s",
+const jobTitle = css({ textStyle: "title", fontWeight: 700, color: "ink", transition: "color 0.15s",
   _hover: { color: "accent" },
 });
 const linkIcon = css({ ml: "6px", verticalAlign: "middle", opacity: 0.5, display: "inline" });
-const statusChip = css({ display: "inline-flex", alignItems: "center", flexShrink: 0, h: "28px", px: "12px", borderRadius: "pill", fontSize: "13px" });
+const statusChip = css({ display: "inline-flex", alignItems: "center", flexShrink: 0, h: "28px", px: "12px", borderRadius: "pill", textStyle: "ui" });
 const statsGrid = css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", mb: "24px" });
 const statHead = css({ display: "flex", alignItems: "center", gap: "4px", color: "ink2", mb: "4px" });
-const statLabel = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2", textTransform: "uppercase", letterSpacing: "0.5px" });
-const statValue = css({ lineHeight: 1.5, fontSize: "22px", fontWeight: 700 });
+const statLabel = css({ textStyle: "eyebrow", color: "ink2" });
+const statValue = css({ textStyle: "title", fontWeight: 700 });
 const statValueGreen = css({ color: "successText" });
-const submittedRow = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
-const updatedChip = css({ display: "inline-flex", alignItems: "center", h: "20px", px: "8px", ml: "8px", borderRadius: "pill", fontSize: "10px", bg: "rgba(37,99,235,0.1)", color: "#1e40af" });
+const submittedRow = css({ textStyle: "meta", color: "ink2" });
+const updatedChip = css({ display: "inline-flex", alignItems: "center", h: "20px", px: "8px", ml: "8px", borderRadius: "pill", textStyle: "micro", bg: "rgba(37,99,235,0.1)", color: "#1e40af" });
 const divider = css({ h: "1px", bg: "rgba(0,0,0,0.12)", mb: "24px" });
-const coverLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 600, color: "ink2" });
+const coverLabel = css({ textStyle: "ui", fontWeight: 600, color: "ink2" });
 const alertRounded = css({ borderRadius: "8px" });
 const alertActionBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, p: "4px 5px", minW: "64px", border: "none", borderRadius: "4px",
-  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", whiteSpace: "nowrap", transition: "background-color .25s",
+  bg: "transparent", color: "inherit", textStyle: "meta", fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap", transition: "background-color .25s",
   _hover: { bg: "rgba(0,0,0,0.06)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
@@ -105,8 +102,7 @@ const actionRow = css({ display: "flex", gap: "16px" });
 const actionBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, flex: 1, minW: "64px", borderRadius: "40px",
-  fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s",
+  textStyle: "body", fontWeight: 500, cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   _disabled: { pointerEvents: "none" },
   "& svg": { flexShrink: 0 },
@@ -123,11 +119,11 @@ const outlineBtn = css({
 });
 const dangerOutline = css({ borderColor: "rgba(239,68,68,0.3)", color: "errorText", _hover: { bg: "rgba(239,68,68,0.04)" } });
 const neutralOutline = css({ borderColor: "rgba(0,0,0,0.2)", color: "ink", _hover: { borderColor: "rgba(0,0,0,0.4)" } });
-const sideLabel = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" });
+const sideLabel = css({ textStyle: "eyebrow", color: "ink2", fontWeight: 500 });
 const sideRow = css({ display: "flex", gap: "16px", alignItems: "center" });
-const sideName = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600 });
-const budgetValue = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 600, color: "successText" });
-const budgetMeta = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const sideName = css({ textStyle: "body", fontWeight: 600 });
+const budgetValue = css({ textStyle: "lead", fontWeight: 600, color: "successText" });
+const budgetMeta = css({ textStyle: "meta", color: "ink2" });
 
 export default function ProposalDetailPage() {
   const params = useParams();

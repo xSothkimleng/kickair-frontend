@@ -51,10 +51,8 @@ const backLinkCss = css({
   ml: "-4px",
   borderRadius: "4px",
   color: "ink2",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   textDecoration: "none",
   transition: "color .25s",
   _hover: { color: "black", bg: "transparent" },
@@ -62,13 +60,11 @@ const backLinkCss = css({
 });
 const heroCss = css({ textAlign: "center", mb: "32px", py: "16px" });
 const heroTitleCss = css({
-  fontSize: { base: "32px", md: "48px" },
+  textStyle: { base: "stat", md: "display" },
   fontWeight: 600,
-  lineHeight: 1.167,
   color: "black",
-  letterSpacing: "-0.02em",
 });
-const heroSubCss = css({ fontSize: "17px", lineHeight: 1.5, color: "ink2" });
+const heroSubCss = css({ textStyle: "lead", color: "ink2" });
 const alertWrapCss = css({ mb: "24px" });
 const retryBtnCss = css({
   boxSizing: "border-box",
@@ -78,11 +74,8 @@ const retryBtnCss = css({
   borderRadius: "4px",
   bg: "transparent",
   color: "inherit",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   _hover: { bg: "rgba(0,0,0,0.04)" },
 });
@@ -110,7 +103,6 @@ const fabCss = css({
   borderRadius: "50%",
   bg: "black",
   color: "white",
-  fontFamily: "inherit",
   cursor: "pointer",
   boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12)",
   transition: "all 0.3s",

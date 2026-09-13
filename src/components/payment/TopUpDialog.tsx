@@ -26,7 +26,7 @@ const headerCss = css({
   borderBottomStyle: "solid",
   borderBottomColor: "hairline",
 });
-const titleCss = css({ fontSize: "22px", fontWeight: 600, letterSpacing: "-0.015em", color: "ink" });
+const titleCss = css({ textStyle: "title", fontWeight: 600, color: "ink" });
 // Merged into one style object (Panda's `cx` only concatenates — it can't
 // resolve conflicting atomic classes), so these beat the recipe's own colours.
 const closeBtn = css(iconButton.raw({ size: "md", shape: "round", variant: "ghost", tone: "default" }), {
@@ -46,15 +46,15 @@ const noteBox = css({
   borderColor: "rgba(0, 113, 227, 0.2)",
   borderRadius: "tile",
 });
-// MUI's SvgIcon carried `flex-shrink: 0`; lucide's svg does not.
+// The old icon set carried `flex-shrink: 0`; lucide's svg does not.
 const noteIcon = css({ color: "accent", flexShrink: 0 });
-const noteText = css({ fontSize: "12.5px", color: "accent" });
+const noteText = css({ textStyle: "meta", color: "accent" });
 
 const amountWrap = css({ display: "flex", flexDirection: "column", alignItems: "center", gap: "4px", mb: "20px" });
-const amountLabel = css({ fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const amountLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
 const amountRow = css({ display: "flex", alignItems: "baseline", gap: "2px" });
-const amountSymbol = css({ fontSize: "30px", fontWeight: 500, color: "ink3" });
-const amountValue = css({ fontFamily: "mono", fontSize: "52px", fontWeight: 600, letterSpacing: "-0.03em", color: "ink" });
+const amountSymbol = css({ textStyle: "stat", fontWeight: 500, color: "ink3" });
+const amountValue = css({ fontVariantNumeric: "tabular-nums", textStyle: "display", fontWeight: 600, color: "ink" });
 
 const chipGrid = css({ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: "8px", mb: "10px" });
 const chipBtn = cva({
@@ -62,8 +62,7 @@ const chipBtn = cva({
     h: "44px",
     borderRadius: "tile",
     cursor: "pointer",
-    fontFamily: "inherit",
-    fontSize: "15px",
+    textStyle: "body",
     fontWeight: 600,
     borderWidth: "1px",
     borderStyle: "solid",
@@ -81,8 +80,7 @@ const customBtn = cva({
     h: "44px",
     borderRadius: "tile",
     cursor: "pointer",
-    fontFamily: "inherit",
-    fontSize: "14px",
+    textStyle: "body",
     fontWeight: 500,
     borderWidth: "1px",
     borderStyle: "solid",
@@ -98,9 +96,9 @@ const customField = css({ mb: "20px" });
 const methodWrap = css({ mb: "22px" });
 const submitBtn = pillButton({ tone: "black", size: "lg", full: true });
 const startIcon = css({ ml: "-4px" });
-// The original `mt: 1.75` sat on a MUI Typography <p>, where globals.css's
+// The original `mt: 1.75` sat on a Typography <p>, where globals.css's
 // unlayered `p { margin: 0 }` already suppressed it — so it stays dropped.
-const footNote = css({ textAlign: "center", fontSize: "11.5px", color: "ink3" });
+const footNote = css({ textAlign: "center", textStyle: "micro", color: "ink3" });
 
 /**
  * Wallet top-up. Form (amount + ABA method) → shared payment flow → success.

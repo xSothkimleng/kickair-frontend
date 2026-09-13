@@ -48,24 +48,24 @@ const LEVEL_BENEFITS = [
 
 const pageStack = css({ display: "flex", flexDirection: "column", gap: "24px" });
 const panel = css({
-  bg: "surface", color: "rgba(0,0,0,0.87)", borderRadius: "16px",
+  bg: "surface", color: "ink", borderRadius: "16px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.08)", p: "32px",
 });
 const centerBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "200px" });
-const errorText = css({ color: "rgba(0,0,0,0.5)", fontSize: "14px", lineHeight: 1.5 });
+const errorText = css({ color: "ink2", textStyle: "body" });
 
 const headRow = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "32px" });
-const headTitle = css({ fontSize: "28px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const headSub = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const headTitle = css({ textStyle: "stat", fontWeight: 600, color: "black" });
+const headSub = css({ textStyle: "ui", color: "ink2" });
 const levelChipBox = css({ px: "24px", py: "12px", borderRadius: "12px" });
-const levelChipLabel = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(255, 255, 255, 0.8)" });
-const levelChipValue = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.5, color: "white" });
+const levelChipLabel = css({ textStyle: "micro", color: "rgba(255, 255, 255, 0.8)" });
+const levelChipValue = css({ textStyle: "heading", fontWeight: 600, color: "white" });
 
 const progressBlock = css({ mb: "32px" });
 const progressHead = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "12px" });
-const xpLine = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.8)", fontWeight: 500 });
-const xpSub = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
-const xpPercent = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const xpLine = css({ textStyle: "ui", color: "ink", fontWeight: 500 });
+const xpSub = css({ textStyle: "micro", color: "ink2" });
+const xpPercent = css({ textStyle: "lead", fontWeight: 600, color: "black" });
 const xpBar = css({
   h: "12px", borderRadius: "pill", bg: "rgba(0, 0, 0, 0.05)",
   "& > div": { background: "linear-gradient(90deg, #0071e3 0%, #0077ED 100%)", borderRadius: "999px" },
@@ -83,14 +83,14 @@ const levelTile = css({
   "&[data-current]": { borderColor: "black", bg: "rgba(0, 0, 0, 0.05)" },
 });
 const levelDot = css({ w: "32px", h: "32px", borderRadius: "50%", mb: "8px" });
-const levelName = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const levelPts = css({ fontSize: "10px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const levelName = css({ textStyle: "meta", fontWeight: 600, color: "black" });
+const levelPts = css({ textStyle: "micro", color: "ink2" });
 const passedMark = css({ position: "absolute", top: "8px", right: "8px", color: "#16a34a", display: "flex" });
 const currentChip = css({
   position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)",
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   h: "20px", px: "12px", borderRadius: "pill", bg: "black", color: "white",
-  fontSize: "9px", fontWeight: 500, whiteSpace: "nowrap",
+  textStyle: "micro", fontWeight: 500, whiteSpace: "nowrap",
 });
 
 const statsGrid = css({
@@ -98,43 +98,43 @@ const statsGrid = css({
   gridTemplateColumns: { base: "repeat(2, minmax(0, 1fr))", sm: "repeat(4, minmax(0, 1fr))" },
 });
 const statCard = css({
-  bg: "surface", color: "rgba(0,0,0,0.87)", p: "20px", borderRadius: "12px",
+  bg: "surface", color: "ink", p: "20px", borderRadius: "12px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.08)", textAlign: "center",
 });
-const statValue = css({ fontSize: "22px", fontWeight: 700, lineHeight: 1.5, color: "black" });
-const statLabel = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
-const statSub = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.4)" });
+const statValue = css({ textStyle: "title", fontWeight: 700, color: "black" });
+const statLabel = css({ textStyle: "meta", fontWeight: 600, color: "ink2" });
+const statSub = css({ textStyle: "micro", color: "ink3" });
 
-const sectionTitle = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const sectionSub = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "black" });
+const sectionSub = css({ textStyle: "meta", color: "ink2" });
 const benefitsGrid = css({
   display: "grid", gap: "16px",
   gridTemplateColumns: { base: "repeat(1, minmax(0, 1fr))", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
 });
 const benefitCard = css({
-  bg: "white", color: "rgba(0,0,0,0.87)", p: "20px", borderRadius: "12px", h: "100%",
+  bg: "white", color: "ink", p: "20px", borderRadius: "12px", h: "100%",
   borderWidth: "2px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.1)",
   "&[data-passed]": { borderColor: "rgba(34, 197, 94, 0.2)", bg: "rgba(34, 197, 94, 0.05)" },
   "&[data-current]": { borderColor: "black", bg: "rgba(0, 0, 0, 0.05)" },
 });
 const benefitHead = css({ display: "flex", alignItems: "center", gap: "8px", mb: "16px" });
 const benefitDot = css({ w: "24px", h: "24px", borderRadius: "50%" });
-const benefitLevel = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const benefitLevel = css({ textStyle: "ui", fontWeight: 600, color: "black" });
 const benefitList = css({ m: 0, p: 0, pl: "16px", display: "flex", flexDirection: "column", gap: "8px" });
 const benefitItem = css({
-  fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.4)",
-  "&[data-on]": { color: "rgba(0,0,0,0.7)" },
+  textStyle: "micro", color: "ink3",
+  "&[data-on]": { color: "ink2" },
 });
 const currentFoot = css({ mt: "16px", pt: "16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0,0,0,0.1)" });
 const currentWide = css({
   display: "flex", alignItems: "center", justifyContent: "center",
   w: "100%", h: "24px", px: "12px", borderRadius: "pill", boxSizing: "border-box",
-  bg: "black", color: "white", fontSize: "9px", fontWeight: 500,
+  bg: "black", color: "white", textStyle: "micro", fontWeight: 500,
 });
 
 const earnPanel = css({
   background: "linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)",
-  color: "rgba(0,0,0,0.87)",
+  color: "ink",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(37, 99, 235, 0.2)",
   borderRadius: "16px", p: "32px",
 });
@@ -142,13 +142,13 @@ const earnGrid = css({
   display: "grid", gap: "16px",
   gridTemplateColumns: { base: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" },
 });
-const earnCard = css({ p: "20px", borderRadius: "12px", bg: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", color: "rgba(0,0,0,0.87)" });
-const earnIcon = css({ fontSize: "24px", lineHeight: 1.5, mb: "8px" });
-const earnTitle = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "black" });
-const earnDesc = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
-const earnPts = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#3b82f6" });
-const tipCard = css({ mt: "24px", p: "16px", borderRadius: "12px", bg: "rgba(255,255,255,0.8)", color: "rgba(0,0,0,0.87)" });
-const tipText = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.8)" });
+const earnCard = css({ p: "20px", borderRadius: "12px", bg: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", color: "ink" });
+const earnIcon = css({ textStyle: "heading", mb: "8px" });
+const earnTitle = css({ textStyle: "ui", fontWeight: 600, color: "black" });
+const earnDesc = css({ textStyle: "micro", color: "ink2" });
+const earnPts = css({ textStyle: "ui", fontWeight: 600, color: "#3b82f6" });
+const tipCard = css({ mt: "24px", p: "16px", borderRadius: "12px", bg: "rgba(255,255,255,0.8)", color: "ink" });
+const tipText = css({ textStyle: "meta", color: "ink" });
 
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
@@ -319,7 +319,7 @@ export default function LevelContent() {
 
       {/* How to Earn Points */}
       <div className={earnPanel}>
-        {/* `mb` on a <p> never rendered under MUI either (globals.css resets p margins) — dropped. */}
+        {/* `mb` on a <p> never rendered before either (globals.css resets p margins) — dropped. */}
         <p className={sectionTitle}>How to Earn Points &amp; Level Up</p>
         <div className={earnGrid}>
           {[

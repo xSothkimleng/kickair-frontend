@@ -17,8 +17,8 @@ import { useRouter } from "next/navigation";
 const page = css({ display: "flex", flexDirection: "column", gap: "24px" });
 const loadingBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "300px" });
 const header = css({ display: "flex", alignItems: "center", justifyContent: "space-between" });
-const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
-const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const pageTitle = css({ textStyle: "stat", fontWeight: 600, color: "ink" });
+const pageSub = css({ textStyle: "ui", color: "ink2" });
 const createBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -33,10 +33,8 @@ const createBtn = css({
   borderRadius: "40px",
   bg: "ink",
   color: "white",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "background-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.8)" },
@@ -52,9 +50,9 @@ const sectionCard = css({
   p: "24px",
 });
 /* globals.css zeroes p margins outside any layer, so the old Typography `mb` never applied — dropped. */
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 const centreBlock = css({ textAlign: "center", py: "48px" });
-const errorText = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(239, 68, 68, 0.8)" });
+const errorText = css({ textStyle: "ui", color: "rgba(239, 68, 68, 0.8)" });
 const retryBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -67,10 +65,8 @@ const retryBtn = css({
   borderRadius: "4px",
   bg: "transparent",
   color: "ink",
-  fontFamily: "inherit",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "background-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
@@ -78,24 +74,24 @@ const retryBtn = css({
 });
 const cardList = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const emptyIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.2)", mb: "16px" });
-const emptyText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const emptyText = css({ textStyle: "ui", color: "ink2" });
 const draftsHeader = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
-const draftsTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const draftsTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 const draftsCount = css({
   px: "8px",
   py: "2px",
   bg: "rgba(0,0,0,0.05)",
   color: "ink2",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 600,
   borderRadius: "4px",
 });
-const draftsSub = css({ lineHeight: 1.5, fontSize: "12px", color: "rgba(0, 0, 0, 0.5)" });
+const draftsSub = css({ textStyle: "meta", color: "ink2" });
 
-/* Delete confirmation — MUI `Dialog` (default `sm`) with DialogContent/DialogActions padding. */
+/* Delete confirmation — Dialog (default `sm`) with DialogContent/DialogActions padding. */
 const dialogBody = css({ p: "20px 24px", overflowY: "auto", flex: 1 });
-const dialogTitle = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 600, color: "ink" });
-const dialogText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const dialogTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
+const dialogText = css({ textStyle: "ui", color: "ink2" });
 const dialogActions = css({ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", p: "8px", flex: "0 0 auto" });
 const dialogBtn = css({
   display: "inline-flex",
@@ -108,10 +104,8 @@ const dialogBtn = css({
   border: "none",
   borderRadius: "4px",
   bg: "transparent",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "background-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
@@ -215,7 +209,7 @@ export default function ServicesContent() {
 
         {loading ? (
           <div className={centreBlock}>
-            <Spinner size={32} className={css({ color: "rgba(0, 0, 0, 0.4)" })} />
+            <Spinner size={32} className={css({ color: "ink3" })} />
           </div>
         ) : error ? (
           <div className={centreBlock}>

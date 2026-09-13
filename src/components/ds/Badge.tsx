@@ -8,8 +8,7 @@ export const badge = cva({
     gap: "1.5",
     borderRadius: "pill",
     fontWeight: 600,
-    fontSize: "12px",
-    lineHeight: 1,
+    textStyle: "meta",
     paddingX: "2.5",
     paddingY: "1.5",
     whiteSpace: "nowrap",
@@ -36,7 +35,7 @@ export function Badge({ tone, className, ...props }: BadgeProps) {
 }
 
 /**
- * Small count/dot bubble anchored to a wrapped icon. Replaces MUI <Badge badgeContent>.
+ * Small count/dot bubble anchored to a wrapped icon.
  * `count` 0/undefined hides it; `dot` renders a plain dot.
  */
 export function Indicator({ count, dot, max = 99, children, className, tone = "error" }: { count?: number; dot?: boolean; max?: number; children: React.ReactNode; className?: string; tone?: "error" | "accent" | "success" }) {
@@ -50,7 +49,7 @@ export function Indicator({ count, dot, max = 99, children, className, tone = "e
           aria-hidden="true"
           className={dot
             ? css({ position: "absolute", top: "2px", right: "2px", w: "8px", h: "8px", borderRadius: "pill", boxShadow: "0 0 0 2px white" })
-            : css({ position: "absolute", top: "-4px", right: "-4px", minW: "18px", h: "18px", px: "5px", borderRadius: "pill", color: "white", fontSize: "11px", fontWeight: 700, lineHeight: "18px", textAlign: "center", boxShadow: "0 0 0 2px white" })}
+            : css({ position: "absolute", top: "-4px", right: "-4px", minW: "18px", h: "18px", px: "5px", borderRadius: "pill", color: "white", textStyle: "micro", fontWeight: 700, textAlign: "center", boxShadow: "0 0 0 2px white" })}
           style={{ background: bg }}>
           {dot ? null : count! > max ? `${max}+` : count}
         </span>

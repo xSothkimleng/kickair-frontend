@@ -33,12 +33,12 @@ const cardBody = css({ display: "flex", flexDirection: "column", gap: "12px", fl
 const topRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" });
 const titleWrap = css({ display: "flex", gap: "8px", flexWrap: "wrap", minW: 0, alignItems: "center" });
 const titleText = cva({
-  base: { fontSize: "17px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 },
+  base: { textStyle: "lead", fontWeight: 600 },
   variants: { muted: { true: { color: "ink2" }, false: { color: "ink" } } },
 });
 const actionsWrap = css({ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end", flex: "none" });
 
-/* MUI `Button size="small"` metrics with the card's own tones. */
+/* Small button metrics with the card's own tones. */
 const actionBtn = cva({
   base: {
     display: "inline-flex",
@@ -54,10 +54,8 @@ const actionBtn = cva({
     borderWidth: "1px",
     borderStyle: "solid",
     borderRadius: "8px",
-    fontFamily: "inherit",
-    fontSize: "12.5px",
+    textStyle: "meta",
     fontWeight: 600,
-    lineHeight: 1.75,
     whiteSpace: "nowrap",
     cursor: "pointer",
     transition: "background-color .25s, border-color .25s, color .25s",

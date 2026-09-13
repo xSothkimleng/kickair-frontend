@@ -17,19 +17,19 @@ interface ProposalFormProps {
 }
 
 const stack = css({ display: "flex", flexDirection: "column", gap: "20px" });
-const heading = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 700 });
-const subHeading = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
-const alertTweak = css({ borderRadius: "12px", fontSize: "12px", py: "4px" });
+const heading = css({ textStyle: "body", fontWeight: 700 });
+const subHeading = css({ textStyle: "meta", color: "ink2" });
+const alertTweak = css({ borderRadius: "12px", textStyle: "meta", py: "4px" });
 const endAdornment = css({ display: "inline-flex", alignItems: "center", gap: "4px", "& svg": { flexShrink: 0 } });
-const endAdornmentText = css({ lineHeight: 1.5, fontSize: "12px" });
-const fieldLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "#334155" });
+const endAdornmentText = css({ textStyle: "meta" });
+const fieldLabel = css({ textStyle: "ui", fontWeight: 500, color: "#334155" });
 const actions = css({ display: "flex", gap: "8px" });
 
-/* MUI `Button` medium metrics (line-height 1.75, min-width 64, 6px/16px padding). */
+/* Button medium metrics (min-width 64, 6px/16px padding). */
 const btnBase = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, minW: "64px", borderRadius: "12px",
-  fontFamily: "inherit", fontSize: "13px", lineHeight: 1.75, cursor: "pointer",
+  textStyle: "ui", cursor: "pointer",
   transition: "background-color .25s, border-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   _disabled: { pointerEvents: "none" },
@@ -38,7 +38,7 @@ const cancelBtn = css({
   flex: 1, p: "5px 15px", fontWeight: 500,
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.12)",
   bg: "transparent", color: "ink2",
-  _hover: { borderColor: "rgba(0,0,0,0.3)", bg: "transparent", color: "rgba(0, 0, 0, 0.87)" },
+  _hover: { borderColor: "rgba(0,0,0,0.3)", bg: "transparent", color: "ink" },
 });
 const submitBtn = css({
   flex: 2, p: "6px 16px", fontWeight: 600, border: "none",

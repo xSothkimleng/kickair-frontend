@@ -4,7 +4,9 @@ import { useLayoutEffect, useMemo, useRef, type ReactNode } from "react";
 import { Select, createListCollection } from "@ark-ui/react";
 import { Check, ChevronDown } from "lucide-react";
 import { css, cva, cx } from "styled-system/css";
+import { tapTargetIcon } from "@/components/ds/tap";
 import { fieldOption, fieldOptionCheck, fieldOptionList, fieldPopup, fieldPositioner } from "@/components/ui/inputs";
+import { money, type MoneyVariants } from "@/components/ds/Text";
 import { CustomOrderEscrow, MilestoneStatus } from "@/types/customOrder";
 
 /* ── Shared classes ────────────────────────────────────────────────────────── */
@@ -18,13 +20,10 @@ export const coCard = css({
   borderRadius: "card",
 });
 
-/** Uppercase micro-label. (MUI Typography body1 line-height, i.e. 1.5.) */
+/** Uppercase micro-label. */
 export const coLabel = css({
-  fontSize: "11px",
+  textStyle: "eyebrow",
   fontWeight: 600,
-  lineHeight: 1.5,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
   color: "ink3",
 });
 
@@ -33,28 +32,22 @@ export const coLabel = css({
 
 /** `coLabel` in the accent colour + mono — the dialog / page "annotation". */
 export const coLabelAccent = css({
-  fontSize: "11px",
+  textStyle: "eyebrow",
   fontWeight: 600,
-  lineHeight: 1.5,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
   color: "accent",
-  fontFamily: "mono",
+  fontVariantNumeric: "tabular-nums",
 });
 
 /** `coLabel` in the escrow (pending) colour. */
 export const coLabelPending = css({
-  fontSize: "11px",
+  textStyle: "eyebrow",
   fontWeight: 600,
-  lineHeight: 1.5,
-  letterSpacing: "0.04em",
-  textTransform: "uppercase",
   color: "pendingText",
 });
 
 /**
- * Action button. Reproduces the MUI `Button` base these surfaces styled through
- * `sx` (500 weight, 14px, 1.75 line-height, 6px/8px padding, 64px min-width,
+ * Action button. Reproduces the button base these surfaces styled through
+ * `sx` (500 weight, 14px, 6px/8px padding, 64px min-width,
  * pill radius) plus each tone/height the custom-order screens use.
  */
 export const coBtn = cva({
@@ -70,11 +63,8 @@ export const coBtn = cva({
     border: "none",
     borderRadius: "pill",
     bg: "transparent",
-    fontFamily: "inherit",
-    fontSize: "14px",
+    textStyle: "body",
     fontWeight: 500,
-    lineHeight: 1.75,
-    letterSpacing: "0.02857em",
     textDecoration: "none",
     whiteSpace: "nowrap",
     verticalAlign: "middle",
@@ -83,7 +73,7 @@ export const coBtn = cva({
     cursor: "pointer",
     transition: "background-color .25s, box-shadow .25s, border-color .25s, color .25s",
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
-    // MUI greys the label and kills pointer events on a disabled text button.
+    // Greys the label and kills pointer events on a disabled text button.
     _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)" },
     "& svg": { flexShrink: 0 },
   },
@@ -106,16 +96,16 @@ export const coBtn = cva({
         _hover: { bg: "rgba(0,0,0,0.04)" },
       },
       /** Back link — no padding, no min width, hover darkens the label. */
-      link: { py: 0, px: 0, minW: 0, fontSize: "13px", color: "ink2", _hover: { color: "ink", bg: "transparent" } },
+      link: { py: 0, px: 0, minW: 0, textStyle: "ui", color: "ink2", _hover: { color: "ink", bg: "transparent" } },
     },
     size: {
       /** height 38 · px 16 · 13px (milestone actions) */
-      xs: { h: "38px", px: "16px", fontSize: "13px" },
+      xs: { h: "38px", px: "16px", textStyle: "ui" },
       /** height 42 · px 20 (dialog confirms) */
       sm: { h: "42px", px: "20px" },
       /** height 44 · px 20 (primary dialog CTA) */
       md: { h: "44px", px: "20px" },
-      /** height 44, MUI's own 8px padding (the full-width end-dialog pair) */
+      /** height 44, 8px padding (the full-width end-dialog pair) */
       h44: { h: "44px" },
       /** auto height with a wider pad — the grey "Message …" pill (14) and the
        *  outlined "Go back" button (16). */
@@ -124,21 +114,22 @@ export const coBtn = cva({
       /** height 46 (fund confirm) */
       lg: { h: "46px" },
       /** height 48 · 15px (accept & pay, send offer) */
-      xl: { h: "48px", fontSize: "15px" },
-      /** MUI's own auto height (36.5px at 14px) */
+      xl: { h: "48px", textStyle: "body" },
+      /** auto height (36.5px at 14px) */
       auto: {},
     },
-    /** Label size where the call site overrode MUI's 14px. */
-    font: { "13.5": { fontSize: "13.5px" } },
+    /** Label size where the call site overrode the 14px default. */
+    font: { ui: { textStyle: "ui" } },
     strong: { true: { fontWeight: 600 } },
     full: { true: { w: "100%" } },
   },
   defaultVariants: { tone: "black", size: "auto" },
 });
 
-/** MUI `IconButton size="small"` — 30px round, 54 % black, 4 % hover fill. */
+/** Small icon button — 30px round, 54 % black, 4 % hover fill. */
 export const coIconBtn = cva({
   base: {
+    ...tapTargetIcon,
     display: "inline-flex",
     alignItems: "center",
     justifyContent: "center",
@@ -146,9 +137,8 @@ export const coIconBtn = cva({
     border: "none",
     borderRadius: "50%",
     bg: "transparent",
-    color: "rgba(0,0,0,0.54)",
+    color: "ink2",
     cursor: "pointer",
-    fontFamily: "inherit",
     transition: "background-color .15s",
     _hover: { bg: "rgba(0,0,0,0.04)" },
     _disabled: { color: "rgba(0,0,0,0.26)", pointerEvents: "none" },
@@ -163,11 +153,11 @@ export const coIconBtn = cva({
   defaultVariants: { size: "sm" },
 });
 
-/** MUI `startIcon` / `endIcon` negative outer margin (the 8px gap is on `coBtn`). */
+/** Start / end icon negative outer margin (the 8px gap is on `coBtn`). */
 export const coBtnStart = css({ ml: "-4px" });
 export const coBtnEnd = css({ mr: "-4px" });
 
-/** Black circle with white initials — the MUI `Avatar` these pages used. */
+/** Black circle with white initials — the Avatar these pages used. */
 export const coAvatar = cva({
   base: {
     display: "flex",
@@ -184,20 +174,20 @@ export const coAvatar = cva({
   },
   variants: {
     size: {
-      xs: { w: "26px", h: "26px", fontSize: "11px" },
-      sm: { w: "36px", h: "36px", fontSize: "13px" },
-      md: { w: "44px", h: "44px", fontSize: "15px" },
-      lg: { w: "46px", h: "46px", fontSize: "15px" },
-      xl: { w: "48px", h: "48px", fontSize: "16px" },
+      xs: { w: "26px", h: "26px", textStyle: "micro" },
+      sm: { w: "36px", h: "36px", textStyle: "ui" },
+      md: { w: "44px", h: "44px", textStyle: "body" },
+      lg: { w: "46px", h: "46px", textStyle: "body" },
+      xl: { w: "48px", h: "48px", textStyle: "lead" },
     },
   },
   defaultVariants: { size: "md" },
 });
 
-/* ── Text fields (MUI OutlinedInput parity) ────────────────────────────────── */
-// MUI drew the border on an absolutely-positioned <fieldset>; here it sits on
+/* ── Text fields (outlined field) ────────────────────────────────── */
+// The old field drew the border on an absolutely-positioned <fieldset>; here it sits on
 // the root, so the paddings lose the 1px the border takes back (15.5/13 instead
-// of 16.5/14) and the box keeps MUI's exact 53.125 / 37.125 / 93.4px heights.
+// of 16.5/14) and the box keeps the 53.125 / 37.125 / 93.4px heights.
 
 const fieldRoot = cva({
   base: {
@@ -206,13 +196,13 @@ const fieldRoot = cva({
     w: "100%",
     boxSizing: "border-box",
     bg: "transparent",
-    color: "rgba(0,0,0,0.87)",
+    color: "ink",
     borderWidth: "1px",
     borderStyle: "solid",
     borderColor: "hairlineStrong",
     transition: "border-color .2s",
     // `:hover:focus-within` outranks the hover rule, so a focused field keeps the
-    // accent border while the pointer is over it (MUI's `.Mui-focused` did the same).
+    // accent border while the pointer is over it (same as the old focused state).
     "&:focus-within, &:hover:focus-within": { borderColor: "accent" },
   },
   variants: {
@@ -224,22 +214,22 @@ const fieldRoot = cva({
       "9": { borderRadius: "9px" },
       "10": { borderRadius: "10px" },
     },
-    // MUI's input line-height is 1.4375em.
+    // The old input line-height was 1.4375em.
     font: {
-      "13.5": { fontSize: "13.5px", lineHeight: "19.40625px" },
-      "14": { fontSize: "14px", lineHeight: "20.125px" },
+      ui: { textStyle: "ui" },
+      body: { textStyle: "body" },
     },
-    /** Hover border — the fields that override it use ink3, MUI's default is 87 % black. */
+    /** Hover border — the fields that override it use ink3, the default is 87 % black. */
     hover: {
       subtle: { _hover: { borderColor: "ink3" } },
       strong: { _hover: { borderColor: "rgba(0,0,0,0.87)" } },
     },
     multiline: { true: { alignItems: "stretch" } },
-    mono: { true: { fontFamily: "mono" } },
-    /** MUI's default focused outline is 2px; the padding gives back the extra px. */
+    mono: { true: { fontVariantNumeric: "tabular-nums" } },
+    /** The focused outline is 2px; the padding gives back the extra px. */
     focus: { thick: { _focusWithin: { borderWidth: "2px", py: "14.5px", px: "12px" } } },
   },
-  defaultVariants: { size: "md", radius: "10", font: "14", hover: "subtle" },
+  defaultVariants: { size: "md", radius: "10", font: "body", hover: "subtle" },
 });
 
 const fieldControl = cva({
@@ -260,11 +250,7 @@ const fieldControl = cva({
   outline: "none",
   boxShadow: "none",
   appearance: "none",
-  fontFamily: "inherit",
-  fontSize: "inherit",
   fontWeight: "inherit",
-  lineHeight: "inherit",
-  letterSpacing: "inherit",
   color: "inherit",
   _placeholder: { color: "currentcolor", opacity: 0.42 },
   "&::-webkit-outer-spin-button, &::-webkit-inner-spin-button": { WebkitAppearance: "none", margin: 0 },
@@ -275,17 +261,17 @@ const fieldControl = cva({
 });
 
 /**
- * `InputAdornment` — Roboto Mono 16px, 60 % black, 8px from the control. MUI's
+ * `InputAdornment` — 16px, 60 % black, 8px from the control. The old
  * adornment box was 24px tall but never drove the field height (the input's own
  * padding did); here the padding sits on the root, so the line-height is pinned
- * to the control's 20.125px to keep the field at MUI's 53.125 / 37.125px.
+ * to the control's 20.125px to keep the field at the 53.125 / 37.125px.
  */
 const adornment = cva({
-  base: { display: "flex", alignItems: "center", flexShrink: 0, fontFamily: "mono", fontSize: "16px", lineHeight: "20.125px", color: "ink2" },
+  base: { display: "flex", alignItems: "center", flexShrink: 0, fontVariantNumeric: "tabular-nums", textStyle: "lead", color: "ink2" },
   variants: { pos: { start: { mr: "8px" }, end: { ml: "8px" } } },
 });
 
-type FieldLook = { radius?: "9" | "10"; font?: "13.5" | "14"; hover?: "subtle" | "strong"; focus?: "thick" };
+type FieldLook = { radius?: "9" | "10"; font?: "ui" | "body"; hover?: "subtle" | "strong"; focus?: "thick" };
 
 export function CoInput({
   value, onChange, placeholder, start, end, size = "md", mono, inputMode, autoFocus, className, radius, font, hover,
@@ -317,12 +303,11 @@ export function CoInput({
   );
 }
 
-/* ── Select (Ark, in the MUI field shell) ──────────────────────────────────── */
+/* ── Select (Ark, in the field shell) ──────────────────────────────────── */
 
 const triggerExtra = css({
   cursor: "pointer",
   textAlign: "left",
-  fontFamily: "inherit",
   fontWeight: 400,
   appearance: "none",
   mt: 0,
@@ -338,7 +323,7 @@ const triggerIndicator = css({
   alignItems: "center",
   flexShrink: 0,
   ml: "8px",
-  color: "rgba(0,0,0,0.54)",
+  color: "ink2",
   transition: "transform .15s",
   "& svg": { display: "block" },
   "&[data-state=open]": { transform: "rotate(180deg)" },
@@ -349,7 +334,7 @@ export interface CoSelectOption { value: number; label: string }
 
 /**
  * The dropdown these dialogs used (`TextField select` + `displayEmpty`), on Ark
- * UI. Trigger keeps the MUI field metrics; the popup uses the shared field
+ * UI. Trigger keeps the field metrics; the popup uses the shared field
  * recipes (inline, not portaled — see `inputs/field.ts`).
  */
 export function CoSelect({
@@ -400,7 +385,7 @@ export function CoSelect({
   );
 }
 
-/** Auto-growing textarea (MUI `TextareaAutosize` parity, no maxRows here). */
+/** Auto-growing textarea (auto-grow, no maxRows here). */
 function useAutosize(ref: React.RefObject<HTMLTextAreaElement | null>, value: string, minRows: number) {
   useLayoutEffect(() => {
     const el = ref.current;
@@ -438,7 +423,7 @@ export function CoTextArea({
   );
 }
 
-/* ── Money (Roboto Mono, tabular) ──────────────────────────────────────────── */
+/* ── Money (tabular figures) ──────────────────────────────────────────── */
 
 export function fmtMoney(value: number, cents = false): string {
   return (
@@ -450,23 +435,24 @@ export function fmtMoney(value: number, cents = false): string {
   );
 }
 
-const moneyCss = css({ fontFamily: "mono", fontVariantNumeric: "tabular-nums", letterSpacing: "-0.01em" });
+const MONEY_WEIGHT = { 400: "regular", 500: "medium", 600: "semibold", 700: "bold" } as const;
 
+/** An amount in the site font with tabular digits. `size` is a typography role (TYPOGRAPHY.md). */
 export function Money({
   value,
-  size = 15,
+  size = "body",
   weight = 500,
   color = "var(--colors-ink)",
   cents = false,
 }: {
   value: number;
-  size?: number;
-  weight?: number;
+  size?: NonNullable<MoneyVariants>["size"];
+  weight?: keyof typeof MONEY_WEIGHT;
   color?: string;
   cents?: boolean;
 }) {
   return (
-    <span className={moneyCss} style={{ fontSize: size, fontWeight: weight, color }}>
+    <span className={money({ size, weight: MONEY_WEIGHT[weight] })} style={{ color }}>
       {fmtMoney(value, cents)}
     </span>
   );
@@ -494,7 +480,7 @@ const chipCss = cva({
     h: "22px",
     px: "8px",
     borderRadius: "999px",
-    fontSize: "11.5px",
+    textStyle: "micro",
     fontWeight: 600,
     whiteSpace: "nowrap",
     flex: "none",
@@ -544,7 +530,7 @@ function Stat({ label, value, color = "var(--colors-ink)", dot }: { label: strin
         {dot && <span className={statDot} style={{ background: dot }} />}
         <p className={cx(coLabel, nowrap)}>{label}</p>
       </div>
-      <Money value={value} size={20} weight={600} color={color} />
+      <Money value={value} size="title" weight={600} color={color} />
     </div>
   );
 }
@@ -554,7 +540,7 @@ const escrowCard = cva({
   variants: { mobile: { true: { p: "18px" }, false: { p: "22px" } } },
 });
 const escrowHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "12px" });
-const escrowPct = css({ fontSize: "11px", lineHeight: 1.5, color: "ink3" });
+const escrowPct = css({ textStyle: "micro", color: "ink3" });
 const escrowGrid = cva({
   base: { display: "grid" },
   variants: {
@@ -605,8 +591,8 @@ const attachChip = css({
   borderColor: "hairline",
   borderRadius: "8px",
   bg: "surface",
-  fontFamily: "mono",
-  fontSize: "11.5px",
+  fontVariantNumeric: "tabular-nums",
+  textStyle: "micro",
   color: "ink2",
   whiteSpace: "nowrap",
 });

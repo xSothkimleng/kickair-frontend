@@ -13,7 +13,7 @@ import { useCoInvalidate } from "./hooks";
 
 const layout = css({ display: "grid", gridTemplateColumns: "1fr", gap: "24px", alignItems: "start" });
 const card = cx(coCard, css({ p: { base: "18px", md: "24px" } }));
-const labelCss = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "ink" });
+const labelCss = css({ textStyle: "meta", fontWeight: 600, color: "ink" });
 const labelSub = css({ color: "ink3", fontWeight: 400 });
 
 const gap20 = css({ mb: "20px" });
@@ -24,8 +24,8 @@ const expiryField = css({ maxW: "200px" });
 const noteBlock = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", pt: "18px" });
 
 const clientRow = css({ display: "flex", alignItems: "center", gap: "10px", mt: "14px", mb: "14px" });
-const clientName = css({ fontWeight: 600, fontSize: "14px", lineHeight: 1.5, color: "ink" });
-const clientMeta = css({ fontSize: "11.5px", lineHeight: 1.5, color: "ink2" });
+const clientName = css({ fontWeight: 600, textStyle: "body", color: "ink" });
+const clientMeta = css({ textStyle: "micro", color: "ink2" });
 
 const totalRow = css({
   display: "flex",
@@ -36,7 +36,7 @@ const totalRow = css({
   borderTopStyle: "solid",
   borderTopColor: "hairlineStrong",
 });
-const totalLabel = css({ fontWeight: 600, fontSize: "16px", lineHeight: 1.5, color: "ink" });
+const totalLabel = css({ fontWeight: 600, textStyle: "lead", color: "ink" });
 
 const feeBox = css({
   mt: "4px",
@@ -49,22 +49,22 @@ const feeBox = css({
   bg: "surface2",
 });
 const feeRow = css({ display: "flex", justifyContent: "space-between", py: "3px" });
-const feeLabel = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
-const feeValue = css({ fontSize: "12.5px", lineHeight: 1.5, fontFamily: "mono", fontWeight: 600, color: "ink" });
-const feeValueWarn = css({ fontSize: "12.5px", lineHeight: 1.5, fontFamily: "mono", fontWeight: 600, color: "pendingText" });
+const feeLabel = css({ textStyle: "meta", color: "ink2" });
+const feeValue = css({ textStyle: "meta", fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "ink" });
+const feeValueWarn = css({ textStyle: "meta", fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "pendingText" });
 const feeDivider = css({ height: "1px", bg: "hairline", my: "4px" });
-const netLabel = css({ fontSize: "12.5px", lineHeight: 1.5, fontWeight: 700, color: "ink" });
-const netValue = css({ fontSize: "13px", lineHeight: 1.5, fontFamily: "mono", fontWeight: 700, color: "successText" });
+const netLabel = css({ textStyle: "meta", fontWeight: 700, color: "ink" });
+const netValue = css({ textStyle: "ui", fontVariantNumeric: "tabular-nums", fontWeight: 700, color: "successText" });
 
 const statusBox = cva({
   base: { display: "flex", gap: "8px", p: "12px", borderRadius: "10px", mt: "4px" },
   variants: { over: { true: { bg: "errorTint" }, false: { bg: "successTint" } } },
 });
 const statusText = cva({
-  base: { fontSize: "12.5px", lineHeight: 1.4, fontWeight: 500 },
+  base: { textStyle: "meta", fontWeight: 500 },
   variants: { over: { true: { color: "errorText" }, false: { color: "successText" } } },
 });
-const monoSpan = css({ fontFamily: "mono" });
+const monoSpan = css({ fontVariantNumeric: "tabular-nums" });
 const alertGap = css({ mt: "14px" });
 const sendBtn = css({ mt: "18px" });
 const cancelBtn = css({ mt: "8px" });
@@ -159,7 +159,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
 
         <div className={totalRow}>
           <p className={totalLabel}>Total</p>
-          <Money value={total} size={22} weight={600} color={overBudget ? "var(--colors-error-text)" : "var(--colors-ink)"} />
+          <Money value={total} size="title" weight={600} color={overBudget ? "var(--colors-error-text)" : "var(--colors-ink)"} />
         </div>
 
         {/* Fee deduction — what actually lands in the freelancer's wallet. */}
@@ -204,7 +204,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
             </>
           )}
         </button>
-        <button type="button" onClick={onCancel} disabled={submitting} className={cx(coBtn({ tone: "quiet", font: "13.5", strong: true, full: true }), cancelBtn)}>
+        <button type="button" onClick={onCancel} disabled={submitting} className={cx(coBtn({ tone: "quiet", font: "ui", strong: true, full: true }), cancelBtn)}>
           Cancel
         </button>
       </div>

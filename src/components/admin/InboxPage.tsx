@@ -22,7 +22,7 @@ const rowCss = css({
   "&[data-unread=true]": { bg: "var(--td-accent-soft)" }, "&[data-unread=true]:hover": { bg: "#E3E8FB" },
 });
 const ic = css({ w: "32px", h: "32px", borderRadius: "10px", display: "grid", placeItems: "center", bg: "var(--td-surface)", border: "1px solid var(--td-line)", color: "var(--td-ink-2)", flexShrink: 0 });
-const dayHead = css({ px: "20px", py: "8px", fontSize: "11.5px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--td-ink-3)", bg: "var(--td-surface-2)", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)" });
+const dayHead = css({ px: "20px", py: "8px", textStyle: "eyebrow", fontWeight: 600, color: "var(--td-ink-3)", bg: "var(--td-surface-2)", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)" });
 
 function dayLabel(iso: string) {
   const days = Math.floor((new Date().setHours(0, 0, 0, 0) - new Date(iso).setHours(0, 0, 0, 0)) / 86_400_000);
@@ -64,9 +64,9 @@ export default function InboxPage() {
                   <span className={ic}><Icon size={15} /></span>
                   <div className={css({ minW: 0, flex: 1 })}>
                     <p className={text({ weight: n.readAt ? 500 : 600 })}>{n.title}</p>
-                    <p className={text({ size: "sm", tone: 2 })}>{n.body}</p>
+                    <p className={text({ size: "meta", tone: 2 })}>{n.body}</p>
                   </div>
-                  <span className={cx(text({ size: "xs", tone: 3 }), css({ whiteSpace: "nowrap", pt: "2px" }))}>{ago(n.createdAt)}</span>
+                  <span className={cx(text({ size: "micro", tone: 3 }), css({ whiteSpace: "nowrap", pt: "2px" }))}>{ago(n.createdAt)}</span>
                 </Link>
               );
             })}

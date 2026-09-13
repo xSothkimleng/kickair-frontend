@@ -7,8 +7,7 @@ import { css, cx } from "styled-system/css";
 /**
  * Bottom sheet on Ark Dialog (focus trap, ESC, aria wiring) styled with Panda.
  * The `anchor="bottom"` counterpart of `ds/Drawer` (which only slides in from the
- * left/right), i.e. the replacement for MUI
- * `<Drawer anchor="bottom" PaperProps={{ sx: { borderRadius: "20px 20px 0 0", maxHeight } }}>`.
+ * left/right): a bottom drawer with a 20px top radius and a height cap.
  *
  * `children` render directly in the panel (flex column, scrolls when taller than
  * `maxH`), so the caller owns its own header / body / footer chrome.
@@ -33,7 +32,7 @@ export interface BottomSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   children?: ReactNode;
-  /** Panel height cap (MUI's `maxHeight`), e.g. "88%". */
+  /** Panel height cap , e.g. "88%". */
   maxH?: string;
   closeOnInteractOutside?: boolean;
   closeOnEscape?: boolean;

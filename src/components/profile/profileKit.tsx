@@ -29,17 +29,18 @@ export function VerifiedTick({ size = 16 }: { size?: number }) {
 
 /* ── Avatar: photo or tinted initials, optional verified tick / editable camera ── */
 const avatarWrap = css({ position: "relative", flex: "none" });
-const avatarFace = css({ borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, letterSpacing: "-0.01em", borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.05)", overflow: "hidden" });
+const avatarFace = css({ borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 600, borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.05)", overflow: "hidden" });
 const avatarImg = css({ w: "100%", h: "100%", objectFit: "cover" });
 // Sizes are derived from the `size` prop at runtime, so they stay inline; everything static lives in the recipe.
 const cameraBtn = css(iconButton.raw({ shape: "round" }), { position: "absolute", right: "-2px", bottom: "-2px", bg: "#000", color: "#fff", border: "2px solid #fff", _hover: { bg: "rgba(0,0,0,0.8)", color: "#fff" } });
-const tickWrap = css({ position: "absolute", right: "-1px", bottom: "-1px", lineHeight: 0, bg: "surface", borderRadius: "50%" });
+const tickWrap = css({ position: "absolute", right: "-1px", bottom: "-1px", display: "flex", bg: "surface", borderRadius: "50%" });
 
 export function ProfileAvatar({ name, src, size = 72, hue, verified, editable, onEdit }: { name: string; src?: string | null; size?: number; hue?: number; verified?: boolean; editable?: boolean; onEdit?: () => void }) {
   const h = hue ?? hueFromName(name);
   const btn = Math.round(size * 0.34);
   return (
     <div className={avatarWrap} style={{ width: size, height: size }}>
+      {/* eslint-disable-next-line no-restricted-syntax -- initials scale with the avatar's pixel size, not the type scale */}
       <div className={avatarFace} style={{ width: size, height: size, background: `oklch(0.93 0.03 ${h})`, color: `oklch(0.45 0.07 ${h})`, fontSize: size * 0.36 }}>
         {/* eslint-disable-next-line @next/next/no-img-element -- remote avatars from many hosts */}
         {src ? <img src={src} alt={name} className={avatarImg} /> : initialsOf(name)}
@@ -91,8 +92,8 @@ export function Stars5({ rating, size = 15, gap = 2 }: { rating: number; size?: 
 
 /* ── Level badge ── */
 // Hue-tinted colours are computed per level at runtime (inline); the shape comes from the ds badge recipe.
-const levelBadge = css(badge.raw(), { gap: "6px", px: "11px", py: 0, fontWeight: 700, letterSpacing: "0.03em", h: "26px", fontSize: "11.5px" });
-const levelBadgeSmall = css(badge.raw(), { gap: "6px", px: "11px", py: 0, fontWeight: 700, letterSpacing: "0.03em", h: "22px", fontSize: "10.5px" });
+const levelBadge = css(badge.raw(), { gap: "6px", px: "11px", py: 0, fontWeight: 700, h: "26px", textStyle: "micro" });
+const levelBadgeSmall = css(badge.raw(), { gap: "6px", px: "11px", py: 0, fontWeight: 700, h: "22px", textStyle: "micro" });
 export function LevelBadge({ level, small }: { level: string; small?: boolean }) {
   const hue = LEVEL_HUE[level] ?? 210;
   return (
@@ -107,9 +108,9 @@ const sectionCard = css(card.raw({ padding: "none" }), { borderColor: "hairline"
 const sectionHead = css({ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", p: "18px 22px" });
 const sectionTitleWrap = css({ display: "flex", alignItems: "center", gap: "11px", minW: 0 });
 const sectionIcon = css({ color: "ink3", display: "flex", flex: "none" });
-const sectionTitle = css({ m: 0, fontSize: "16px", fontWeight: 600, letterSpacing: "-0.015em", whiteSpace: "nowrap" });
+const sectionTitle = css({ m: 0, textStyle: "lead", fontWeight: 600, whiteSpace: "nowrap" });
 const sectionHintWrap = css({ px: "22px" });
-const sectionHint = css({ fontSize: "12.5px", color: "ink3", mt: "-4px" });
+const sectionHint = css({ textStyle: "meta", color: "ink3", mt: "-4px" });
 const sectionBody = css({ p: "0 22px 22px" });
 const sectionBodyHinted = css({ p: "14px 22px 22px" });
 export function SectionCard({ icon, title, hint, action, children, className }: { icon?: ReactNode; title: string; hint?: string; action?: ReactNode; children: ReactNode; className?: string }) {
@@ -129,10 +130,10 @@ export function SectionCard({ icon, title, hint, action, children, className }: 
 }
 
 /* ── Labeled field ── */
-const fieldLabel = css({ display: "flex", alignItems: "baseline", justifyContent: "space-between", fontSize: "12.5px", fontWeight: 600, color: "ink2", mb: "8px", letterSpacing: "-0.005em" });
+const fieldLabel = css({ display: "flex", alignItems: "baseline", justifyContent: "space-between", textStyle: "meta", fontWeight: 600, color: "ink2", mb: "8px" });
 const fieldLabelText = css({ whiteSpace: "nowrap" });
-const fieldOptional = css({ fontSize: "11px", color: "ink3", fontWeight: 400 });
-const fieldHint = css({ fontSize: "12px", color: "ink3", mt: "6px" });
+const fieldOptional = css({ textStyle: "micro", color: "ink3", fontWeight: 400 });
+const fieldHint = css({ textStyle: "meta", color: "ink3", mt: "6px" });
 export function Field({ label, hint, optional, children }: { label: string; hint?: string; optional?: boolean; children: ReactNode }) {
   return (
     <div>
@@ -147,8 +148,8 @@ export function Field({ label, hint, optional, children }: { label: string; hint
 }
 
 /* ── Locked (read-only) field ── */
-const lockedLabel = css({ display: "block", fontSize: "12.5px", fontWeight: 600, color: "ink2", mb: "8px" });
-const lockedBox = css({ h: "44px", px: "14px", display: "flex", alignItems: "center", gap: "9px", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "input", bg: "surface2", color: "ink2", fontSize: "15px" });
+const lockedLabel = css({ display: "block", textStyle: "meta", fontWeight: 600, color: "ink2", mb: "8px" });
+const lockedBox = css({ h: "44px", px: "14px", display: "flex", alignItems: "center", gap: "9px", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "input", bg: "surface2", color: "ink2", textStyle: "body" });
 const lockedIcon = css({ color: "ink3", display: "flex" });
 const lockedValue = css({ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 export function LockedField({ label, value, icon, note }: { label: string; value: string; icon?: ReactNode; note?: string }) {
@@ -172,10 +173,10 @@ const PROFICIENCY: Record<string, { label: string; className: string }> = {
   native: { label: "Native", className: css({ bg: "successTint", color: "successText" }) },
 };
 const langChip = cva({
-  base: { display: "inline-flex", alignItems: "center", gap: "8px", h: "34px", pl: "13px", borderRadius: "pill", bg: "rgba(0,0,0,0.04)", fontSize: "13px", fontWeight: 500, whiteSpace: "nowrap" },
+  base: { display: "inline-flex", alignItems: "center", gap: "8px", h: "34px", pl: "13px", borderRadius: "pill", bg: "rgba(0,0,0,0.04)", textStyle: "ui", fontWeight: 500, whiteSpace: "nowrap" },
   variants: { removable: { true: { pr: "6px" }, false: { pr: "13px" } } },
 });
-const langLevel = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "9px", borderRadius: "pill", fontSize: "11px", fontWeight: 600 });
+const langLevel = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "9px", borderRadius: "pill", textStyle: "micro", fontWeight: 600 });
 const langRemove = css(iconButton.raw({ size: "xs" }), { w: "22px", h: "22px", color: "ink3", _hover: { bg: "rgba(0,0,0,0.08)", color: "ink" } });
 export function LangChip({ name, proficiency, onRemove }: { name: string; proficiency: string; onRemove?: () => void }) {
   const cfg = PROFICIENCY[proficiency] ?? PROFICIENCY.basic;
@@ -196,8 +197,8 @@ export function LangChip({ name, proficiency, onRemove }: { name: string; profic
 const entryRow = css({ display: "flex", alignItems: "center", gap: "14px", py: "14px", "&:not(:first-of-type)": { borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" }, "&:hover .entry-acts": { opacity: 1 } });
 const entryIcon = css({ w: "38px", h: "38px", borderRadius: "10px", flex: "none", bg: "rgba(0,0,0,0.04)", color: "ink2", display: "flex", alignItems: "center", justifyContent: "center" });
 const entryText = css({ minW: 0, flex: 1 });
-const entryTitle = css({ fontSize: "14.5px", fontWeight: 600, letterSpacing: "-0.01em", lineHeight: 1.3 });
-const entrySub = css({ fontSize: "13px", color: "ink2", mt: "2px" });
+const entryTitle = css({ textStyle: "body", fontWeight: 600 });
+const entrySub = css({ textStyle: "ui", color: "ink2", mt: "2px" });
 const entryActs = css({ display: "flex", gap: "4px", flex: "none", opacity: 0.55, transition: "opacity .15s" });
 const entryEdit = css(iconButton.raw({ shape: "square" }), { w: "28px", h: "28px", borderRadius: "7px", color: "ink2", _hover: { bg: "rgba(0,0,0,0.05)", color: "ink" } });
 const entryDelete = css(iconButton.raw({ shape: "square" }), { w: "28px", h: "28px", borderRadius: "7px", color: "ink2", _hover: { bg: "errorTint", color: "errorText" } });
@@ -226,10 +227,10 @@ const verifyIcon = cva({
   variants: { verified: { true: { bg: "successTint", color: "success" }, false: { bg: "rgba(0,0,0,0.04)", color: "ink3" } } },
 });
 const verifyText = css({ flex: 1, minW: 0 });
-const verifyTitle = css({ fontSize: "14.5px", fontWeight: 600, letterSpacing: "-0.01em" });
-const verifySub = css({ fontSize: "12.5px", color: "ink2", mt: "1px" });
-const verifiedPill = css({ display: "inline-flex", alignItems: "center", gap: "4px", h: "26px", px: "10px", borderRadius: "pill", bg: "successTint", color: "successText", fontSize: "12px", fontWeight: 600, flex: "none" });
-const verifyBtn = css(button.raw({ variant: "outline", size: "sm" }), { flex: "none", h: "34px", px: "14px", borderRadius: "pill", fontSize: "13px", borderColor: "hairlineStrong", bg: "surface", color: "ink", _hover: { bg: "surface2", borderColor: "hairlineStrong" } });
+const verifyTitle = css({ textStyle: "body", fontWeight: 600 });
+const verifySub = css({ textStyle: "meta", color: "ink2", mt: "1px" });
+const verifiedPill = css({ display: "inline-flex", alignItems: "center", gap: "4px", h: "26px", px: "10px", borderRadius: "pill", bg: "successTint", color: "successText", textStyle: "meta", fontWeight: 600, flex: "none" });
+const verifyBtn = css(button.raw({ variant: "outline", size: "sm" }), { flex: "none", h: "34px", px: "14px", borderRadius: "pill", textStyle: "ui", borderColor: "hairlineStrong", bg: "surface", color: "ink", _hover: { bg: "surface2", borderColor: "hairlineStrong" } });
 export function VerifyRow({ icon, title, sub, verified, onVerify }: { icon: ReactNode; title: string; sub: string; verified: boolean; onVerify?: () => void }) {
   return (
     <div className={verifyRow}>
@@ -250,8 +251,8 @@ export function VerifyRow({ icon, title, sub, verified, onVerify }: { icon: Reac
 /* ── Empty state ── */
 const emptyWrap = css({ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "12px", py: "30px", px: "20px" });
 const emptyIcon = css({ w: "52px", h: "52px", borderRadius: "14px", bg: "rgba(0,0,0,0.04)", color: "ink3", display: "flex", alignItems: "center", justifyContent: "center" });
-const emptyTitle = css({ fontSize: "14px", fontWeight: 600, letterSpacing: "-0.01em" });
-const emptySub = css({ fontSize: "12.5px", color: "ink2", mt: "3px", maxW: "300px", mx: "auto" });
+const emptyTitle = css({ textStyle: "body", fontWeight: 600 });
+const emptySub = css({ textStyle: "meta", color: "ink2", mt: "3px", maxW: "300px", mx: "auto" });
 export function Empty({ icon, title, sub, action }: { icon: ReactNode; title: string; sub?: string; action?: ReactNode }) {
   return (
     <div className={emptyWrap}>
@@ -266,7 +267,7 @@ export function Empty({ icon, title, sub, action }: { icon: ReactNode; title: st
 }
 
 /* ── Add pill (dashed) + small round icon button (used in section headers) ── */
-const addPill = css(button.raw({ variant: "ghost", size: "sm" }), { gap: "7px", h: "38px", px: "16px", borderRadius: "pill", borderStyle: "dashed", borderColor: "hairlineStrong", bg: "transparent", fontSize: "13.5px", fontWeight: 500, color: "ink2", whiteSpace: "nowrap", transition: "border-color .15s, color .15s, background .15s", _hover: { borderColor: "accent", color: "accent", bg: "accentFill" } });
+const addPill = css(button.raw({ variant: "ghost", size: "sm" }), { gap: "7px", h: "38px", px: "16px", borderRadius: "pill", borderStyle: "dashed", borderColor: "hairlineStrong", bg: "transparent", textStyle: "ui", fontWeight: 500, color: "ink2", whiteSpace: "nowrap", transition: "border-color .15s, color .15s, background .15s", _hover: { borderColor: "accent", color: "accent", bg: "accentFill" } });
 export function AddPill({ children, onClick }: { children: ReactNode; onClick?: () => void }) {
   return <button type="button" onClick={onClick} className={addPill}>{children}</button>;
 }

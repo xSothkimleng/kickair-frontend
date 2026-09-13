@@ -13,8 +13,8 @@ export type VerifiedStatus = "verified" | "expired" | "invalid" | "already";
 const PAGE_MIN_HEIGHT = "85vh";
 
 const form = css({ mt: "24px", display: "flex", flexDirection: "column", gap: "12px" });
-const label = css({ display: "block", fontSize: "12px", lineHeight: 1.5, fontWeight: 600, color: "ink2", mb: "6px" });
-// Square ink-palette text field (was a raw MUI InputBase, not a slate kit field).
+const label = css({ display: "block", textStyle: "meta", fontWeight: 600, color: "ink2", mb: "6px" });
+// Square ink-palette text field (was a bare input, not a kit field).
 const input = css({
   display: "block",
   w: "100%",
@@ -23,10 +23,8 @@ const input = css({
   m: "0",
   px: "16px",
   py: "0",
-  fontFamily: "inherit",
-  fontSize: "15px",
-  lineHeight: 1.4375,
-  color: "rgba(0,0,0,0.87)",
+  textStyle: "body",
+  color: "ink",
   bg: "surface",
   borderWidth: "1px",
   borderStyle: "solid",
@@ -37,7 +35,7 @@ const input = css({
   _focus: { borderColor: "ink" },
 });
 const actions = css({ display: "flex", gap: "12px", flexWrap: "wrap" });
-const hint = css({ fontSize: "12px", lineHeight: 1.5, color: "ink3" });
+const hint = css({ textStyle: "meta", color: "ink3" });
 const gap20 = css({ mt: "20px" });
 const gap28 = css({ mt: "28px" });
 

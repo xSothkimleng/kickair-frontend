@@ -14,9 +14,8 @@ const ctaSolid = css({
   borderWidth: "0",
   bg: "accent",
   color: "white",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   cursor: "pointer",
   boxShadow: "0 10px 40px rgba(0, 0, 0, 0.3)",
   transition: "background-color .15s",
@@ -31,7 +30,7 @@ const badgePill = css({
   bg: "rgba(255, 255, 255, 0.1)",
   backdropFilter: "blur(8px)",
   color: "rgba(255, 255, 255, 0.8)",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 600,
   py: "1",
   px: "3",
@@ -79,9 +78,8 @@ export default function KickAirProSection() {
             <Box
               as="h2"
               className={css({
-                fontSize: { base: "28px", md: "40px", lg: "48px" },
+                textStyle: { base: "stat", md: "display", lg: "display" },
                 fontWeight: 600,
-                letterSpacing: "-0.02em",
                 mb: "4",
               })}
             >
@@ -91,7 +89,7 @@ export default function KickAirProSection() {
             <Box
               as="p"
               className={css({
-                fontSize: { base: "16px", md: "19px" },
+                textStyle: { base: "lead", md: "title" },
                 color: "rgba(255, 255, 255, 0.7)",
                 maxW: "672px",
                 mx: "auto",
@@ -118,10 +116,10 @@ export default function KickAirProSection() {
                   <Box display="flex" justifyContent="center" mb="3">
                     <Icon size={32} color="#0071e3" />
                   </Box>
-                  <Box as="p" className={css({ fontSize: "17px", fontWeight: 600, mb: "2" })}>
+                  <Box as="p" className={css({ textStyle: "lead", fontWeight: 600, mb: "2" })}>
                     {title}
                   </Box>
-                  <Box as="p" className={css({ fontSize: "13px", color: "rgba(255, 255, 255, 0.6)" })}>
+                  <Box as="p" className={css({ textStyle: "ui", color: "rgba(255, 255, 255, 0.6)" })}>
                     {description}
                   </Box>
                 </Box>

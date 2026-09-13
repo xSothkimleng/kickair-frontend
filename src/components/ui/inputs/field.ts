@@ -1,4 +1,4 @@
-// Panda CSS recipes for the KickAir field system (the former MUI
+// Panda CSS recipes for the KickAir field system (the former
 // OutlinedInput/InputAdornment styling, now shared by every input in the kit).
 //
 // Anatomy:
@@ -8,8 +8,9 @@
 //     <button class={fieldIconButton}>…</button>                    ← optional end action
 //   </div>
 //
-// Panda `preflight` is off while MUI is still mounted, so the recipes set
-// box-sizing / font inheritance / appearance themselves.
+// Panda `preflight` is off, so the recipes set box-sizing / appearance
+// themselves. Font, size and line-height reach the bare control through the
+// `button, input, select, textarea { font: inherit }` rule in globals.css.
 
 import { css, cva } from "styled-system/css";
 
@@ -34,9 +35,11 @@ export const fieldRoot = cva({
     "&[data-disabled], &[data-disabled]:hover": { bg: "fill", borderColor: "border", cursor: "not-allowed" },
   },
   variants: {
+    // `input` / `inputSm` roles are 16px on phones (iOS Safari zooms the page
+    // when a focused input is smaller) and 15px / 14px from `md` up.
     size: {
-      md: { minH: "46px", px: "14px", fontSize: "15px" },
-      sm: { minH: "38px", px: "12px", fontSize: "14px" },
+      md: { minH: "46px", px: "14px", textStyle: "input" },
+      sm: { minH: "38px", px: "12px", textStyle: "inputSm" },
     },
     multiline: {
       true: { alignItems: "stretch" },
@@ -59,9 +62,6 @@ export const fieldControl = css({
   outline: "none",
   boxShadow: "none",
   appearance: "none",
-  fontFamily: "inherit",
-  fontSize: "inherit",
-  lineHeight: 1.5,
   color: "inherit",
   _placeholder: { color: "placeholder", opacity: 1 },
   _disabled: { cursor: "not-allowed", color: "muted" },
@@ -109,7 +109,6 @@ export const fieldIconButton = css({
   bg: "transparent",
   color: "muted",
   cursor: "pointer",
-  fontFamily: "inherit",
   transition: "background-color .15s, color .15s",
   _hover: { bg: "fill", color: "body" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
@@ -120,9 +119,8 @@ export const fieldIconButton = css({
 
 export const fieldLabel = css({
   display: "block",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.5,
   color: "body",
   mb: "7px",
 });
@@ -133,8 +131,7 @@ export const fieldHelper = cva({
     alignItems: "center",
     gap: "5px",
     mt: "7px",
-    fontSize: "12.5px",
-    lineHeight: 1.45,
+    textStyle: "meta",
     color: "muted",
   },
   variants: {
@@ -144,16 +141,15 @@ export const fieldHelper = cva({
 
 // ── Popup parts (Select / MultiSelect / DatePicker) ────────────────────────
 // NOTE: these popups render inline (no <Portal>) on purpose. Several callers
-// mount the kit inside MUI <Dialog>, whose focus trap yanks focus back from
+// mount the kit inside a dialog, whose focus trap yanks focus back from
 // anything portaled outside the dialog and closes an Ark popup on open.
 // `positioning.strategy = "fixed"` still escapes overflow clipping. Switch to
-// <Portal> once the last MUI Dialog is gone.
+// <Portal> once every dialog is on Ark.
 
 /** Select/Popover trigger: layered on top of `fieldRoot({ size })` for a <button>. */
 export const fieldTrigger = css({
   cursor: "pointer",
   textAlign: "left",
-  fontFamily: "inherit",
   fontWeight: 400,
   appearance: "none",
   m: 0,
@@ -185,7 +181,7 @@ export const fieldIndicator = css({
   "&[data-state=open]": { transform: "rotate(180deg)" },
 });
 
-/** Ark positioner wrapper — carries the z-index above MUI dialogs (1300). */
+/** Ark positioner wrapper — carries the z-index above dialogs (1300). */
 export const fieldPositioner = css({
   "--z-index": "1400",
   zIndex: 1400,
@@ -218,8 +214,7 @@ export const fieldOption = css({
   px: "10px",
   py: "8px",
   borderRadius: "7px",
-  fontSize: "14.5px",
-  lineHeight: 1.4,
+  textStyle: "body",
   color: "body",
   cursor: "pointer",
   userSelect: "none",
@@ -272,7 +267,7 @@ export const fieldChip = css({
   borderWidth: "1px",
   borderStyle: "solid",
   borderColor: "border",
-  fontSize: "12.5px",
+  textStyle: "meta",
   fontWeight: 500,
   color: "heading",
   whiteSpace: "nowrap",
@@ -309,7 +304,6 @@ export const fieldChipRemove = css({
   bg: "transparent",
   color: "muted",
   cursor: "pointer",
-  fontFamily: "inherit",
   _hover: { bg: "borderStrong", color: "heading" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
@@ -327,6 +321,6 @@ export const fieldOptionCreate = css({
 export const fieldEmpty = css({
   px: "10px",
   py: "10px",
-  fontSize: "13.5px",
+  textStyle: "ui",
   color: "muted",
 });

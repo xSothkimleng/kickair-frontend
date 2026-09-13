@@ -7,7 +7,7 @@ import { AlertTriangle, ChevronLeft, ChevronRight, X } from "lucide-react";
 
 /* ────────────────────────────────────────────────────────────────────────────
    Admin console design tokens. Scoped to the shell root as CSS variables so the
-   console is independent of the MUI palette the user-facing site still uses.
+   console is independent of the site palette.
    ──────────────────────────────────────────────────────────────────────────── */
 export const tdVars = css({
   "--td-canvas": "#FFFFFF",
@@ -35,11 +35,9 @@ export const tdVars = css({
   "--td-shadow-sm": "0 1px 2px rgba(21,23,28,0.06)",
   "--td-shadow-lg": "0 24px 64px -16px rgba(21,23,28,0.28), 0 0 0 1px rgba(21,23,28,0.05)",
   color: "var(--td-ink)",
-  fontSize: "14px",
-  lineHeight: 1.45,
+  textStyle: "body",
   fontSmoothing: "antialiased",
   "& *, & *::before, & *::after": { boxSizing: "border-box" },
-  "& button, & input, & select, & textarea": { fontFamily: "inherit", fontSize: "inherit" },
   "& input, & select, & textarea": { color: "inherit" },
   "& a": { color: "inherit", textDecoration: "none" },
   "& svg": { flexShrink: 0 },
@@ -79,16 +77,21 @@ export const grid = cva({
 });
 
 /* ── Text ───────────────────────────────────────────────────────────────── */
+// Sizes are the site-wide typography roles (panda.config.ts `textStyles`);
+// the console adds its own tones on top.
 export const text = cva({
   base: { margin: 0 },
   variants: {
     size: {
-      xs: { fontSize: "11.5px", lineHeight: 1.4 },
-      sm: { fontSize: "12.5px", lineHeight: 1.45 },
-      md: { fontSize: "14px", lineHeight: 1.5 },
-      lg: { fontSize: "16px", lineHeight: 1.45 },
-      xl: { fontSize: "20px", lineHeight: 1.3, letterSpacing: "-0.01em" },
-      "2xl": { fontSize: "26px", lineHeight: 1.2, letterSpacing: "-0.02em" },
+      micro: { textStyle: "micro" },
+      eyebrow: { textStyle: "eyebrow" },
+      meta: { textStyle: "meta" },
+      ui: { textStyle: "ui" },
+      body: { textStyle: "body" },
+      lead: { textStyle: "lead" },
+      title: { textStyle: "title" },
+      heading: { textStyle: "heading" },
+      stat: { textStyle: "stat" },
     },
     tone: {
       ink: { color: "var(--td-ink) !important" },
@@ -99,15 +102,16 @@ export const text = cva({
       green: { color: "var(--td-green) !important" },
     },
     weight: { 400: { fontWeight: 400 }, 500: { fontWeight: 500 }, 600: { fontWeight: 600 }, 700: { fontWeight: 700 } },
-    mono: { true: { fontFamily: "var(--td-mono)", fontVariantNumeric: "tabular-nums" } },
+    /** Aligned figures (amounts, counts, ids): same font, tabular digits. */
+    mono: { true: { fontVariantNumeric: "tabular-nums" } },
     truncate: { true: { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" } },
-    upper: { true: { textTransform: "uppercase", letterSpacing: "0.06em" } },
   },
-  defaultVariants: { size: "md", tone: "ink", weight: 400 },
+  defaultVariants: { size: "body", tone: "ink", weight: 400 },
 });
 
+/** Uppercase section label — the `eyebrow` role carries the tracking and weight. */
 export function Eyebrow({ children, className }: { children: ReactNode; className?: string }) {
-  return <p className={cx(text({ size: "xs", tone: 3, weight: 600, upper: true }), className)}>{children}</p>;
+  return <p className={cx(text({ size: "eyebrow", tone: 3 }), className)}>{children}</p>;
 }
 
 /* ── Page header ────────────────────────────────────────────────────────── */
@@ -116,7 +120,7 @@ export function PageHeader({ title, eyebrow, description, actions }: { title: Re
     <header className={cx(row({ between: true, top: true, gap: 4 }), css({ mb: "24px" }))}>
       <div className={stack({ gap: 1 })}>
         {eyebrow ? <Eyebrow>{eyebrow}</Eyebrow> : null}
-        <h1 className={text({ size: "2xl", weight: 600 })}>{title}</h1>
+        <h1 className={text({ size: "heading", weight: 600 })}>{title}</h1>
         {description ? <p className={cx(text({ tone: 2 }), css({ mt: "2px" }))}>{description}</p> : null}
       </div>
       {actions ? <div className={row({ gap: 2 })}>{actions}</div> : null}
@@ -142,8 +146,8 @@ export function PanelHead({ title, meta, actions }: { title: ReactNode; meta?: R
   return (
     <div className={cx(row({ between: true, gap: 3 }), css({ px: "20px", py: "14px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)" }))}>
       <div className={row({ gap: 2 })}>
-        <h2 className={text({ size: "md", weight: 600 })}>{title}</h2>
-        {meta ? <span className={text({ size: "sm", tone: 3 })}>{meta}</span> : null}
+        <h2 className={text({ size: "body", weight: 600 })}>{title}</h2>
+        {meta ? <span className={text({ size: "meta", tone: 3 })}>{meta}</span> : null}
       </div>
       {actions}
     </div>
@@ -154,8 +158,7 @@ export function PanelHead({ title, meta, actions }: { title: ReactNode; meta?: R
 export const pill = cva({
   base: {
     display: "inline-flex", alignItems: "center", gap: "6px", h: "22px", px: "8px", borderRadius: "999px",
-    fontSize: "12px", fontWeight: 600, whiteSpace: "nowrap", lineHeight: 1,
-    "& i": { display: "inline-block", w: "6px", h: "6px", borderRadius: "999px", bg: "currentColor" },
+    textStyle: "meta", fontWeight: 600, whiteSpace: "nowrap", "& i": { display: "inline-block", w: "6px", h: "6px", borderRadius: "999px", bg: "currentColor" },
   },
   variants: {
     tone: {
@@ -201,10 +204,10 @@ export const button = cva({
       success: { bg: "var(--td-green)", color: "#fff", _hover: { bg: "#18774B" } },
     },
     size: {
-      xs: { h: "26px", px: "9px", fontSize: "12px", borderRadius: "7px" },
-      sm: { h: "30px", px: "11px", fontSize: "12.5px" },
-      md: { h: "36px", px: "14px", fontSize: "13.5px" },
-      lg: { h: "42px", px: "18px", fontSize: "14px", borderRadius: "10px" },
+      xs: { h: "26px", px: "9px", textStyle: "meta", borderRadius: "7px" },
+      sm: { h: "30px", px: "11px", textStyle: "meta" },
+      md: { h: "36px", px: "14px", textStyle: "ui" },
+      lg: { h: "42px", px: "18px", textStyle: "body", borderRadius: "10px" },
     },
     full: { true: { w: "100%" } },
   },
@@ -233,8 +236,8 @@ export function IconBtn({ size, className, ...props }: ButtonHTMLAttributes<HTML
 const avatarPalette = ["#DCE4FB", "#E3F4E9", "#FCEBD6", "#EFE7FB", "#FBE3E1", "#E6F1F7"];
 const avatarInk = ["#2B4BC9", "#1E7A4E", "#A05A0A", "#5B3FC9", "#B2342F", "#1E6F93"];
 export const avatar = cva({
-  base: { display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "999px", fontWeight: 600, flexShrink: 0, letterSpacing: "0.01em" },
-  variants: { size: { xs: { w: "22px", h: "22px", fontSize: "9.5px" }, sm: { w: "28px", h: "28px", fontSize: "11px" }, md: { w: "36px", h: "36px", fontSize: "13px" }, lg: { w: "48px", h: "48px", fontSize: "16px" }, xl: { w: "64px", h: "64px", fontSize: "22px" } } },
+  base: { display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "999px", fontWeight: 600, flexShrink: 0 },
+  variants: { size: { xs: { w: "22px", h: "22px", textStyle: "micro" }, sm: { w: "28px", h: "28px", textStyle: "micro" }, md: { w: "36px", h: "36px", textStyle: "ui" }, lg: { w: "48px", h: "48px", textStyle: "lead" }, xl: { w: "64px", h: "64px", textStyle: "title" } } },
   defaultVariants: { size: "md" },
 });
 export function Avatar({ name, size, seed, src }: { name: string; size?: "xs" | "sm" | "md" | "lg" | "xl"; seed?: number; src?: string | null }) {
@@ -255,8 +258,8 @@ export function Avatar({ name, size, seed, src }: { name: string; size?: "xs" | 
 
 /* ── Table ──────────────────────────────────────────────────────────────── */
 export const table = css({
-  w: "100%", borderCollapse: "collapse", fontSize: "13.5px",
-  "& th": { textAlign: "left", fontSize: "11.5px", fontWeight: 600, textTransform: "uppercase", letterSpacing: "0.06em", color: "var(--td-ink-3)", px: "16px", py: "10px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)", bg: "var(--td-surface-2)", whiteSpace: "nowrap" },
+  w: "100%", borderCollapse: "collapse", textStyle: "ui",
+  "& th": { textAlign: "left", textStyle: "eyebrow", fontWeight: 600, color: "var(--td-ink-3)", px: "16px", py: "10px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)", bg: "var(--td-surface-2)", whiteSpace: "nowrap" },
   "& td": { px: "16px", py: "12px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)", verticalAlign: "middle" },
   "& tbody tr:last-child td": { borderBottom: "none" },
   "& tbody tr[data-clickable]": { cursor: "pointer", transition: "background-color .1s" },
@@ -269,10 +272,10 @@ export const table = css({
 const segWrap = css({ display: "inline-flex", gap: "2px", p: "3px", bg: "var(--td-hover)", borderRadius: "10px" });
 const segItem = css({
   display: "inline-flex", alignItems: "center", gap: "7px", h: "30px", px: "12px", borderRadius: "8px", border: "none", bg: "transparent",
-  fontSize: "13px", fontWeight: 500, color: "var(--td-ink-2)", cursor: "pointer", appearance: "none", transition: "all .12s",
+  textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2)", cursor: "pointer", appearance: "none", transition: "all .12s",
   _hover: { color: "var(--td-ink)" },
   "&[data-active=true]": { bg: "var(--td-surface)", color: "var(--td-ink)", fontWeight: 600, boxShadow: "var(--td-shadow-sm)" },
-  "& b": { fontSize: "11px", fontWeight: 600, color: "var(--td-ink-3)", bg: "var(--td-line)", borderRadius: "999px", px: "6px", h: "18px", display: "inline-flex", alignItems: "center", fontVariantNumeric: "tabular-nums" },
+  "& b": { textStyle: "micro", fontWeight: 600, color: "var(--td-ink-3)", bg: "var(--td-line)", borderRadius: "999px", px: "6px", h: "18px", display: "inline-flex", alignItems: "center", fontVariantNumeric: "tabular-nums" },
   "&[data-active=true] b": { color: "var(--td-ink)" },
 });
 export function Segmented<T extends string>({ value, onChange, items }: { value: T; onChange: (v: T) => void; items: { value: T; label: string; count?: number }[] }) {
@@ -291,7 +294,7 @@ export function Segmented<T extends string>({ value, onChange, items }: { value:
 /* ── Underline tabs (for detail pages) ──────────────────────────────────── */
 const tabsWrap = css({ display: "flex", gap: "4px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)" });
 const tabItem = css({
-  position: "relative", h: "40px", px: "12px", border: "none", bg: "transparent", fontSize: "13.5px", fontWeight: 500, color: "var(--td-ink-2)", cursor: "pointer", appearance: "none",
+  position: "relative", h: "40px", px: "12px", border: "none", bg: "transparent", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2)", cursor: "pointer", appearance: "none",
   _hover: { color: "var(--td-ink)" },
   "&[data-active=true]": { color: "var(--td-ink)", fontWeight: 600 },
   "&[data-active=true]::after": { content: '""', position: "absolute", left: "8px", right: "8px", bottom: "-1px", h: "2px", bg: "var(--td-ink)", borderRadius: "2px" },
@@ -311,7 +314,7 @@ export function Tabs<T extends string>({ value, onChange, items }: { value: T; o
 /* ── Form fields ────────────────────────────────────────────────────────── */
 const fieldBase = css({
   w: "100%", boxSizing: "border-box", h: "36px", px: "11px", bg: "var(--td-surface)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line-2)", borderRadius: "9px",
-  fontSize: "13.5px", color: "var(--td-ink)", appearance: "none", outline: "none", transition: "border-color .12s, box-shadow .12s",
+  textStyle: "ui", color: "var(--td-ink)", appearance: "none", outline: "none", transition: "border-color .12s, box-shadow .12s",
   _placeholder: { color: "var(--td-ink-3)" },
   _focus: { borderColor: "var(--td-accent)", boxShadow: "0 0 0 3px var(--td-accent-soft)" },
 });
@@ -319,7 +322,7 @@ export function Input({ className, ...props }: InputHTMLAttributes<HTMLInputElem
   return <input className={cx(fieldBase, className)} {...props} />;
 }
 export function Textarea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return <textarea className={cx(fieldBase, css({ h: "auto", minH: "88px", py: "9px", resize: "vertical", lineHeight: 1.5 }), className)} {...props} />;
+  return <textarea className={cx(fieldBase, css({ h: "auto", minH: "88px", py: "9px", resize: "vertical" }), className)} {...props} />;
 }
 const selectCss = css({
   pr: "30px", cursor: "pointer",
@@ -332,9 +335,9 @@ export function Select({ className, ...props }: SelectHTMLAttributes<HTMLSelectE
 export function Field({ label, hint, children }: { label: ReactNode; hint?: ReactNode; children: ReactNode }) {
   return (
     <label className={stack({ gap: 1 })}>
-      <span className={text({ size: "sm", weight: 600, tone: 2 })}>{label}</span>
+      <span className={text({ size: "meta", weight: 600, tone: 2 })}>{label}</span>
       {children}
-      {hint ? <span className={text({ size: "xs", tone: 3 })}>{hint}</span> : null}
+      {hint ? <span className={text({ size: "micro", tone: 3 })}>{hint}</span> : null}
     </label>
   );
 }
@@ -351,7 +354,7 @@ export function EmptyState({ icon, title, body, action }: { icon?: ReactNode; ti
     <div className={cx(stack({ gap: 2 }), css({ alignItems: "center", textAlign: "center", py: "48px", px: "24px" }))}>
       {icon ? <div className={css({ w: "40px", h: "40px", borderRadius: "12px", bg: "var(--td-hover)", display: "grid", placeItems: "center", color: "var(--td-ink-3)", mb: "6px" })}>{icon}</div> : null}
       <p className={text({ weight: 600 })}>{title}</p>
-      {body ? <p className={cx(text({ size: "sm", tone: 2 }), css({ maxW: "360px" }))}>{body}</p> : null}
+      {body ? <p className={cx(text({ size: "meta", tone: 2 }), css({ maxW: "360px" }))}>{body}</p> : null}
       {action ? <div className={css({ mt: "8px" })}>{action}</div> : null}
     </div>
   );
@@ -359,7 +362,7 @@ export function EmptyState({ icon, title, body, action }: { icon?: ReactNode; ti
 
 /* ── Key/value list ─────────────────────────────────────────────────────── */
 export const kvList = css({
-  display: "grid", gridTemplateColumns: "max-content 1fr", columnGap: "20px", rowGap: "10px", fontSize: "13.5px",
+  display: "grid", gridTemplateColumns: "max-content 1fr", columnGap: "20px", rowGap: "10px", textStyle: "ui",
   "& dt": { color: "var(--td-ink-3)", whiteSpace: "nowrap" },
   "& dd": { margin: 0, color: "var(--td-ink)", minW: 0, overflowWrap: "anywhere" },
 });
@@ -372,11 +375,11 @@ export function Pager({ meta, onPage, noun = "items" }: { meta: PageInfo | undef
   const to = Math.min(meta.total, meta.current_page * meta.per_page);
   return (
     <div className={cx(row({ between: true }), css({ px: "16px", py: "10px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "var(--td-line)", bg: "var(--td-surface-2)" }))}>
-      <span className={text({ size: "sm", tone: 3 })}>{from}–{to} of {meta.total.toLocaleString("en-US")} {noun}</span>
+      <span className={text({ size: "meta", tone: 3 })}>{from}–{to} of {meta.total.toLocaleString("en-US")} {noun}</span>
       {meta.last_page > 1 ? (
         <span className={row({ gap: 1 })}>
           <IconBtn size="sm" aria-label="Previous page" disabled={meta.current_page <= 1} onClick={() => onPage(meta.current_page - 1)} className={css({ _disabled: { opacity: 0.35, cursor: "not-allowed" } })}><ChevronLeft size={15} /></IconBtn>
-          <span className={cx(text({ size: "sm", tone: 2 }), css({ px: "4px", fontVariantNumeric: "tabular-nums" }))}>{meta.current_page} / {meta.last_page}</span>
+          <span className={cx(text({ size: "meta", tone: 2 }), css({ px: "4px", fontVariantNumeric: "tabular-nums" }))}>{meta.current_page} / {meta.last_page}</span>
           <IconBtn size="sm" aria-label="Next page" disabled={meta.current_page >= meta.last_page} onClick={() => onPage(meta.current_page + 1)} className={css({ _disabled: { opacity: 0.35, cursor: "not-allowed" } })}><ChevronRight size={15} /></IconBtn>
         </span>
       ) : null}
@@ -393,7 +396,7 @@ export function Spinner({ className }: { className?: string }) {
 }
 export function Loading({ label = "Loading…", tall }: { label?: string; tall?: boolean }) {
   return (
-    <div className={cx(row({ gap: 3 }), css({ justifyContent: "center", py: tall ? "96px" : "40px", color: "var(--td-ink-3)", fontSize: "13px" }))}>
+    <div className={cx(row({ gap: 3 }), css({ justifyContent: "center", py: tall ? "96px" : "40px", color: "var(--td-ink-3)", textStyle: "ui" }))}>
       <Spinner /> {label}
     </div>
   );
@@ -441,8 +444,8 @@ export function Drawer({ open, onClose, title, subtitle, children, footer }: { o
       <aside className={cx(tdVars, drawerCss)} role="dialog" aria-modal="true">
         <div className={overlayHead}>
           <div className={stack({ gap: 1 })}>
-            <h2 className={text({ size: "lg", weight: 600 })}>{title}</h2>
-            {subtitle ? <div className={text({ size: "sm", tone: 2 })}>{subtitle}</div> : null}
+            <h2 className={text({ size: "lead", weight: 600 })}>{title}</h2>
+            {subtitle ? <div className={text({ size: "meta", tone: 2 })}>{subtitle}</div> : null}
           </div>
           <IconBtn onClick={onClose} aria-label="Close"><X size={18} /></IconBtn>
         </div>
@@ -463,8 +466,8 @@ export function Modal({ open, onClose, title, description, size, children, foote
         <div className={cx(tdVars, modalCss({ size }))} role="dialog" aria-modal="true">
           <div className={overlayHead}>
             <div className={stack({ gap: 1 })}>
-              <h2 className={text({ size: "lg", weight: 600 })}>{title}</h2>
-              {description ? <p className={text({ size: "sm", tone: 2 })}>{description}</p> : null}
+              <h2 className={text({ size: "lead", weight: 600 })}>{title}</h2>
+              {description ? <p className={text({ size: "meta", tone: 2 })}>{description}</p> : null}
             </div>
             <IconBtn onClick={onClose} aria-label="Close"><X size={18} /></IconBtn>
           </div>

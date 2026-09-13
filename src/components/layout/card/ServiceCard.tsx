@@ -10,7 +10,7 @@ interface ServiceCardProps {
 }
 
 // Keys are the icon names stored on the category data; values are the nearest lucide
-// glyphs to the MUI icons used before (Edit → Pencil, BusinessCenter → Briefcase,
+// glyphs to the icons used before (Edit → Pencil, BusinessCenter → Briefcase,
 // VideoLibrary → Video).
 const iconMap: Record<string, LucideIcon> = {
   Palette,
@@ -32,7 +32,6 @@ const cardCss = css({
   borderColor: "transparent",
   textAlign: "left",
   cursor: "pointer",
-  fontFamily: "inherit",
   transition: "all 0.3s ease",
   _hover: {
     bg: "white",
@@ -52,11 +51,11 @@ const iconWrapCss = css({
   transition: "background-color 0.3s ease",
 });
 
-const iconCss = css({ color: "rgba(0, 0, 0, 0.7)", transition: "color 0.3s ease" });
+const iconCss = css({ color: "ink2", transition: "color 0.3s ease" });
 
 const textColCss = css({ display: "flex", flexDirection: "column", gap: "4px" });
-const titleCss = css({ fontSize: "20px", fontWeight: 500, lineHeight: 1.5, color: "ink" });
-const descCss = css({ fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+const titleCss = css({ textStyle: "title", fontWeight: 500, color: "ink" });
+const descCss = css({ textStyle: "body", color: "ink2" });
 
 export function ServiceCard({ name, description, icon }: ServiceCardProps) {
   const IconComponent = iconMap[icon] || Palette;

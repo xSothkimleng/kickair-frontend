@@ -4,9 +4,9 @@ import { Slider as Ark } from "@ark-ui/react";
 import { css, cx } from "styled-system/css";
 
 /**
- * Replaces MUI <Slider> (single value or range). Ark UI `Slider` styled with
+ * Ark UI `Slider` styled with
  * Panda on the slate palette — 4px rail, 16px white thumb with a 2px ink ring
- * and the MUI "halo" on hover/focus/drag, plus the `valueLabelDisplay="auto"`
+ * and the "halo" on hover/focus/drag, plus the `valueLabelDisplay="auto"`
  * bubble above the active thumb.
  *
  * `value` is always an array (one entry per thumb), like Ark/Zag.
@@ -18,7 +18,7 @@ const controlCss = css({
   display: "flex",
   alignItems: "center",
   position: "relative",
-  // MUI's <Slider> root is `height: 4px` + `padding: 13px 0` — same hit area.
+  // The old slider root is `height: 4px` + `padding: 13px 0` — same hit area.
   h: "30px",
   cursor: "pointer",
   "&[data-disabled]": { cursor: "not-allowed", opacity: 0.5 },
@@ -66,8 +66,7 @@ const bubbleCss = css({
   borderRadius: "6px",
   bg: "heading",
   color: "white",
-  fontSize: "11px",
-  lineHeight: 1.5,
+  textStyle: "micro",
   whiteSpace: "nowrap",
   pointerEvents: "none",
   opacity: 0,
@@ -82,9 +81,9 @@ export interface SliderProps {
   max?: number;
   step?: number;
   disabled?: boolean;
-  /** Formats the bubble above the active thumb (MUI `valueLabelFormat`). */
+  /** Formats the bubble above the active thumb. */
   formatValue?: (n: number) => string;
-  /** Hide the bubble entirely (MUI `valueLabelDisplay="off"`). */
+  /** Hide the bubble entirely. */
   hideValueLabel?: boolean;
   /** Accessible name per thumb. */
   ariaLabels?: string[];

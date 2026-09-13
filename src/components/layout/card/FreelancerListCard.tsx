@@ -10,10 +10,10 @@ const MAX_VISIBLE_SKILLS = 4;
 
 const card = css({ gap: "16px", p: "16px" });
 const topRow = css({ display: "flex", alignItems: "center", gap: "12px", mb: "4px" });
-const tagline = css({ fontSize: "13px", color: "ink2", lineHeight: 1.4, mb: "8px", lineClamp: 1 });
+const tagline = css({ textStyle: "ui", color: "ink2", mb: "8px", lineClamp: 1 });
 const metaRow = css({ display: "flex", alignItems: "center", gap: "12px", flexWrap: "wrap" });
 const skillsRow = css({ display: "flex", alignItems: "center", gap: "6px", flexWrap: "nowrap", overflow: "hidden" });
-const skillChip = css({ h: "22px", px: "8px", fontSize: "11px" });
+const skillChip = css({ h: "22px", px: "8px", textStyle: "micro" });
 
 interface FreelancerListCardProps {
   profile: FreelancerProfile;

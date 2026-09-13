@@ -18,8 +18,8 @@ const screen = css({
 });
 const spinnerAccent = css({ color: "#0071e3" });
 const errorBox = css({ textAlign: "center" });
-// The MUI Typography's `mb` never applied (globals.css `p { margin: 0 }` is unlayered).
-const errorText = css({ fontSize: "15px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+// The Typography's `mb` never applied (globals.css `p { margin: 0 }` is unlayered).
+const errorText = css({ textStyle: "body", color: "ink2" });
 const backLink = css({
   display: "inline-flex",
   alignItems: "center",
@@ -27,10 +27,8 @@ const backLink = css({
   px: "32px",
   h: "40px",
   minW: "64px",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   bg: "#0071e3",
   // globals.css sets an unlayered `a { color: inherit }`, which beats utilities.
   color: "white !important",

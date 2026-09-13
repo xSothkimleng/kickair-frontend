@@ -1,4 +1,5 @@
 import { css } from "styled-system/css";
+import { tapTargetIcon } from "@/components/ds/tap";
 import { iconButton } from "@/components/ds";
 
 /**
@@ -8,9 +9,9 @@ import { iconButton } from "@/components/ds";
  * classes competing in the stylesheet.
  */
 
-// Button reset + the MUI text-button defaults the old navbar relied on
-// (14px/500, line-height 1.75, 6px 8px padding, 64px min-width, 4px radius).
-export const muiBtnRaw = css.raw({
+// Button reset + the text-button defaults the old navbar relied on
+// (14px/500, 6px 8px padding, 64px min-width, 4px radius).
+export const navBtnRaw = css.raw({
   appearance: "none",
   display: "inline-flex",
   alignItems: "center",
@@ -25,11 +26,8 @@ export const muiBtnRaw = css.raw({
   borderRadius: "4px",
   bg: "transparent",
   color: "inherit",
-  fontFamily: "inherit",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "normal",
   textTransform: "none",
   textDecoration: "none",
   textAlign: "center",
@@ -54,7 +52,7 @@ export const dropdownPanelRaw = css.raw({
   zIndex: 1000,
 });
 
-export const dropdownItemCss = css(muiBtnRaw, {
+export const dropdownItemCss = css(navBtnRaw, {
   width: "100%",
   textAlign: "left",
   display: "flex",
@@ -70,19 +68,19 @@ export const dropdownItemCss = css(muiBtnRaw, {
   "&:hover svg": { color: "black" },
 });
 
-export const navBtnCss = css(muiBtnRaw, {
-  fontSize: "14px",
-  color: "rgba(0,0,0,0.8)",
+export const navBtnCss = css(navBtnRaw, {
+  textStyle: "body",
+  color: "ink",
   _hover: { bg: "transparent", color: "black" },
 });
 
 // Mode-switcher pills (profile dropdown + mobile drawer).
-const modeBtnRaw = css.raw({ flex: 1, px: "12px", py: "8px", fontSize: "12px", borderRadius: "8px" });
-export const modeBtnOnCss = css(muiBtnRaw, modeBtnRaw, { bg: "black", color: "white", _hover: { bg: "black" } });
-export const modeBtnOffCss = css(muiBtnRaw, modeBtnRaw, { bg: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", _hover: { bg: "rgba(0,0,0,0.1)" } });
+const modeBtnRaw = css.raw({ flex: 1, px: "12px", py: "8px", textStyle: "meta", borderRadius: "8px" });
+export const modeBtnOnCss = css(navBtnRaw, modeBtnRaw, { bg: "black", color: "white", _hover: { bg: "black" } });
+export const modeBtnOffCss = css(navBtnRaw, modeBtnRaw, { bg: "rgba(0,0,0,0.05)", color: "ink2", _hover: { bg: "rgba(0,0,0,0.1)" } });
 
-// 30px round icon button used by both bells (the MUI IconButton size="small" look).
-export const bellBtnCss = css(iconButton.raw({ size: "sm" }), {
-  color: "rgba(0,0,0,0.7)",
-  _hover: { bg: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.7)" },
+// 30px round icon button used by both bells (the small icon button look).
+export const bellBtnCss = css(iconButton.raw({ size: "sm" }), tapTargetIcon, {
+  color: "ink2",
+  _hover: { bg: "rgba(0,0,0,0.04)", color: "ink2" },
 });

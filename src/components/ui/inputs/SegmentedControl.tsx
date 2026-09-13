@@ -57,12 +57,12 @@ const segment = cva({
 });
 
 const labelCss = cva({
-  base: { fontSize: "14px", fontWeight: 500, color: "body" },
+  base: { textStyle: "body", fontWeight: 500, color: "body" },
   variants: { active: { true: { color: "heading" } } },
 });
 
 const subCss = cva({
-  base: { fontSize: "12px", fontWeight: 400, color: "muted" },
+  base: { textStyle: "meta", fontWeight: 400, color: "muted" },
   variants: { active: { true: { color: "accent", fontWeight: 500 } } },
 });
 

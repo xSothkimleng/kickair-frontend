@@ -18,7 +18,7 @@ const DOC_LABEL: Record<string, string> = {
 };
 
 const pageCss = css({ minH: "100vh", bg: "#F5F5F7" });
-// MUI `Container maxWidth="sm"`: 600px cap, 16px gutters that grow to 24px at the
+// Page container: 600px cap, 16px gutters that grow to 24px at the
 // sm breakpoint, centred, border-box (preflight is off, so it must be explicit).
 const containerCss = css({ w: "100%", boxSizing: "border-box", mx: "auto", maxW: "600px", px: { base: "16px", sm: "24px" }, py: "32px" });
 const loadingCss = css({ display: "flex", justifyContent: "center", py: "64px" });

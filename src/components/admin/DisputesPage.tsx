@@ -35,7 +35,7 @@ export default function DisputesPage() {
       <PageHeader title="Disputes" description="Either side can raise a dispute on an active order. Only one can be open per order at a time, and disputes are numbered so the history stays readable." />
       <div className={cx(row({ between: true }), css({ mb: "14px" }))}>
         <Segmented value={filter} onChange={(f) => { setFilter(f); setPageNo(1); }} items={[{ value: "open", label: "Open", count: openCount }, { value: "resolved", label: "Resolved" }]} />
-        {filter === "resolved" ? <span className={text({ size: "sm", tone: 3 })}>Includes disputes continued with feedback</span> : null}
+        {filter === "resolved" ? <span className={text({ size: "meta", tone: 3 })}>Includes disputes continued with feedback</span> : null}
       </div>
       <Panel>
         {disputes.isLoading ? <Loading /> : disputes.isError ? <ErrorState onRetry={() => disputes.refetch()} /> : rows.length === 0 ? (
@@ -50,17 +50,17 @@ export default function DisputesPage() {
                 <tr key={d.id} data-clickable onClick={() => router.push(`/admin/disputes/${d.id}`)}>
                   <td>
                     <p className={text({ weight: 600 })}>Dispute #{d.sequence} <span className={text({ tone: 3, weight: 400 })}>on order #{d.order.id}</span></p>
-                    <p className={cx(text({ size: "sm", tone: 2, truncate: true }), css({ maxW: "420px" }))}>{d.order.title}</p>
+                    <p className={cx(text({ size: "meta", tone: 2, truncate: true }), css({ maxW: "420px" }))}>{d.order.title}</p>
                   </td>
                   <td><Pill tone={d.opened_by === "client" ? "blue" : "purple"} outline>{d.opened_by === "client" ? "Client" : "Freelancer"}</Pill></td>
                   <td>
                     <div className={row({ gap: 2 })}>
                       <span className={parties}><Avatar name={d.client.name} size="xs" seed={d.client.id} src={d.client.avatar_url} /><Avatar name={d.freelancer.name} size="xs" seed={d.freelancer.id} src={d.freelancer.avatar_url} /></span>
-                      <span className={text({ size: "sm", tone: 2 })}>{first(d.client.name)} · {first(d.freelancer.name)}</span>
+                      <span className={text({ size: "meta", tone: 2 })}>{first(d.client.name)} · {first(d.freelancer.name)}</span>
                     </div>
                   </td>
                   <td className="num"><span className={text({ weight: 600, mono: true })}>{money(d.order.price)}</span></td>
-                  <td>{filter === "open" ? <><p className={text({ weight: 500 })}>{waiting(d.opened_at)}</p><p className={text({ size: "sm", tone: 3 })}>opened {ago(d.opened_at)}</p></> : <p className={text({ tone: 2 })}>{d.resolved_at ? ago(d.resolved_at) : "—"}</p>}</td>
+                  <td>{filter === "open" ? <><p className={text({ weight: 500 })}>{waiting(d.opened_at)}</p><p className={text({ size: "meta", tone: 3 })}>opened {ago(d.opened_at)}</p></> : <p className={text({ tone: 2 })}>{d.resolved_at ? ago(d.resolved_at) : "—"}</p>}</td>
                   <td><DisputeStatus status={d.status} outcome={d.outcome} /></td>
                 </tr>
               ))}

@@ -5,7 +5,7 @@ import CategoryPicker from "@/components/category/CategoryPicker";
 import { ServiceFormData } from "../types";
 import { ServiceCategory } from "@/types/service";
 
-/* The form sections are white cards (MUI `Paper elevation={0}`, radius 16, 32px pad). */
+/* The form sections are white cards (flat panels, radius 16, 32px pad). */
 const sectionCard = css({
   bg: "surface",
   borderRadius: "card",
@@ -14,9 +14,9 @@ const sectionCard = css({
   borderColor: "hairline",
   p: "32px",
 });
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 const fieldStack = css({ display: "flex", flexDirection: "column", gap: "16px" });
-const editorLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "body" });
+const editorLabel = css({ textStyle: "ui", fontWeight: 500, color: "body" });
 const requiredMark = css({ color: "error" });
 
 interface BasicInfoSectionProps {

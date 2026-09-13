@@ -7,9 +7,9 @@ import { Avatar, Spinner } from "@/components/ds";
 import { useConversations } from "@/hooks/useConversations";
 
 const headerRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "24px" });
-const titleCss = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.334, color: "ink" });
-const subtitleCss = css({ fontSize: "14px", lineHeight: 1.43, color: "ink2" });
-// Text button, ported from MUI's default text-button metrics (36.5px tall, 4px radius).
+const titleCss = css({ textStyle: "heading", fontWeight: 600, color: "ink" });
+const subtitleCss = css({ textStyle: "body", color: "ink2" });
+// Text button, text-button metrics (36.5px tall, 4px radius).
 const textBtnRaw = css.raw({
   display: "inline-flex",
   alignItems: "center",
@@ -21,16 +21,13 @@ const textBtnRaw = css.raw({
   borderRadius: "4px",
   bg: "transparent",
   color: "accent",
-  fontFamily: "inherit",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "background-color .25s",
   _hover: { bg: "accentFill" },
 });
-const viewAllCss = css(textBtnRaw, { gap: "8px", fontSize: "14px", "& svg": { mr: "-4px" } });
-const viewMoreCss = css(textBtnRaw, { fontSize: "13px" });
+const viewAllCss = css(textBtnRaw, { gap: "8px", textStyle: "body", "& svg": { mr: "-4px" } });
+const viewMoreCss = css(textBtnRaw, { textStyle: "ui" });
 const cardCss = css({
   bg: "surface",
   borderRadius: "card",
@@ -41,13 +38,13 @@ const cardCss = css({
 });
 const loadingCss = css({ display: "flex", justifyContent: "center", py: "48px", color: "accent" });
 const stateCss = css({ p: "32px", textAlign: "center" });
-const errorTextCss = css({ fontSize: "16px", lineHeight: 1.5, color: "error" });
-const emptyTextCss = css({ fontSize: "16px", lineHeight: 1.5, color: "ink2" });
+const errorTextCss = css({ textStyle: "lead", color: "error" });
+const emptyTextCss = css({ textStyle: "lead", color: "ink2" });
 const rowRaw = css.raw({ p: "16px", cursor: "pointer", transition: "background-color 0.2s", _hover: { bg: "rgba(0, 0, 0, 0.02)" } });
 const rowCss = css(rowRaw, { borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0, 0, 0, 0.05)" });
 const rowLastCss = css(rowRaw);
 const rowInnerCss = css({ display: "flex", alignItems: "start", gap: "12px" });
-// The old MUI <Badge variant="dot"> was styled transparent with a 2px white ring.
+// The old Dot badge was styled transparent with a 2px white ring.
 const avatarWrapCss = css({ position: "relative", display: "inline-flex", verticalAlign: "middle", flexShrink: 0 });
 const avatarRingCss = css({
   position: "absolute",
@@ -65,12 +62,12 @@ const avatarRingCss = css({
 const colCss = css({ flex: 1, minW: 0 });
 const nameRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "4px" });
 const truncateRaw = css.raw({ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
-const nameRaw = css.raw(truncateRaw, { fontSize: "13px", lineHeight: 1.5, color: "ink" });
+const nameRaw = css.raw(truncateRaw, { textStyle: "ui", color: "ink" });
 const nameUnreadCss = css(nameRaw, { fontWeight: 700 });
 const nameReadCss = css(nameRaw, { fontWeight: 600 });
-const timeCss = css({ fontSize: "11px", lineHeight: 1.5, color: "ink3", ml: "8px" });
-const orderTitleCss = css(truncateRaw, { fontSize: "11px", lineHeight: 1.5, color: "ink2" });
-const latestRaw = css.raw(truncateRaw, { fontSize: "12px", lineHeight: 1.5 });
+const timeCss = css({ textStyle: "micro", color: "ink3", ml: "8px" });
+const orderTitleCss = css(truncateRaw, { textStyle: "micro", color: "ink2" });
+const latestRaw = css.raw(truncateRaw, { textStyle: "meta" });
 const latestUnreadCss = css(latestRaw, { color: "ink", fontWeight: 500 });
 const latestReadCss = css(latestRaw, { color: "ink2", fontWeight: 400 });
 const unreadPillCss = css({
@@ -78,7 +75,7 @@ const unreadPillCss = css({
   h: "20px",
   bg: "accent",
   color: "#fff",
-  fontSize: "10px",
+  textStyle: "micro",
   borderRadius: "50%",
   display: "flex",
   alignItems: "center",

@@ -43,20 +43,20 @@ export function VerifyCard({ children, minHeight = "100vh" }: { children: ReactN
   );
 }
 
-const overline = css({ fontSize: "11px", lineHeight: 1.5, letterSpacing: "0.1em", textTransform: "uppercase", fontWeight: 600, color: "ink3", mb: "12px" });
+const overline = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3", mb: "12px" });
 
 export function VerifyOverline({ children }: { children: ReactNode }) {
   return <div className={overline}>{children}</div>;
 }
 
-const headline = css({ fontSize: { base: "30px", md: "36px" }, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.08, color: "ink" });
+const headline = css({ textStyle: "stat", fontWeight: 600, color: "ink" });
 
 export function VerifyHeadline({ children }: { children: ReactNode }) {
   return <h1 className={headline}>{children}</h1>;
 }
 
 const body = cva({
-  base: { fontSize: "15px", lineHeight: 1.65, color: "ink2" },
+  base: { textStyle: "body", color: "ink2" },
   variants: { tone: { default: {}, strong: { color: "ink" } } },
   defaultVariants: { tone: "default" },
 });
@@ -66,7 +66,7 @@ export function VerifyBody({ children, tone }: { children: ReactNode; tone?: "de
 }
 
 const tag = cva({
-  base: { display: "inline-block", px: "10px", py: "4px", fontSize: "12px", fontWeight: 600, letterSpacing: "0.02em", mb: "16px" },
+  base: { display: "inline-block", px: "10px", py: "4px", textStyle: "meta", fontWeight: 600, mb: "16px" },
   variants: {
     tone: {
       success: { bg: "successTint", color: "successText" },
@@ -88,7 +88,7 @@ const notice = cva({
     },
   },
 });
-const noticeText = css({ fontSize: "13.5px", lineHeight: 1.5, color: "inherit" });
+const noticeText = css({ textStyle: "ui", color: "inherit" });
 
 export function VerifyNotice({ tone, children }: { tone: "success" | "error"; children: ReactNode }) {
   return (
@@ -113,7 +113,7 @@ const verifyButtonBase = css.raw({
   boxSizing: "border-box", // the recipe sits on <a> too, which is content-box by default
   h: "48px",
   paddingX: "24px",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
   borderRadius: "0",
   transition: "background-color .15s, border-color .15s, opacity .15s",

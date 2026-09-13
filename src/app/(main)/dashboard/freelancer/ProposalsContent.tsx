@@ -16,7 +16,7 @@ const STATUS_CLASS: Record<ProposalStatus, string> = {
   pending: css({ bg: "rgba(234,88,12,0.1)", color: "pendingText" }),
   accepted: css({ bg: "rgba(22,163,74,0.1)", color: "successText" }),
   rejected: css({ bg: "rgba(239,68,68,0.1)", color: "errorText" }),
-  withdrawn: css({ bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" }),
+  withdrawn: css({ bg: "rgba(0,0,0,0.06)", color: "ink2" }),
 };
 
 function statusLabel(status: ProposalStatus) {
@@ -47,16 +47,15 @@ const FILTERS: { value: Filter; label: string }[] = [
 
 /* ── static styles ── */
 const page = css({ display: "flex", flexDirection: "column", gap: "24px" });
-const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
-const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const pageTitle = css({ textStyle: "stat", fontWeight: 600, color: "ink" });
+const pageSub = css({ textStyle: "ui", color: "ink2" });
 const filterRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 const filterPill = cva({
   base: {
     display: "inline-flex", alignItems: "center", justifyContent: "center",
     boxSizing: "border-box", m: 0, px: "16px", h: "32px", minW: "64px",
     border: "none", borderRadius: "40px",
-    fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
-    cursor: "pointer", transition: "background-color .25s, color .25s",
+    textStyle: "meta", fontWeight: 500, cursor: "pointer", transition: "background-color .25s, color .25s",
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
   },
   variants: {
@@ -72,23 +71,22 @@ const panel = css({
   p: "24px",
 });
 const centreBlock = css({ textAlign: "center", py: "48px" });
-const errorText = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(239,68,68,0.8)" });
+const errorText = css({ textStyle: "ui", color: "rgba(239,68,68,0.8)" });
 const retryBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, p: "6px 8px", minW: "64px", border: "none", borderRadius: "4px",
-  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  bg: "transparent", color: "ink", textStyle: "meta", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const emptyIcon = css({ display: "inline-block", color: "rgba(0,0,0,0.2)", mb: "16px" });
-const emptyText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const emptyText = css({ textStyle: "ui", color: "ink2" });
 const cardList = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const proposalCard = css({
   display: "block", w: "100%", boxSizing: "border-box", m: 0, p: "20px", textAlign: "left",
   borderRadius: "cardSm",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.07)",
-  bg: "surface", fontFamily: "inherit", cursor: "pointer",
+  bg: "surface", cursor: "pointer",
   transition: "border-color .15s, box-shadow .15s, background-color .15s",
   _hover: {
     borderColor: "rgba(0,0,0,0.2)",
@@ -106,16 +104,16 @@ const avatarBox = css({
 });
 const cardText = css({ flex: 1, minW: 0 });
 const titleRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "2px" });
-const jobTitle = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minW: 0 });
+const jobTitle = css({ textStyle: "body", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minW: 0 });
 const updatedChip = css({
   display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0,
   h: "20px", px: "8px", borderRadius: "pill",
-  fontSize: "10px", bg: "rgba(37,99,235,0.1)", color: "#1e40af",
+  textStyle: "micro", bg: "rgba(37,99,235,0.1)", color: "#1e40af",
 });
-const submitted = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const submitted = css({ textStyle: "meta", color: "ink2" });
 const cardAside = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", flexShrink: 0 });
-const priceText = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 600, color: "successText" });
-const statusChip = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "8px", borderRadius: "pill", fontSize: "11px" });
+const priceText = css({ textStyle: "body", fontWeight: 600, color: "successText" });
+const statusChip = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "8px", borderRadius: "pill", textStyle: "micro" });
 const pagerRow = css({ display: "flex", justifyContent: "center", mt: "24px" });
 
 export default function ProposalsContent() {
@@ -162,7 +160,7 @@ export default function ProposalsContent() {
       <div className={panel}>
         {loading ? (
           <div className={centreBlock}>
-            <Spinner size={32} className={css({ color: "rgba(0,0,0,0.4)" })} />
+            <Spinner size={32} className={css({ color: "ink3" })} />
           </div>
         ) : error ? (
           <div className={centreBlock}>

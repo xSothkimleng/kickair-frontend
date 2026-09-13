@@ -1,9 +1,10 @@
 // KickAir design-system primitives (Panda CSS + Ark UI).
-// The Panda-native replacement for the MUI component layer. Import branded
+// The Panda-native replacement for the old component layer. Import branded
 // primitives from here; import layout patterns (Box, Flex, Stack, Container,
 // Grid, etc.) directly from "styled-system/jsx".
 export { Button, button, type ButtonVariants } from "./Button";
-export { Text, Heading, text, type TextVariants } from "./Text";
+export { Text, Heading, text, money, type TextVariants, type MoneyVariants } from "./Text";
+export { tapTarget, tapTargetIcon } from "./tap";
 export { Card, card, type CardVariants } from "./Card";
 export { Badge, badge, Indicator, type BadgeVariants } from "./Badge";
 export { Link, link, type LinkVariants } from "./Link";
@@ -16,7 +17,7 @@ export { Menu, MenuPrimitive, type MenuItemDef, type MenuProps } from "./Menu";
 export { Tabs, TabsPrimitive, type TabDef, type TabsProps } from "./Tabs";
 export { Tooltip, TooltipPrimitive, type TooltipProps } from "./Tooltip";
 
-// Added for the MUI removal (2026-09-08). One-to-one replacements for the MUI
+// Added 2026-09-08. One-to-one replacements for the old
 // components the site used; see MIGRATION-PANDA.md for the mapping table.
 export { IconButton, iconButton, type IconButtonVariants } from "./IconButton";
 export { Spinner } from "./Spinner";

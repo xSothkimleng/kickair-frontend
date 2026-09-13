@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Wallet as WalletIcon, Plus as AddIcon, ArrowUp as ArrowUpIcon, ArrowDown as ArrowDownIcon, ShieldCheck as ShieldIcon, Clock as PendingIcon } from "lucide-react";
 import { css } from "styled-system/css";
+import { tapTarget } from "@/components/ds/tap";
 import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
@@ -64,17 +65,17 @@ const ROLE_TAG: Record<TransactionRole, { label: string; color: string; bg: stri
 
 const loadingBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "400px", color: "ink3" });
 const errorBlock = css({ textAlign: "center", py: "48px" });
-const errorText = css({ fontSize: "13px", lineHeight: 1.5, color: "errorText" });
+const errorText = css({ textStyle: "ui", color: "errorText" });
 const retryBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   minW: "64px", px: "8px", py: "6px", border: "none", borderRadius: "4px",
-  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "12px", fontWeight: 500,
-  lineHeight: 1.75, cursor: "pointer",
+  bg: "transparent", color: "inherit", textStyle: "meta", fontWeight: 500,
+  cursor: "pointer",
   _hover: { bg: "rgba(0,0,0,0.04)" },
 });
 
 const head = css({ display: "flex", flexDirection: "column", gap: "8px", mb: "24px" });
-const headTitle = css({ fontSize: { base: "28px", md: "34px" }, fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.03em" });
+const headTitle = css({ textStyle: "stat", fontWeight: 600 });
 
 const layout = css({
   display: "grid", gap: "24px", alignItems: "start",
@@ -94,17 +95,17 @@ const balanceCard = css({
 const cardHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "12px" });
 const cardHeadLeft = css({ display: "flex", alignItems: "center", gap: "7px", minW: 0 });
 const dot = css({ w: "7px", h: "7px", borderRadius: "50%", flexShrink: 0 });
-const balanceLabel = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "rgba(255,255,255,0.72)" });
+const balanceLabel = css({ textStyle: "meta", fontWeight: 500, color: "rgba(255,255,255,0.72)" });
 const balanceAmountRow = css({ display: "flex", alignItems: "baseline", gap: "3.2px" });
-const balanceCurrency = css({ fontSize: "16px", fontWeight: 500, lineHeight: 1.5, color: "rgba(255,255,255,0.6)" });
-const balanceValue = css({ fontFamily: "mono", fontSize: "30px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em" });
-const balanceNote = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(255,255,255,0.5)" });
+const balanceCurrency = css({ textStyle: "lead", fontWeight: 500, color: "rgba(255,255,255,0.6)" });
+const balanceValue = css({ fontVariantNumeric: "tabular-nums", textStyle: "stat", fontWeight: 600 });
+const balanceNote = css({ textStyle: "micro", color: "rgba(255,255,255,0.5)" });
 const balanceActions = css({ display: "flex", gap: "8px", mt: "auto", pt: "14px" });
 const topUpBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   flex: 1, minW: 0, h: "36px", px: "16px", borderRadius: "999px", border: "none",
-  bg: "#fff", color: "#000", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer",
+  bg: "#fff", color: "#000", textStyle: "ui", fontWeight: 600,
+  cursor: "pointer",
   _hover: { bg: "rgba(255,255,255,0.88)" },
   "& svg": { display: "block" },
 });
@@ -112,8 +113,8 @@ const withdrawBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   flex: 1, minW: 0, h: "36px", px: "16px", borderRadius: "999px", boxSizing: "border-box",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(255,255,255,0.28)",
-  bg: "transparent", color: "#fff", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer",
+  bg: "transparent", color: "#fff", textStyle: "ui", fontWeight: 600,
+  cursor: "pointer",
   _hover: { bg: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.4)" },
   "& svg": { display: "block" },
 });
@@ -123,41 +124,41 @@ const escrowCard = css({
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
   borderRadius: "card", p: "18px",
 });
-const escrowLabel = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "ink2" });
-const escrowValue = css({ fontFamily: "mono", fontSize: "24px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em" });
-const escrowValueGreen = css({ fontFamily: "mono", fontSize: "24px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "successText" });
-// `mt: auto` never applied to these <p>s under MUI (globals.css resets p margins) — only the 4px padding did.
-const escrowNote = css({ fontSize: "11px", lineHeight: 1.5, color: "ink3", pt: "4px" });
+const escrowLabel = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
+const escrowValue = css({ fontVariantNumeric: "tabular-nums", textStyle: "heading", fontWeight: 600 });
+const escrowValueGreen = css({ fontVariantNumeric: "tabular-nums", textStyle: "heading", fontWeight: 600, color: "successText" });
+// `mt: auto` never applied to these <p>s (globals.css resets p margins) — only the 4px padding did.
+const escrowNote = css({ textStyle: "micro", color: "ink3", pt: "4px" });
 
 const lifetimeRow = css({ display: "flex", gap: "24px", px: "4px", flexWrap: "wrap" });
-const lifetimeText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink3" });
-const lifetimeValue = css({ fontFamily: "mono", fontWeight: 600, color: "ink2" });
+const lifetimeText = css({ textStyle: "meta", color: "ink3" });
+const lifetimeValue = css({ fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "ink2" });
 
 const panel = css({
   bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
   borderRadius: "card", p: { base: "18px", md: "24px" }, minW: 0,
 });
-const panelTitle = css({ fontSize: "22px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.015em" });
-const panelSub = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink3" });
+const panelTitle = css({ textStyle: "title", fontWeight: 600 });
+const panelSub = css({ textStyle: "meta", color: "ink3" });
 
 const filterRow = css({ display: "flex", gap: "8px", flexWrap: "wrap", mb: "8px" });
-const roleBtn = css({
+const roleBtn = css(tapTarget, {
   h: "34px", px: "16px", borderRadius: "999px", cursor: "pointer", border: "none",
-  fontFamily: "inherit", fontSize: "13px", fontWeight: 500,
+  textStyle: "ui", fontWeight: 500,
   bg: "rgba(0,0,0,0.05)", color: "ink2",
   _hover: { bg: "rgba(0,0,0,0.09)" },
   "&[data-active]": { bg: "#000", color: "#fff", _hover: { bg: "#000" } },
 });
-const statusBtn = css({
+const statusBtn = css(tapTarget, {
   h: "28px", px: "12px", borderRadius: "999px", cursor: "pointer",
-  fontFamily: "inherit", fontSize: "12px", fontWeight: 500,
+  textStyle: "meta", fontWeight: 500,
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
   bg: "transparent", color: "ink2",
   _hover: { borderColor: "hairlineStrong" },
   "&[data-active]": { borderColor: "#000", bg: "rgba(0,0,0,0.04)", color: "ink", _hover: { borderColor: "#000" } },
 });
 
-const emptyText = css({ textAlign: "center", py: "32px", fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+const emptyText = css({ textAlign: "center", py: "32px", textStyle: "body", color: "ink2" });
 const txnRow = css({
   display: "flex", alignItems: "center", gap: "14px", py: "14px",
   borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline",
@@ -169,30 +170,30 @@ const txnIcon = css({
 });
 const txnMain = css({ flex: 1, minW: 0 });
 const txnTitleRow = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
-const txnTitleCss = css({ fontSize: "14.5px", fontWeight: 600, lineHeight: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxW: "100%" });
+const txnTitleCss = css({ textStyle: "body", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxW: "100%" });
 const txnTag = css({
   display: "inline-block", px: "7.2px", py: "1.6px", borderRadius: "999px",
-  fontSize: "10.5px", fontWeight: 700, whiteSpace: "nowrap",
+  textStyle: "micro", fontWeight: 700, whiteSpace: "nowrap",
 });
-const txnMeta = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "ink2" });
-const txnRef = css({ fontFamily: "mono" });
-const txnNote = css({ fontSize: "12px", lineHeight: 1.5, color: "ink3", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const txnMeta = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
+const txnRef = css({ fontVariantNumeric: "tabular-nums" });
+const txnNote = css({ textStyle: "meta", color: "ink3", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 const txnRight = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" });
-const txnAmount = css({ fontFamily: "mono", fontSize: "15px", fontWeight: 600, lineHeight: 1.5 });
+const txnAmount = css({ fontVariantNumeric: "tabular-nums", textStyle: "body", fontWeight: 600 });
 
-const methodTitle = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.01em" });
+const methodTitle = css({ textStyle: "lead", fontWeight: 600 });
 const methodList = css({ display: "flex", flexDirection: "column", gap: "10px" });
 const methodRow = css({
   display: "flex", alignItems: "center", gap: "12px", p: "12px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm",
 });
-const methodName = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
-const methodSub = css({ fontSize: "11.5px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "ink2" });
-// MUI's height:1 in the old style prop meant 100% (its sizing shorthand), which resolved to a
+const methodName = css({ textStyle: "body", fontWeight: 600 });
+const methodSub = css({ textStyle: "micro", fontWeight: 500, color: "ink2" });
+// The old height:1 in the old style prop meant 100% (its sizing shorthand), which resolved to a
 // 0px box inside the auto-height column, so this "divider" always rendered as plain
 // whitespace with no line. Ported as rendered: an 18px spacer.
 const hairlineRule = css({ h: "18px" });
-const acceptedLabel = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const acceptedLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
 const logoRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 const footerWrap = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", mt: "24px", pt: "24px" });
 

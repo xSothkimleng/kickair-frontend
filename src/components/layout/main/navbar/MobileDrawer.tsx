@@ -7,7 +7,7 @@ import { css, cx } from "styled-system/css";
 import { Avatar, Divider, Drawer, Spinner, iconButton } from "@/components/ds";
 import { LANGUAGES, type Language, type UserMode } from "./types";
 import { WalletChip } from "./WalletChip";
-import { muiBtnRaw, modeBtnOnCss, modeBtnOffCss } from "./styles";
+import { navBtnRaw, modeBtnOnCss, modeBtnOffCss } from "./styles";
 
 export interface MobileDrawerProps {
   open: boolean;
@@ -54,40 +54,40 @@ const NAV_SECTIONS: NavSection[] = [
   },
 ];
 
-// The old MUI drawer paper was 280px wide; the ds Drawer's `sm` is min(320px, 100vw).
+// The old drawer paper was 280px wide; the ds Drawer's `sm` is min(320px, 100vw).
 const panelCss = css({ maxW: "280px" });
 const colCss = css({ display: "flex", flexDirection: "column", minH: "100%" });
 const headerCss = css({ px: "16px", py: "12px", display: "flex", alignItems: "center", justifyContent: "space-between", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)", flexShrink: 0 });
 const logoCss = css({ objectFit: "contain" });
-const closeBtnCss = css(iconButton.raw({ size: "sm" }), { color: "rgba(0,0,0,0.54)", _hover: { bg: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.54)" } });
+const closeBtnCss = css(iconButton.raw({ size: "sm" }), { color: "ink2", _hover: { bg: "rgba(0,0,0,0.04)", color: "ink2" } });
 const navBoxCss = css({ py: "8px", flexShrink: 0 });
-const navItemCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "20px", py: "10px", fontSize: "14px", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const navItemCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "20px", py: "10px", textStyle: "body", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
 const sectionChevronCss = css({ ml: "auto", mr: "-4px", flexShrink: 0, transition: "transform 0.2s" });
 const openCss = css({ transform: "rotate(180deg)" });
 const subBoxCss = css({ pl: "16px", pb: "8px" });
-const subItemCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "6px", color: "black", flexDirection: "column", alignItems: "flex-start", textAlign: "left", borderRadius: "4px", _hover: { bg: "rgba(0,0,0,0.04)" } });
-const subTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5 });
-const subDescCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.5)", lineHeight: 1.5 });
+const subItemCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "6px", color: "black", flexDirection: "column", alignItems: "flex-start", textAlign: "left", borderRadius: "4px", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const subTitleCss = css({ textStyle: "ui", fontWeight: 600 });
+const subDescCss = css({ textStyle: "micro", color: "ink2" });
 const langBoxCss = css({ px: "20px", py: "16px", flexShrink: 0 });
-const sectionLabelCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", mb: "8px", lineHeight: 1.5 });
+const sectionLabelCss = css({ textStyle: "eyebrow", color: "ink2", mb: "8px" });
 const langRowCss = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
-const langBtnRaw = css.raw({ px: "12px", py: "4px", fontSize: "12px", borderRadius: "8px" });
-const langOnCss = css(muiBtnRaw, langBtnRaw, { bg: "black", color: "white", _hover: { bg: "black" } });
-const langOffCss = css(muiBtnRaw, langBtnRaw, { bg: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", _hover: { bg: "rgba(0,0,0,0.1)" } });
+const langBtnRaw = css.raw({ px: "12px", py: "4px", textStyle: "meta", borderRadius: "8px" });
+const langOnCss = css(navBtnRaw, langBtnRaw, { bg: "black", color: "white", _hover: { bg: "black" } });
+const langOffCss = css(navBtnRaw, langBtnRaw, { bg: "rgba(0,0,0,0.05)", color: "ink2", _hover: { bg: "rgba(0,0,0,0.1)" } });
 const authBoxCss = css({ px: "16px", py: "16px", mt: "auto", flexShrink: 0 });
 const userRowCss = css({ display: "flex", alignItems: "center", gap: "12px", mb: "16px" });
 const userTextCss = css({ flex: 1, minW: 0 });
-const nameCss = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5 });
-const modeTextCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.5)", textTransform: "capitalize", lineHeight: 1.5 });
+const nameCss = css({ textStyle: "ui", fontWeight: 500 });
+const modeTextCss = css({ textStyle: "micro", color: "ink2", textTransform: "capitalize" });
 const modeBoxCss = css({ mb: "16px" });
 const modeRowCss = css({ display: "flex", gap: "8px" });
 const linksCss = css({ display: "flex", flexDirection: "column", mb: "8px" });
-const linkCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", fontSize: "13px", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
-const linkIconCss = css({ color: "rgba(0,0,0,0.6)", mr: "8px", flexShrink: 0 });
-const logoutCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", fontSize: "13px", color: "#dc2626", _hover: { bg: "#fef2f2" } });
+const linkCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", textStyle: "ui", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const linkIconCss = css({ color: "ink2", mr: "8px", flexShrink: 0 });
+const logoutCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", textStyle: "ui", color: "#dc2626", _hover: { bg: "#fef2f2" } });
 const logoutIconCss = css({ mr: "8px", flexShrink: 0 });
 // `<a>` colour needs !important: globals.css sets `a { color: inherit }` outside any layer.
-const signInCss = css(muiBtnRaw, { w: "100%", bg: "black", color: "white !important", borderRadius: "100px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const signInCss = css(navBtnRaw, { w: "100%", bg: "black", color: "white !important", borderRadius: "100px", _hover: { bg: "rgba(0,0,0,0.8)" } });
 
 export function MobileDrawer({
   open,

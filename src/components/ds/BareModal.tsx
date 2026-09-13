@@ -9,10 +9,9 @@ import { css, cx } from "styled-system/css";
  * foundation (focus trap, ESC, aria wiring, scroll lock) and the same backdrop,
  * z-index and panel treatment as `Modal`, but `children` render directly inside
  * the panel so bespoke dialogs (payment result cards, the simulated ABA PayWay
- * popup, the purchase gate) own their padding and header. Replaces MUI
- * `<Dialog fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius } }}>`.
+ * popup, the purchase gate) own their padding and header. A full-width `xs` dialog with a custom radius.
  *
- * `maxW` is the panel width (MUI `xs` = 444px). Compose `Dialog.Title` /
+ * `maxW` is the panel width (`xs` = 444px). Compose `Dialog.Title` /
  * `Dialog.CloseTrigger` from `@/components/ds` inside for labelled dialogs.
  */
 
@@ -45,7 +44,7 @@ export interface BareModalProps {
   open: boolean;
   onOpenChange?: (open: boolean) => void;
   children?: ReactNode;
-  /** Panel max width, e.g. "444px" (MUI `xs`, the default), "420px", "440px". */
+  /** Panel max width, e.g. "444px" (the default), "420px", "440px". */
   maxW?: string;
   closeOnInteractOutside?: boolean;
   closeOnEscape?: boolean;

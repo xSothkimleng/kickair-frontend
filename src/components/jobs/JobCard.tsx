@@ -28,11 +28,11 @@ function daysLeft(dateStr: string) {
 
 /* ── static styles ── */
 const skillRow = css({ display: "flex", gap: "7px", flexWrap: "wrap" });
-const skillPill = css({ display: "inline-flex", alignItems: "center", h: "28px", px: "12px", borderRadius: "pill", fontSize: "12.5px", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
-const skillMore = css({ display: "inline-flex", alignItems: "center", h: "28px", px: "11px", borderRadius: "pill", fontSize: "12.5px", fontWeight: 600, color: "ink3" });
+const skillPill = css({ display: "inline-flex", alignItems: "center", h: "28px", px: "12px", borderRadius: "pill", textStyle: "meta", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
+const skillMore = css({ display: "inline-flex", alignItems: "center", h: "28px", px: "11px", borderRadius: "pill", textStyle: "meta", fontWeight: 600, color: "ink3" });
 
 const signal = cva({
-  base: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12.5px", fontWeight: 500, whiteSpace: "nowrap", "& svg": { flexShrink: 0 } },
+  base: { display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "meta", fontWeight: 500, whiteSpace: "nowrap", "& svg": { flexShrink: 0 } },
   variants: { tone: { plain: { color: "ink2" }, accent: { color: "accent" }, error: { color: "errorText" } } },
   defaultVariants: { tone: "plain" },
 });
@@ -42,18 +42,17 @@ const budgetBlock = cva({
   variants: { mobile: { true: { alignItems: "flex-start" }, false: { alignItems: "flex-end" } } },
 });
 const budgetFigure = cva({
-  base: { fontFamily: "mono", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.05, color: "successText", whiteSpace: "nowrap" },
-  variants: { mobile: { true: { fontSize: "19px" }, false: { fontSize: "20px" } } },
+  base: { fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "successText", whiteSpace: "nowrap" },
+  variants: { mobile: { true: { textStyle: "title" }, false: { textStyle: "title" } } },
 });
 const budgetDash = css({ color: "ink3", fontWeight: 500 });
-const budgetLabel = css({ lineHeight: 1.5, fontSize: "10px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3", whiteSpace: "nowrap" });
+const budgetLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3", whiteSpace: "nowrap" });
 
 const bookmarkBtn = cva({
   base: {
     w: "38px", h: "38px", p: 0, m: 0, borderRadius: "10px",
     borderWidth: "1px", borderStyle: "solid", borderColor: "transparent",
-    bg: "transparent", fontFamily: "inherit",
-    display: "flex", alignItems: "center", justifyContent: "center",
+    bg: "transparent", display: "flex", alignItems: "center", justifyContent: "center",
     cursor: "pointer", flex: "none",
     _hover: { bg: "rgba(0,0,0,0.05)" },
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
@@ -63,9 +62,9 @@ const bookmarkBtn = cva({
 });
 
 const metaRow = css({ display: "flex", alignItems: "center", gap: "8px", minW: 0 });
-const categoryPill = css({ display: "inline-flex", alignItems: "center", h: "24px", px: "10px", borderRadius: "pill", fontSize: "11.5px", fontWeight: 600, bg: "rgba(0,0,0,0.05)", color: "ink2", whiteSpace: "nowrap" });
-const postedText = css({ lineHeight: 1.5, fontSize: "12px", fontWeight: 500, color: "ink2", whiteSpace: "nowrap" });
-const previewText = css({ fontSize: "13.5px", lineHeight: 1.55, color: "ink2", lineClamp: 2 });
+const categoryPill = css({ display: "inline-flex", alignItems: "center", h: "24px", px: "10px", borderRadius: "pill", textStyle: "micro", fontWeight: 600, bg: "rgba(0,0,0,0.05)", color: "ink2", whiteSpace: "nowrap" });
+const postedText = css({ textStyle: "meta", fontWeight: 500, color: "ink2", whiteSpace: "nowrap" });
+const previewText = css({ textStyle: "ui", color: "ink2", lineClamp: 2 });
 const hairlineRow = css({ h: "1px", bg: "hairline", my: "3px" });
 const footerRow = css({ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "8px" });
 const footerSep = css({ w: "1px", h: "12px", bg: "hairlineStrong", mx: "14px" });
@@ -82,11 +81,11 @@ const jobCard = css({
 });
 const mobileBody = css({ display: { base: "flex", md: "none" }, flexDirection: "column", gap: "13px", p: "18px" });
 const mobileTop = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" });
-const mobileTitle = css({ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 });
+const mobileTitle = css({ textStyle: "lead", fontWeight: 600 });
 const desktopBody = css({ display: { base: "none", md: "flex" }, flexDirection: "column", gap: "14px", p: "24px" });
 const desktopTop = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" });
 const desktopHead = css({ display: "flex", flexDirection: "column", gap: "12px", minW: 0, flex: 1 });
-const desktopTitle = css({ fontSize: "19px", fontWeight: 600, letterSpacing: "-0.018em", lineHeight: 1.2 });
+const desktopTitle = css({ textStyle: "title", fontWeight: 600 });
 const desktopAside = css({ display: "flex", gap: "12px", alignItems: "flex-start", flex: "none" });
 
 function SkillRow({ skills, cap }: { skills: string[]; cap: number }) {

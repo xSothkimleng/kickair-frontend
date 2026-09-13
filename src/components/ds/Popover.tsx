@@ -5,8 +5,8 @@ import type { ReactNode } from "react";
 import { css, cx } from "styled-system/css";
 
 /**
- * Anchored popover on Ark (ESC, outside click, focus management). Replaces MUI
- * <Popover>/<Menu> used as a panel (notification bells, wallet chip, filters).
+ * Anchored popover on Ark (ESC, outside click, focus management). Used as a
+ * panel (notification bells, wallet chip, filters).
  * `trigger` must be a single element (rendered asChild). Raw parts: PopoverPrimitive.
  */
 export { Ark as PopoverPrimitive };
@@ -31,7 +31,7 @@ export interface PopoverProps {
   onOpenChange?: (open: boolean) => void;
   placement?: "bottom-start" | "bottom-end" | "bottom" | "top-start" | "top-end" | "top" | "left" | "right";
   gutter?: number;
-  /** Set false when the popover lives inside a MUI Dialog (its focus trap fights portals). */
+  /** Set false when the popover lives inside a dialog (its focus trap fights portals). */
   portalled?: boolean;
   className?: string;
 }

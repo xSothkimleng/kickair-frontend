@@ -17,7 +17,7 @@ type Filter = "pending" | "approved" | "rejected";
 const docTile = css({
   display: "block", position: "relative", aspectRatio: "1.6", borderRadius: "12px", overflow: "hidden", bg: "var(--td-hover)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line)",
   "& img": { w: "100%", h: "100%", objectFit: "cover", display: "block" },
-  "& span": { position: "absolute", left: "10px", bottom: "10px", px: "8px", h: "22px", display: "inline-flex", alignItems: "center", gap: "5px", borderRadius: "999px", bg: "rgba(21,23,28,0.72)", color: "#fff", fontSize: "11.5px", fontWeight: 600, backdropFilter: "blur(4px)" },
+  "& span": { position: "absolute", left: "10px", bottom: "10px", px: "8px", h: "22px", display: "inline-flex", alignItems: "center", gap: "5px", borderRadius: "999px", bg: "rgba(21,23,28,0.72)", color: "#fff", textStyle: "micro", fontWeight: 600, backdropFilter: "blur(4px)" },
   _hover: { borderColor: "var(--td-line-2)" },
 });
 
@@ -31,7 +31,7 @@ export function kycDocuments(k: Pick<AdminKycSubmission, "document_type" | "id_d
 }
 
 export function DocumentGrid({ docs }: { docs: { label: string; url: string }[] }) {
-  if (docs.length === 0) return <p className={text({ size: "sm", tone: 3 })}>No documents on file.</p>;
+  if (docs.length === 0) return <p className={text({ size: "meta", tone: 3 })}>No documents on file.</p>;
   return (
     <div className={css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" })}>
       {docs.map((d) => (
@@ -83,7 +83,7 @@ export default function VerificationsPage() {
       <PageHeader title="Verifications" description="Identity documents submitted by users. Approving marks the account as verified across the marketplace." />
       <div className={cx(row({ between: true }), css({ mb: "14px" }))}>
         <Segmented value={filter} onChange={changeFilter} items={[{ value: "pending", label: "To review", count: pendingCount }, { value: "approved", label: "Approved" }, { value: "rejected", label: "Rejected" }]} />
-        {filter === "pending" && rows.length ? <span className={text({ size: "sm", tone: 3 })}>Oldest first</span> : null}
+        {filter === "pending" && rows.length ? <span className={text({ size: "meta", tone: 3 })}>Oldest first</span> : null}
       </div>
 
       <Panel>
@@ -104,13 +104,13 @@ export default function VerificationsPage() {
                       <Avatar name={k.user.name ?? "?"} size="sm" seed={k.user.id} src={k.user.avatar_url} />
                       <div>
                         <p className={text({ weight: 600 })}>{k.user.name}</p>
-                        <p className={text({ size: "sm", tone: 3 })}>{k.user.email ?? k.user.telephone ?? ""}</p>
+                        <p className={text({ size: "meta", tone: 3 })}>{k.user.email ?? k.user.telephone ?? ""}</p>
                       </div>
                     </div>
                   </td>
-                  <td><p>{docTypeLabel[k.document_type ?? ""] ?? "Document"}</p><p className={text({ size: "sm", tone: 3 })}>{kycDocuments(k).length} files</p></td>
+                  <td><p>{docTypeLabel[k.document_type ?? ""] ?? "Document"}</p><p className={text({ size: "meta", tone: 3 })}>{kycDocuments(k).length} files</p></td>
                   <td>
-                    {filter === "pending" ? <><p className={text({ weight: 500 })}>{waiting(k.submitted_at)}</p><p className={text({ size: "sm", tone: 3 })}>{dateTime(k.submitted_at)}</p></> : <p className={text({ tone: 2 })}>{k.reviewed_at ? ago(k.reviewed_at) : "—"}</p>}
+                    {filter === "pending" ? <><p className={text({ weight: 500 })}>{waiting(k.submitted_at)}</p><p className={text({ size: "meta", tone: 3 })}>{dateTime(k.submitted_at)}</p></> : <p className={text({ tone: 2 })}>{k.reviewed_at ? ago(k.reviewed_at) : "—"}</p>}
                   </td>
                   {filter !== "pending" ? <td><Pill tone={k.status === "approved" ? "green" : "red"}>{k.status === "approved" ? "Approved" : "Rejected"}</Pill></td> : null}
                   <td className="actions"><Btn size="sm" onClick={(e) => { e.stopPropagation(); setOpenId(k.id); }}>{filter === "pending" ? "Review" : "View"}</Btn></td>
@@ -153,13 +153,13 @@ function ReviewBody({ k, rejecting, reason, setReason }: { k: AdminKycSubmission
       {k.status !== "pending" ? (
         <div className={row({ gap: 2 })}>
           <Pill tone={k.status === "approved" ? "green" : "red"}>{k.status === "approved" ? "Approved" : "Rejected"}</Pill>
-          <span className={text({ size: "sm", tone: 3 })}>{k.reviewed_at ? dateTime(k.reviewed_at) : ""}</span>
+          <span className={text({ size: "meta", tone: 3 })}>{k.reviewed_at ? dateTime(k.reviewed_at) : ""}</span>
         </div>
       ) : null}
-      {k.admin_note ? <div className={cx(text({ size: "sm" }), css({ p: "12px", bg: "var(--td-red-soft)", color: "var(--td-red)", borderRadius: "10px" }))}>{k.admin_note}</div> : null}
+      {k.admin_note ? <div className={cx(text({ size: "meta" }), css({ p: "12px", bg: "var(--td-red-soft)", color: "var(--td-red)", borderRadius: "10px" }))}>{k.admin_note}</div> : null}
 
       <DocumentGrid docs={kycDocuments(k)} />
-      <p className={text({ size: "xs", tone: 3 })}>Click a document to open it full size. Check that the photo is sharp, the document is valid, and the selfie matches it.</p>
+      <p className={text({ size: "micro", tone: 3 })}>Click a document to open it full size. Check that the photo is sharp, the document is valid, and the selfie matches it.</p>
 
       <dl className={kvList}>
         <dt>Document</dt><dd>{docTypeLabel[k.document_type ?? ""] ?? "Document"}</dd>

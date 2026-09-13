@@ -36,9 +36,9 @@ const brandMarkCss = css({
   alignItems: "center",
   justifyContent: "center",
 });
-const brandMarkTextCss = css({ fontWeight: 800, fontSize: "13px", color: "aba.navy", letterSpacing: "-0.04em", lineHeight: 1.5 });
-const brandNameCss = css({ fontWeight: 700, fontSize: "14px", letterSpacing: "-0.01em", lineHeight: 1.1 });
-const brandSubCss = css({ fontSize: "10px", color: "rgba(255,255,255,0.6)", letterSpacing: "0.02em", lineHeight: 1.5 });
+const brandMarkTextCss = css({ fontWeight: 800, textStyle: "ui", color: "aba.navy" });
+const brandNameCss = css({ fontWeight: 700, textStyle: "body" });
+const brandSubCss = css({ textStyle: "micro", color: "rgba(255,255,255,0.6)" });
 const secureCss = css({
   display: "flex",
   alignItems: "center",
@@ -49,7 +49,7 @@ const secureCss = css({
   borderRadius: "pill",
 });
 const secureIconCss = css({ color: "#7fd1a0", flexShrink: 0 });
-const secureTextCss = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5 });
+const secureTextCss = css({ textStyle: "micro", fontWeight: 600 });
 
 const merchantCss = css({
   display: "flex",
@@ -70,13 +70,13 @@ const merchantAvatarCss = css({
   alignItems: "center",
   justifyContent: "center",
   fontWeight: 700,
-  fontSize: "16px",
+  textStyle: "lead",
 });
-const merchantNameCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5 });
-const merchantSubCss = css({ fontSize: "10.5px", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 });
+const merchantNameCss = css({ textStyle: "ui", fontWeight: 600 });
+const merchantSubCss = css({ textStyle: "micro", color: "rgba(255,255,255,0.55)" });
 const amountColCss = css({ textAlign: "right" });
-const amountCss = css({ fontFamily: "mono", fontSize: "20px", fontWeight: 700, letterSpacing: "-0.02em", lineHeight: 1.5 });
-const currencyCss = css({ fontSize: "10px", color: "rgba(255,255,255,0.55)", lineHeight: 1.5 });
+const amountCss = css({ fontVariantNumeric: "tabular-nums", textStyle: "title", fontWeight: 700 });
+const currencyCss = css({ textStyle: "micro", color: "rgba(255,255,255,0.55)" });
 
 const bodyCss = css({ p: "22px 20px", bg: "aba.bg" });
 
@@ -99,11 +99,8 @@ const footerBtnCss = cva({
     minW: 0,
     border: "none",
     bg: "transparent",
-    fontFamily: "inherit",
-    fontSize: "12.5px",
+    textStyle: "meta",
     fontWeight: 500,
-    lineHeight: 1.75,
-    letterSpacing: "0.02857em",
     cursor: "pointer",
     appearance: "none",
     _hover: { textDecoration: "underline" },
@@ -202,12 +199,12 @@ export default function MockAbaPayWayPopup({
 
 const qrPaneCss = css({ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" });
 const qrHeadRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" });
-const qrMethodCss = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
+const qrMethodCss = css({ textStyle: "body", fontWeight: 600 });
 const qrTimerCss = css({
   display: "flex",
   alignItems: "center",
   gap: "6px",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 600,
   color: "pendingText",
   bg: "pendingTint",
@@ -231,12 +228,12 @@ const qrCardHeadCss = css({
   justifyContent: "space-between",
   alignItems: "center",
 });
-const qrCardTitleCss = css({ fontWeight: 700, fontSize: "13px", letterSpacing: "0.02em", lineHeight: 1.5 });
-const qrCardCurrencyCss = css({ fontSize: "11px", opacity: 0.85, lineHeight: 1.5 });
+const qrCardTitleCss = css({ fontWeight: 700, textStyle: "ui" });
+const qrCardCurrencyCss = css({ textStyle: "micro", opacity: 0.85 });
 const qrGlyphWrapCss = css({ p: "18px", display: "flex", justifyContent: "center" });
 const qrCaptionWrapCss = css({ px: "16px", pb: "14px", textAlign: "center" });
-const qrCaptionCss = css({ fontSize: "11px", color: "ink3", fontFamily: "mono", lineHeight: 1.5 });
-const qrHintCss = css({ textAlign: "center", fontSize: "13px", color: "ink2", lineHeight: 1.5 });
+const qrCaptionCss = css({ textStyle: "micro", color: "ink3", fontVariantNumeric: "tabular-nums" });
+const qrHintCss = css({ textAlign: "center", textStyle: "ui", color: "ink2" });
 
 const BRAND_COLOR: Record<AbaMethod, string> = { khqr: "#e2202a", alipay: "#1296db", wechat: "#09bb07", card: "#e2202a" };
 
@@ -293,7 +290,7 @@ const cardNoteCss = css({
   alignItems: "center",
   gap: "6px",
   color: "ink3",
-  fontSize: "11.5px",
+  textStyle: "micro",
 });
 
 function CardForm({ amount, onPay }: { amount: number; onPay: () => void }) {
@@ -328,7 +325,7 @@ function CardForm({ amount, onPay }: { amount: number; onPay: () => void }) {
 }
 
 const fieldCss = css({ display: "flex", flexDirection: "column" });
-const fieldLabelCss = css({ fontSize: "13px", fontWeight: 500, color: "ink2", mb: "7px", lineHeight: 1.5 });
+const fieldLabelCss = css({ textStyle: "ui", fontWeight: 500, color: "ink2", mb: "7px" });
 
 function AbaField({ label, children, className }: { label: string; children: React.ReactNode; className?: string }) {
   return (
@@ -349,8 +346,7 @@ const inputCss = css({
   borderColor: "hairlineStrong",
   borderRadius: "input",
   bg: "surface",
-  fontFamily: "inherit",
-  fontSize: "15px",
+  textStyle: "body",
   color: "ink",
   outline: "none",
   transition: "border-color .15s ease, box-shadow .15s ease",

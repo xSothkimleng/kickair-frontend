@@ -40,7 +40,7 @@ const noImageCss = css({
   alignItems: "center",
   justifyContent: "center",
   bg: "rgba(0, 0, 0, 0.05)",
-  fontSize: "13px",
+  textStyle: "ui",
   color: "ink3",
 });
 const categoryBadgeCss = css({
@@ -51,7 +51,7 @@ const categoryBadgeCss = css({
   py: "4px",
   bg: "rgba(0, 0, 0, 0.7)",
   color: "white",
-  fontSize: "10px",
+  textStyle: "micro",
   fontWeight: 500,
   borderRadius: "100px",
 });
@@ -73,7 +73,6 @@ const favBtnCss = css({
   backdropFilter: "blur(4px)",
   color: "ink2",
   cursor: "pointer",
-  fontFamily: "inherit",
   opacity: { base: 1, md: 0 },
   transition: "all 0.3s",
   _hover: { bg: "white" },
@@ -82,18 +81,17 @@ const favBtnCss = css({
 
 const contentCss = css({ p: "16px 16px 24px" });
 const sellerRowCss = css({ display: "flex", alignItems: "center", gap: "8px", mb: "12px" });
-const sellerNameCss = css({ fontSize: "11px", fontWeight: 500, lineHeight: 1.5 });
+const sellerNameCss = css({ textStyle: "micro", fontWeight: 500 });
 const titleCss = css({
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
   lineClamp: 2,
-  lineHeight: 1.4,
   color: "ink",
 });
 const statsRowCss = css({ display: "flex", alignItems: "center", gap: "12px", mb: "12px" });
 const statCss = css({ display: "flex", alignItems: "center", gap: "4px" });
-const ratingValueCss = css({ fontSize: "11px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
-const mutedSmCss = css({ fontSize: "11px", color: "rgba(0, 0, 0, 0.5)", lineHeight: 1.5 });
+const ratingValueCss = css({ textStyle: "micro", fontWeight: 600, color: "ink" });
+const mutedSmCss = css({ textStyle: "micro", color: "ink2" });
 const footerCss = css({
   display: "flex",
   alignItems: "center",
@@ -103,12 +101,12 @@ const footerCss = css({
   borderTopStyle: "solid",
   borderTopColor: "hairline",
 });
-const footerLabelCss = css({ fontSize: "11px", color: "ink2", lineHeight: 1.5 });
-const priceCss = css({ fontSize: "17px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
-const deliveryCss = css({ fontSize: "13px", fontWeight: 500, color: "ink", lineHeight: 1.5 });
+const footerLabelCss = css({ textStyle: "micro", color: "ink2" });
+const priceCss = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
+const deliveryCss = css({ textStyle: "ui", fontWeight: 500, color: "ink" });
 const rightCss = css({ textAlign: "right" });
 const starCss = css({ color: "#f59e0b", fill: "#f59e0b" });
-const mutedIconCss = css({ color: "rgba(0, 0, 0, 0.5)" });
+const mutedIconCss = css({ color: "ink2" });
 
 export default function ServiceCard({ service }: ServiceCardProps) {
   const [isFavorited, setIsFavorited] = useState(false);

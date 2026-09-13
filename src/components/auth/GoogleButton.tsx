@@ -17,7 +17,7 @@ type GoogleButtonProps = {
   disabled?: boolean;
   /** Optional extra classes merged last (e.g. to match a pill-shaped surface). */
   className?: string;
-  /** @deprecated MUI-era style override; ignored since the Panda port. Pass `className` instead. */
+  /** @deprecated Ignored. Pass `className` instead. */
   sx?: Record<string, unknown>;
 };
 
@@ -88,13 +88,12 @@ function ConfiguredGoogleButton({ label, roles, onAuthenticated, onError, disabl
 }
 
 // ds outline button at the 46px / 15px-500 size these screens use; the disabled
-// palette mirrors the MUI outlined default the loading state used to show.
+// palette mirrors the outlined default the loading state used to show.
 const googleButton = css(button.raw({ variant: "outline", full: true }), {
   h: "46px",
   paddingX: "15px",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 500,
-  lineHeight: 1.75,
   gap: "8px",
   _hover: { bg: "#F8FAFC", borderColor: "borderStrong" },
   _disabled: { color: "rgba(0,0,0,0.26)", borderColor: "rgba(0,0,0,0.12)", opacity: 1, cursor: "not-allowed", pointerEvents: "none" },

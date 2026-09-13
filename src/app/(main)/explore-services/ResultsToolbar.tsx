@@ -40,9 +40,8 @@ const kbdCss = css({
   borderStyle: "solid",
   borderColor: "border",
   color: "ink2",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 500,
-  lineHeight: 1,
 });
 
 function Kbd({ children }: { children: React.ReactNode }) {
@@ -52,8 +51,8 @@ function Kbd({ children }: { children: React.ReactNode }) {
 const searchRowCss = css({ display: "flex", gap: "12px", mb: "16px" });
 const sortWrapCss = css({ minW: "180px" });
 const metaRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "16px" });
-const metaTextCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
-const metaStrongCss = css({ color: "rgba(0,0,0,0.87)", fontWeight: 600 });
+const metaTextCss = css({ textStyle: "ui", color: "ink2" });
+const metaStrongCss = css({ color: "ink", fontWeight: 600 });
 const toggleGroupCss = css({
   display: "inline-flex",
   bg: "field",
@@ -75,7 +74,6 @@ const toggleBtnCss = css({
   border: "none",
   bg: "transparent",
   color: "placeholder",
-  fontFamily: "inherit",
   cursor: "pointer",
   transition: "background-color .15s, color .15s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },

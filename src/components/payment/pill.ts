@@ -2,8 +2,8 @@ import { cva, type RecipeVariantProps } from "styled-system/css";
 
 /**
  * Pill-shaped action button used across the payment surfaces (checkout, wallet
- * dialogs, result cards, the simulated ABA popup). Reproduces the MUI `Button`
- * base the old `sx` overrides sat on (500 weight, 1.75 line-height, 0.02857em
+ * dialogs, result cards, the simulated ABA popup). Reproduces the Button
+ * base the old `sx` overrides sat on (500 weight, 0.02857em
  * tracking, 6px 8px padding, 64px min-width) plus each surface's tone.
  */
 export const pillButton = cva({
@@ -19,10 +19,7 @@ export const pillButton = cva({
     border: "none",
     borderRadius: "pill",
     bg: "transparent",
-    fontFamily: "inherit",
     fontWeight: 500,
-    lineHeight: 1.75,
-    letterSpacing: "0.02857em",
     textDecoration: "none",
     whiteSpace: "nowrap",
     verticalAlign: "middle",
@@ -56,9 +53,9 @@ export const pillButton = cva({
       },
     },
     size: {
-      sm: { h: "36px", fontSize: "13px", fontWeight: 600 },
-      md: { h: "44px", fontSize: "15px" },
-      lg: { h: "52px", fontSize: "16px" },
+      sm: { h: "36px", textStyle: "ui", fontWeight: 600 },
+      md: { h: "44px", textStyle: "body" },
+      lg: { h: "52px", textStyle: "lead" },
     },
     full: { true: { w: "100%" } },
   },

@@ -434,7 +434,7 @@ export default function ClientOrderDetailPage() {
               {isCustom ? "Custom order" : isJobBased ? "Job Contract" : (pricingOption?.title ?? "Standard")}
             </p>
             {pricingOption?.description && (
-              <p className={css({ fontSize: "13px", lineHeight: 1.5, color: "#64748B" })}>{pricingOption.description}</p>
+              <p className={css({ textStyle: "ui", color: "#64748B" })}>{pricingOption.description}</p>
             )}
             <div className={statGridCss}>
               {[
@@ -566,21 +566,21 @@ export default function ClientOrderDetailPage() {
             {order.status === "completed" && (
               <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
                 <CheckIcon size={15} style={{ color: "#94A3B8", flexShrink: 0 }} />
-                <p className={css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#94A3B8" })}>Order Completed</p>
+                <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Completed</p>
               </div>
             )}
 
             {/* cancelled */}
             {order.status === "cancelled" && (
               <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
-                <p className={css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#94A3B8" })}>Order Cancelled</p>
+                <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Cancelled</p>
               </div>
             )}
 
             {/* pending — client may cancel freely until the freelancer accepts */}
             {order.status === "pending" && (
               <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
-                <p className={css({ fontSize: "13px", lineHeight: 1.5, color: "#94A3B8" })}>Awaiting freelancer acceptance</p>
+                <p className={css({ textStyle: "ui", color: "#94A3B8" })}>Awaiting freelancer acceptance</p>
                 <button type="button" onClick={() => setCancelOpen(true)} className={pageBtn({ look: "danger" })}>Cancel Order</button>
               </div>
             )}

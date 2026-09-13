@@ -1,6 +1,6 @@
 // Shared colour tokens + base prop types for the KickAir input system.
 // The visual recipes live in ./field.ts (Panda). This colour object mirrors the
-// Panda tokens in panda.config.ts and is still read by a few MUI-styled pages
+// Panda tokens in panda.config.ts and is still read by a few older pages
 // (auth) — delete it once those pages are on Panda.
 
 export const tokens = {

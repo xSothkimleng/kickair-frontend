@@ -23,24 +23,22 @@ const errorAlert = css({ mb: "24px" });
 const retryBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, p: "4px 5px", minW: "64px", border: "none", borderRadius: "4px",
-  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  bg: "transparent", color: "inherit", textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "rgba(0,0,0,0.06)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const column = css({ display: "flex", flexDirection: "column", gap: "24px" });
 const header = css({ display: "flex", flexDirection: "column", gap: { base: "14px", md: "18px" } });
-const pageTitle = css({ lineHeight: 1.5, fontSize: { base: "28px", md: "36px" }, fontWeight: 600, letterSpacing: "-0.025em" });
-const pageSub = css({ lineHeight: 1.5, fontSize: { base: "14px", md: "15px" }, color: "ink2", maxW: "560px" });
+const pageTitle = css({ textStyle: "stat", fontWeight: 600 });
+const pageSub = css({ textStyle: "body", color: "ink2", maxW: "560px" });
 const countRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", flexWrap: "wrap" });
-const countText = css({ lineHeight: 1.5, fontSize: "13.5px", fontWeight: 500, color: "ink2" });
+const countText = css({ textStyle: "ui", fontWeight: 500, color: "ink2" });
 const countStrong = css({ color: "ink", fontWeight: 600 });
 const filtersBtn = css({
   display: { base: "inline-flex", md: "none" }, alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, h: "40px", px: "14px", minW: "64px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong", borderRadius: "input",
-  bg: "surface", color: "ink", fontFamily: "inherit", fontSize: "13.5px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  bg: "surface", color: "ink", textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "surface2" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
@@ -82,13 +80,12 @@ const emptyIconWrap = css({
   display: "flex", alignItems: "center", justifyContent: "center", color: "ink3",
 });
 const emptyTextWrap = css({ maxW: "380px" });
-const emptyTitle = css({ lineHeight: 1.5, fontSize: "19px", fontWeight: 600, letterSpacing: "-0.015em" });
-const emptyBody = css({ fontSize: "14px", lineHeight: 1.55, color: "ink2" });
+const emptyTitle = css({ textStyle: "title", fontWeight: 600 });
+const emptyBody = css({ textStyle: "body", color: "ink2" });
 const pillBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, h: "38px", px: "16px", minW: "64px", border: "none", borderRadius: "pill",
-  bg: "rgba(0,0,0,0.05)", color: "#000", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  bg: "rgba(0,0,0,0.05)", color: "#000", textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "rgba(0,0,0,0.1)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
@@ -99,11 +96,10 @@ const sheetHead = css({
   p: "16px 18px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline",
   flex: "none",
 });
-const sheetTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600 });
+const sheetTitle = css({ textStyle: "lead", fontWeight: 600 });
 const sheetClose = css({
   w: "34px", h: "34px", p: 0, m: 0, borderRadius: "50%", border: "none",
-  bg: "rgba(0,0,0,0.05)", color: "ink2", cursor: "pointer", fontFamily: "inherit",
-  display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
+  bg: "rgba(0,0,0,0.05)", color: "ink2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
 });
@@ -116,8 +112,7 @@ const sheetFoot = css({
 const sheetBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, w: "100%", h: "44px", minW: "64px", border: "none", borderRadius: "pill",
-  fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  textStyle: "body", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const sheetClear = css({ bg: "rgba(0,0,0,0.05)", color: "#000" });

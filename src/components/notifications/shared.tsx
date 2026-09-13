@@ -187,7 +187,7 @@ export function TypeTile({ type, size = 40 }: { type: NotificationType; size?: n
   );
 }
 
-const roleChipCss = css({ display: "inline-flex", alignItems: "center", gap: "5px", h: "20px", px: "8px", borderRadius: "999px", bg: "rgba(0,0,0,0.05)", color: "ink2", fontSize: "10.5px", fontWeight: 600, letterSpacing: "0.01em", whiteSpace: "nowrap", flex: "none" });
+const roleChipCss = css({ display: "inline-flex", alignItems: "center", gap: "5px", h: "20px", px: "8px", borderRadius: "999px", bg: "rgba(0,0,0,0.05)", color: "ink2", textStyle: "micro", fontWeight: 600, whiteSpace: "nowrap", flex: "none" });
 const roleDot = cva({
   base: { w: "5px", h: "5px", borderRadius: "50%" },
   variants: { role: { freelancer: { bg: "accent" }, client: { bg: "ink3" }, admin: { bg: "pending" } } },

@@ -23,10 +23,8 @@ const trigger = css({
   px: "16px",
   border: "none",
   bg: "transparent",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 400,
-  lineHeight: 1.25,
   color: "ink2",
   whiteSpace: "nowrap",
   cursor: "pointer",
@@ -39,7 +37,7 @@ const indicator = css({ h: "2px", bg: "ink", bottom: 0 });
 const badge = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   minW: "16px", h: "16px", px: "4px", borderRadius: "pill",
-  bg: "error", color: "white", fontSize: "10px", fontWeight: 600, lineHeight: 1,
+  bg: "error", color: "white", textStyle: "micro", fontWeight: 600,
 });
 
 export default function FreelancerTabs({ activeTab, onTabChange, tabs }: FreelancerTabsProps) {

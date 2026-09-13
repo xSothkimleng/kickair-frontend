@@ -15,22 +15,22 @@ const cardBox = css({
 const row = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" });
 const main = css({ flex: 1, minW: 0 });
 const titleRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
-const title = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 500, color: "ink", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const title = css({ textStyle: "body", fontWeight: 500, color: "ink", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 const draftPill = css({
   px: "8px",
   py: "2px",
   bg: "rgba(245, 158, 11, 0.1)",
   color: "pendingText",
-  fontSize: "10px",
+  textStyle: "micro",
   fontWeight: 600,
   borderRadius: "4px",
   flexShrink: 0,
 });
-const category = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
-const edited = css({ lineHeight: 1.5, fontSize: "11px", color: "ink3" });
+const category = css({ textStyle: "meta", color: "ink2" });
+const edited = css({ textStyle: "micro", color: "ink3" });
 const sideActions = css({ display: "flex", alignItems: "center", gap: "8px", flexShrink: 0 });
 
-/* MUI `Button` metrics (min-width 64, line-height 1.75, 500 weight) with this card's tones. */
+/* Button metrics (min-width 64, 500 weight) with this card's tones. */
 const actionBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -43,10 +43,8 @@ const actionBtn = css({
   minW: "64px",
   border: "none",
   borderRadius: "8px",
-  fontFamily: "inherit",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
   whiteSpace: "nowrap",
   cursor: "pointer",
   transition: "background-color .25s, color .25s",

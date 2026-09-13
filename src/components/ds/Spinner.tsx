@@ -12,7 +12,7 @@ const spinner = css({
   animation: "spin .7s linear infinite",
 });
 
-/** Replaces MUI <CircularProgress>. `size` in px; colour follows `color` (currentcolor). */
+/** `size` in px; colour follows `color` (currentcolor). */
 export function Spinner({ size = 20, thickness, className, style }: { size?: number; thickness?: number; className?: string; style?: CSSProperties }) {
   return (
     <span

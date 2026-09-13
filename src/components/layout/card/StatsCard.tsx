@@ -3,7 +3,7 @@ import { ArrowRight } from "lucide-react";
 import { css, cva, cx } from "styled-system/css";
 
 // Any icon component that takes className/style works: lucide icons (size prop) and,
-// during the MUI removal, the remaining MUI icon components.
+// the remaining old icon components.
 type IconComponent = ComponentType<{ className?: string; style?: CSSProperties; size?: number }>;
 
 interface StatsCardProps {
@@ -44,23 +44,23 @@ const card = cva({
 });
 
 const topRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "16px" });
-const iconCss = css({ w: "20px", h: "20px", fontSize: "20px" });
+const iconCss = css({ w: "20px", h: "20px", textStyle: "title" });
 
 const arrow = cva({
   base: { opacity: 0, transition: "opacity 0.3s" },
   variants: {
-    gradient: { true: { color: "rgba(22, 163, 74, 0.4)" }, false: { color: "rgba(0, 0, 0, 0.4)" } },
+    gradient: { true: { color: "rgba(22, 163, 74, 0.4)" }, false: { color: "ink3" } },
   },
 });
 
 const value = cva({
-  base: { fontSize: "28px", fontWeight: 600, lineHeight: 1.5 },
+  base: { textStyle: "stat", fontWeight: 600 },
   variants: { gradient: { true: { color: "rgb(21, 128, 61)" }, false: { color: "black" } } },
 });
 
 const label = cva({
-  base: { fontSize: "11px", lineHeight: 1.5 },
-  variants: { gradient: { true: { color: "rgba(21, 128, 61, 0.7)" }, false: { color: "rgba(0, 0, 0, 0.6)" } } },
+  base: { textStyle: "micro" },
+  variants: { gradient: { true: { color: "rgba(21, 128, 61, 0.7)" }, false: { color: "ink2" } } },
 });
 
 const dotCss = css({ position: "absolute", top: "16px", right: "16px", w: "8px", h: "8px", borderRadius: "50%" });

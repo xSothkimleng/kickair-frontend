@@ -26,7 +26,7 @@ interface Props {
 const panel = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
 const header = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" });
 
-const dlgTitle = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
+const dlgTitle = css({ textStyle: "title", fontWeight: 600, color: "ink" });
 const body = css({ display: "flex", flexDirection: "column", gap: "16px", p: "18px 24px 24px" });
 
 const amountCard = css({
@@ -40,10 +40,9 @@ const amountCard = css({
 });
 const amountValue = css({ mt: "6px" });
 const flowRow = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", mt: "8px", color: "ink3" });
-const flowLabel = css({ fontSize: "11.5px", lineHeight: 1.5 });
+const flowLabel = css({ textStyle: "micro" });
 const flowTarget = css({
-  fontSize: "11.5px",
-  lineHeight: 1.5,
+  textStyle: "micro",
   color: "pendingText",
   maxW: "140px",
   overflow: "hidden",
@@ -56,15 +55,15 @@ const rowCss = cva({
   variants: { last: { false: { borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" }, true: {} } },
 });
 const rowLabel = cva({
-  base: { fontSize: "13.5px", lineHeight: 1.5 },
+  base: { textStyle: "ui" },
   variants: { last: { true: { fontWeight: 600, color: "ink" }, false: { fontWeight: 400, color: "ink2" } } },
 });
-const rowValue = css({ fontFamily: "mono", fontSize: "14px" });
+const rowValue = css({ fontVariantNumeric: "tabular-nums", textStyle: "body" });
 
 const shortBox = css({ display: "flex", gap: "8px", p: "12px", bg: "errorTint", borderRadius: "10px" });
-const shortText = css({ fontSize: "12.5px", lineHeight: 1.45, color: "errorText" });
-const monoSpan = css({ fontFamily: "mono" });
-const footNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", color: "ink3", fontSize: "11.5px" });
+const shortText = css({ textStyle: "meta", color: "errorText" });
+const monoSpan = css({ fontVariantNumeric: "tabular-nums" });
+const footNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", color: "ink3", textStyle: "micro" });
 
 export default function FundMilestoneDialog({
   open,
@@ -112,7 +111,7 @@ export default function FundMilestoneDialog({
         <div className={amountCard}>
           <p className={coLabel}>Moving to escrow</p>
           <div className={amountValue}>
-            <Money value={amount} size={34} weight={600} color="var(--colors-pending-text)" cents />
+            <Money value={amount} size="stat" weight={600} color="var(--colors-pending-text)" cents />
           </div>
           <div className={flowRow}>
             <Wallet size={14} />
@@ -125,12 +124,12 @@ export default function FundMilestoneDialog({
 
         {/* wallet rows */}
         <div>
-          <Row label="Available balance" valueEl={<Money value={available} size={14} weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />} />
+          <Row label="Available balance" valueEl={<Money value={available} size="body" weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />} />
           <Row label="This payment" valueEl={<span className={rowValue}>−{`$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</span>} />
           <Row
             last
             label={insufficient ? "Short by" : "Balance after"}
-            valueEl={<Money value={insufficient ? short : available - amount} size={16} weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />}
+            valueEl={<Money value={insufficient ? short : available - amount} size="lead" weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />}
           />
         </div>
 

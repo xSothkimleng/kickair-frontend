@@ -1,7 +1,7 @@
 /**
  * Shared kit for the auth card screens (sign-in, sign-up, forgot / reset
  * password): one 420px white card on the slate page background, logo on top,
- * centred title, 48px accent primary button. Panda port of the MUI
+ * centred title, 48px accent primary button. Panda port of the old
  * Paper/Typography/Button pattern those pages repeated verbatim.
  *
  * Where the design overrides a value the ds recipes already set (button
@@ -14,7 +14,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 import { css, cx } from "styled-system/css";
 import { Spinner, button, card } from "@/components/ds";
 
-// MUI `contained` elevation the pages never turned off (shadows[2], shadows[4] on hover).
+// Contained-button elevation the pages never turned off (shadows[2], shadows[4] on hover).
 const SHADOW_REST = "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)";
 const SHADOW_HOVER = "0px 2px 4px -1px rgba(0,0,0,0.2), 0px 4px 5px 0px rgba(0,0,0,0.14), 0px 1px 10px 0px rgba(0,0,0,0.12)";
 
@@ -55,9 +55,9 @@ export function AuthFallback() {
 }
 
 // Typography. `h1`/`p` margins are reset by globals.css, so spacing lives on wrappers.
-export const authTitle = css({ fontSize: "23px", fontWeight: 700, lineHeight: 1.5, letterSpacing: "-0.02em", color: "heading" });
-export const authSubtitle = css({ fontSize: "14.5px", lineHeight: 1.5, color: "muted" });
-export const authFooterText = css({ textAlign: "center", fontSize: "14px", lineHeight: 1.5, color: "body" });
+export const authTitle = css({ textStyle: "heading", fontWeight: 700, color: "heading" });
+export const authSubtitle = css({ textStyle: "body", color: "muted" });
+export const authFooterText = css({ textAlign: "center", textStyle: "body", color: "body" });
 /** Bold inline link inside a footer sentence ("Create one", "Sign in"). Use with the ds `Link`. */
 export const authLinkStrong = css({ fontWeight: 700, textUnderlineOffset: "3px", _hover: { opacity: 0.85 } });
 export const authForm = css({ display: "flex", flexDirection: "column", gap: "16px" });
@@ -66,9 +66,8 @@ const primaryButton = css(button.raw({ variant: "solid", full: true }), {
   h: "48px",
   minW: "64px",
   paddingX: "16px",
-  fontSize: "16px",
+  textStyle: "lead",
   fontWeight: 500,
-  lineHeight: 1.75,
   boxShadow: SHADOW_REST,
   _hover: { bg: "accentHover", boxShadow: SHADOW_HOVER },
   _disabled: { bg: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)", boxShadow: "none", opacity: 1, cursor: "not-allowed", pointerEvents: "none" },
@@ -86,22 +85,20 @@ export const authTextButton = css(button.raw({ variant: "text" }), {
   paddingX: "0",
   paddingY: "0",
   borderWidth: "0",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   _hover: { color: "accent", bg: "transparent", textDecoration: "underline" },
 });
 
-/** Muted text button with the MUI text-button box (6px 8px padding, 64px min width). */
+/** Muted text button with the text-button box (6px 8px padding, 64px min width). */
 export const authMutedButton = css(button.raw({ variant: "text" }), {
   h: "auto",
   minW: "64px",
   paddingX: "8px",
   paddingY: "6px",
   borderWidth: "0",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   color: "muted",
   _hover: { color: "muted", bg: "rgba(0,113,227,0.04)", textDecoration: "none" },
 });
@@ -113,9 +110,8 @@ export const authBackButton = css(button.raw({ variant: "text" }), {
   paddingX: "8px",
   paddingY: "6px",
   borderWidth: "0",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
-  lineHeight: 1.75,
   color: "muted",
   _hover: { color: "body", bg: "transparent", textDecoration: "none" },
 });

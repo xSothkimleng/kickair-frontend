@@ -17,15 +17,15 @@ import { useCoInvalidate } from "./hooks";
 const panel = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
 const header = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" });
 
-const dlgTitle = css({ fontSize: "21px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
+const dlgTitle = css({ textStyle: "title", fontWeight: 600, color: "ink" });
 
-const labelCss = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "ink" });
+const labelCss = css({ textStyle: "meta", fontWeight: 600, color: "ink" });
 const labelSub = css({ color: "ink3", fontWeight: 400 });
 
 const sentBox = css({ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", p: "24px 36px 32px", gap: "16px" });
 const sentIcon = css({ width: "64px", height: "64px", borderRadius: "50%", bg: "successTint", display: "grid", placeItems: "center" });
-const sentLead = css({ fontSize: "15px", fontWeight: 500, lineHeight: 1.5, color: "ink" });
-const sentBody = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.5 });
+const sentLead = css({ textStyle: "body", fontWeight: 500, color: "ink" });
+const sentBody = css({ textStyle: "ui", color: "ink2" });
 
 const body = css({ display: "flex", flexDirection: "column", gap: "20px", p: "20px 24px" });
 const twoCol = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "16px" });
@@ -44,8 +44,8 @@ const footer = css({
   bg: "surface2",
 });
 const footNote = css({ display: "flex", alignItems: "center", gap: "8px" });
-const footText = css({ fontSize: "11.5px", color: "ink3", lineHeight: 1.35 });
-const footMoney = css({ fontFamily: "mono", fontWeight: 600, color: "ink2" });
+const footText = css({ textStyle: "micro", color: "ink3" });
+const footMoney = css({ fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "ink2" });
 const actions = css({ display: "flex", gap: "10px" });
 
 /**
@@ -229,7 +229,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
             <div className={footNote}>
               <Lock size={13} className={css({ color: "ink3", flexShrink: 0 })} />
               <p className={footText}>
-                Only the client can accept — total <span className={footMoney}><Money value={total} size={11.5} weight={600} /></span>
+                Only the client can accept — total <span className={footMoney}><Money value={total} size="micro" weight={600} /></span>
               </p>
             </div>
             <div className={actions}>

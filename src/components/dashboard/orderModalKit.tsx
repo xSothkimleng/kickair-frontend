@@ -6,8 +6,8 @@ import { cva, css } from "styled-system/css";
 /**
  * Classes shared by `dashboard/OrderDetailModal` and
  * `dashboard/FreelancerOrderDetailModal` (the client/freelancer twins).
- * Each one reproduces the MUI geometry those dialogs had, measured against the
- * MUI build: `Dialog` header, `DialogContent`, `Stack spacing={2.5}`,
+ * Each one reproduces the geometry those dialogs had, measured against the old build
+ * old build: `Dialog` header, `DialogContent`, `Stack spacing={2.5}`,
  * `Chip size="small"`, standard `Alert`s, `Card elevation={0}` and the
  * contained / outlined / text `Button` sizes. Added for the orders slice.
  */
@@ -23,9 +23,9 @@ export const dlgHeaderCss = css({
   borderBottomStyle: "solid",
   borderBottomColor: "rgba(0, 0, 0, 0.08)",
 });
-export const dlgEyebrowCss = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.5)", textTransform: "uppercase", letterSpacing: "0.5px" });
-export const dlgTitleCss = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5 });
-/** MUI `IconButton size="small"`. */
+export const dlgEyebrowCss = css({ textStyle: "eyebrow", color: "ink2" });
+export const dlgTitleCss = css({ textStyle: "lead", fontWeight: 600 });
+/** Small icon button. */
 export const dlgCloseCss = css({
   display: "flex",
   alignItems: "center",
@@ -37,11 +37,10 @@ export const dlgCloseCss = css({
   border: "none",
   borderRadius: "50%",
   bg: "transparent",
-  color: "rgba(0, 0, 0, 0.5)",
+  color: "ink2",
   cursor: "pointer",
   appearance: "none",
-  fontFamily: "inherit",
-  fontSize: "18px",
+  textStyle: "title",
   textAlign: "center",
   transition: "background-color .15s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
@@ -50,7 +49,7 @@ export const dlgCloseCss = css({
 });
 /** `DialogContent sx={{ p: 3 }}`. */
 export const dlgBodyCss = css({ p: "24px", flex: "1 1 auto", overflowY: "auto" });
-/** `Stack spacing={2.5}` — MUI put the 20px on each sibling's margin-top. */
+/** `Stack spacing={2.5}` — the 20px sits on each sibling's margin-top. */
 export const dlgStackCss = css({ display: "flex", flexDirection: "column", "& > :not(style) ~ :not(style)": { marginTop: "20px" } });
 /** `Stack spacing={1.5}`. */
 export const stack15Css = css({ display: "flex", flexDirection: "column", "& > :not(style) ~ :not(style)": { marginTop: "12px" } });
@@ -70,24 +69,22 @@ export const statusChipCss = css({
   height: "24px",
   px: "8px",
   borderRadius: "16px",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 500,
-  lineHeight: 1.5,
   whiteSpace: "nowrap",
   maxWidth: "100%",
 });
-/** `.MuiChip-icon` at `size="small"`. */
+/** Chip icon at `size="small"`. */
 export const chipIconCss = css({ display: "inline-flex", ml: "4px", mr: "-4px", "& svg": { display: "block" } });
 
-/* ── Alerts (MUI standard variants, with the dialogs' 8px radius) ─────────── */
+/* ── Alerts (standard variants, with the dialogs' 8px radius) ─────────── */
 
 export const alertCss = cva({
   base: {
     display: "flex",
     p: "6px 16px",
     borderRadius: "8px",
-    fontSize: "14px",
-    lineHeight: 1.43,
+    textStyle: "body",
   },
   variants: {
     tone: {
@@ -100,7 +97,7 @@ export const alertCss = cva({
   defaultVariants: { tone: "info" },
 });
 export const alertIconCss = cva({
-  base: { display: "flex", mr: "12px", py: "7px", fontSize: "22px", opacity: 0.9, "& svg": { display: "block" } },
+  base: { display: "flex", mr: "12px", py: "7px", textStyle: "title", opacity: 0.9, "& svg": { display: "block" } },
   variants: {
     tone: {
       success: { color: "#2e7d32" },
@@ -112,7 +109,7 @@ export const alertIconCss = cva({
   defaultVariants: { tone: "info" },
 });
 export const alertMsgCss = css({ py: "8px", minWidth: 0, overflow: "auto" });
-/** `.MuiAlert-action` — the dismiss button on the error alerts. */
+/** Alert action — the dismiss button on the error alerts. */
 export const alertActionCss = css({ display: "flex", alignItems: "flex-start", p: "4px 0 0 16px", ml: "auto", mr: "-8px" });
 export const alertCloseCss = css({
   display: "flex",
@@ -128,7 +125,6 @@ export const alertCloseCss = css({
   color: "inherit",
   cursor: "pointer",
   appearance: "none",
-  fontFamily: "inherit",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
@@ -151,16 +147,16 @@ export const lineCardCss = css({
 
 /* ── Typography ───────────────────────────────────────────────────────────── */
 
-export const eyebrowCss = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.5)", textTransform: "uppercase", letterSpacing: "0.5px" });
-export const t15b = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5 });
-export const t14b = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
-export const t13b = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5 });
-export const t13m = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5 });
-export const t12 = css({ fontSize: "12px", lineHeight: 1.5 });
-export const t12muted = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.5)" });
-export const t12body = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
-export const t11muted = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.5)" });
-export const t11body = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+export const eyebrowCss = css({ textStyle: "eyebrow", color: "ink2" });
+export const t15b = css({ textStyle: "body", fontWeight: 600 });
+export const t14b = css({ textStyle: "body", fontWeight: 600 });
+export const t13b = css({ textStyle: "ui", fontWeight: 600 });
+export const t13m = css({ textStyle: "ui", fontWeight: 500 });
+export const t12 = css({ textStyle: "meta" });
+export const t12muted = css({ textStyle: "meta", color: "ink2" });
+export const t12body = css({ textStyle: "meta", color: "ink2" });
+export const t11muted = css({ textStyle: "micro", color: "ink2" });
+export const t11body = css({ textStyle: "micro", color: "ink2" });
 export const truncate = css({ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 
 /* ── Buttons ──────────────────────────────────────────────────────────────── */
@@ -174,9 +170,7 @@ const btnBase = {
   m: 0,
   minW: "64px",
   bg: "transparent",
-  fontFamily: "inherit",
   fontWeight: 500,
-  lineHeight: 1.75,
   textTransform: "none",
   textAlign: "center",
   verticalAlign: "middle",
@@ -189,31 +183,31 @@ const btnBase = {
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 } as const;
 
-/** MUI `Button` in the shapes these dialogs used. */
+/** Button in the shapes these dialogs used. */
 export const dlgBtn = cva({
   base: { ...btnBase },
   variants: {
     look: {
       /** contained, h 44, pill — the primary CTAs. */
-      cta: { h: "44px", p: "6px 16px", borderRadius: "112px", fontSize: "13px", color: "#fff", boxShadow: "none", _disabled: { pointerEvents: "none", bg: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)", boxShadow: "none" } },
+      cta: { h: "44px", p: "6px 16px", borderRadius: "112px", textStyle: "ui", color: "#fff", boxShadow: "none", _disabled: { pointerEvents: "none", bg: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)", boxShadow: "none" } },
       /** outlined, h 44, pill — "Request Revision". */
       outline44: {
         h: "44px",
         p: "5px 15px",
         borderRadius: "112px",
-        fontSize: "13px",
+        textStyle: "ui",
         borderWidth: "1px",
         borderStyle: "solid",
         borderColor: "rgba(0,0,0,0.2)",
-        color: "rgba(0,0,0,0.7)",
+        color: "ink2",
         _hover: { borderColor: "rgba(0,0,0,0.4)", bg: "rgba(0,0,0,0.02)" },
         _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)", borderColor: "rgba(0,0,0,0.12)" },
       },
-      /** small outlined pill (form confirm). MUI kept the primary-tinted border; the theme made the label inherit. */
+      /** small outlined pill (form confirm). the primary-tinted border stays; the theme made the label inherit. */
       outlineSm: {
         p: "3px 9px",
         borderRadius: "112px",
-        fontSize: "12px",
+        textStyle: "meta",
         borderWidth: "1px",
         borderStyle: "solid",
         borderColor: "rgba(25,118,210,0.5)",
@@ -225,7 +219,7 @@ export const dlgBtn = cva({
       outlineSmError: {
         p: "3px 9px",
         borderRadius: "112px",
-        fontSize: "12px",
+        textStyle: "meta",
         borderWidth: "1px",
         borderStyle: "solid",
         borderColor: "rgba(211,47,47,0.5)",
@@ -234,15 +228,15 @@ export const dlgBtn = cva({
         _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)", borderColor: "rgba(0,0,0,0.12)" },
       },
       /** small text pill ("Cancel"). */
-      textSm: { p: "4px 5px", borderRadius: "112px", fontSize: "12px", color: "inherit", _hover: { bg: "rgba(0,0,0,0.04)" }, _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)" } },
+      textSm: { p: "4px 5px", borderRadius: "112px", textStyle: "meta", color: "inherit", _hover: { bg: "rgba(0,0,0,0.04)" }, _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)" } },
       /** the low-prominence "Open a dispute" text button. */
-      quiet: { p: "4px 5px", borderRadius: "4px", fontSize: "12px", color: "rgba(0,0,0,0.4)", _hover: { color: "#ef4444", bg: "transparent" }, _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)" } },
+      quiet: { p: "4px 5px", borderRadius: "4px", textStyle: "meta", color: "ink3", _hover: { color: "#ef4444", bg: "transparent" }, _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)" } },
       /** small text button with a dashed attach frame. */
       attach: {
         p: "4px 12px",
         borderRadius: "8px",
-        fontSize: "12px",
-        color: "rgba(0,0,0,0.5)",
+        textStyle: "meta",
+        color: "ink2",
         borderWidth: "1px",
         borderStyle: "dashed",
         borderColor: "rgba(0,0,0,0.2)",
@@ -253,11 +247,11 @@ export const dlgBtn = cva({
       attachOutline: {
         p: "3px 9px",
         borderRadius: "112px",
-        fontSize: "12px",
+        textStyle: "meta",
         borderWidth: "1px",
         borderStyle: "solid",
         borderColor: "rgba(0,0,0,0.2)",
-        color: "rgba(0,0,0,0.6)",
+        color: "ink2",
         _hover: { borderColor: "rgba(0,0,0,0.4)", bg: "rgba(0,0,0,0.04)" },
         _disabled: { pointerEvents: "none", color: "rgba(0,0,0,0.26)", borderColor: "rgba(0,0,0,0.12)" },
       },
@@ -267,11 +261,11 @@ export const dlgBtn = cva({
   defaultVariants: { look: "cta" },
 });
 
-/** `.MuiButton-startIcon` (medium: −4px/8px, icon 20px; small: −2px/8px, icon 18px). */
+/** The start-icon slot (medium: −4px/8px, icon 20px; small: −2px/8px, icon 18px). */
 export const startIconCss = css({ display: "flex", alignItems: "center", ml: "-4px", mr: "8px", "& svg": { display: "block" } });
 export const startIconSmCss = css({ display: "flex", alignItems: "center", ml: "-2px", mr: "8px", "& svg": { display: "block" } });
 
-/* ── Avatar (MUI default 48px) ────────────────────────────────────────────── */
+/* ── Avatar (48px) ────────────────────────────────────────────── */
 
 export const avatar48Css = css({
   position: "relative",
@@ -286,12 +280,11 @@ export const avatar48Css = css({
   userSelect: "none",
   bg: "#bdbdbd",
   color: "#fff",
-  fontSize: "20px",
-  lineHeight: 1,
+  textStyle: "title",
 });
 export const avatarImgCss = css({ width: "100%", height: "100%", objectFit: "cover", color: "transparent", textAlign: "center" });
 
-/** MUI `Avatar`: the photo, falling back to `fallback` when there is none or it fails to load. */
+/** Avatar: the photo, falling back to `fallback` when there is none or it fails to load. */
 export function ModalAvatar({ src, alt, fallback }: { src?: string | null; alt?: string; fallback: string }) {
   const [failed, setFailed] = useState<string | null>(null);
   return (
@@ -313,9 +306,8 @@ export const fileChipCss = css({
   height: "24px",
   borderRadius: "16px",
   bg: "rgba(0, 0, 0, 0.08)",
-  color: "rgba(0, 0, 0, 0.87)",
-  fontSize: "11px",
-  lineHeight: 1.5,
+  color: "ink",
+  textStyle: "micro",
   whiteSpace: "nowrap",
   maxWidth: "100%",
 });
@@ -331,7 +323,7 @@ export const fileChipDeleteCss = css({
   bg: "transparent",
   cursor: "pointer",
   color: "rgba(0, 0, 0, 0.26)",
-  _hover: { color: "rgba(0, 0, 0, 0.4)" },
+  _hover: { color: "ink3" },
   "& svg": { display: "block" },
 });
 
@@ -341,12 +333,11 @@ export const iconTextRowCss = css({ display: "flex", alignItems: "center", gap: 
 export const iconTextRow8Css = css({ display: "flex", alignItems: "center", gap: "8px" });
 export const pillStatCss = css({ display: "flex", alignItems: "center", gap: "8px", px: "12px", py: "8px", bg: "rgba(0, 0, 0, 0.03)", borderRadius: "8px" });
 export const descClampCss = css({
-  fontSize: "13px",
-  color: "rgba(0,0,0,0.7)",
-  lineHeight: 1.6,
+  textStyle: "ui",
+  color: "ink2",
   lineClamp: 3,
   "& p": { margin: 0 },
-  "& *": { fontSize: "inherit" },
+  "& *": {},
 });
 /** The white-on-tint attachment row inside an Alert. */
 export const alertFileRowCss = css({
@@ -378,7 +369,6 @@ export const starBtnCss = css({
   bg: "transparent",
   cursor: "pointer",
   appearance: "none",
-  fontFamily: "inherit",
   borderRadius: "50%",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },

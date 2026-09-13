@@ -15,7 +15,7 @@ const chipCss = cva({
     h: "24px",
     px: "10px",
     borderRadius: "pill",
-    fontSize: "12px",
+    textStyle: "meta",
     fontWeight: 600,
   },
   variants: {

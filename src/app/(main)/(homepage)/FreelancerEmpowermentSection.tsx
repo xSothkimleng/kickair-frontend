@@ -14,9 +14,8 @@ const ctaPill = css({
   bg: "accent",
   color: "white",
   borderRadius: "pill",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   borderWidth: "0",
   cursor: "pointer",
   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
@@ -59,7 +58,7 @@ export default function FreelancerEmpowermentSection() {
             px="3"
             py="1"
             mb="4"
-            fontSize="11px"
+            textStyle="micro"
             fontWeight={600}
           >
             <Target size={14} />
@@ -69,10 +68,9 @@ export default function FreelancerEmpowermentSection() {
           <Box
             as="h2"
             className={css({
-              fontSize: { base: "28px", md: "40px" },
+              textStyle: { base: "stat", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
               mb: "3",
             })}
           >
@@ -81,7 +79,7 @@ export default function FreelancerEmpowermentSection() {
           <Box
             as="p"
             className={css({
-              fontSize: { base: "16px", md: "19px" },
+              textStyle: { base: "lead", md: "title" },
               color: "ink2",
             })}
           >
@@ -117,10 +115,10 @@ export default function FreelancerEmpowermentSection() {
               >
                 <Icon size={32} strokeWidth={2} />
               </Box>
-              <Box as="h3" fontSize="21px" fontWeight={600} color="ink" mb="3">
+              <Box as="h3" textStyle="title" fontWeight={600} color="ink" mb="3">
                 {title}
               </Box>
-              <Box as="p" fontSize="15px" color="ink2" lineHeight={1.6}>
+              <Box as="p" textStyle="body" color="ink2">
                 {body}
               </Box>
             </Box>

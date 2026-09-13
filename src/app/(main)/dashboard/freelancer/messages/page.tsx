@@ -27,7 +27,7 @@ const backCss = css(iconButton.raw({ size: "sm" }), {
   _hover: { bg: "rgba(0, 0, 0, 0.05)" },
   "& svg": { color: "ink" },
 });
-const titleCss = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.6, letterSpacing: "0.0075em", color: "ink" });
+const titleCss = css({ textStyle: "title", fontWeight: 600, color: "ink" });
 const bodyCss = css({ maxW: "1440px", mx: "auto", p: "24px" });
 const panelCss = css({
   display: "flex",

@@ -4,9 +4,9 @@ import { Star } from "lucide-react";
 import { css, cx } from "styled-system/css";
 
 const row = css({ display: "inline-flex", alignItems: "center", gap: "2px", "& svg": { display: "block" } });
-const starBtn = css({ p: 0, border: "none", bg: "transparent", cursor: "pointer", color: "inherit", fontFamily: "inherit", _focusVisible: { outline: "none", boxShadow: "focusRing", borderRadius: "4px" } });
+const starBtn = css({ p: 0, border: "none", bg: "transparent", cursor: "pointer", color: "inherit", _focusVisible: { outline: "none", boxShadow: "focusRing", borderRadius: "4px" } });
 
-/** Star rating (display or input). Replaces MUI <Rating>. */
+/** Star rating (display or input). */
 export function Rating({ value, max = 5, size = 16, onChange, className, readOnly }: { value: number; max?: number; size?: number; onChange?: (v: number) => void; className?: string; readOnly?: boolean }) {
   const interactive = !!onChange && !readOnly;
   return (

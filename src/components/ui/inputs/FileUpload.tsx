@@ -41,8 +41,8 @@ const dropzone = css({
 });
 
 const dropIcon = css({ display: "flex", justifyContent: "center", color: "muted", mb: "10px", "[data-over] &": { color: "accent" }, "& svg": { display: "block" } });
-const dropTitle = css({ fontSize: "14.5px", fontWeight: 500, color: "heading", mb: "4px" });
-const dropHint = css({ fontSize: "12.5px", color: "muted" });
+const dropTitle = css({ textStyle: "body", fontWeight: 500, color: "heading", mb: "4px" });
+const dropHint = css({ textStyle: "meta", color: "muted" });
 const browse = css({ color: "accent" });
 
 const list = css({ display: "flex", flexDirection: "column", gap: "10px", mt: "12px" });
@@ -60,8 +60,8 @@ const row = css({
 const thumbImg = css({ w: "40px", h: "40px", borderRadius: "8px", objectFit: "cover", flexShrink: 0 });
 const thumbFile = css({ w: "40px", h: "40px", borderRadius: "8px", bg: "fill", display: "flex", alignItems: "center", justifyContent: "center", color: "muted", flexShrink: 0 });
 const meta = css({ flex: 1, minW: 0 });
-const fileName = css({ fontSize: "14px", fontWeight: 500, color: "heading", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
-const fileSize = css({ fontSize: "12.5px", color: "muted" });
+const fileName = css({ textStyle: "body", fontWeight: 500, color: "heading", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const fileSize = css({ textStyle: "meta", color: "muted" });
 
 export default function FileUpload({ label, helper, error, required, onFiles, accept, multiple, hint = "PNG, JPG or PDF · up to 10 MB" }: FileUploadProps) {
   const inputRef = useRef<HTMLInputElement | null>(null);

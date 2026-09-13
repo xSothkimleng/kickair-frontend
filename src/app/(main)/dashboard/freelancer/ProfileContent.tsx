@@ -41,7 +41,7 @@ const pfPanel = css({
   "&[data-part=content]": {
     borderRadius: "20px",
     boxShadow: "0 24px 80px rgba(0,0,0,0.28), 0 0 0 1px rgba(0,0,0,0.04)",
-    // MUI paper: margin 16px + max-height calc(100% - 64px); the positioner already
+    // Dialog paper: margin 16px + max-height calc(100% - 64px); the positioner already
     // takes 32px, so 32 more here.
     maxH: "calc(100% - 32px)",
     overflow: "hidden",
@@ -53,15 +53,14 @@ const pfClose = css({
   position: "absolute", top: "14px", right: "14px",
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   w: "32px", h: "32px", p: 0, border: "none", borderRadius: "50%",
-  bg: "rgba(0,0,0,0.05)", color: "ink2", cursor: "pointer", fontFamily: "inherit",
-  _hover: { bg: "rgba(0,0,0,0.1)", color: "ink" },
+  bg: "rgba(0,0,0,0.05)", color: "ink2", cursor: "pointer", _hover: { bg: "rgba(0,0,0,0.1)", color: "ink" },
   "& svg": { display: "block" },
 });
-const pfEyebrow = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "0.07em", textTransform: "uppercase", color: "accent" });
-const pfTitle = css({ fontSize: "21px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
-const pfSub = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.45 });
+const pfEyebrow = css({ textStyle: "eyebrow", fontWeight: 600, color: "accent" });
+const pfTitle = css({ textStyle: "title", fontWeight: 600, color: "ink" });
+const pfSub = css({ textStyle: "ui", color: "ink2" });
 const pfBody = css({ display: "flex", flexDirection: "column", gap: "18px", p: "18px 26px 4px", overflowY: "auto", flex: 1, minH: 0 });
-// MUI DialogActions adds an 8px margin-left on top of the 12px `gap` → 20px apart.
+// The dialog actions add an 8px margin-left on top of the 12px `gap` → 20px apart.
 const pfActions = css({ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "20px", p: "18px 26px 24px", flex: "none" });
 
 function PfDialog({ open, onClose, eyebrow, title, sub, width = 460, children, footer }: {
@@ -95,8 +94,7 @@ function PfDialog({ open, onClose, eyebrow, title, sub, width = 460, children, f
 const ghostBtnRaw = css.raw({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   h: "40px", px: "16px", borderRadius: "999px", border: "none", bg: "transparent",
-  color: "ink2", fontFamily: "inherit", fontSize: "14px", fontWeight: 600, lineHeight: 1.75,
-  cursor: "pointer", whiteSpace: "nowrap",
+  color: "ink2", textStyle: "body", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
   _hover: { bg: "surface2" },
   _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
   "& svg": { display: "block" },
@@ -104,8 +102,8 @@ const ghostBtnRaw = css.raw({
 const primaryBtnRaw = css.raw({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   h: "40px", px: "26px", borderRadius: "999px", border: "none", boxShadow: "none",
-  bg: "#000", color: "#fff", fontFamily: "inherit", fontSize: "14px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer", whiteSpace: "nowrap",
+  bg: "#000", color: "#fff", textStyle: "body", fontWeight: 600,
+  cursor: "pointer", whiteSpace: "nowrap",
   _hover: { bg: "rgba(0,0,0,0.8)", boxShadow: "none" },
   _disabled: { bg: "rgba(0,0,0,0.25)", color: "#fff", cursor: "default", pointerEvents: "none" },
   "& svg": { display: "block" },
@@ -123,14 +121,14 @@ const skeletonCard = css({
 const skeletonTitle = css({ mb: "16px" });
 
 const headRow = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" });
-const headTitle = css({ fontSize: { base: "24px", md: "28px" }, fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.025em" });
-const headSub = css({ fontSize: "13.5px", lineHeight: 1.5, color: "ink2" });
+const headTitle = css({ textStyle: { base: "heading", md: "stat" }, fontWeight: 600 });
+const headSub = css({ textStyle: "ui", color: "ink2" });
 const previewBtn = css({
   alignItems: "center", justifyContent: "center", gap: "8px",
   h: "38px", pl: "12px", pr: "16px", borderRadius: "999px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong",
-  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap",
+  bg: "transparent", color: "ink", textStyle: "ui", fontWeight: 600,
+  cursor: "pointer", flexShrink: 0, whiteSpace: "nowrap",
   display: { base: "none", sm: "inline-flex" },
   _hover: { bg: "surface2" },
   "& svg": { display: "block" },
@@ -142,26 +140,26 @@ const strengthCard = css({
 });
 const strengthHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "13px" });
 const strengthTitleWrap = css({ display: "flex", alignItems: "center", gap: "9px" });
-const strengthTitle = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.01em" });
+const strengthTitle = css({ textStyle: "body", fontWeight: 600 });
 const strengthRight = css({ display: "flex", alignItems: "center", gap: "12px" });
 const stepsBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   h: "28px", px: "12px", borderRadius: "999px", border: "none",
-  bg: "rgba(0,0,0,0.05)", color: "ink", fontFamily: "inherit", fontSize: "12px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer", whiteSpace: "nowrap",
+  bg: "rgba(0,0,0,0.05)", color: "ink", textStyle: "meta", fontWeight: 600,
+  cursor: "pointer", whiteSpace: "nowrap",
   _hover: { bg: "rgba(0,0,0,0.09)" },
 });
-const strengthPctCss = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, fontFamily: "mono", color: "accent" });
-const strengthPctDone = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, fontFamily: "mono", color: "success" });
+const strengthPctCss = css({ textStyle: "body", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "accent" });
+const strengthPctDone = css({ textStyle: "body", fontWeight: 600, fontVariantNumeric: "tabular-nums", color: "success" });
 const strengthBar = css({ h: "8px", borderRadius: "999px", bg: "rgba(0,0,0,0.06)", "& > div": { borderRadius: "999px" } });
 const strengthBarAccent = css({ "& > div": { background: "var(--colors-accent)" } });
 const strengthBarDone = css({ "& > div": { background: "var(--colors-success)" } });
 const leftBlock = css({ mt: "14px" });
-const leftLabel = css({ fontSize: "10.5px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
-const leftRow = css({ display: "flex", alignItems: "center", gap: "10px", py: "8px", fontSize: "13px" });
+const leftLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
+const leftRow = css({ display: "flex", alignItems: "center", gap: "10px", py: "8px", textStyle: "ui" });
 const leftDot = css({ w: "18px", h: "18px", borderRadius: "50%", borderWidth: "1.5px", borderStyle: "solid", borderColor: "hairlineStrong", flex: "none" });
-const leftText = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
-const completeText = css({ fontSize: "13px", lineHeight: 1.5, color: "successText", display: "flex", alignItems: "center", gap: "7px" });
+const leftText = css({ textStyle: "ui", color: "ink2" });
+const completeText = css({ textStyle: "ui", color: "successText", display: "flex", alignItems: "center", gap: "7px" });
 
 const identityCard = css({
   bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
@@ -179,13 +177,13 @@ const uploadingOverlay = css({
   display: "flex", alignItems: "center", justifyContent: "center",
 });
 const identityNameRow = css({ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap" });
-const identityName = css({ fontSize: { base: "20px", md: "23px" }, fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em" });
-const levelBtn = css({ display: "inline-flex", p: 0, border: "none", bg: "transparent", color: "inherit", fontFamily: "inherit", cursor: "pointer" });
+const identityName = css({ textStyle: { base: "title", md: "heading" }, fontWeight: 600 });
+const levelBtn = css({ display: "inline-flex", p: 0, border: "none", bg: "transparent", color: "inherit", cursor: "pointer" });
 const ratingRow = css({ display: "flex", alignItems: "center", gap: "8px", mt: "6px", flexWrap: "wrap" });
-const ratingValue = css({ fontSize: "13.5px", fontWeight: 600, lineHeight: 1.5, fontFamily: "mono" });
-const ratingMeta = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2", fontFamily: "mono" });
+const ratingValue = css({ textStyle: "ui", fontWeight: 600, fontVariantNumeric: "tabular-nums" });
+const ratingMeta = css({ textStyle: "ui", color: "ink2", fontVariantNumeric: "tabular-nums" });
 const ratingDot = css({ w: "3px", h: "3px", borderRadius: "50%", bg: "ink3" });
-const noReviews = css({ fontSize: "13px", lineHeight: 1.5, color: "ink3" });
+const noReviews = css({ textStyle: "ui", color: "ink3" });
 const lockedGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "14px", mt: "18px" });
 
 const fieldStack = css({ display: "flex", flexDirection: "column", gap: "16px" });
@@ -206,27 +204,25 @@ const portfolioPlaceholder = css({ w: "100%", h: "100%", display: "flex", alignI
 const portfolioCount = css({
   position: "absolute", top: "8px", right: "8px", display: "inline-flex", alignItems: "center", gap: "4px",
   h: "24px", px: "8px", borderRadius: "999px", bg: "rgba(0,0,0,0.6)", color: "#fff",
-  fontSize: "11px", fontWeight: 600,
+  textStyle: "micro", fontWeight: 600,
   "& svg": { display: "block" },
 });
 const portfolioBody = css({ p: "12px 13px" });
-const portfolioTitle = css({ fontSize: "13.5px", fontWeight: 600, lineHeight: 1.3, letterSpacing: "-0.01em", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const portfolioTitle = css({ textStyle: "ui", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 const portfolioFoot = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mt: "7px" });
-const portfolioYearCss = css({ fontSize: "11.5px", lineHeight: 1.5, color: "ink3", fontFamily: "mono" });
+const portfolioYearCss = css({ textStyle: "micro", color: "ink3", fontVariantNumeric: "tabular-nums" });
 const portfolioActions = css({ display: "flex", gap: "2px" });
 const portfolioIconBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   w: "28px", h: "28px", p: 0, border: "none", borderRadius: "7px", bg: "transparent",
-  color: "ink2", cursor: "pointer", fontFamily: "inherit",
-  _hover: { bg: "rgba(0,0,0,0.05)", color: "ink" },
+  color: "ink2", cursor: "pointer", _hover: { bg: "rgba(0,0,0,0.05)", color: "ink" },
   _disabled: { opacity: 0.5, cursor: "default", pointerEvents: "none" },
   "& svg": { display: "block" },
 });
 const portfolioDeleteBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   w: "28px", h: "28px", p: 0, border: "none", borderRadius: "7px", bg: "transparent",
-  color: "ink2", cursor: "pointer", fontFamily: "inherit",
-  _hover: { bg: "errorTint", color: "errorText" },
+  color: "ink2", cursor: "pointer", _hover: { bg: "errorTint", color: "errorText" },
   _disabled: { opacity: 0.5, cursor: "default", pointerEvents: "none" },
   "& svg": { display: "block" },
 });
@@ -234,8 +230,8 @@ const addProjectBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   h: "34px", pl: "10px", pr: "14px", borderRadius: "999px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong",
-  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer", whiteSpace: "nowrap",
+  bg: "transparent", color: "ink", textStyle: "ui", fontWeight: 600,
+  cursor: "pointer", whiteSpace: "nowrap",
   _hover: { bg: "surface2" },
   "& svg": { display: "block" },
 });
@@ -250,34 +246,34 @@ const saveBar = css({
 });
 const saveBarLeft = css({ display: "flex", alignItems: "center", gap: "10px", minW: 0 });
 const saveBarDot = css({ w: "8px", h: "8px", borderRadius: "50%", bg: "pending", flex: "none" });
-const saveBarText = css({ fontSize: "13.5px", fontWeight: 500, lineHeight: 1.5 });
+const saveBarText = css({ textStyle: "ui", fontWeight: 500 });
 const saveBarActions = css({ display: "flex", gap: "9px", flex: "none" });
 const tailSpacer = css({ h: "4px" });
 
-const certLabel = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5, color: "#334155", mb: "7px" });
-const certOptional = css({ color: "rgba(0,0,0,0.4)" });
+const certLabel = css({ textStyle: "ui", fontWeight: 500, color: "#334155", mb: "7px" });
+const certOptional = css({ color: "ink3" });
 const certFileRow = css({
   display: "flex", alignItems: "center", gap: "8px", p: "8px 12px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "8px",
 });
 // globals.css `a { color: inherit }` is unlayered, so the accent needs !important.
 const certFileLink = css({
-  flex: 1, fontSize: "13px", lineHeight: 1.5, color: "var(--colors-accent) !important",
+  flex: 1, textStyle: "ui", color: "var(--colors-accent) !important",
   textDecoration: "none", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
   _hover: { textDecoration: "underline" },
 });
 const certRemoveBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   minW: 0, px: "8px", py: "6px", border: "none", borderRadius: "4px", bg: "transparent",
-  color: "ink2", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75, cursor: "pointer",
+  color: "ink2", textStyle: "meta", fontWeight: 500, cursor: "pointer",
   _hover: { bg: "rgba(0,0,0,0.04)" },
 });
 const certUploadLabel = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   h: "38px", px: "16px", borderRadius: "8px",
   borderWidth: "1px", borderStyle: "dashed", borderColor: "hairlineStrong",
-  bg: "transparent", color: "ink2", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer", whiteSpace: "nowrap",
+  bg: "transparent", color: "ink2", textStyle: "ui", fontWeight: 600,
+  cursor: "pointer", whiteSpace: "nowrap",
   _hover: { bg: "surface2" },
   "&[data-busy]": { opacity: 0.5, pointerEvents: "none" },
 });
@@ -290,8 +286,7 @@ const pfImageRemove = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   w: "22px", h: "22px", p: 0, borderRadius: "50%",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong",
-  bg: "white", color: "ink2", cursor: "pointer", fontFamily: "inherit",
-  _hover: { bg: "#fdecec" },
+  bg: "white", color: "ink2", cursor: "pointer", _hover: { bg: "#fdecec" },
   "& svg": { display: "block" },
 });
 

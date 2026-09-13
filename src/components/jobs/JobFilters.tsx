@@ -26,34 +26,34 @@ function findAisleId(tree: ServiceCategory[], categoryId?: number): number | nul
 /* ── static styles ── */
 const root = css({ display: "flex", flexDirection: "column", gap: "24px" });
 const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
-const headTitle = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 600, letterSpacing: "-0.01em" });
+const headTitle = css({ textStyle: "lead", fontWeight: 600 });
 const clearBtn = css({
   border: "none", bg: "transparent", p: 0, m: 0, cursor: "pointer",
-  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, color: "accent",
+  textStyle: "ui", fontWeight: 500, color: "accent",
   _hover: { textDecoration: "underline" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const section = css({ display: "flex", flexDirection: "column", gap: "12px" });
-const labelText = css({ lineHeight: 1.5, fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const labelText = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
 const tree = css({ display: "flex", flexDirection: "column", gap: "2px" });
 const aisleWrap = css({ display: "flex", flexDirection: "column" });
 const aisleBtn = css({
   display: "flex", alignItems: "center", gap: "8px",
   border: "none", bg: "transparent", p: "8px 4px", m: 0,
-  cursor: "pointer", fontFamily: "inherit", w: "100%", boxSizing: "border-box", textAlign: "left",
+  cursor: "pointer", w: "100%", boxSizing: "border-box", textAlign: "left",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const aisleChevron = cva({
   base: { color: "ink3", flexShrink: 0, transition: "transform .15s", "& svg": { display: "block" } },
   variants: { expanded: { true: { transform: "rotate(90deg)" }, false: {} } },
 });
-const aisleText = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 500, color: "ink" });
+const aisleText = css({ textStyle: "body", fontWeight: 500, color: "ink" });
 const shelfList = css({ display: "flex", flexDirection: "column", gap: "2px", pl: "22px", pb: "4px" });
 const shelfBtn = cva({
   base: {
     display: "flex", alignItems: "center",
     border: "none", p: "7px 10px", m: 0, borderRadius: "8px",
-    cursor: "pointer", fontFamily: "inherit", textAlign: "left",
+    cursor: "pointer", textAlign: "left",
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
   },
   variants: {
@@ -64,18 +64,18 @@ const shelfBtn = cva({
   },
 });
 const shelfText = cva({
-  base: { lineHeight: 1.5, fontSize: "13.5px" },
+  base: { textStyle: "ui" },
   variants: { selected: { true: { fontWeight: 600 }, false: { fontWeight: 500 } } },
 });
-const emptyShelves = css({ lineHeight: 1.5, fontSize: "12.5px", color: "ink3", pl: "10px", py: "4px" });
+const emptyShelves = css({ textStyle: "meta", color: "ink3", pl: "10px", py: "4px" });
 const hairlineRow = css({ h: "1px", bg: "hairline" });
 const budgetRow = css({ display: "flex", gap: "10px" });
 const budgetField = css({ position: "relative", flex: 1 });
-const budgetPrefix = css({ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", fontSize: "14px", color: "ink3", pointerEvents: "none" });
+const budgetPrefix = css({ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", textStyle: "body", color: "ink3", pointerEvents: "none" });
 const budgetInput = css({
   w: "100%", boxSizing: "border-box", h: "42px", pl: "24px", pr: "10px", m: 0,
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong", borderRadius: "input",
-  bg: "surface", color: "ink", fontFamily: "mono", fontSize: "14px", outline: "none",
+  bg: "surface", color: "ink", fontVariantNumeric: "tabular-nums", textStyle: "body", outline: "none",
   _placeholder: { color: "ink3", opacity: 1 },
   _focus: { borderColor: "accent", boxShadow: "0 0 0 3px rgba(0, 113, 227, 0.05)" },
 });
@@ -83,7 +83,7 @@ const chipRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 const skillChip = cva({
   base: {
     h: "32px", px: "12px", m: 0, borderRadius: "pill", border: "none",
-    cursor: "pointer", fontFamily: "inherit", fontSize: "12.5px", fontWeight: 500,
+    cursor: "pointer", textStyle: "meta", fontWeight: 500,
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
   },
   variants: {

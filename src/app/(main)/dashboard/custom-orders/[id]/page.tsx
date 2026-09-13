@@ -24,7 +24,7 @@ const STATUS_TEXT: Record<string, string> = {
 const page = css({ minHeight: "100vh", bg: "canvas" });
 const centered = css({ minHeight: "100vh", bg: "canvas", display: "grid", placeItems: "center" });
 const missing = css({ minHeight: "100vh", bg: "canvas", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" });
-const missingText = css({ fontSize: "16px", lineHeight: 1.5, color: "ink2" });
+const missingText = css({ textStyle: "lead", color: "ink2" });
 const spinner = css({ color: "ink" });
 
 const container = css({
@@ -40,26 +40,26 @@ const wide = css({ maxW: "1080px" });
 const backBtn = css({ mb: "16px" });
 
 const headerRow = css({ display: "flex", alignItems: "center", gap: "14px", mb: "24px" });
-const headerTitle = css({ fontSize: "22px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
-const headerSub = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
-const monoSpan = css({ fontFamily: "mono" });
+const headerTitle = css({ textStyle: "title", fontWeight: 600, color: "ink" });
+const headerSub = css({ textStyle: "ui", color: "ink2" });
+const monoSpan = css({ fontVariantNumeric: "tabular-nums" });
 
 const detailCard = cx(coCard, css({ p: { base: "20px", md: "28px" } }));
 const statsRow = css({ display: "flex", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "12px", overflow: "hidden", mb: "20px" });
 const statCell = css({ flex: 1, p: "14px 18px" });
 const statSplit = css({ width: "1px", bg: "hairline" });
-const statDays = css({ fontFamily: "mono", fontSize: "20px", fontWeight: 600, color: "ink" });
-const briefText = css({ fontSize: "14px", lineHeight: 1.55, color: "ink" });
+const statDays = css({ fontVariantNumeric: "tabular-nums", textStyle: "title", fontWeight: 600, color: "ink" });
+const briefText = css({ textStyle: "body", color: "ink" });
 const attachBlock = css({ mb: "20px" });
 const attachRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 const detailActions = css({ display: "flex", justifyContent: "space-between", gap: "12px" });
 
 const summaryCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
 const awaitBanner = css({ display: "flex", alignItems: "center", gap: "8px", p: "12px 14px", borderRadius: "10px", bg: "pendingTint", color: "pendingText", mb: "16px" });
-const awaitText = css({ fontSize: "13.5px", lineHeight: 1.5, fontWeight: 500 });
+const awaitText = css({ textStyle: "ui", fontWeight: 500 });
 const msRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", py: "10px" });
 const msRowLine = css({ borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
-const msTitle = css({ fontSize: "14px", lineHeight: 1.5, fontWeight: 500, color: "ink" });
+const msTitle = css({ textStyle: "body", fontWeight: 500, color: "ink" });
 const totalRow = css({
   display: "flex",
   justifyContent: "space-between",
@@ -70,10 +70,10 @@ const totalRow = css({
   borderTopStyle: "solid",
   borderTopColor: "hairlineStrong",
 });
-const totalLabel = css({ fontWeight: 600, fontSize: "16px", lineHeight: 1.5, color: "ink" });
+const totalLabel = css({ fontWeight: 600, textStyle: "lead", color: "ink" });
 
 const statusCard = cx(coCard, css({ p: { base: "24px", md: "32px" }, textAlign: "center" }));
-const statusText = css({ fontSize: "14.5px", color: "ink2", lineHeight: 1.6, maxW: "420px", mx: "auto" });
+const statusText = css({ textStyle: "body", color: "ink2", maxW: "420px", mx: "auto" });
 
 export default function CustomOrderDetailPage() {
   const params = useParams();
@@ -148,7 +148,7 @@ export default function CustomOrderDetailPage() {
               <div className={statsRow}>
                 <div className={statCell}>
                   <p className={coLabel}>Budget</p>
-                  <Money value={order.budget} size={20} weight={600} />
+                  <Money value={order.budget} size="title" weight={600} />
                 </div>
                 <div className={statSplit} />
                 <div className={statCell}>
@@ -215,12 +215,12 @@ export default function CustomOrderDetailPage() {
             {order.milestones.map((m, i) => (
               <div key={m.id} className={i < order.milestones.length - 1 ? cx(msRow, msRowLine) : msRow}>
                 <p className={msTitle}>{m.seq}. {m.title}</p>
-                <Money value={m.amount} size={14} weight={600} />
+                <Money value={m.amount} size="body" weight={600} />
               </div>
             ))}
             <div className={totalRow}>
               <p className={totalLabel}>Total</p>
-              <Money value={order.offer?.total ?? 0} size={18} weight={600} />
+              <Money value={order.offer?.total ?? 0} size="title" weight={600} />
             </div>
           </div>
         ) : (

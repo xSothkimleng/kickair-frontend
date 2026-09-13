@@ -417,7 +417,7 @@ export default function FreelancerOrderDetailPage() {
               {isCustom ? "Custom order" : isJobBased ? "Job Contract" : (pricingOption?.title ?? "Standard")}
             </p>
             {pricingOption?.description && (
-              <p className={css({ fontSize: "13px", lineHeight: 1.5, color: "#64748B" })}>{pricingOption.description}</p>
+              <p className={css({ textStyle: "ui", color: "#64748B" })}>{pricingOption.description}</p>
             )}
             <div className={statGridCss}>
               {[
@@ -435,10 +435,10 @@ export default function FreelancerOrderDetailPage() {
               <div>
                 <p className={tileLabelCss}>Your earnings</p>
                 {commissionRate != null && (
-                  <p className={css({ fontSize: "10.5px", lineHeight: 1.5, color: "#94A3B8" })}>after the {Math.round(commissionRate * 100)}% platform fee</p>
+                  <p className={css({ textStyle: "micro", color: "#94A3B8" })}>after the {Math.round(commissionRate * 100)}% platform fee</p>
                 )}
               </div>
-              <p className={css({ fontSize: "18px", fontWeight: 700, lineHeight: 1.5, letterSpacing: "-0.01em", color: "#10B981" })}>
+              <p className={css({ textStyle: "title", fontWeight: 700, color: "#10B981" })}>
                 ${(parseFloat(String(pricingOption?.price ?? order.price ?? "0")) * (1 - (commissionRate ?? 0))).toFixed(2)}
               </p>
             </div>
@@ -596,13 +596,13 @@ export default function FreelancerOrderDetailPage() {
             {order.status === "completed" && (
               <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
                 <CheckIcon size={15} style={{ color: "#94A3B8", flexShrink: 0 }} />
-                <p className={css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#94A3B8" })}>Order Completed</p>
+                <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Completed</p>
               </div>
             )}
 
             {/* cancelled / delivered (no further action) */}
             {(order.status === "cancelled" || order.status === "delivered") && (
-              <p className={css({ fontSize: "13px", lineHeight: 1.5, color: "#94A3B8", textAlign: "right" })}>
+              <p className={css({ textStyle: "ui", color: "#94A3B8", textAlign: "right" })}>
                 {order.status === "cancelled" ? "Order Cancelled" : "Awaiting client review"}
               </p>
             )}

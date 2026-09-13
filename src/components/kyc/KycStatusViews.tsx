@@ -4,8 +4,8 @@ import { AlertCircle, BadgeCheck, Calendar, Check, Clock, Focus, Lock, RotateCcw
 import { css, cva } from "styled-system/css";
 
 /**
- * The MUI `Button` base the old `sx` sat on (6px 8px padding, 64px min-width,
- * 1.75 line-height, no uppercase) with the KYC primary tone on top.
+ * The button base the old overrides sat on (6px 8px padding, 64px min-width,
+ * no uppercase) with the KYC primary tone on top.
  */
 const primaryBtn = css({
   display: "inline-flex",
@@ -16,8 +16,6 @@ const primaryBtn = css({
   p: "6px 8px",
   minW: "64px",
   border: "none",
-  fontFamily: "inherit",
-  lineHeight: 1.75,
   textDecoration: "none",
   verticalAlign: "middle",
   userSelect: "none",
@@ -28,7 +26,7 @@ const primaryBtn = css({
   w: "100%",
   h: "50px",
   borderRadius: "11px",
-  fontSize: "16px",
+  textStyle: "lead",
   fontWeight: 600,
   bg: "accent",
   color: "#fff",
@@ -36,10 +34,10 @@ const primaryBtn = css({
   _hover: { bg: "accentHover", boxShadow: "none" },
 });
 
-// MUI's startIcon slot: 20px glyph, 8px from the label, -4px into the padding.
+// Start-icon slot: 20px glyph, 8px from the label, -4px into the padding.
 const startIconCss = css({ ml: "-4px", mr: "8px" });
 
-const cardCss = css({ maxW: "480px", mx: "auto", borderRadius: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", overflow: "hidden", bg: "#fff", color: "rgba(0, 0, 0, 0.87)" });
+const cardCss = css({ maxW: "480px", mx: "auto", borderRadius: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", overflow: "hidden", bg: "#fff", color: "ink" });
 const cardBodyCss = css({ p: "26px 22px 18px" });
 const cardFooterCss = css({ p: "14px 22px 18px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "border" });
 
@@ -75,8 +73,8 @@ function ResultIcon({ tone, children }: { tone: "amber" | "green" | "red"; child
 // `mb` on the h1 and `m` on the p are dropped: globals.css's unlayered
 // `h1-h6, p { margin: 0 }` already beat the old `sx`, so they never applied.
 const headingWrapCss = css({ textAlign: "center", mb: "20px" });
-const headingTitleCss = css({ fontSize: "22px", fontWeight: 700, lineHeight: 1.5, color: "heading", letterSpacing: "-.02em" });
-const headingSubCss = css({ fontSize: "14.5px", color: "muted", lineHeight: 1.5 });
+const headingTitleCss = css({ textStyle: "title", fontWeight: 700, color: "heading" });
+const headingSubCss = css({ textStyle: "body", color: "muted" });
 
 function Heading({ title, sub }: { title: string; sub: string }) {
   return (
@@ -88,12 +86,12 @@ function Heading({ title, sub }: { title: string; sub: string }) {
 }
 
 const pendingRowCss = css({ display: "flex", alignItems: "center", gap: "10px", p: "13px 15px", borderRadius: "12px", bg: "#FFFBEB", borderWidth: "1px", borderStyle: "solid", borderColor: "#FCD9A6" });
-const pendingPillCss = css({ display: "inline-flex", alignItems: "center", gap: "7.2px", h: "26px", px: "11.2px", borderRadius: "999px", bg: "#fff", color: "#B45309", fontSize: "12.5px", fontWeight: 600, flexShrink: 0 });
+const pendingPillCss = css({ display: "inline-flex", alignItems: "center", gap: "7.2px", h: "26px", px: "11.2px", borderRadius: "999px", bg: "#fff", color: "#B45309", textStyle: "meta", fontWeight: 600, flexShrink: 0 });
 const pendingDotCss = css({ w: "7px", h: "7px", borderRadius: "50%", bg: "#F59E0B" });
-const pendingWhenCss = css({ fontSize: "12.5px", lineHeight: 1.5, color: "#B45309" });
+const pendingWhenCss = css({ textStyle: "meta", color: "#B45309" });
 const pendingLockRowCss = css({ display: "flex", alignItems: "center", gap: "8px", mt: "14px", color: "muted" });
-const pendingLockTextCss = css({ fontSize: "12.5px", fontWeight: 600, lineHeight: 1.5 });
-const pendingNoteCss = css({ fontSize: "12.5px", color: "muted", lineHeight: 1.55, textAlign: "center" });
+const pendingLockTextCss = css({ textStyle: "meta", fontWeight: 600 });
+const pendingNoteCss = css({ textStyle: "meta", color: "muted", textAlign: "center" });
 
 export function KycPendingView({ docTypeLabel, submittedAt, onDone }: { docTypeLabel: string | null; submittedAt: string | null; onDone: () => void }) {
   const submitted = submittedAt ? new Date(submittedAt).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }) : null;
@@ -121,15 +119,15 @@ export function KycPendingView({ docTypeLabel, submittedAt, onDone }: { docTypeL
 }
 
 const approvedBadgeWrapCss = css({ display: "flex", justifyContent: "center", mb: "16px" });
-const approvedBadgeCss = css({ display: "flex", alignItems: "center", gap: "7.2px", px: "14px", h: "32px", borderRadius: "999px", bg: "#ECFDF5", borderWidth: "1px", borderStyle: "solid", borderColor: "#A7F3D0", color: "#047857", fontSize: "13px", fontWeight: 600 });
+const approvedBadgeCss = css({ display: "flex", alignItems: "center", gap: "7.2px", px: "14px", h: "32px", borderRadius: "999px", bg: "#ECFDF5", borderWidth: "1px", borderStyle: "solid", borderColor: "#A7F3D0", color: "#047857", textStyle: "ui", fontWeight: 600 });
 const listBoxCss = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "border", borderRadius: "13px", px: "16px" });
-const overlineCss = css({ fontSize: "11.5px", fontWeight: 600, lineHeight: 1.5, letterSpacing: ".04em", textTransform: "uppercase", color: "muted" });
+const overlineCss = css({ textStyle: "eyebrow", fontWeight: 600, color: "muted" });
 const unlockedRowCss = cva({
   base: { display: "flex", alignItems: "center", gap: "11.2px", py: "10px" },
   variants: { divided: { true: { borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "border" }, false: {} } },
 });
 const unlockedIconCss = css({ flexShrink: 0, w: "30px", h: "30px", borderRadius: "9px", bg: "#ECFDF5", color: "#047857", display: "flex", alignItems: "center", justifyContent: "center" });
-const unlockedTextCss = css({ fontSize: "14px", lineHeight: 1.5, color: "body" });
+const unlockedTextCss = css({ textStyle: "body", color: "body" });
 
 const UNLOCKED = ["Withdraw earnings and get paid", "Place and accept orders without limits", "A verified badge on your profile"];
 
@@ -156,16 +154,16 @@ export function KycApprovedView({ onDone }: { onDone: () => void }) {
   );
 }
 
-const helpNoteCss = css({ fontSize: "12px", color: "muted", lineHeight: 1.5, textAlign: "center" });
+const helpNoteCss = css({ textStyle: "meta", color: "muted", textAlign: "center" });
 const helpLinkCss = css({ color: "accent", fontWeight: 600 });
 const reasonBoxCss = css({ display: "flex", gap: "11.2px", p: "14px 16px", borderRadius: "13px", bg: "#FEF2F2", borderWidth: "1px", borderStyle: "solid", borderColor: "#FBD2D2" });
 const reasonIconCss = css({ color: "#DC2626", flexShrink: 0, mt: "1px" });
-const reasonTitleCss = css({ fontSize: "13px", fontWeight: 700, lineHeight: 1.5, color: "#B91C1C" });
-const reasonTextCss = css({ fontSize: "13.5px", color: "#7F1D1D", lineHeight: 1.55 });
+const reasonTitleCss = css({ textStyle: "ui", fontWeight: 700, color: "#B91C1C" });
+const reasonTextCss = css({ textStyle: "ui", color: "#7F1D1D" });
 const tipsBoxCss = css({ mt: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", borderRadius: "13px", px: "16px" });
 const tipRowCss = css({ display: "flex", alignItems: "center", gap: "11.2px", py: "10px" });
 const tipIconCss = css({ flexShrink: 0, w: "28px", h: "28px", borderRadius: "8px", bg: "fill", color: "body", display: "flex", alignItems: "center", justifyContent: "center" });
-const tipTextCss = css({ fontSize: "13.5px", lineHeight: 1.5, color: "body" });
+const tipTextCss = css({ textStyle: "ui", color: "body" });
 
 const TIPS: [string, React.ReactNode][] = [
   ["Use a current, non-expired document", <Calendar key="a" size={16} />],

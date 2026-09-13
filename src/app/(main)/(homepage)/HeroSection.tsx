@@ -17,9 +17,8 @@ const searchBtn = css({
   color: "white",
   borderRadius: "pill",
   borderWidth: "0",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 600,
-  fontFamily: "inherit",
   cursor: "pointer",
   transition: "background-color .15s",
   _hover: { bg: "accentHover" },
@@ -36,9 +35,8 @@ const ctaBase = css({
   borderRadius: "pill",
   borderWidth: "2px",
   borderStyle: "solid",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   cursor: "pointer",
   transition: "background-color .15s, color .15s, border-color .15s",
 });
@@ -85,11 +83,9 @@ export default function HeroSection() {
           <Box
             as="h1"
             className={css({
-              fontSize: { base: "32px", sm: "48px", md: "72px" },
+              textStyle: { base: "stat", sm: "display", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
-              lineHeight: 1.05,
             })}
           >
             Hire Cambodia&apos;s
@@ -100,11 +96,10 @@ export default function HeroSection() {
             <Box
               as="p"
               className={css({
-                fontSize: { base: "21px", md: "24px" },
+                textStyle: { base: "title", md: "heading" },
                 color: "ink2",
                 maxW: "740px",
                 mx: "auto",
-                lineHeight: 1.4,
               })}
             >
               Work with skilled professionals at transparent prices. Browse ready-to-buy services or hire freelancers for your next project.
@@ -150,8 +145,7 @@ export default function HeroSection() {
                   borderStyle: "solid",
                   borderColor: "border",
                   borderRadius: "input",
-                  fontSize: "15px",
-                  fontFamily: "inherit",
+                  textStyle: "body",
                   color: "heading",
                   outline: "none",
                   transition: "border-color .15s, box-shadow .15s",
@@ -191,8 +185,8 @@ export default function HeroSection() {
             as="p"
             className={css({
               mt: "2.5",
-              fontSize: "13px",
-              color: "rgba(0, 0, 0, 0.5)",
+              textStyle: "ui",
+              color: "ink2",
             })}
           >
             Popular: Web Design, Logo Design, WordPress, Mobile App, Video Editing
@@ -213,19 +207,19 @@ export default function HeroSection() {
         <Wrap align="center" justify="center" gap="8" pt="8">
           <Flex align="center" gap="2">
             <CheckCircle size={16} color="#0071e3" />
-            <Box as="span" className={css({ fontSize: "13px", color: "ink2" })}>
+            <Box as="span" className={css({ textStyle: "ui", color: "ink2" })}>
               15,000+ Active Freelancers
             </Box>
           </Flex>
           <Flex align="center" gap="2">
             <CheckCircle size={16} color="#0071e3" />
-            <Box as="span" className={css({ fontSize: "13px", color: "ink2" })}>
+            <Box as="span" className={css({ textStyle: "ui", color: "ink2" })}>
               50,000+ Projects Completed
             </Box>
           </Flex>
           <Flex align="center" gap="2">
             <CheckCircle size={16} color="#0071e3" />
-            <Box as="span" className={css({ fontSize: "13px", color: "ink2" })}>
+            <Box as="span" className={css({ textStyle: "ui", color: "ink2" })}>
               4.9/5 Average Rating
             </Box>
           </Flex>

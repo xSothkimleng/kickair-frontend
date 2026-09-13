@@ -19,6 +19,27 @@ body {
   max-width: 100vw;
 }
 
+/* The site font. The two variables are set on <html> by next/font in
+   src/app/layout.tsx; this is the same stack as the Panda `fonts.sans` token. */
+html {
+  font-family: var(--font-sans), var(--font-khmer), ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Panda preflight is off, so form controls would otherwise use the browser's
+   own font at 13.33px. Make them follow the surrounding text instead. This
+   lives in the `base` layer on purpose: an unlayered rule would outrank every
+   Panda class, but here a component's own `textStyle` (utilities layer) wins. */
+@layer base {
+  button,
+  input,
+  select,
+  textarea {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+}
+
 body {
   color: var(--foreground);
   background: var(--background);

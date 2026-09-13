@@ -23,7 +23,7 @@ const searchWrapCss = css({
   borderBottomColor: "hairline",
 });
 
-// The former MUI OutlinedInput: 36px tall, 8px radius, 5 % black fill, no border,
+// The search field: 36px tall, 8px radius, 5 % black fill, no border,
 // 8 % on focus. Written out (rather than layered on `fieldRoot`) so the atomic
 // classes can't fight the kit recipe's border/background.
 const searchFieldCss = css({
@@ -36,7 +36,7 @@ const searchFieldCss = css({
   boxSizing: "border-box",
   bg: "rgba(0, 0, 0, 0.05)",
   borderRadius: "8px",
-  fontSize: "13px",
+  textStyle: "ui",
   color: "ink",
   _focusWithin: { bg: "rgba(0, 0, 0, 0.08)" },
 });
@@ -61,11 +61,8 @@ const searchInputCss = css({
   outline: "none",
   boxShadow: "none",
   appearance: "none",
-  fontFamily: "inherit",
-  fontSize: "inherit",
-  lineHeight: 1.5,
   color: "inherit",
-  _placeholder: { color: "rgba(0, 0, 0, 0.42)", opacity: 1 },
+  _placeholder: { color: "ink3", opacity: 1 },
   "&::-webkit-search-cancel-button, &::-webkit-search-decoration": { WebkitAppearance: "none", appearance: "none" },
 });
 
@@ -73,7 +70,7 @@ const listCss = css({ flex: 1, overflowY: "auto" });
 const loadingCss = css({ display: "flex", justifyContent: "center", py: "32px" });
 const spinnerCss = css({ color: "accent" });
 const emptyCss = css({ p: "24px", textAlign: "center" });
-const emptyTextCss = css({ fontSize: "13px", color: "rgba(0, 0, 0, 0.5)" });
+const emptyTextCss = css({ textStyle: "ui", color: "ink2" });
 
 const rowCss = cva({
   base: {
@@ -92,7 +89,7 @@ const rowCss = cva({
 
 const rowInnerCss = css({ display: "flex", alignItems: "start", gap: "12px" });
 
-// MUI <Badge variant="dot" overlap="circular" anchorOrigin={bottom,right}> with a
+// Dot badge with a
 // transparent fill and a 2px white ring.
 const avatarWrapCss = css({ position: "relative", display: "inline-flex", verticalAlign: "middle", flexShrink: 0 });
 const avatarDotCss = css({
@@ -113,21 +110,21 @@ const avatarDotCss = css({
 const bodyColCss = css({ flex: 1, minW: 0 });
 const titleRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "4px" });
 const nameCss = cva({
-  base: { fontSize: "13px", color: "ink", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  base: { textStyle: "ui", color: "ink", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   variants: { unread: { true: { fontWeight: 700 }, false: { fontWeight: 600 } } },
 });
-const timeCss = css({ fontSize: "11px", color: "ink3", flexShrink: 0 });
-// `mb`/`ml` on these <p>s were already dead under MUI too — globals.css zeroes
+const timeCss = css({ textStyle: "micro", color: "ink3", flexShrink: 0 });
+// `mb`/`ml` on these <p>s were already dead — globals.css zeroes
 // margin *and* padding on `p` outside any layer — so they are dropped, not ported.
 const orderTitleCss = css({
-  fontSize: "11px",
+  textStyle: "micro",
   color: "ink2",
   overflow: "hidden",
   textOverflow: "ellipsis",
   whiteSpace: "nowrap",
 });
 const previewCss = cva({
-  base: { fontSize: "12px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
+  base: { textStyle: "meta", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" },
   variants: {
     unread: {
       true: { color: "ink", fontWeight: 500 },
@@ -140,7 +137,7 @@ const unreadBadgeCss = css({
   h: "20px",
   bg: "accent",
   color: "white",
-  fontSize: "10px",
+  textStyle: "micro",
   borderRadius: "50%",
   display: "flex",
   alignItems: "center",

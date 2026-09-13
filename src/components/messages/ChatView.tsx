@@ -27,9 +27,9 @@ const emptyIconWrapCss = css({
   color: "rgba(0, 0, 0, 0.2)",
 });
 // globals.css zeroes margin/padding on <p> outside any layer, so the `mb` these
-// carried as MUI Typography never rendered — dropped rather than ported.
-const emptyTitleCss = css({ fontSize: "17px", fontWeight: 600, color: "ink" });
-const emptyCopyCss = css({ fontSize: "13px", color: "ink2" });
+// carried as Typography never rendered — dropped rather than ported.
+const emptyTitleCss = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
+const emptyCopyCss = css({ textStyle: "ui", color: "ink2" });
 
 /* ── shell ── */
 const rootCss = css({ flex: 1, display: "flex", flexDirection: "column" });
@@ -42,10 +42,10 @@ const headerCss = css({
 });
 const rowBetweenCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between" });
 const headerIdentityCss = css({ display: "flex", alignItems: "center", gap: "12px" });
-const headerNameCss = css({ fontSize: "15px", fontWeight: 600, color: "ink" });
-const headerSubCss = css({ fontSize: "11px", color: "ink2" });
+const headerNameCss = css({ textStyle: "body", fontWeight: 600, color: "ink" });
+const headerSubCss = css({ textStyle: "micro", color: "ink2" });
 
-// MUI <Badge variant="dot" overlap="circular" anchorOrigin={bottom,right}> —
+// Dot badge —
 // transparent fill inside a 2px white ring.
 const avatarWrapCss = css({ position: "relative", display: "inline-flex", verticalAlign: "middle", flexShrink: 0 });
 const avatarDotCss = css({
@@ -75,7 +75,7 @@ const bannerCss = css({
 });
 const bannerLeftCss = css({ display: "flex", alignItems: "center", gap: "8px" });
 const bannerIconCss = css({ color: "#3b82f6", flexShrink: 0 });
-const bannerTextCss = css({ fontSize: "12px", color: "rgb(29, 78, 216)", fontWeight: 500 });
+const bannerTextCss = css({ textStyle: "meta", color: "rgb(29, 78, 216)", fontWeight: 500 });
 const viewOrderBtnCss = css(button.raw({ variant: "text" }), {
   h: "auto",
   minW: "auto",
@@ -83,15 +83,13 @@ const viewOrderBtnCss = css(button.raw({ variant: "text" }), {
   py: 0,
   borderWidth: 0,
   borderRadius: 0,
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   color: "#3b82f6",
   _hover: { bg: "transparent", color: "#3b82f6", textDecoration: "underline" },
 });
 
-/* ── chip (MUI <Chip size="small" | default>) ── */
+/* ── chip (small | default) ── */
 const chipCss = cva({
   base: {
     display: "inline-flex",
@@ -100,14 +98,13 @@ const chipCss = cva({
     boxSizing: "border-box",
     maxW: "100%",
     borderRadius: "pill",
-    fontFamily: "inherit",
     fontWeight: 400,
     whiteSpace: "nowrap",
   },
   variants: {
     tone: {
-      status: { h: "20px", px: "8px", fontSize: "10px", bg: "rgba(37, 99, 235, 0.1)", color: "#3b82f6" },
-      date: { h: "24px", px: "12px", fontSize: "11px", bg: "rgba(0, 0, 0, 0.05)", color: "ink2" },
+      status: { h: "20px", px: "8px", textStyle: "micro", bg: "rgba(37, 99, 235, 0.1)", color: "#3b82f6" },
+      date: { h: "24px", px: "12px", textStyle: "micro", bg: "rgba(0, 0, 0, 0.05)", color: "ink2" },
     },
   },
 });
@@ -117,7 +114,7 @@ const streamCss = css({ flex: 1, overflowY: "auto", p: "24px", display: "flex", 
 const loadingCss = css({ display: "flex", justifyContent: "center", py: "32px" });
 const spinnerCss = css({ color: "accent" });
 const noMessagesWrapCss = css({ flex: 1, display: "flex", alignItems: "center", justifyContent: "center" });
-const noMessagesCss = css({ fontSize: "13px", color: "rgba(0, 0, 0, 0.5)" });
+const noMessagesCss = css({ textStyle: "ui", color: "ink2" });
 const dateRowCss = cva({
   base: { display: "flex", justifyContent: "center", mb: "16px" },
   variants: { first: { true: { mt: 0 }, false: { mt: "16px" } } },
@@ -141,9 +138,9 @@ const eventPillCss = css({
   _hover: { bg: "rgba(37, 99, 235, 0.1)" },
 });
 const eventIconCss = css({ color: "#3b82f6", flexShrink: 0 });
-const eventOrderCss = css({ fontSize: "11.5px", color: "#1D4ED8", fontWeight: 600, whiteSpace: "nowrap" });
-const eventLabelCss = css({ fontSize: "11.5px", color: "rgba(0,0,0,0.65)", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
-const eventTimeCss = css({ fontSize: "10.5px", color: "rgba(0,0,0,0.45)", whiteSpace: "nowrap" });
+const eventOrderCss = css({ textStyle: "micro", color: "#1D4ED8", fontWeight: 600, whiteSpace: "nowrap" });
+const eventLabelCss = css({ textStyle: "micro", color: "ink2", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const eventTimeCss = css({ textStyle: "micro", color: "ink3", whiteSpace: "nowrap" });
 
 /* ── composer ── */
 const composerWrapCss = css({
@@ -160,7 +157,7 @@ const addBtnCss = css(iconButton.raw({ shape: "round", variant: "ghost" }), {
   color: "ink2",
   _hover: { bg: "rgba(0, 0, 0, 0.05)", color: "ink2" },
 });
-// MUI multiline OutlinedInput: 16px radius, 5 % black fill, no border, 8 % on focus.
+// Multiline field: 16px radius, 5 % black fill, no border, 8 % on focus.
 const fieldCss = css({
   display: "flex",
   alignItems: "stretch",
@@ -171,7 +168,7 @@ const fieldCss = css({
   boxSizing: "border-box",
   bg: "rgba(0, 0, 0, 0.05)",
   borderRadius: "16px",
-  fontSize: "13px",
+  textStyle: "ui",
   color: "ink",
   _focusWithin: { bg: "rgba(0, 0, 0, 0.08)" },
 });
@@ -191,12 +188,9 @@ const textareaCss = css({
   appearance: "none",
   resize: "none",
   overflowY: "hidden",
-  fontFamily: "inherit",
-  fontSize: "inherit",
-  lineHeight: 1.5,
   color: "inherit",
-  _placeholder: { color: "rgba(0, 0, 0, 0.42)", opacity: 1 },
-  _disabled: { color: "rgba(0, 0, 0, 0.38)", cursor: "default" },
+  _placeholder: { color: "ink3", opacity: 1 },
+  _disabled: { color: "ink3", cursor: "default" },
 });
 const sendBtnActiveCss = css(iconButton.raw({ shape: "round", variant: "ghost" }), {
   w: "40px",
@@ -213,8 +207,8 @@ const sendBtnIdleCss = css(iconButton.raw({ shape: "round", variant: "ghost" }),
   _hover: { bg: "rgba(0, 0, 0, 0.05)", color: "rgba(0, 0, 0, 0.2)" },
   _disabled: { opacity: 1, cursor: "default", pointerEvents: "none" },
 });
-const sendSpinnerCss = css({ color: "rgba(0, 0, 0, 0.3)" });
-const hintCss = css({ fontSize: "10px", color: "ink3", textAlign: "center" });
+const sendSpinnerCss = css({ color: "ink3" });
+const hintCss = css({ textStyle: "micro", color: "ink3", textAlign: "center" });
 
 const COMPOSER_MAX_ROWS = 4;
 
@@ -293,7 +287,7 @@ export default function ChatView({
     // scrollToBottom();
   }, [messages]);
 
-  // Replaces MUI's TextareaAutosize (maxRows=4): grow with the content, then scroll.
+  // Auto-grow (maxRows=4): grow with the content, then scroll.
   useLayoutEffect(() => {
     const el = composerRef.current;
     if (!el) return;

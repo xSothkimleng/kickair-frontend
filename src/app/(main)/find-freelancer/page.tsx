@@ -25,8 +25,8 @@ const SORT_OPTIONS = [
   { value: "name-desc", label: "Name: Z–A" },
 ];
 
-// MUI <Chip> with a delete icon: 26px pill, 10px label padding, the delete glyph
-// pulled 6px left (MUI's default) and 4px off the right edge.
+// Chip with a delete icon: 26px pill, 10px label padding, the delete glyph
+// pulled 6px left (the default) and 4px off the right edge.
 const activeChip = css({
   display: "inline-flex",
   alignItems: "center",
@@ -36,9 +36,8 @@ const activeChip = css({
   borderRadius: "999px",
   bg: "#F1F5F9",
   color: "#0F172A",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: "18px",
   maxW: "100%",
   boxSizing: "border-box",
 });
@@ -58,7 +57,6 @@ const activeChipRemove = css({
   bg: "transparent",
   color: "#94A3B8",
   cursor: "pointer",
-  fontFamily: "inherit",
   ml: "-6px",
   _hover: { color: "#0F172A" },
   _focusVisible: { outline: "none", boxShadow: "focusRing", borderRadius: "999px" },
@@ -77,25 +75,23 @@ const sectionHeader = css({
   py: "6px",
   userSelect: "none",
 });
-// MUI's Stack `spacing` put a margin-left on the meta <p>, which globals.css's
+// The old stack spacing put a margin-left on the meta <p>, which globals.css's
 // unlayered `p { margin: 0 }` already suppressed — so there is no gap here.
 const sectionTitleRow = css({ display: "flex", alignItems: "center", minW: 0 });
 const sectionTitle = css({
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 600,
-  lineHeight: 1.5,
-  letterSpacing: "-0.005em",
   color: "ink",
 });
-const sectionMeta = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.38)" });
+const sectionMeta = css({ textStyle: "meta", color: "ink3" });
 const sectionChevron = css({
-  color: "rgba(0, 0, 0, 0.38)",
+  color: "ink3",
   flexShrink: 0,
   transition: "transform 0.2s ease",
   transform: "rotate(-90deg)",
   "&[data-open]": { transform: "rotate(0deg)" },
 });
-// Pure-CSS collapse (0fr → 1fr) so the section still animates like MUI <Collapse>.
+// Pure-CSS collapse (0fr → 1fr) so the section still animates like a collapse.
 const collapse = css({
   display: "grid",
   gridTemplateRows: "0fr",
@@ -148,25 +144,24 @@ const facetScroll = css({
   "&::-webkit-scrollbar-thumb": { backgroundColor: "#E2E8F0", borderRadius: "4px" },
 });
 const facetEmpty = css({
-  fontSize: "12px",
-  lineHeight: 1.5,
-  color: "rgba(0, 0, 0, 0.38)",
+  textStyle: "meta",
+  color: "ink3",
   px: "8px",
   py: "8px",
 });
-// The row look (padding / radius / hover) and MUI's ink-coloured tick live on the
+// The row look (padding / radius / hover) and the ink-coloured tick live on the
 // wrapper: the kit Checkbox has no className, so the label is stretched from here.
 const facetRow = css({
   borderRadius: "6px",
   _hover: { bg: "#F1F5F9" },
-  "& > label": { py: "7px", px: "8px", borderRadius: "6px", fontSize: "13px", lineHeight: 1.5 },
+  "& > label": { py: "7px", px: "8px", borderRadius: "6px", textStyle: "ui" },
   "& [data-part=control]": { mt: 0 },
   "& [data-part=control][data-state=checked]": { bg: "#0F172A", borderColor: "#0F172A" },
-  // The kit label is 14.5px; the facet rows are 13px/1.5 like the MUI original.
-  "& [data-part=label]": { fontSize: "13px", lineHeight: 1.5 },
+  // The kit label is 14.5px; the facet rows are 13px like the original.
+  "& [data-part=label]": { textStyle: "ui" },
 });
-const facetLabel = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", fontWeight: 400 });
-const facetLabelOn = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.87)", fontWeight: 500 });
+const facetLabel = css({ textStyle: "ui", color: "ink2", fontWeight: 400 });
+const facetLabelOn = css({ textStyle: "ui", color: "ink", fontWeight: 500 });
 
 function CheckboxFacet({
   options,
@@ -235,15 +230,13 @@ const hero = css({
   py: "40px",
 });
 const heroInner = css({ maxW: "900px", mx: "auto", w: "100%", px: { base: "16px", sm: "24px" }, boxSizing: "border-box" });
-// The MUI h1's `mb` never applied (globals.css `h1 { margin: 0 }` is unlayered).
+// The h1's `mb` never applied (globals.css `h1 { margin: 0 }` is unlayered).
 const heroTitle = css({
-  fontSize: { base: "32px", md: "48px" },
+  textStyle: { base: "stat", md: "display" },
   fontWeight: 600,
-  lineHeight: 1.167,
   color: "#0F172A",
-  letterSpacing: "-0.02em",
 });
-const heroSub = css({ fontSize: "17px", lineHeight: 1.5, color: "#64748B" });
+const heroSub = css({ textStyle: "lead", color: "#64748B" });
 
 const container = css({
   maxW: "1200px",
@@ -262,10 +255,8 @@ const pillButton = css({
   h: "40px",
   px: "20px",
   minW: "64px",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   color: "#0F172A",
   bg: "white",
   borderWidth: "1px",
@@ -279,7 +270,7 @@ const pillButton = css({
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
 });
-// MUI Button startIcon metrics for a medium button.
+// Button start-icon metrics for a medium button.
 const startIcon = css({ ml: "-4px", mr: "8px", flexShrink: 0 });
 const countBubble = css({
   ml: "8px",
@@ -290,15 +281,13 @@ const countBubble = css({
   bg: "#0F172A",
   color: "white",
   borderRadius: "999px",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 600,
 });
 const errorWrap = css({ mb: "24px" });
 const retryBtn = css({
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   color: "inherit",
   bg: "transparent",
   border: "none",
@@ -345,7 +334,7 @@ const sidebarHead = css({
   mb: "16px",
 });
 const sidebarHeadLeft = css({ display: "flex", alignItems: "center", gap: "8px" });
-const sidebarTitle = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.01em", color: "ink" });
+const sidebarTitle = css({ textStyle: "body", fontWeight: 600, color: "ink" });
 const sidebarCount = css({
   display: "inline-flex",
   alignItems: "center",
@@ -355,25 +344,22 @@ const sidebarCount = css({
   px: "6px",
   bg: "#0F172A",
   color: "#FFF",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 600,
-  lineHeight: 1,
   borderRadius: "999px",
   boxSizing: "border-box",
 });
 const resetBtn = css({
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
-  color: "rgba(0, 0, 0, 0.6)",
+  color: "ink2",
   bg: "transparent",
   border: "none",
   borderRadius: "4px",
   minW: 0,
   p: "2px 4px",
   cursor: "pointer",
-  _hover: { color: "rgba(0, 0, 0, 0.87)", bg: "transparent" },
+  _hover: { color: "ink", bg: "transparent" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const facetDivider = css({ my: "12px", h: "1px", bg: "#F1F5F9", border: "none" });
@@ -381,8 +367,8 @@ const facetDivider = css({ my: "12px", h: "1px", bg: "#F1F5F9", border: "none" }
 const toolbar = css({ display: "flex", gap: "12px", mb: "16px" });
 const sortWrap = css({ minW: "180px" });
 const countRow = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "20px" });
-const countText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
-const countStrong = css({ color: "rgba(0, 0, 0, 0.87)", fontWeight: 600 });
+const countText = css({ textStyle: "ui", color: "ink2" });
+const countStrong = css({ color: "ink", fontWeight: 600 });
 
 const viewGroup = css({
   display: "flex",
@@ -405,7 +391,6 @@ const viewBtn = cva({
     bg: "transparent",
     color: "#94A3B8",
     cursor: "pointer",
-    fontFamily: "inherit",
     transition: "background-color .15s, color .15s",
     _hover: { bg: "rgba(0, 0, 0, 0.04)" },
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
@@ -432,7 +417,7 @@ const cardsGrid = css({
   gap: "24px",
 });
 const emptyWrap = css({ textAlign: "center", py: "80px" });
-const emptyText = css({ fontSize: "15px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const emptyText = css({ textStyle: "body", color: "ink2" });
 const clearBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -440,10 +425,8 @@ const clearBtn = css({
   h: "40px",
   px: "24px",
   minW: "64px",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   color: "#0F172A",
   bg: "white",
   borderWidth: "1px",
@@ -455,12 +438,12 @@ const clearBtn = css({
   _hover: { borderColor: "#CBD5E1", bg: "white" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
-// MUI Pagination size="large": 40px circular items with the selected pill in ink.
+// Large pagination: 40px circular items with the selected pill in ink.
 const pagerWrap = css({
   display: "flex",
   justifyContent: "center",
   mt: "48px",
-  "& button": { minW: "40px", h: "40px", borderRadius: "999px", fontSize: "14px" },
+  "& button": { minW: "40px", h: "40px", borderRadius: "999px", textStyle: "body" },
   "& [aria-current=page]": {
     bg: "#0F172A",
     color: "white",
@@ -482,7 +465,6 @@ const fab = css({
   bg: "#0F172A",
   color: "white",
   cursor: "pointer",
-  fontFamily: "inherit",
   boxShadow: "0px 3px 5px -1px rgba(0,0,0,0.2), 0px 6px 10px 0px rgba(0,0,0,0.14), 0px 1px 18px 0px rgba(0,0,0,0.12)",
   transition: "all 0.2s",
   _hover: { bg: "#1E293B", transform: "scale(1.08)" },

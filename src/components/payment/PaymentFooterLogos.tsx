@@ -15,17 +15,14 @@ const wrapCss = css({
 
 const titleCss = cva({
   base: {
-    fontSize: "12px",
+    textStyle: "eyebrow",
     fontWeight: 600,
-    letterSpacing: "0.04em",
-    textTransform: "uppercase",
-    lineHeight: 1.5,
   },
   variants: { dark: { true: { color: "rgba(255,255,255,0.55)" }, false: { color: "ink3" } } },
 });
 
 const subCss = cva({
-  base: { fontSize: "12px", lineHeight: 1.5 },
+  base: { textStyle: "meta" },
   variants: { dark: { true: { color: "rgba(255,255,255,0.4)" }, false: { color: "ink3" } } },
 });
 

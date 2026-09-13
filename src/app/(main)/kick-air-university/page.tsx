@@ -25,10 +25,9 @@ interface KickAirUniversityPageProps {
 
 // Text-style link/action (marketing "Start Learning →" etc.)
 const textLink = css({
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 600,
   color: "accent",
-  fontFamily: "inherit",
   bg: "transparent",
   border: "none",
   p: "0",
@@ -223,9 +222,8 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
               display: "inline-flex",
               alignItems: "center",
               gap: "1.5",
-              fontSize: "12px",
+              textStyle: "meta",
               color: "ink2",
-              fontFamily: "inherit",
               textDecoration: "none",
               mb: "4",
               cursor: "pointer",
@@ -243,7 +241,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                 gap: "1.5",
                 bg: "rgba(0,0,0,0.05)",
                 color: "ink2",
-                fontSize: "11px",
+                textStyle: "micro",
                 fontWeight: 600,
                 borderRadius: "pill",
                 py: "1",
@@ -256,10 +254,9 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             <Box
               as="h1"
               className={css({
-                fontSize: { base: "32px", md: "48px" },
+                textStyle: { base: "stat", md: "display" },
                 fontWeight: 600,
                 color: "ink",
-                letterSpacing: "-0.02em",
                 mb: "2",
               })}>
               KickAir University
@@ -267,7 +264,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             <Box
               as="p"
               className={css({
-                fontSize: "19px",
+                textStyle: "title",
                 color: "ink2",
                 maxW: "600px",
               })}>
@@ -290,10 +287,9 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
               className={css({
                 px: "6",
                 py: "2",
-                fontSize: "13px",
+                textStyle: "ui",
                 fontWeight: 500,
                 borderRadius: "8px",
-                fontFamily: "inherit",
                 border: "none",
                 cursor: "pointer",
                 transition: "background-color .15s, color .15s, box-shadow .15s",
@@ -313,10 +309,9 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
               className={css({
                 px: "6",
                 py: "2",
-                fontSize: "13px",
+                textStyle: "ui",
                 fontWeight: 500,
                 borderRadius: "8px",
-                fontFamily: "inherit",
                 border: "none",
                 cursor: "pointer",
                 transition: "background-color .15s, color .15s, box-shadow .15s",
@@ -340,10 +335,9 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
           <Box
             as="h2"
             className={css({
-              fontSize: "32px",
+              textStyle: "stat",
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.01em",
               mb: "3",
             })}>
             {activeTab === "freelancer" ? "Build Your Freelance Career" : "Hire Smarter, Work Better"}
@@ -351,7 +345,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
           <Box
             as="p"
             className={css({
-              fontSize: "17px",
+              textStyle: "lead",
               color: "ink2",
               mb: "12",
             })}>
@@ -400,7 +394,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                   <Box
                     as="h3"
                     className={css({
-                      fontSize: "21px",
+                      textStyle: "title",
                       fontWeight: 600,
                       color: "ink",
                       mb: "2",
@@ -410,10 +404,9 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                   <Box
                     as="p"
                     className={css({
-                      fontSize: "14px",
+                      textStyle: "body",
                       color: "ink2",
                       mb: "6",
-                      lineHeight: 1.5,
                     })}>
                     {course.description}
                   </Box>
@@ -427,7 +420,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                           color="#0071e3"
                           className={css({ flexShrink: 0, mt: "0.5" })}
                         />
-                        <Box as="span" className={css({ fontSize: "13px", color: "rgba(0,0,0,0.8)" })}>
+                        <Box as="span" className={css({ textStyle: "ui", color: "ink" })}>
                           {item}
                         </Box>
                       </Box>
@@ -446,7 +439,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                     justifyContent: "space-between",
                     alignItems: "center",
                   })}>
-                  <Box as="span" className={css({ fontSize: "12px", color: "ink2" })}>
+                  <Box as="span" className={css({ textStyle: "meta", color: "ink2" })}>
                     {course.lessons} • {course.duration}
                   </Box>
                   <button type="button" className={textLink}>
@@ -463,10 +456,9 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
           <Box
             as="h2"
             className={css({
-              fontSize: "32px",
+              textStyle: "stat",
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.01em",
               mb: "8",
             })}>
             Additional Resources
@@ -488,7 +480,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                 <Box
                   as="h4"
                   className={css({
-                    fontSize: "17px",
+                    textStyle: "lead",
                     fontWeight: 600,
                     color: "ink",
                     mb: "2",
@@ -498,10 +490,9 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                 <Box
                   as="p"
                   className={css({
-                    fontSize: "13px",
+                    textStyle: "ui",
                     color: "ink2",
                     mb: "4",
-                    lineHeight: 1.5,
                   })}>
                   {resource.description}
                 </Box>
@@ -527,7 +518,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
           <Box
             as="h2"
             className={css({
-              fontSize: "28px",
+              textStyle: "stat",
               fontWeight: 600,
               color: "ink",
               mb: "8",
@@ -539,14 +530,14 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
               <Box
                 as="p"
                 className={css({
-                  fontSize: "48px",
+                  textStyle: "display",
                   fontWeight: 600,
                   color: "ink",
                   mb: "2",
                 })}>
                 15,000+
               </Box>
-              <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+              <Box as="p" className={css({ textStyle: "body", color: "ink2" })}>
                 Active Students
               </Box>
             </Box>
@@ -554,14 +545,14 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
               <Box
                 as="p"
                 className={css({
-                  fontSize: "48px",
+                  textStyle: "display",
                   fontWeight: 600,
                   color: "ink",
                   mb: "2",
                 })}>
                 50+
               </Box>
-              <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+              <Box as="p" className={css({ textStyle: "body", color: "ink2" })}>
                 Free Courses
               </Box>
             </Box>
@@ -569,14 +560,14 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
               <Box
                 as="p"
                 className={css({
-                  fontSize: "48px",
+                  textStyle: "display",
                   fontWeight: 600,
                   color: "ink",
                   mb: "2",
                 })}>
                 4.8/5
               </Box>
-              <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+              <Box as="p" className={css({ textStyle: "body", color: "ink2" })}>
                 Average Rating
               </Box>
             </Box>

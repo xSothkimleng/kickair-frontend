@@ -17,17 +17,17 @@ const CLIENT_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"] as const;
 const primaryBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   h: "38px", px: "20px", borderRadius: "999px", border: "none",
-  bg: "#000", color: "#fff", fontFamily: "inherit", fontSize: "13.5px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer", boxShadow: "none", whiteSpace: "nowrap",
+  bg: "#000", color: "#fff", textStyle: "ui", fontWeight: 600,
+  cursor: "pointer", boxShadow: "none", whiteSpace: "nowrap",
   _hover: { bg: "rgba(0,0,0,0.8)", boxShadow: "none" },
   _disabled: { bg: "rgba(0,0,0,0.25)", color: "#fff", cursor: "default", pointerEvents: "none" },
 });
 const secBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
-  h: "34px", pl: "10px", pr: "14px", borderRadius: "999px",  // MUI startIcon pulls 4px off the left padding
+  h: "34px", pl: "10px", pr: "14px", borderRadius: "999px",  // the start icon pulls 4px off the left padding
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong",
-  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
-  lineHeight: 1.75, cursor: "pointer", whiteSpace: "nowrap",
+  bg: "transparent", color: "ink", textStyle: "ui", fontWeight: 600,
+  cursor: "pointer", whiteSpace: "nowrap",
   _hover: { bg: "surface2" },
   _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
   "& svg": { display: "block" },
@@ -35,8 +35,7 @@ const secBtn = css({
 const ghostBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   h: "34px", px: "12px", borderRadius: "999px", border: "none", bg: "transparent",
-  color: "ink2", fontFamily: "inherit", fontSize: "13px", fontWeight: 600, lineHeight: 1.75,
-  cursor: "pointer", whiteSpace: "nowrap",
+  color: "ink2", textStyle: "ui", fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap",
   _hover: { bg: "surface2" },
   _disabled: { color: "rgba(0,0,0,0.26)", cursor: "default", pointerEvents: "none" },
 });
@@ -44,7 +43,7 @@ const ghostBtn = css({
 const pillRow = css({ display: "flex", flexWrap: "wrap", gap: "8px" });
 const sizePill = css({
   h: "38px", px: "15px", borderRadius: "999px", cursor: "pointer",
-  fontFamily: "inherit", fontSize: "13.5px", fontWeight: 600,
+  textStyle: "ui", fontWeight: 600,
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong",
   bg: "surface", color: "ink2",
   transition: "background .12s, border-color .12s, color .12s",
@@ -76,10 +75,10 @@ const skeletonCard = css({
 });
 const skeletonTitle = css({ mb: "16px" });
 const headRow = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "12px" });
-const headTitle = css({ fontSize: { base: "24px", md: "28px" }, fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.025em" });
-const headSub = css({ fontSize: "13.5px", lineHeight: 1.5, color: "ink2" });
+const headTitle = css({ textStyle: { base: "heading", md: "stat" }, fontWeight: 600 });
+const headSub = css({ textStyle: "ui", color: "ink2" });
 const saveGroup = css({ display: "flex", alignItems: "center", gap: "10px", flex: "none" });
-const unsavedTag = css({ display: { base: "none", sm: "inline-flex" }, alignItems: "center", gap: "7px", fontSize: "12.5px", color: "pendingText" });
+const unsavedTag = css({ display: { base: "none", sm: "inline-flex" }, alignItems: "center", gap: "7px", textStyle: "meta", color: "pendingText" });
 const unsavedDot = css({ w: "8px", h: "8px", borderRadius: "50%", bg: "pending" });
 
 const identityCard = css({
@@ -92,8 +91,8 @@ const uploadingOverlay = css({
   position: "absolute", inset: 0, borderRadius: "50%", bg: "rgba(0,0,0,0.5)",
   display: "flex", alignItems: "center", justifyContent: "center",
 });
-const identityName = css({ fontSize: { base: "17px", md: "19px" }, fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em" });
-const identitySub = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const identityName = css({ textStyle: { base: "lead", md: "title" }, fontWeight: 600 });
+const identitySub = css({ textStyle: "ui", color: "ink2" });
 const identityActions = css({ display: "flex", gap: "9px", mt: "12px" });
 const detailsGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "16px" });
 const sizeBlock = css({ mt: "16px" });

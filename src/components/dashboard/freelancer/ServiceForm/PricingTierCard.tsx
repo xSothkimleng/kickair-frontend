@@ -17,11 +17,11 @@ const header = cva({
   variants: { off: { true: { mb: 0 }, false: { mb: "16px" } } },
 });
 const tierName = cva({
-  base: { fontSize: "13px", fontWeight: 600, lineHeight: 1.5, textTransform: "capitalize" },
-  variants: { off: { true: { color: "rgba(0, 0, 0, 0.3)" }, false: { color: "ink" } } },
+  base: { textStyle: "ui", fontWeight: 600, textTransform: "capitalize" },
+  variants: { off: { true: { color: "ink3" }, false: { color: "ink" } } },
 });
 const body = css({ display: "flex", flexDirection: "column", gap: "12px" });
-const editorLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "body" });
+const editorLabel = css({ textStyle: "ui", fontWeight: 500, color: "body" });
 const optionalMark = css({ color: "ink3" });
 const earnings = css({
   p: "8px 12px",
@@ -31,7 +31,7 @@ const earnings = css({
   borderColor: "rgba(22,163,74,0.15)",
   borderRadius: "8px",
 });
-const earningsText = css({ lineHeight: 1.5, fontSize: "12.5px", color: "#166534" });
+const earningsText = css({ textStyle: "meta", color: "#166534" });
 const earningsAmount = css({ fontWeight: 700 });
 
 interface PricingTierCardProps {

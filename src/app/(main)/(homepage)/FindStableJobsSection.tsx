@@ -13,9 +13,8 @@ const ctaPill = css({
   bg: "accent",
   color: "white",
   borderRadius: "pill",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   borderWidth: "0",
   cursor: "pointer",
   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
@@ -31,7 +30,7 @@ const tagChip = css({
   borderRadius: "pill",
   px: "2.5",
   height: "24px",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 500,
   whiteSpace: "nowrap",
 });
@@ -81,7 +80,7 @@ export default function StableJobsSection() {
               px="3"
               py="1"
               mb="4"
-              fontSize="11px"
+              textStyle="micro"
               fontWeight={600}
             >
               <Briefcase size={14} />
@@ -91,10 +90,9 @@ export default function StableJobsSection() {
             <Box
               as="h2"
               className={css({
-                fontSize: { base: "28px", md: "40px" },
+                textStyle: { base: "stat", md: "display" },
                 fontWeight: 600,
                 color: "ink",
-                letterSpacing: "-0.02em",
                 mb: "4",
               })}
             >
@@ -104,9 +102,8 @@ export default function StableJobsSection() {
             <Box
               as="p"
               className={css({
-                fontSize: "17px",
+                textStyle: "lead",
                 color: "ink2",
-                lineHeight: 1.6,
                 mb: "6",
               })}
             >
@@ -117,10 +114,10 @@ export default function StableJobsSection() {
             <Box as="ul" listStyleType="none" p="0" m="0" mb="8">
               {benefits.map((benefit) => (
                 <Box key={benefit} as="li" display="flex" alignItems="flex-start" gap="3" mb="4">
-                  <Box color="accent" flexShrink={0} mt="0.5" lineHeight={0}>
+                  <Box color="accent" flexShrink={0} mt="0.5" display="flex">
                     <CheckCircle2 size={20} />
                   </Box>
-                  <Box as="span" fontSize="15px" color="rgba(0, 0, 0, 0.8)">
+                  <Box as="span" textStyle="body" color="ink">
                     {benefit}
                   </Box>
                 </Box>
@@ -156,14 +153,14 @@ export default function StableJobsSection() {
                 >
                   <Box display="flex" alignItems="flex-start" justifyContent="space-between" mb="3">
                     <Box>
-                      <Box as="p" fontSize="15px" fontWeight={600} color="ink" mb="1">
+                      <Box as="p" textStyle="body" fontWeight={600} color="ink" mb="1">
                         {job.title}
                       </Box>
-                      <Box as="p" fontSize="13px" color="ink2">
+                      <Box as="p" textStyle="ui" color="ink2">
                         {job.org}
                       </Box>
                     </Box>
-                    <Box as="p" fontSize="13px" fontWeight={600} color="accent" whiteSpace="nowrap">
+                    <Box as="p" textStyle="ui" fontWeight={600} color="accent" whiteSpace="nowrap">
                       {job.pay}
                     </Box>
                   </Box>

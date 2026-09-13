@@ -13,8 +13,7 @@ export const alert = cva({
     borderRadius: "input",
     borderWidth: "1px",
     borderStyle: "solid",
-    fontSize: "14px",
-    lineHeight: 1.5,
+    textStyle: "body",
     "& svg": { flexShrink: 0 },
   },
   variants: {
@@ -41,7 +40,7 @@ export interface AlertProps {
   className?: string;
 }
 
-/** Replaces MUI <Alert severity=…>. */
+/** */
 export function Alert({ tone = "info", title, children, icon, action, onClose, className }: AlertProps) {
   const Icon = ICONS[tone];
   return (

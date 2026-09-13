@@ -12,8 +12,8 @@ const sectionCard = css({
   p: "32px",
 });
 const header = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "24px" });
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
-const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
+const sectionSub = css({ textStyle: "micro", color: "ink2" });
 const panel = css({
   display: "flex",
   flexDirection: "column",
@@ -24,10 +24,10 @@ const panel = css({
   borderTopColor: "hairline",
 });
 const noteBox = css({ p: "16px", bg: "rgba(245, 158, 11, 0.05)", borderRadius: "cardSm" });
-const noteText = css({ lineHeight: 1.5, fontSize: "11px", color: "pendingText" });
+const noteText = css({ textStyle: "micro", color: "pendingText" });
 const halfGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "repeat(2, 1fr)" }, gap: "16px" });
-const fieldLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 600, color: "ink" });
-const fieldHint = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+const fieldLabel = css({ textStyle: "ui", fontWeight: 600, color: "ink" });
+const fieldHint = css({ textStyle: "micro", color: "ink2" });
 
 interface CustomOrdersSectionProps {
   formData: ServiceFormData;

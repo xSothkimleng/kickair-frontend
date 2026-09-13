@@ -13,7 +13,7 @@ const stripHtml = (s: string) => s.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ")
 const COVER_PLACEHOLDER =
   "Introduce yourself and explain why you're a great fit. What relevant work have you done? How would you approach this project, and what will you deliver?";
 
-/* ── dialog shell (MUI `Dialog fullWidth maxWidth="sm"`, full-screen under 640px) ── */
+/* ── dialog shell (Dialog, full-screen under 640px) ── */
 const backdrop = css({ position: "fixed", inset: 0, zIndex: 1300, bg: "rgba(0, 0, 0, 0.5)" });
 const positioner = css({
   position: "fixed", inset: 0, zIndex: 1300,
@@ -41,12 +41,11 @@ const header = css({
   borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline",
   flex: "none",
 });
-const headTitle = css({ lineHeight: 1.5, fontSize: { base: "18px", sm: "19px" }, fontWeight: 600, letterSpacing: "-0.01em" });
-const headSub = css({ lineHeight: 1.5, display: { base: "none", sm: "block" }, fontSize: "12px", color: "ink2" });
+const headTitle = css({ textStyle: "title", fontWeight: 600 });
+const headSub = css({ display: { base: "none", sm: "block" }, textStyle: "meta", color: "ink2" });
 const closeBtn = css({
   w: "36px", h: "36px", p: 0, m: 0, borderRadius: "50%", border: "none",
-  bg: "rgba(0,0,0,0.05)", color: "ink2", cursor: "pointer", fontFamily: "inherit",
-  display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
+  bg: "rgba(0,0,0,0.05)", color: "ink2", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
 });
@@ -58,19 +57,19 @@ const recap = css({
   p: "13px 16px", bg: "surface2",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm",
 });
-const capText = css({ lineHeight: 1.5, fontSize: "9.5px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
-const recapTitle = css({ lineHeight: 1.5, fontSize: "13.5px", fontWeight: 600, letterSpacing: "-0.01em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
-const recapBudget = css({ lineHeight: 1.5, fontFamily: "mono", fontSize: "14px", fontWeight: 600, color: "successText", whiteSpace: "nowrap" });
+const capText = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
+const recapTitle = css({ textStyle: "ui", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
+const recapBudget = css({ fontVariantNumeric: "tabular-nums", textStyle: "body", fontWeight: 600, color: "successText", whiteSpace: "nowrap" });
 const fieldGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: { base: "18px", sm: "16px" } });
-const fieldLabel = css({ lineHeight: 1.5, display: "block", fontSize: "13.5px", fontWeight: 500, color: "ink2", mb: "7px" });
-const fieldHint = css({ lineHeight: 1.5, fontSize: "11.5px", color: "ink2" });
+const fieldLabel = css({ display: "block", textStyle: "ui", fontWeight: 500, color: "ink2", mb: "7px" });
+const fieldHint = css({ textStyle: "micro", color: "ink2" });
 const hintStrong = css({ color: "successText", fontWeight: 600 });
 const relative = css({ position: "relative" });
-const pricePrefix = css({ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", fontFamily: "mono", fontSize: "20px", fontWeight: 600, color: "ink3", pointerEvents: "none" });
-const daysSuffix = css({ position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)", fontSize: "14px", fontWeight: 500, color: "ink3", pointerEvents: "none" });
+const pricePrefix = css({ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", fontVariantNumeric: "tabular-nums", textStyle: "title", fontWeight: 600, color: "ink3", pointerEvents: "none" });
+const daysSuffix = css({ position: "absolute", right: "16px", top: "50%", transform: "translateY(-50%)", textStyle: "body", fontWeight: 500, color: "ink3", pointerEvents: "none" });
 const coverHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "7px" });
-const coverLabel = css({ lineHeight: 1.5, display: "block", fontSize: "13.5px", fontWeight: 500, color: "ink2" });
-const errorText = css({ lineHeight: 1.5, fontSize: "13px", color: "errorText" });
+const coverLabel = css({ display: "block", textStyle: "ui", fontWeight: 500, color: "ink2" });
+const errorText = css({ textStyle: "ui", color: "errorText" });
 
 const fieldBase = css({
   w: "100%", boxSizing: "border-box", m: 0,
@@ -80,9 +79,9 @@ const fieldBase = css({
   _focus: { borderColor: "accent", boxShadow: "0 0 0 3px rgba(0, 113, 227, 0.05)" },
   _disabled: { opacity: 0.6 },
 });
-const priceInput = css({ h: "56px", pl: "34px", pr: "14px", fontFamily: "mono", fontSize: "22px", fontWeight: 600 });
-const daysInput = css({ h: "56px", pl: "16px", pr: "64px", fontFamily: "mono", fontSize: "22px", fontWeight: 600 });
-const coverInput = css({ minH: { base: "200px", sm: "184px" }, p: "14px 16px", fontFamily: "inherit", fontSize: "14.5px", lineHeight: 1.55, resize: "vertical" });
+const priceInput = css({ h: "56px", pl: "34px", pr: "14px", fontVariantNumeric: "tabular-nums", textStyle: "title", fontWeight: 600 });
+const daysInput = css({ h: "56px", pl: "16px", pr: "64px", fontVariantNumeric: "tabular-nums", textStyle: "title", fontWeight: 600 });
+const coverInput = css({ minH: { base: "200px", sm: "184px" }, p: "14px 16px", textStyle: "body", resize: "vertical" });
 
 /* ── footer ── */
 const footer = css({
@@ -94,7 +93,7 @@ const footer = css({
 const btnBase = css({
   alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, minW: "64px", border: "none",
-  fontFamily: "inherit", fontWeight: 500, lineHeight: 1.75, cursor: "pointer",
+  fontWeight: 500, cursor: "pointer",
   transition: "background-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   _disabled: { pointerEvents: "none" },
@@ -104,12 +103,12 @@ const btnBase = css({
    are resolved by stylesheet order, not by `cx` order. */
 const cancelBtn = css({
   display: { base: "none", sm: "inline-flex" },
-  h: "44px", px: "16px", borderRadius: "pill", bg: "transparent", color: "ink2", fontSize: "14px",
+  h: "44px", px: "16px", borderRadius: "pill", bg: "transparent", color: "ink2", textStyle: "body",
   _hover: { bg: "rgba(0,0,0,0.04)" },
 });
 const submitBtn = css({
   display: "inline-flex",
-  h: "52px", px: "24px", borderRadius: "pill", bg: "#000", color: "#fff", fontSize: "16px",
+  h: "52px", px: "24px", borderRadius: "pill", bg: "#000", color: "#fff", textStyle: "lead",
   w: { base: "100%", sm: "auto" },
   minW: { base: "0", sm: "190px" },
   _hover: { bg: "rgba(0,0,0,0.8)" },

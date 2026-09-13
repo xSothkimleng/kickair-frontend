@@ -13,7 +13,7 @@ interface ServiceGridProps {
 }
 
 const emptyWrapCss = css({ textAlign: "center", py: "80px" });
-const emptyTextCss = css({ fontSize: "15px", color: "ink2", mb: "16px" });
+const emptyTextCss = css({ textStyle: "body", color: "ink2", mb: "16px" });
 const clearBtnCss = css({
   display: "inline-flex",
   alignItems: "center",
@@ -28,11 +28,8 @@ const clearBtnCss = css({
   borderStyle: "solid",
   borderColor: "rgba(0, 0, 0, 0.1)",
   borderRadius: "100px",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "border-color .25s",
   _hover: { borderColor: "rgba(0, 0, 0, 0.2)", bg: "white" },

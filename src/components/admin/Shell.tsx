@@ -16,22 +16,22 @@ import { adminNotificationRoute } from "./notify";
 import { Avatar, IconBtn, Loading, keyframesCss, row, tdVars, text } from "./ui";
 import { ago } from "./format";
 
-const shell = css({ display: "flex", minH: "100vh", bg: "var(--td-canvas)", fontFamily: "var(--td-font)" });
+const shell = css({ display: "flex", minH: "100vh", bg: "var(--td-canvas)" });
 const side = css({
   w: "236px", flexShrink: 0, position: "sticky", top: 0, h: "100vh", display: "flex", flexDirection: "column", px: "12px", py: "14px",
   borderRightWidth: "1px", borderRightStyle: "solid", borderRightColor: "var(--td-line)", bg: "var(--td-canvas)",
 });
 const brand = css({ display: "flex", alignItems: "center", gap: "10px", px: "8px", h: "40px", mb: "18px" });
-const brandMark = css({ w: "28px", h: "28px", borderRadius: "8px", bg: "var(--td-ink)", color: "#fff", display: "grid", placeItems: "center", fontWeight: 700, fontSize: "13px", letterSpacing: "-0.02em" });
-const groupLabel = css({ px: "10px", mt: "22px", mb: "6px", fontSize: "11px", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--td-ink-3)" });
+const brandMark = css({ w: "28px", h: "28px", borderRadius: "8px", bg: "var(--td-ink)", color: "#fff", display: "grid", placeItems: "center", fontWeight: 700, textStyle: "ui" });
+const groupLabel = css({ px: "10px", mt: "22px", mb: "6px", textStyle: "eyebrow", fontWeight: 600, color: "var(--td-ink-3)" });
 const navItem = css({
-  display: "flex", alignItems: "center", gap: "10px", h: "36px", px: "10px", borderRadius: "9px", fontSize: "13.5px", fontWeight: 500, color: "var(--td-ink-2) !important", transition: "background-color .1s, color .1s",
+  display: "flex", alignItems: "center", gap: "10px", h: "36px", px: "10px", borderRadius: "9px", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2) !important", transition: "background-color .1s, color .1s",
   "& svg": { color: "var(--td-ink-3)" },
   _hover: { bg: "var(--td-hover)", color: "var(--td-ink) !important" },
   "&[data-active=true]": { bg: "var(--td-hover)", color: "var(--td-ink) !important", fontWeight: 600 },
   "&[data-active=true] svg": { color: "var(--td-ink)" },
 });
-const navCount = css({ ml: "auto", minW: "20px", h: "20px", px: "6px", borderRadius: "999px", display: "inline-flex", alignItems: "center", justifyContent: "center", fontSize: "11.5px", fontWeight: 600, bg: "var(--td-line)", color: "var(--td-ink-2)", fontVariantNumeric: "tabular-nums", "&[data-hot=true]": { bg: "var(--td-ink)", color: "#fff" } });
+const navCount = css({ ml: "auto", minW: "20px", h: "20px", px: "6px", borderRadius: "999px", display: "inline-flex", alignItems: "center", justifyContent: "center", textStyle: "micro", fontWeight: 600, bg: "var(--td-line)", color: "var(--td-ink-2)", fontVariantNumeric: "tabular-nums", "&[data-hot=true]": { bg: "var(--td-ink)", color: "#fff" } });
 const main = css({ flex: 1, minW: 0, display: "flex", flexDirection: "column" });
 const topbar = css({
   position: "sticky", top: 0, zIndex: 30, h: "56px", display: "flex", alignItems: "center", gap: "12px", px: "24px",
@@ -39,8 +39,8 @@ const topbar = css({
 });
 const searchBox = css({
   display: "flex", alignItems: "center", gap: "8px", h: "34px", w: "320px", px: "10px", borderRadius: "9px", bg: "var(--td-surface)", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line)",
-  color: "var(--td-ink-3)", fontSize: "13px", _focusWithin: { borderColor: "var(--td-accent)", boxShadow: "0 0 0 3px var(--td-accent-soft)" },
-  "& input": { flex: 1, border: "none", outline: "none", bg: "transparent", fontSize: "13px", color: "var(--td-ink)", minW: 0, _placeholder: { color: "var(--td-ink-3)" } },
+  color: "var(--td-ink-3)", textStyle: "ui", _focusWithin: { borderColor: "var(--td-accent)", boxShadow: "0 0 0 3px var(--td-accent-soft)" },
+  "& input": { flex: 1, border: "none", outline: "none", bg: "transparent", textStyle: "ui", color: "var(--td-ink)", minW: 0, _placeholder: { color: "var(--td-ink-3)" } },
 });
 const bellDot = css({ position: "absolute", top: "7px", right: "7px", w: "7px", h: "7px", borderRadius: "999px", bg: "var(--td-red)", boxShadow: "0 0 0 2px var(--td-canvas)" });
 const menuCss = css({ position: "absolute", right: 0, top: "calc(100% + 6px)", w: "360px", bg: "var(--td-surface)", borderRadius: "12px", boxShadow: "var(--td-shadow-lg)", zIndex: 40, overflow: "hidden", animation: "tdPop .16s ease-out" });
@@ -75,8 +75,8 @@ function Sidebar() {
       <div className={brand}>
         <span className={brandMark}>K</span>
         <div>
-          <p className={text({ size: "sm", weight: 700 })}>KickAir</p>
-          <p className={text({ size: "xs", tone: 3 })}>Admin console</p>
+          <p className={text({ size: "meta", weight: 700 })}>KickAir</p>
+          <p className={text({ size: "micro", tone: 3 })}>Admin console</p>
         </div>
       </div>
       <Link href="/admin" className={navItem} data-active={isActive("/admin")}><LayoutGrid size={17} /> Overview</Link>
@@ -133,22 +133,22 @@ function BellMenu() {
       {open ? (
         <div className={menuCss}>
           <div className={cx(row({ between: true }), css({ px: "14px", py: "10px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)" }))}>
-            <span className={text({ size: "sm", weight: 600 })}>Notifications {unread ? <span className={text({ size: "sm", tone: 3 })}>· {unread} unread</span> : null}</span>
-            <button className={cx(text({ size: "sm", tone: "accent", weight: 500 }), css({ bg: "none", border: "none", cursor: "pointer", p: 0 }))} onClick={markAll}>Mark all read</button>
+            <span className={text({ size: "meta", weight: 600 })}>Notifications {unread ? <span className={text({ size: "meta", tone: 3 })}>· {unread} unread</span> : null}</span>
+            <button className={cx(text({ size: "meta", tone: "accent", weight: 500 }), css({ bg: "none", border: "none", cursor: "pointer", p: 0 }))} onClick={markAll}>Mark all read</button>
           </div>
           <div className={css({ maxH: "400px", overflowY: "auto" })}>
-            {notices.length === 0 ? <p className={cx(text({ size: "sm", tone: 3 }), css({ p: "16px", textAlign: "center" }))}>Nothing yet.</p> : null}
+            {notices.length === 0 ? <p className={cx(text({ size: "meta", tone: 3 }), css({ p: "16px", textAlign: "center" }))}>Nothing yet.</p> : null}
             {notices.slice(0, 6).map((n) => (
               <Link key={n.id} href={adminNotificationRoute(n)} className={menuItem} data-unread={!n.readAt} onClick={() => { if (!n.readAt) markRead(n.id); setOpen(false); }}>
                 <div className={css({ minW: 0 })}>
-                  <p className={text({ size: "sm", weight: 600, truncate: true })}>{n.title}</p>
-                  <p className={text({ size: "sm", tone: 2, truncate: true })}>{n.body}</p>
-                  <p className={text({ size: "xs", tone: 3 })}>{ago(n.createdAt)}</p>
+                  <p className={text({ size: "meta", weight: 600, truncate: true })}>{n.title}</p>
+                  <p className={text({ size: "meta", tone: 2, truncate: true })}>{n.body}</p>
+                  <p className={text({ size: "micro", tone: 3 })}>{ago(n.createdAt)}</p>
                 </div>
               </Link>
             ))}
           </div>
-          <Link href="/admin/inbox" className={cx(text({ size: "sm", weight: 600, tone: "accent" }), css({ display: "block", textAlign: "center", py: "10px" }))} onClick={() => setOpen(false)}>Open inbox</Link>
+          <Link href="/admin/inbox" className={cx(text({ size: "meta", weight: 600, tone: "accent" }), css({ display: "block", textAlign: "center", py: "10px" }))} onClick={() => setOpen(false)}>Open inbox</Link>
         </div>
       ) : null}
     </div>
@@ -179,7 +179,7 @@ function Topbar() {
       <BellMenu />
       <span className={cx(row({ gap: 2 }), css({ h: "34px", pl: "4px", pr: "6px" }))}>
         <Avatar name={user?.name ?? "Admin"} size="sm" seed={0} src={user?.avatar_url} />
-        <span className={text({ size: "sm", weight: 600 })}>{user?.name ?? "Admin"}</span>
+        <span className={text({ size: "meta", weight: 600 })}>{user?.name ?? "Admin"}</span>
       </span>
       <IconBtn aria-label="Log out" title="Log out" onClick={handleLogout}><LogOut size={17} /></IconBtn>
     </header>
@@ -204,7 +204,7 @@ function RealtimeBridge() {
   return null;
 }
 
-export default function Shell({ children, fontClass }: { children: ReactNode; fontClass: string }) {
+export default function Shell({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
@@ -220,7 +220,7 @@ export default function Shell({ children, fontClass }: { children: ReactNode; fo
 
   if (isLoginPage) {
     return (
-      <div className={cx(fontClass, tdVars)}>
+      <div className={cx(tdVars)}>
         <style dangerouslySetInnerHTML={{ __html: keyframesCss }} />
         {children}
       </div>
@@ -229,7 +229,7 @@ export default function Shell({ children, fontClass }: { children: ReactNode; fo
 
   if (loading || !user?.is_admin) {
     return (
-      <div className={cx(fontClass, tdVars, css({ minH: "100vh", display: "grid", placeItems: "center", bg: "var(--td-canvas)", fontFamily: "var(--td-font)" }))}>
+      <div className={cx(tdVars, css({ minH: "100vh", display: "grid", placeItems: "center", bg: "var(--td-canvas)" }))}>
         <style dangerouslySetInnerHTML={{ __html: keyframesCss }} />
         <Loading label="Signing you in…" />
       </div>
@@ -241,7 +241,7 @@ export default function Shell({ children, fontClass }: { children: ReactNode; fo
       <style dangerouslySetInnerHTML={{ __html: keyframesCss }} />
       <GlobalNotificationToast />
       <RealtimeBridge />
-      <div className={cx(fontClass, tdVars, shell)}>
+      <div className={cx(tdVars, shell)}>
         <Sidebar />
         <div className={main}>
           <Topbar />

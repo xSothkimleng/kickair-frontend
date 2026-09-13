@@ -5,17 +5,18 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { BookOpen, Briefcase, ChevronDown, CircleHelp, Globe, LogOut, Menu as MenuIcon, Search, Settings as SettingsIcon, Shield, Users, Zap } from "lucide-react";
 import { css, cx } from "styled-system/css";
+import { tapTarget } from "@/components/ds/tap";
 import { Avatar, Dialog, Portal, Spinner, iconButton } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { type DropdownType, type UserMode, type Language, LANGUAGES } from "./types";
-import { dropdownPanelRaw, muiBtnRaw, navBtnCss, modeBtnOnCss, modeBtnOffCss } from "./styles";
+import { dropdownPanelRaw, navBtnRaw, navBtnCss, modeBtnOnCss, modeBtnOffCss } from "./styles";
 import { DropdownItem } from "./DropdownItem";
 import { MobileDrawer } from "./MobileDrawer";
 import { NotificationBell } from "./NotificationBell";
 import { MessageBell } from "./MessageBell";
 import { WalletChip } from "./WalletChip";
 
-// The desktop/hamburger switch keeps MUI's exact `lg` breakpoint (1200px) via a
+// The desktop/hamburger switch keeps the `lg` breakpoint (1200px) via a
 // literal media query — Panda's `lg` token is 1024px.
 const navCss = css({ position: "sticky", top: 0, zIndex: 1100, bg: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" });
 const containerCss = css({ w: "100%", maxW: "1200px", mx: "auto", boxSizing: "border-box", px: { base: "16px", sm: "24px" }, display: "flex", alignItems: "center", justifyContent: "space-between" });
@@ -28,48 +29,48 @@ const navChevronCss = css({ ml: "8px", mr: "-4px", flexShrink: 0, transition: "t
 const openCss = css({ transform: "rotate(180deg)" });
 const megaPanelCss = css(dropdownPanelRaw, { left: "50%", transform: "translateX(-50%)" });
 const megaInnerCss = css({ p: "24px" });
-const megaLeadCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", mb: "16px", lineHeight: 1.5 });
+const megaLeadCss = css({ textStyle: "micro", color: "ink2", mb: "16px" });
 const megaListCss = css({ display: "flex", flexDirection: "column", gap: "4px" });
-const ddIconCss = css({ color: "rgba(0,0,0,0.6)", display: "block" });
+const ddIconCss = css({ color: "ink2", display: "block" });
 const rightGroupCss = css({ display: "flex", alignItems: "center", gap: "10px" });
-const langBtnCss = css(muiBtnRaw, { fontSize: "12px", gap: "4px", color: "rgba(0,0,0,0.7)", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const langBtnCss = css(navBtnRaw, { textStyle: "meta", gap: "4px", color: "ink2", _hover: { bg: "rgba(0,0,0,0.04)" } });
 const langPanelCss = css(dropdownPanelRaw, { right: 0, mt: "8px", borderRadius: "12px", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" });
 const langListCss = css({ py: "8px" });
-const langOptRaw = css.raw({ w: "100%", justifyContent: "flex-start", px: "16px", py: "8px", fontSize: "12px", _hover: { bg: "rgba(0,0,0,0.04)" } });
-const langOptOnCss = css(muiBtnRaw, langOptRaw, { color: "black", fontWeight: 600 });
-const langOptOffCss = css(muiBtnRaw, langOptRaw, { color: "rgba(0,0,0,0.6)", fontWeight: 400 });
-const spinnerCss = css({ color: "rgba(0,0,0,0.6)" });
-const profileBtnCss = css(muiBtnRaw, { display: "flex", alignItems: "center", gap: "8px", px: "12px", h: "44px", fontSize: "12px", color: "rgba(0,0,0,0.8)", _hover: { color: "black", bg: "transparent" } });
+const langOptRaw = css.raw({ w: "100%", justifyContent: "flex-start", px: "16px", py: "8px", textStyle: "meta", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const langOptOnCss = css(navBtnRaw, langOptRaw, { color: "black", fontWeight: 600 });
+const langOptOffCss = css(navBtnRaw, langOptRaw, { color: "ink2", fontWeight: 400 });
+const spinnerCss = css({ color: "ink2" });
+const profileBtnCss = css(navBtnRaw, { display: "flex", alignItems: "center", gap: "8px", px: "12px", h: "44px", textStyle: "meta", color: "ink", _hover: { color: "black", bg: "transparent" } });
 const profileChevronCss = css({ opacity: 0.6, flexShrink: 0, transition: "transform 0.2s" });
 const menuPanelCss = css(dropdownPanelRaw, { width: "360px", right: 0, mt: "8px", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" });
 const menuHeaderCss = css({ p: "12px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)" });
 const menuHeaderRowCss = css({ display: "flex", alignItems: "center", gap: "12px", px: "8px" });
-const menuNameCss = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5 });
-const menuModeTextCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", textTransform: "capitalize", lineHeight: 1.5 });
+const menuNameCss = css({ textStyle: "ui", fontWeight: 500 });
+const menuModeTextCss = css({ textStyle: "micro", color: "ink2", textTransform: "capitalize" });
 const modeBoxCss = css({ p: "16px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)" });
-const modeLabelCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.6)", textTransform: "uppercase", letterSpacing: "0.05em", mb: "8px", lineHeight: 1.5 });
+const modeLabelCss = css({ textStyle: "eyebrow", color: "ink2", mb: "8px" });
 const modeRowCss = css({ display: "flex", gap: "8px" });
 const menuGroupCss = css({ py: "8px" });
-const menuItemCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "10px", fontSize: "12px", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
-const menuIconCss = css({ color: "rgba(0,0,0,0.6)", mr: "8px", flexShrink: 0 });
+const menuItemCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "10px", textStyle: "meta", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
+const menuIconCss = css({ color: "ink2", mr: "8px", flexShrink: 0 });
 const logoutBoxCss = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0,0,0,0.08)", p: "8px" });
-const logoutCss = css(muiBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "10px", fontSize: "12px", color: "#dc2626", borderRadius: "4px", _hover: { bg: "#fef2f2" } });
+const logoutCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "16px", py: "10px", textStyle: "meta", color: "#dc2626", borderRadius: "4px", _hover: { bg: "#fef2f2" } });
 const logoutIconCss = css({ mr: "8px", flexShrink: 0 });
 // `<a>` colour needs !important: globals.css sets `a { color: inherit }` outside any layer.
-const signInCss = css(muiBtnRaw, { ml: "8px", px: "16px", h: "32px", fontSize: "12px", color: "white !important", fontWeight: 700, bg: "black", borderRadius: "100px", _hover: { bg: "rgba(0,0,0,0.8)" } });
-const hamburgerCss = css(iconButton.raw({ size: "md" }), { w: "40px", h: "40px", color: "rgba(0,0,0,0.54)", _hover: { bg: "rgba(0,0,0,0.04)", color: "rgba(0,0,0,0.54)" }, "@media (min-width: 1200px)": { display: "none" } });
-// Enable-second-role dialog — keeps the MUI Dialog geometry (600px paper, 12px radius, 8px paper padding).
+const signInCss = css(navBtnRaw, tapTarget, { ml: "8px", px: "16px", h: "32px", textStyle: "meta", color: "white !important", fontWeight: 700, bg: "black", borderRadius: "100px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const hamburgerCss = css(iconButton.raw({ size: "md" }), { w: "40px", h: "40px", color: "ink2", _hover: { bg: "rgba(0,0,0,0.04)", color: "ink2" }, "@media (min-width: 1200px)": { display: "none" } });
+// Enable-second-role dialog — keeps the dialog geometry (600px paper, 12px radius, 8px paper padding).
 const dlgBackdropCss = css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 1300 });
 const dlgPositionerCss = css({ position: "fixed", inset: 0, zIndex: 1300, display: "flex", alignItems: "center", justifyContent: "center" });
 const dlgPaperCss = css({ bg: "white", borderRadius: "12px", w: "600px", minW: "400px", maxW: "calc(100vw - 64px)", maxH: "calc(100vh - 64px)", m: "32px", p: "8px", overflowY: "auto", display: "flex", flexDirection: "column", boxShadow: "0 11px 15px -7px rgba(0,0,0,0.2), 0 24px 38px 3px rgba(0,0,0,0.14), 0 9px 46px 8px rgba(0,0,0,0.12)", _focus: { outline: "none" } });
 const dlgContentCss = css({ px: "24px", py: "20px" });
 const dlgTitleWrapCss = css({ pb: "8px" });
-const dlgTitleCss = css({ fontSize: "18px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.87)" });
-const dlgBodyCss = css({ fontSize: "14px", lineHeight: 1.5, color: "rgba(0,0,0,0.6)" });
-const dlgErrorCss = css({ fontSize: "13px", color: "#dc2626", pt: "12px", lineHeight: 1.5 });
+const dlgTitleCss = css({ textStyle: "title", fontWeight: 600, color: "ink" });
+const dlgBodyCss = css({ textStyle: "body", color: "ink2" });
+const dlgErrorCss = css({ textStyle: "ui", color: "#dc2626", pt: "12px" });
 const dlgActionsCss = css({ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", px: "24px", pt: "8px", pb: "16px" });
-const dlgCancelCss = css(muiBtnRaw, { fontSize: "13px", color: "rgba(0,0,0,0.6)", _hover: { bg: "rgba(0,0,0,0.04)" }, _disabled: { color: "rgba(0,0,0,0.26)" } });
-const dlgPrimaryCss = css(muiBtnRaw, { fontSize: "13px", bg: "black", color: "white", px: "24px", borderRadius: "8px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const dlgCancelCss = css(navBtnRaw, { textStyle: "ui", color: "ink2", _hover: { bg: "rgba(0,0,0,0.04)" }, _disabled: { color: "rgba(0,0,0,0.26)" } });
+const dlgPrimaryCss = css(navBtnRaw, { textStyle: "ui", bg: "black", color: "white", px: "24px", borderRadius: "8px", _hover: { bg: "rgba(0,0,0,0.8)" } });
 const whiteSpinnerCss = css({ color: "white" });
 
 export default function MainNavbar() {

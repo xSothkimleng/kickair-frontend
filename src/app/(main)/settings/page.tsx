@@ -32,17 +32,16 @@ const sectionCss = css({
 });
 
 const fieldLabelCss = css({
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.5,
   color: "#334155",
   display: "block",
 });
 
 /**
- * The three MUI Button looks this page used (`primaryBtnSx`, `secondaryBtnSx`,
- * `ghostBtnSx`) plus the danger flavours, on MUI's own base metrics
- * (min-width 64px, line-height 1.75) and disabled palette.
+ * The three Button looks this page used (`primaryBtnSx`, `secondaryBtnSx`,
+ * `ghostBtnSx`) plus the danger flavours, on the old base metrics
+ * (min-width 64px) and disabled palette.
  */
 const btn = cva({
   base: {
@@ -51,8 +50,6 @@ const btn = cva({
     justifyContent: "center",
     boxSizing: "border-box",
     minW: "64px",
-    fontFamily: "inherit",
-    lineHeight: 1.75,
     cursor: "pointer",
     userSelect: "none",
     textDecoration: "none",
@@ -63,9 +60,8 @@ const btn = cva({
   variants: {
     tone: {
       primary: {
-        fontSize: "13px",
+        textStyle: "ui",
         fontWeight: 600,
-        letterSpacing: "-0.005em",
         borderRadius: "8px",
         h: "38px",
         px: "16px",
@@ -82,9 +78,8 @@ const btn = cva({
         },
       },
       secondary: {
-        fontSize: "13px",
+        textStyle: "ui",
         fontWeight: 600,
-        letterSpacing: "-0.005em",
         borderRadius: "8px",
         h: "38px",
         px: "16px",
@@ -102,12 +97,11 @@ const btn = cva({
           pointerEvents: "none",
         },
       },
-      // Same look, but MUI rendered it as a *text* button (no `variant="outlined"`),
+      // Same look, but it rendered as a *text* button (no `variant="outlined"`),
       // so the borderColor from the sx never drew a border.
       secondaryFlat: {
-        fontSize: "13px",
+        textStyle: "ui",
         fontWeight: 600,
-        letterSpacing: "-0.005em",
         borderRadius: "8px",
         h: "38px",
         px: "16px",
@@ -118,19 +112,19 @@ const btn = cva({
         _disabled: { color: "rgba(0, 0, 0, 0.26)", cursor: "default", pointerEvents: "none" },
       },
       ghost: {
-        fontSize: "13px",
+        textStyle: "ui",
         fontWeight: 500,
-        color: "rgba(0, 0, 0, 0.6)",
+        color: "ink2",
         borderRadius: "8px",
         px: "12px",
         py: "4px",
         border: "none",
         backgroundColor: "transparent",
-        _hover: { backgroundColor: "#F1F5F9", color: "rgba(0, 0, 0, 0.87)" },
+        _hover: { backgroundColor: "#F1F5F9", color: "ink" },
         _disabled: { color: "rgba(0, 0, 0, 0.26)", cursor: "default", pointerEvents: "none" },
       },
       ghostDanger: {
-        fontSize: "13px",
+        textStyle: "ui",
         fontWeight: 500,
         color: "#DC2626",
         borderRadius: "8px",
@@ -142,7 +136,7 @@ const btn = cva({
         _disabled: { color: "rgba(0, 0, 0, 0.26)", cursor: "default", pointerEvents: "none" },
       },
       dangerOutline: {
-        fontSize: "13px",
+        textStyle: "ui",
         fontWeight: 600,
         borderRadius: "8px",
         h: "38px",
@@ -155,9 +149,8 @@ const btn = cva({
         _hover: { backgroundColor: "#FEF2F2", borderColor: "#DC2626" },
       },
       dangerSolid: {
-        fontSize: "13px",
+        textStyle: "ui",
         fontWeight: 600,
-        letterSpacing: "-0.005em",
         borderRadius: "8px",
         h: "38px",
         px: "16px",
@@ -175,11 +168,11 @@ const btn = cva({
   defaultVariants: { tone: "primary" },
 });
 
-// MUI Button startIcon metrics for a small button.
+// Button start-icon metrics for a small button.
 const btnStartIcon = css({ ml: "-2px", mr: "8px", flexShrink: 0 });
 const btnEndIcon = css({ ml: "8px", mr: "-2px", flexShrink: 0 });
 const spinnerWhite = css({ color: "#FFFFFF" });
-// MUI's default CircularProgress colour is `primary.main`.
+// The spinner colour is the accent.
 const spinnerPrimary = css({ color: "#1976d2" });
 const spinnerDanger = css({ color: "#DC2626" });
 
@@ -187,7 +180,7 @@ const spinnerDanger = css({ color: "#DC2626" });
 
 type StatusChipVariant = "success" | "warn" | "info" | "neutral" | "danger";
 
-// MUI <Chip icon>: the 6px dot sits 8px in and its -6px margin-right is cancelled
+// Chip icon: the 6px dot sits 8px in and its -6px margin-right is cancelled
 // by the label's 6px padding-left, so the dot touches the text.
 const statusChip = cva({
   base: {
@@ -199,10 +192,8 @@ const statusChip = cva({
     pl: "8px",
     pr: "6px",
     borderRadius: "999px",
-    fontSize: "11px",
+    textStyle: "micro",
     fontWeight: 600,
-    lineHeight: "16.5px",
-    letterSpacing: "0.01em",
     whiteSpace: "nowrap",
   },
   variants: {
@@ -236,13 +227,11 @@ function StatusChip({ label, variant }: { label: string; variant: StatusChipVari
 const sectionHead = css({ mb: "20px" });
 // `mb` on the <h2> / <p> never applied (globals.css zeroes those margins unlayered).
 const sectionTitleCss = css({
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  lineHeight: 1.5,
-  letterSpacing: "-0.01em",
   color: "ink",
 });
-const sectionDescCss = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const sectionDescCss = css({ textStyle: "ui", color: "ink2" });
 
 function Section({
   title,
@@ -285,16 +274,16 @@ const kycTile = css({
   borderRadius: "10px",
   display: "grid",
   placeItems: "center",
-  color: "rgba(0, 0, 0, 0.87)",
+  color: "ink",
   flexShrink: 0,
 });
 const kycBody = css({ flex: 1, minW: 0 });
 const kycTitleRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "6px" });
-const kycTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
-const kycText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", maxW: "480px", mb: "14px" });
-// MUI's Stack spacing was a margin-left on the <p>, which globals.css already killed.
+const kycTitle = css({ textStyle: "body", fontWeight: 600 });
+const kycText = css({ textStyle: "ui", color: "ink2", maxW: "480px", mb: "14px" });
+// The old stack spacing was a margin-left on the <p>, which globals.css already killed.
 const kycDoneRow = css({ display: "flex", alignItems: "center", color: "#047857" });
-const kycDoneText = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5 });
+const kycDoneText = css({ textStyle: "ui", fontWeight: 600 });
 
 function KycCard({ status, onSubmit }: { status: KycStatus; onSubmit: () => void }) {
   const config: Record<
@@ -354,9 +343,9 @@ const pageContainer = css({
   boxSizing: "border-box",
 });
 const pageHeader = css({ mb: "40px" });
-const pageKicker = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
-const pageTitle = css({ fontSize: "28px", fontWeight: 700, lineHeight: 1.5, letterSpacing: "-0.025em", color: "ink" });
-const pageSub = css({ fontSize: "14px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const pageKicker = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
+const pageTitle = css({ textStyle: "stat", fontWeight: 700, color: "ink" });
+const pageSub = css({ textStyle: "body", color: "ink2" });
 const sectionsStack = css({ display: "flex", flexDirection: "column", gap: "20px" });
 const fieldStack = css({ display: "flex", flexDirection: "column", gap: "16px" });
 
@@ -367,9 +356,8 @@ const avatarWrap = css({ position: "relative" });
 const avatarStyle = {
   background: "linear-gradient(135deg, #1E293B, #0F172A)",
   color: "#FFF",
-  fontSize: 28,
+  textStyle: "stat",
   fontWeight: 600,
-  letterSpacing: "-0.02em",
 } as const;
 const avatarBusy = css({
   position: "absolute",
@@ -380,10 +368,10 @@ const avatarBusy = css({
   placeItems: "center",
 });
 const photoSide = css({ flex: 1, minW: "200px" });
-// The hidden <input> was a Stack child, so MUI's spacing indented the first button by 8px.
+// The hidden <input> was a Stack child, so the stack spacing indented the first button by 8px.
 const photoButtons = css({ display: "flex", gap: "8px", pl: "8px", mb: "6px" });
 const hiddenInput = css({ display: "none" });
-const photoHint = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const photoHint = css({ textStyle: "meta", color: "ink2" });
 
 const infoGrid = cva({
   base: { display: "grid", gap: "16px" },
@@ -392,8 +380,8 @@ const infoGrid = cva({
 const labelRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "6px" });
 const requiredMark = css({ color: "#DC2626" });
 const hintRow = css({ display: "flex", alignItems: "flex-start", mt: "12px" });
-const hintIcon = css({ color: "rgba(0, 0, 0, 0.38)", mt: "2px", flexShrink: 0 });
-const hintText = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const hintIcon = css({ color: "ink3", mt: "2px", flexShrink: 0 });
+const hintText = css({ textStyle: "meta", color: "ink2" });
 const alertSpaced = css({ mt: "12px" });
 const actionsRight = css({ display: "flex", justifyContent: "flex-end", mt: "20px" });
 
@@ -405,8 +393,8 @@ const addEmailBlock = css({
   borderTopColor: "#F1F5F9",
 });
 const addEmailHead = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
-const addEmailTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
-const addEmailText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", maxW: "480px", mb: "14px" });
+const addEmailTitle = css({ textStyle: "body", fontWeight: 600 });
+const addEmailText = css({ textStyle: "ui", color: "ink2", maxW: "480px", mb: "14px" });
 const stackRow = css({
   display: "flex",
   flexDirection: { base: "column", sm: "row" },
@@ -432,23 +420,22 @@ const phoneWarning = css(alert.raw({ tone: "warning" }), {
   backgroundColor: "#FFFBEB",
   borderColor: "rgba(245, 158, 11, 0.25)",
   color: "#92400E",
-  fontSize: "13px",
-  lineHeight: "20px",
+  textStyle: "ui",
   "& > svg": { color: "#F59E0B", mt: "2px" },
 });
 
 const phoneWarningMsg = css({ flex: 1, minW: 0, py: "4px" });
 
 const dialogPaper = css({
-  // BareModal's panel radius is 16px; MUI's was 14px.
+  // BareModal's panel radius is 16px; the old one was 14px.
   borderRadius: "14px !important",
   p: "8px",
   boxSizing: "border-box",
-  color: "rgba(0, 0, 0, 0.87)",
+  color: "ink",
 });
 const dialogContent = css({ p: "20px 24px" });
-const dialogTitle = css({ fontSize: "16px", fontWeight: 600, lineHeight: 1.5 });
-const dialogDesc = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const dialogTitle = css({ textStyle: "lead", fontWeight: 600 });
+const dialogDesc = css({ textStyle: "ui", color: "ink2" });
 const dialogActions = css({
   display: "flex",
   alignItems: "center",
@@ -467,12 +454,12 @@ const dialogActionsTight = css({
   pt: "8px",
   pb: "16px",
 });
-// MUI Stack spacing: the margin lands on every child but <p>, where globals.css kills it.
+// The old stack spacing: the margin lands on every child but <p>, where globals.css kills it.
 const dialogStack = css({ "& > * + *": { mt: "12px" } });
 const dialogPhoneRow = css({ display: "flex", alignItems: "flex-start", gap: "8px" });
-const otpHint = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const otpHint = css({ textStyle: "ui", color: "ink2" });
 
-const sessionsEmpty = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const sessionsEmpty = css({ textStyle: "ui", color: "ink2" });
 const sessionsLoadingWrap = css({ display: "flex", justifyContent: "center", py: "24px" });
 const sessionDivider = css({ height: "1px", backgroundColor: "#F1F5F9" });
 const sessionRow = css({
@@ -490,13 +477,13 @@ const sessionIcon = css({
   borderRadius: "8px",
   display: "grid",
   placeItems: "center",
-  color: "rgba(0, 0, 0, 0.87)",
+  color: "ink",
   flexShrink: 0,
 });
 const sessionBody = css({ flex: 1, minW: 0 });
 const sessionNameRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "2px" });
-const sessionName = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.5 });
-const sessionMeta = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const sessionName = css({ textStyle: "body", fontWeight: 500 });
+const sessionMeta = css({ textStyle: "meta", color: "ink2" });
 const signOutRow = css({ display: "flex", justifyContent: "flex-end", mt: "16px" });
 
 const dangerBox = css({
@@ -513,8 +500,8 @@ const dangerBox = css({
   gap: "16px",
   boxSizing: "border-box",
 });
-const dangerTitle = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5, color: "#DC2626", mb: "4px" });
-const dangerText = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)", maxW: "460px" });
+const dangerTitle = css({ textStyle: "body", fontWeight: 600, color: "#DC2626", mb: "4px" });
+const dangerText = css({ textStyle: "ui", color: "ink2", maxW: "460px" });
 
 // ─── Main page ─────────────────────────────────────────────────────────────────
 

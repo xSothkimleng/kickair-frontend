@@ -57,7 +57,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
 ];
 
 const navLink = css({
-  fontSize: "13px",
+  textStyle: "ui",
   color: "rgba(255, 255, 255, 0.6)",
   textDecoration: "none",
   transition: "color .15s",
@@ -73,13 +73,13 @@ const socialBtn = css({
   borderRadius: "pill",
   bg: "rgba(255, 255, 255, 0.1)",
   color: "white",
-  fontSize: "12px",
+  textStyle: "meta",
   textDecoration: "none",
   transition: "background-color .15s",
   _hover: { bg: "rgba(255, 255, 255, 0.2)" },
 });
 
-const colTitle = css({ fontSize: "15px", fontWeight: 600, color: "white", mb: "4" });
+const colTitle = css({ textStyle: "body", fontWeight: 600, color: "white", mb: "4" });
 
 export default function Footer() {
   return (
@@ -98,10 +98,9 @@ export default function Footer() {
               <Box
                 as="p"
                 className={css({
-                  fontSize: "11px",
+                  textStyle: "micro",
                   color: "rgba(255, 255, 255, 0.4)",
                   fontWeight: 500,
-                  letterSpacing: "0.05em",
                   mt: "1",
                 })}
               >
@@ -111,9 +110,8 @@ export default function Footer() {
             <Box
               as="p"
               className={css({
-                fontSize: "13px",
+                textStyle: "ui",
                 color: "rgba(255, 255, 255, 0.6)",
-                lineHeight: 1.6,
                 mb: "6",
               })}
             >

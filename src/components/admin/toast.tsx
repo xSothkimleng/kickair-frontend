@@ -21,7 +21,7 @@ let nextId = 1;
 
 const wrap = css({ position: "fixed", right: "20px", bottom: "20px", zIndex: 80, display: "flex", flexDirection: "column", gap: "8px", pointerEvents: "none" });
 const item = css({
-  display: "flex", alignItems: "center", gap: "10px", bg: "var(--td-ink)", color: "#fff", px: "14px", py: "10px", maxW: "420px", borderRadius: "10px", fontSize: "13.5px", fontWeight: 500,
+  display: "flex", alignItems: "center", gap: "10px", bg: "var(--td-ink)", color: "#fff", px: "14px", py: "10px", maxW: "420px", borderRadius: "10px", textStyle: "ui", fontWeight: 500,
   boxShadow: "var(--td-shadow-lg)", animation: "tdToast .18s ease-out", "& svg": { color: "#7EE2A8", flexShrink: 0 },
   "&[data-tone=info] svg": { color: "#9DB4FF" }, "&[data-tone=error] svg": { color: "#FF9E99" },
 });

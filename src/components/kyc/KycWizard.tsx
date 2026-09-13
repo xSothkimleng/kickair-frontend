@@ -21,6 +21,7 @@ import {
   VideoOff,
 } from "lucide-react";
 import { css, cva } from "styled-system/css";
+import { tapTargetIcon } from "@/components/ds/tap";
 import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { KycDocumentType } from "@/types/user";
@@ -40,8 +41,8 @@ type Step = "intro" | "doctype" | "capture" | "selfie" | "review";
 // ─── Buttons ────────────────────────────────────────────────────────────────────
 
 /**
- * The MUI `Button` base the old `sx` overrides sat on: 6px 8px padding, 64px
- * min-width, 4px radius, 500 weight, 1.75 line-height, no uppercase (the theme
+ * The button base the old overrides sat on: 6px 8px padding, 64px
+ * min-width, 4px radius, 500 weight, no uppercase (the theme
  * set `textTransform: none` globally) and `color: inherit` on the text variant.
  */
 const wizButton = cva({
@@ -59,10 +60,8 @@ const wizButton = cva({
     borderStyle: "none",
     borderRadius: "4px",
     bg: "transparent",
-    fontFamily: "inherit",
-    fontSize: "14px",
+    textStyle: "body",
     fontWeight: 500,
-    lineHeight: 1.75,
     textDecoration: "none",
     verticalAlign: "middle",
     userSelect: "none",
@@ -78,7 +77,7 @@ const wizButton = cva({
         w: "100%",
         h: "50px",
         borderRadius: "11px",
-        fontSize: "16px",
+        textStyle: "lead",
         fontWeight: 600,
         bg: "accent",
         color: "#fff",
@@ -90,7 +89,7 @@ const wizButton = cva({
         w: "100%",
         h: "48px",
         borderRadius: "11px",
-        fontSize: "15px",
+        textStyle: "body",
         fontWeight: 600,
         bg: "#fff",
         color: "body",
@@ -102,25 +101,25 @@ const wizButton = cva({
   },
 });
 
-// MUI's start/end icon slots: 20px glyph, 8px from the label, -4px into the padding.
+// Start/end icon slots: 20px glyph, 8px from the label, -4px into the padding.
 const startIconCss = css({ ml: "-4px", mr: "8px" });
 const endIconCss = css({ ml: "8px", mr: "-4px" });
 
 const primaryBtn = wizButton({ tone: "primary" });
 const secondaryBtn = wizButton({ tone: "secondary" });
-const backBtn = css(wizButton.raw({ tone: "text" }), { minW: 0, w: "34px", h: "34px", ml: "-8px", borderRadius: "8px", color: "body" });
-const linkBtnSm = css(wizButton.raw({ tone: "text" }), { fontSize: "13.5px", fontWeight: 600, color: "accent", minW: 0 });
-const linkBtnMd = css(wizButton.raw({ tone: "text" }), { fontSize: "14px", fontWeight: 600, color: "accent", minW: 0 });
-const mutedBtn = css(wizButton.raw({ tone: "text" }), { fontSize: "13.5px", fontWeight: 600, color: "muted" });
+const backBtn = css(wizButton.raw({ tone: "text" }), tapTargetIcon, { minW: 0, w: "34px", h: "34px", ml: "-8px", borderRadius: "8px", color: "body" });
+const linkBtnSm = css(wizButton.raw({ tone: "text" }), { textStyle: "ui", fontWeight: 600, color: "accent", minW: 0 });
+const linkBtnMd = css(wizButton.raw({ tone: "text" }), { textStyle: "body", fontWeight: 600, color: "accent", minW: 0 });
+const mutedBtn = css(wizButton.raw({ tone: "text" }), { textStyle: "ui", fontWeight: 600, color: "muted" });
 const submitSpinner = css({ color: "#fff", borderColor: "rgba(255,255,255,0.4)", borderTopColor: "#fff" });
 
 // ─── Frame + shared bits ────────────────────────────────────────────────────────
 
-const frameCss = css({ maxW: "480px", mx: "auto", borderRadius: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", overflow: "hidden", bg: "#fff", color: "rgba(0, 0, 0, 0.87)" });
+const frameCss = css({ maxW: "480px", mx: "auto", borderRadius: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", overflow: "hidden", bg: "#fff", color: "ink" });
 const frameHeadCss = css({ px: "18px", pt: "12px", pb: "14px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "border" });
 const frameHeadRowCss = css({ display: "flex", alignItems: "center", h: "32px" });
 const spacer26Css = css({ w: "26px" });
-const stepLabelCss = css({ flex: 1, textAlign: "center", fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "muted" });
+const stepLabelCss = css({ flex: 1, textAlign: "center", textStyle: "ui", fontWeight: 600, color: "muted" });
 const barsRowCss = css({ display: "flex", gap: "5.2px", mt: "11.2px" });
 const barCss = cva({
   base: { flex: 1, h: "4px", borderRadius: "999px", transition: "background .35s ease" },
@@ -161,8 +160,8 @@ function WizardFrame({ stepNum, onBack, children, footer }: { stepNum?: number; 
 const titleWrapCss = cva({ base: { mb: "20px" }, variants: { center: { true: { textAlign: "center" }, false: { textAlign: "left" } } } });
 // `mb` on the h1 and `m` on the p are dropped: globals.css's unlayered
 // `h1-h6, p { margin: 0 }` already beat the old `sx`, so they never applied.
-const titleCss = css({ fontSize: "22px", fontWeight: 700, color: "heading", letterSpacing: "-.02em", lineHeight: 1.2 });
-const subCss = css({ fontSize: "14.5px", color: "muted", lineHeight: 1.5 });
+const titleCss = css({ textStyle: "title", fontWeight: 700, color: "heading" });
+const subCss = css({ textStyle: "body", color: "muted" });
 
 function Title({ title, sub, center }: { title: string; sub?: string; center?: boolean }) {
   return (
@@ -175,7 +174,7 @@ function Title({ title, sub, center }: { title: string; sub?: string; center?: b
 
 const reassureCss = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "7.2px", mb: "11.2px", color: "muted" });
 const reassureIconCss = css({ color: "accent" });
-const reassureTextCss = css({ fontSize: "12px", lineHeight: 1.4, textAlign: "center" });
+const reassureTextCss = css({ textStyle: "meta", textAlign: "center" });
 
 function Reassure() {
   return (
@@ -202,16 +201,16 @@ const heroShieldCss = css({
 });
 const rejectBoxCss = css({ mb: "16px", p: "12px 14px", borderRadius: "11px", bg: "#FEF2F2", borderWidth: "1px", borderStyle: "solid", borderColor: "#FBD2D2", display: "flex", gap: "8.8px" });
 const rejectBulletCss = css({ color: "#DC2626", mt: "1px" });
-const rejectTitleCss = css({ fontSize: "12.5px", fontWeight: 700, lineHeight: 1.5, color: "#B91C1C" });
-const rejectBodyCss = css({ fontSize: "13px", color: "#7F1D1D", lineHeight: 1.5 });
+const rejectTitleCss = css({ textStyle: "meta", fontWeight: 700, color: "#B91C1C" });
+const rejectBodyCss = css({ textStyle: "ui", color: "#7F1D1D" });
 const introListCss = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "border", borderRadius: "14px", px: "16px" });
 const introRowCss = cva({
   base: { display: "flex", alignItems: "center", gap: "12.8px", py: "12px" },
   variants: { divided: { true: { borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "border" }, false: {} } },
 });
 const introIconCss = css({ flexShrink: 0, w: "42px", h: "42px", borderRadius: "12px", bg: "fill", color: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
-const introRowTitleCss = css({ fontSize: "14.5px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
-const introRowSubCss = css({ fontSize: "13px", lineHeight: 1.5, color: "muted" });
+const introRowTitleCss = css({ textStyle: "body", fontWeight: 600, color: "heading" });
+const introRowSubCss = css({ textStyle: "ui", color: "muted" });
 
 const INTRO_ITEMS = [
   { icon: <IdCard size={24} />, title: "A government-issued ID", sub: "National ID, passport or driver's license" },
@@ -278,7 +277,6 @@ const docTileCss = cva({
     p: "16px",
     borderRadius: "13px",
     cursor: "pointer",
-    fontFamily: "inherit",
     transition: "border-color .15s, background .15s",
   },
   variants: {
@@ -293,8 +291,8 @@ const docTileIconCss = cva({
   variants: { selected: { true: { bg: "#fff", color: "accent" }, false: { bg: "fill", color: "body" } } },
 });
 const docTileTextCss = css({ flex: 1, minW: 0 });
-const docTileLabelCss = css({ fontSize: "15.5px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
-const docTileDescCss = css({ fontSize: "13px", lineHeight: 1.5, color: "muted" });
+const docTileLabelCss = css({ textStyle: "lead", fontWeight: 600, color: "heading" });
+const docTileDescCss = css({ textStyle: "ui", color: "muted" });
 const docRadioCss = cva({
   base: { flexShrink: 0, w: "23px", h: "23px", borderRadius: "50%", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" },
   variants: { selected: { true: { borderWidth: "2px", borderStyle: "solid", borderColor: "accent", bg: "accent" }, false: { borderWidth: "2px", borderStyle: "solid", borderColor: "borderStrong", bg: "#fff" } } },
@@ -337,13 +335,13 @@ function DocTypeStep({ value, onChange, onBack, onContinue }: { value: KycDocume
 
 // ─── Step 2: document capture ────────────────────────────────────────────────────
 
-const tileLabelCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "body" });
+const tileLabelCss = css({ textStyle: "ui", fontWeight: 600, color: "body" });
 const previewFrameCss = css({ position: "relative", borderRadius: "11px", overflow: "hidden", borderWidth: "1.5px", borderStyle: "solid", borderColor: "#A7F3D0" });
 const previewImgCss = css({ w: "100%", aspectRatio: "1.55 / 1", objectFit: "cover", display: "block" });
 const previewCheckCss = css({ position: "absolute", top: "7px", right: "7px", w: "24px", h: "24px", borderRadius: "50%", bg: "#047857", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" });
 const previewRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "8px" });
 const previewOkCss = css({ display: "flex", alignItems: "center", gap: "4.8px", color: "#047857" });
-const previewOkTextCss = css({ fontSize: "12.5px", fontWeight: 600, lineHeight: 1.5 });
+const previewOkTextCss = css({ textStyle: "meta", fontWeight: 600 });
 const dropzoneCss = css({
   display: "flex",
   flexDirection: "column",
@@ -354,15 +352,14 @@ const dropzoneCss = css({
   aspectRatio: "1.55 / 1",
   borderRadius: "11px",
   cursor: "pointer",
-  fontFamily: "inherit",
   bg: "fill",
   borderWidth: "2px", borderStyle: "dashed", borderColor: "borderStrong",
   transition: "all .15s",
   _hover: { bg: "#EFF6FF", borderColor: "accent" },
 });
 const dropzoneIconCss = css({ color: "muted", mb: "8px" });
-const dropzoneTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
-const dropzoneSubCss = css({ fontSize: "11.5px", lineHeight: 1.5, color: "muted" });
+const dropzoneTitleCss = css({ textStyle: "ui", fontWeight: 600, color: "heading" });
+const dropzoneSubCss = css({ textStyle: "micro", color: "muted" });
 
 function UploadTile({ label, file, onFile, onClear }: { label: string; file: File | null; onFile: (f: File) => void; onClear: () => void }) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -405,11 +402,11 @@ const captureGridCss = cva({
   variants: { card: { true: { gridTemplateColumns: "1fr 1fr", maxW: "none" }, false: { gridTemplateColumns: "1fr", maxW: "320px" } } },
 });
 const hintsRowCss = css({ display: "flex", gap: "8px", flexWrap: "wrap", mt: "16px" });
-const hintChipCss = css({ display: "flex", alignItems: "center", gap: "6px", h: "30px", px: "11.2px", borderRadius: "8px", bg: "fill", color: "body", fontSize: "12.5px", fontWeight: 500 });
+const hintChipCss = css({ display: "flex", alignItems: "center", gap: "6px", h: "30px", px: "11.2px", borderRadius: "8px", bg: "fill", color: "body", textStyle: "meta", fontWeight: 500 });
 const hintIconCss = css({ display: "flex", color: "#047857" });
 const helpBoxCss = css({ display: "flex", gap: "8.8px", mt: "16px", p: "12px 13px", borderRadius: "11px", bg: "fill" });
 const helpIconCss = css({ color: "muted", flexShrink: 0, mt: "1px" });
-const helpTextCss = css({ fontSize: "12.5px", color: "body", lineHeight: 1.5 });
+const helpTextCss = css({ textStyle: "meta", color: "body" });
 
 const CAPTURE_HINTS: [string, React.ReactNode][] = [
   ["In focus", <Focus key="a" size={15} />],
@@ -461,14 +458,14 @@ type Cam = "prompt" | "camera" | "preview" | "denied";
 const stackBelowCss = css({ mt: "8.8px" });
 const deniedTileCss = css({ w: "72px", h: "72px", borderRadius: "20px", bg: "#FFFBEB", color: "#B45309", display: "flex", alignItems: "center", justifyContent: "center" });
 const deniedBoxCss = css({ p: "14px 16px", borderRadius: "12px", bg: "#FFFBEB", borderWidth: "1px", borderStyle: "solid", borderColor: "#FCD9A6" });
-const deniedBoxTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#B45309" });
-const deniedListCss = css({ m: 0, pl: "18px", fontSize: "13px", color: "body", lineHeight: 1.7 });
+const deniedBoxTitleCss = css({ textStyle: "ui", fontWeight: 600, color: "#B45309" });
+const deniedListCss = css({ m: 0, pl: "18px", textStyle: "ui", color: "body" });
 const selfiePreviewWrapCss = css({ display: "flex", justifyContent: "center", my: "8px" });
 const selfiePreviewImgCss = css({ w: "210px", h: "210px", borderRadius: "50%", objectFit: "cover", border: "3px solid #fff", boxShadow: "0 6px 20px rgba(15,23,42,.22)" });
 const promptTileCss = css({ w: "72px", h: "72px", borderRadius: "20px", bg: "#EFF6FF", color: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
 const promptNoteCss = css({ display: "flex", gap: "8.8px", p: "14px 16px", borderRadius: "12px", bg: "#fff", borderWidth: "1px", borderStyle: "solid", borderColor: "border" });
 const promptNoteIconCss = css({ color: "accent", flexShrink: 0, mt: "1px" });
-const promptNoteTextCss = css({ fontSize: "13px", color: "body", lineHeight: 1.55 });
+const promptNoteTextCss = css({ textStyle: "ui", color: "body" });
 const centerRowCss = css({ display: "flex", justifyContent: "center", mt: "4px" });
 
 function SelfieStep({ selfie, setSelfie, onBack, onContinue }: { selfie: File | null; setSelfie: (f: File | null) => void; onBack: () => void; onContinue: () => void }) {
@@ -584,7 +581,7 @@ function SelfieStep({ selfie, setSelfie, onBack, onContinue }: { selfie: File | 
 // ─── Step 4: review & submit ─────────────────────────────────────────────────────
 
 const thumbCss = css({ flex: "1 1 110px", minW: "100px", maxW: "150px" });
-const thumbLabelCss = css({ fontSize: "11.5px", fontWeight: 600, lineHeight: 1.5, color: "muted" });
+const thumbLabelCss = css({ textStyle: "micro", fontWeight: 600, color: "muted" });
 const thumbFrameCss = css({ position: "relative", borderRadius: "10px", overflow: "hidden", borderWidth: "1px", borderStyle: "solid", borderColor: "border" });
 const thumbImgCss = css({ w: "100%", aspectRatio: "1.55 / 1", objectFit: "cover", display: "block" });
 const thumbCheckCss = css({ position: "absolute", top: "5px", right: "5px", w: "20px", h: "20px", borderRadius: "50%", bg: "#047857", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" });
@@ -603,12 +600,12 @@ function Thumb({ label, file }: { label: string; file: File }) {
   );
 }
 
-const reviewErrorCss = css({ mb: "14px", p: "11px 14px", borderRadius: "10px", bg: "#FEF2F2", borderWidth: "1px", borderStyle: "solid", borderColor: "#FBD2D2", color: "#B91C1C", fontSize: "13px" });
+const reviewErrorCss = css({ mb: "14px", p: "11px 14px", borderRadius: "10px", bg: "#FEF2F2", borderWidth: "1px", borderStyle: "solid", borderColor: "#FBD2D2", color: "#B91C1C", textStyle: "ui" });
 const docSummaryCss = css({ display: "flex", alignItems: "center", gap: "12.8px", p: "14px 15px", borderRadius: "13px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", mb: "12px" });
 const docSummaryIconCss = css({ flexShrink: 0, w: "46px", h: "46px", borderRadius: "12px", bg: "fill", color: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
 const docSummaryTextCss = css({ flex: 1, minW: 0 });
-const overlineCss = css({ fontSize: "11.5px", fontWeight: 600, lineHeight: 1.5, letterSpacing: ".04em", textTransform: "uppercase", color: "muted" });
-const docSummaryLabelCss = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, color: "heading" });
+const overlineCss = css({ textStyle: "eyebrow", fontWeight: 600, color: "muted" });
+const docSummaryLabelCss = css({ textStyle: "body", fontWeight: 600, color: "heading" });
 const photosBoxCss = css({ p: "16px 15px", borderRadius: "13px", borderWidth: "1px", borderStyle: "solid", borderColor: "border", mb: "14px" });
 const photosHeadCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "12.8px" });
 const photosRowCss = css({ display: "flex", gap: "12px", flexWrap: "wrap", alignItems: "flex-end" });
@@ -627,7 +624,6 @@ const consentCss = cva({
     p: "14px",
     borderRadius: "12px",
     cursor: "pointer",
-    fontFamily: "inherit",
     transition: "all .15s",
   },
   variants: { on: { true: { bg: "#EFF6FF", borderWidth: "1.5px", borderStyle: "solid", borderColor: "accent" }, false: { bg: "#fff", borderWidth: "1.5px", borderStyle: "solid", borderColor: "border" } } },
@@ -636,7 +632,7 @@ const consentBoxCss = cva({
   base: { flexShrink: 0, mt: "1px", w: "22px", h: "22px", borderRadius: "8px", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center" },
   variants: { on: { true: { borderWidth: "2px", borderStyle: "solid", borderColor: "accent", bg: "accent" }, false: { borderWidth: "2px", borderStyle: "solid", borderColor: "borderStrong", bg: "#fff" } } },
 });
-const consentTextCss = css({ fontSize: "13.5px", color: "body", lineHeight: 1.5 });
+const consentTextCss = css({ textStyle: "ui", color: "body" });
 
 function ReviewStep({ docType, front, back, selfie, consent, setConsent, submitting, error, onBack, onEditDoc, onEditSelfie, onSubmit }: { docType: DocType; front: File; back: File | null; selfie: File; consent: boolean; setConsent: (v: boolean) => void; submitting: boolean; error: string | null; onBack: () => void; onEditDoc: () => void; onEditSelfie: () => void; onSubmit: () => void }) {
   const selfieUrl = useObjectUrl(selfie);

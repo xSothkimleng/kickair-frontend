@@ -5,9 +5,9 @@ import type { ReactNode } from "react";
 import { css, cx } from "styled-system/css";
 
 /**
- * Replaces MUI <RadioGroup> + <Radio>/<FormControlLabel>. Ark UI `RadioGroup`
+ * Ark UI `RadioGroup`
  * styled with Panda: an 18px ring that fills with an ink dot when checked,
- * matching the MUI `RadioButtonChecked` icon at `fontSize: 18`.
+ * matching the old 18px checked-radio icon.
  *
  * `RadioGroupPrimitive` (the raw Ark namespace) plus `radioItem` / `radioControl`
  * are exported for bespoke rows (custom labels, hover backgrounds).
@@ -54,7 +54,7 @@ export const radioItem = css({
 });
 
 const rootCss = css({ display: "flex", flexDirection: "column" });
-const labelCss = css({ fontSize: "14px", color: "body", "&[data-state=checked]": { color: "heading" } });
+const labelCss = css({ textStyle: "body", color: "body", "&[data-state=checked]": { color: "heading" } });
 
 export interface RadioOption {
   value: string;

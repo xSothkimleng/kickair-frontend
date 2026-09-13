@@ -21,9 +21,9 @@ const headRow = css({ display: "flex", alignItems: "flex-start", gap: "16px" });
 const headRowSpaced = css({ display: "flex", alignItems: "flex-start", gap: "16px", mb: "16px" });
 const bodyCol = css({ flex: 1, minW: 0 });
 const nameRow = css({ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "8px", mb: "4px" });
-const nameCss = css({ fontSize: "14px", fontWeight: 600, color: "black" });
-const dateCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.4)", flexShrink: 0 });
-const commentCss = css({ fontSize: "13px", color: "rgba(0,0,0,0.7)", lineHeight: 1.65, pl: "56px" });
+const nameCss = css({ textStyle: "body", fontWeight: 600, color: "black" });
+const dateCss = css({ textStyle: "micro", color: "ink3", flexShrink: 0 });
+const commentCss = css({ textStyle: "ui", color: "ink2", pl: "56px" });
 
 export default function ReviewCard({ review }: ReviewCardProps) {
   const client = review.client_profile?.user;

@@ -53,8 +53,8 @@ const spacer24 = css({ height: "24px" });
 const spacer22 = css({ height: "22px" });
 
 const spinnerCss = css({ color: "ink" });
-const waitTitleCss = css({ mt: "24px", fontSize: "22px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.5 });
-const waitBodyCss = css({ mt: "8px", fontSize: "15px", color: "ink2", maxWidth: "320px", lineHeight: 1.5 });
+const waitTitleCss = css({ mt: "24px", textStyle: "title", fontWeight: 600 });
+const waitBodyCss = css({ mt: "8px", textStyle: "body", color: "ink2", maxWidth: "320px" });
 const waitNoteCss = css({
   display: "flex",
   alignItems: "center",
@@ -66,26 +66,22 @@ const waitNoteCss = css({
   borderRadius: "pill",
   color: "ink3",
 });
-const waitNoteTextCss = css({ fontSize: "12.5px", color: "ink2", lineHeight: 1.5 });
+const waitNoteTextCss = css({ textStyle: "meta", color: "ink2" });
 
 const resultTitleCss = css({
   mt: "22px",
-  fontSize: { base: "24px", sm: "28px" },
+  textStyle: { base: "heading", sm: "stat" },
   fontWeight: 600,
-  letterSpacing: "-0.025em",
-  lineHeight: 1.5,
 });
 const amountCss = css({
-  fontFamily: "mono",
-  fontSize: "40px",
+  fontVariantNumeric: "tabular-nums",
+  textStyle: "display",
   fontWeight: 600,
-  letterSpacing: "-0.03em",
   mt: "10px",
   mb: "6px",
-  lineHeight: 1.5,
 });
-const leadCss = css({ fontSize: "15px", color: "ink2", maxWidth: "340px", lineHeight: 1.5 });
-const leadTopCss = css({ mt: "8px", fontSize: "15px", color: "ink2", maxWidth: "340px", lineHeight: 1.5 });
+const leadCss = css({ textStyle: "body", color: "ink2", maxWidth: "340px" });
+const leadTopCss = css({ mt: "8px", textStyle: "body", color: "ink2", maxWidth: "340px" });
 
 const nextCardCss = css({
   width: "100%",
@@ -99,13 +95,10 @@ const nextCardCss = css({
   mt: "22px",
 });
 const nextLabelCss = css({
-  fontSize: "11px",
+  textStyle: "eyebrow",
   fontWeight: 600,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
   color: "ink3",
   mb: "12px",
-  lineHeight: 1.5,
 });
 const nextListCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const nextRowCss = css({ display: "flex", gap: "12px", alignItems: "flex-start" });
@@ -120,11 +113,11 @@ const nextTileCss = css({
   justifyContent: "center",
   flex: "none",
 });
-const nextTitleCss = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
-const nextDescCss = css({ fontSize: "12.5px", color: "ink2", lineHeight: 1.5 });
+const nextTitleCss = css({ textStyle: "body", fontWeight: 600 });
+const nextDescCss = css({ textStyle: "meta", color: "ink2" });
 
 const actionsCss = css({ display: "flex", flexDirection: "column", gap: "10px", width: "100%", mt: "24px" });
-const refCss = css({ fontSize: "11.5px", color: "ink3", mt: "16px", lineHeight: 1.5 });
+const refCss = css({ textStyle: "micro", color: "ink3", mt: "16px" });
 
 const primaryBtn = pillButton({ tone: "black", size: "lg", full: true });
 const ghostBtn = pillButton({ tone: "ghost", size: "md", full: true });
@@ -143,8 +136,8 @@ const errorBoxCss = css({
   color: "errorText",
 });
 const errorIconCss = css({ flex: "none" });
-const errorTitleCss = css({ fontSize: "13.5px", fontWeight: 600, color: "errorText", lineHeight: 1.5 });
-const errorSubCss = css({ fontSize: "12.5px", color: "errorText", opacity: 0.85, lineHeight: 1.5 });
+const errorTitleCss = css({ textStyle: "ui", fontWeight: 600, color: "errorText" });
+const errorSubCss = css({ textStyle: "meta", color: "errorText", opacity: 0.85 });
 
 /** Post-payment result card (waiting / success / failure). Rendered inside a Dialog by the flow controller. */
 export default function PaymentResult(props: PaymentResultProps) {

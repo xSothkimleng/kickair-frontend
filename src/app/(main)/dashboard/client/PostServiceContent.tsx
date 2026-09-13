@@ -44,50 +44,47 @@ function daysLeft(dateStr: string) {
 const cardLayout = css({ display: "flex", alignItems: "center", gap: "16px", p: "20px 22px" });
 const cardBody = css({ display: "flex", flexDirection: "column", gap: "13px", flex: 1, minW: 0 });
 const cardTop = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" });
-const cardTitle = css({ fontSize: "18px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 });
+const cardTitle = css({ textStyle: "title", fontWeight: 600 });
 
 const page = css({ display: "flex", flexDirection: "column", gap: "24px" });
 const header = css({ display: "flex", alignItems: "center", justifyContent: "space-between" });
-const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
-const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const pageTitle = css({ textStyle: "stat", fontWeight: 600, color: "ink" });
+const pageSub = css({ textStyle: "ui", color: "ink2" });
 const createBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, px: "24px", h: "44px", minW: "64px",
   border: "none", borderRadius: "40px",
   bg: "ink", color: "white",
-  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.8)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
 });
-const alertBox = css({ borderRadius: "8px", fontSize: "13px" });
+const alertBox = css({ borderRadius: "8px", textStyle: "ui" });
 const sectionCard = css({
   bg: "surface", borderRadius: "card",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
   p: "24px",
 });
 /* globals.css zeroes `p` margins outside any layer, so the old Typography `mb` never applied. */
-const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionTitle = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 const centreBlock = css({ textAlign: "center", py: "48px" });
-const errorText = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(239,68,68,0.8)" });
+const errorText = css({ textStyle: "ui", color: "rgba(239,68,68,0.8)" });
 const retryBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, p: "6px 8px", minW: "64px", border: "none", borderRadius: "4px",
-  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  bg: "transparent", color: "ink", textStyle: "meta", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const emptyIcon = css({ display: "inline-block", color: "rgba(0,0,0,0.2)", mb: "16px" });
-const emptyText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const emptyText = css({ textStyle: "ui", color: "ink2" });
 const firstJobBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, p: "6px 16px", minW: "64px",
   border: "none", borderRadius: "40px",
   bg: "accent", color: "white",
-  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
   _hover: { bg: "accentHover" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
@@ -96,9 +93,9 @@ const cardList = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const draftsHeader = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
 const draftsCount = css({
   px: "8px", py: "2px", bg: "rgba(0,0,0,0.05)", color: "ink2",
-  fontSize: "11px", fontWeight: 600, borderRadius: "4px",
+  textStyle: "micro", fontWeight: 600, borderRadius: "4px",
 });
-const draftsSub = css({ lineHeight: 1.5, fontSize: "12px", color: "rgba(0,0,0,0.5)" });
+const draftsSub = css({ textStyle: "meta", color: "ink2" });
 
 interface JobRowProps {
   job: JobPost;
@@ -302,7 +299,7 @@ export default function PostServiceContent() {
 
         {loading ? (
           <div className={centreBlock}>
-            <Spinner size={32} className={css({ color: "rgba(0,0,0,0.4)" })} />
+            <Spinner size={32} className={css({ color: "ink3" })} />
           </div>
         ) : error ? (
           <div className={centreBlock}>

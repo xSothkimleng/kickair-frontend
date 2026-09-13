@@ -13,20 +13,19 @@ const chip = css({
   borderRadius: "pill",
   bg: "rgba(0, 0, 0, 0.05)",
   color: "ink2",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 600,
 });
 
 // Text-only link button ("Read Full Story →"), underline on hover.
 const storyLink = css({
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 600,
   color: "accent",
   bg: "transparent",
   border: "none",
   p: "0",
   cursor: "pointer",
-  fontFamily: "inherit",
   _hover: { textDecoration: "underline" },
 });
 
@@ -70,16 +69,15 @@ export default function SuccessStoriesSection() {
           <Box
             as="h2"
             className={css({
-              fontSize: { base: "28px", md: "40px" },
+              textStyle: { base: "stat", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
               mb: "3",
             })}
           >
             Made on KickAir
           </Box>
-          <Box as="p" className={css({ fontSize: { base: "16px", md: "19px" }, color: "ink2" })}>
+          <Box as="p" className={css({ textStyle: { base: "lead", md: "title" }, color: "ink2" })}>
             Real brands, real results, real success
           </Box>
         </Box>
@@ -105,22 +103,22 @@ export default function SuccessStoriesSection() {
                 justifyContent="center"
                 style={{ background: story.gradient }}
               >
-                <Box as="span" className={css({ fontSize: "32px", fontWeight: 700 })} style={{ color: story.textColor }}>
+                <Box as="span" className={css({ textStyle: "stat", fontWeight: 700 })} style={{ color: story.textColor }}>
                   {story.name}
                 </Box>
               </Box>
               <Box p="6">
-                <Box as="h3" className={css({ fontSize: "19px", fontWeight: 600, color: "ink", mb: "2" })}>
+                <Box as="h3" className={css({ textStyle: "title", fontWeight: 600, color: "ink", mb: "2" })}>
                   {story.title}
                 </Box>
-                <Box as="p" className={css({ fontSize: "13px", color: "ink2", mb: "4", lineHeight: 1.6 })}>
+                <Box as="p" className={css({ textStyle: "ui", color: "ink2", mb: "4" })}>
                   {story.description}
                 </Box>
                 <Box mb="4">
                   {story.services.map((service, idx) => (
                     <Flex key={idx} align="center" gap="2" mb="2">
                       <CheckCircle size={14} color="#0071e3" style={{ flexShrink: 0 }} />
-                      <Box as="span" className={css({ fontSize: "12px", color: "rgba(0, 0, 0, 0.7)" })}>
+                      <Box as="span" className={css({ textStyle: "meta", color: "ink2" })}>
                         {service}
                       </Box>
                     </Flex>

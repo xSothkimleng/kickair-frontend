@@ -15,7 +15,7 @@ const stepCircle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
 });
 
@@ -36,16 +36,15 @@ function SectionHeader({ title, subtitle }: { title: string; subtitle: string })
       <Box
         as="h2"
         className={css({
-          fontSize: "32px",
+          textStyle: "stat",
           fontWeight: 600,
           color: "ink",
-          letterSpacing: "-0.02em",
           mb: "3",
         })}
       >
         {title}
       </Box>
-      <Box as="p" className={css({ fontSize: "17px", color: "ink2", maxW: "672px", mx: "auto" })}>
+      <Box as="p" className={css({ textStyle: "lead", color: "ink2", maxW: "672px", mx: "auto" })}>
         {subtitle}
       </Box>
     </Box>
@@ -63,10 +62,10 @@ function StepColumn({ heading, subtitle, steps }: { heading: string; subtitle: s
       p="8"
     >
       <Box textAlign="center" mb="8">
-        <Box as="h3" className={css({ fontSize: "24px", fontWeight: 600, color: "ink", mb: "2" })}>
+        <Box as="h3" className={css({ textStyle: "heading", fontWeight: 600, color: "ink", mb: "2" })}>
           {heading}
         </Box>
-        <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+        <Box as="p" className={css({ textStyle: "body", color: "ink2" })}>
           {subtitle}
         </Box>
       </Box>
@@ -76,10 +75,10 @@ function StepColumn({ heading, subtitle, steps }: { heading: string; subtitle: s
           <Box key={step.number} display="flex" gap="4">
             <Box className={stepCircle}>{step.number}</Box>
             <Box>
-              <Box as="p" className={css({ fontSize: "15px", fontWeight: 600, color: "ink", mb: "1" })}>
+              <Box as="p" className={css({ textStyle: "body", fontWeight: 600, color: "ink", mb: "1" })}>
                 {step.title}
               </Box>
-              <Box as="p" className={css({ fontSize: "13px", color: "ink2", lineHeight: 1.6 })}>
+              <Box as="p" className={css({ textStyle: "ui", color: "ink2" })}>
                 {step.desc}
               </Box>
             </Box>
@@ -226,7 +225,7 @@ export default function WhyKickAirPage() {
               alignItems: "center",
               gap: "1",
               mb: "4",
-              fontSize: "12px",
+              textStyle: "meta",
               color: "ink2",
               textDecoration: "none",
               cursor: "pointer",
@@ -240,16 +239,15 @@ export default function WhyKickAirPage() {
             <Box
               as="h1"
               className={css({
-                fontSize: "40px",
+                textStyle: "display",
                 fontWeight: 600,
                 color: "ink",
-                letterSpacing: "-0.02em",
                 mb: "2",
               })}
             >
               Why KickAir
             </Box>
-            <Box as="p" className={css({ fontSize: "17px", color: "ink2" })}>
+            <Box as="p" className={css({ textStyle: "lead", color: "ink2" })}>
               Premium freelancing made simple for Cambodia and the world
             </Box>
           </Box>
@@ -296,7 +294,7 @@ export default function WhyKickAirPage() {
             <Box
               as="p"
               className={css({
-                fontSize: "21px",
+                textStyle: "title",
                 fontWeight: 600,
                 color: "ink",
                 mb: "12",
@@ -337,7 +335,7 @@ export default function WhyKickAirPage() {
                         display="flex"
                         alignItems="center"
                         justifyContent="center"
-                        fontSize="17px"
+                        textStyle="lead"
                         fontWeight={600}
                         mb="4"
                         boxShadow="0 2px 8px rgba(0, 0, 0, 0.1)"
@@ -345,10 +343,10 @@ export default function WhyKickAirPage() {
                       >
                         {step.num}
                       </Box>
-                      <Box as="p" className={css({ fontSize: "15px", fontWeight: 600, color: "ink", mb: "2" })}>
+                      <Box as="p" className={css({ textStyle: "body", fontWeight: 600, color: "ink", mb: "2" })}>
                         {step.title}
                       </Box>
-                      <Box as="p" className={css({ fontSize: "13px", color: "ink2", lineHeight: 1.6 })}>
+                      <Box as="p" className={css({ textStyle: "ui", color: "ink2" })}>
                         {step.desc}
                       </Box>
                     </Box>
@@ -388,10 +386,10 @@ export default function WhyKickAirPage() {
                   >
                     <Icon size={24} color="#0071e3" strokeWidth={2} />
                   </Box>
-                  <Box as="p" className={css({ fontSize: "17px", fontWeight: 600, color: "ink", mb: "2" })}>
+                  <Box as="p" className={css({ textStyle: "lead", fontWeight: 600, color: "ink", mb: "2" })}>
                     {feature.title}
                   </Box>
-                  <Box as="p" className={css({ fontSize: "13px", color: "ink2", lineHeight: 1.6 })}>
+                  <Box as="p" className={css({ textStyle: "ui", color: "ink2" })}>
                     {feature.desc}
                   </Box>
                 </Box>
@@ -430,10 +428,10 @@ export default function WhyKickAirPage() {
                     >
                       <Icon size={24} color="black" />
                     </Box>
-                    <Box as="p" className={css({ fontSize: "19px", fontWeight: 600, color: "ink", mb: "2" })}>
+                    <Box as="p" className={css({ textStyle: "title", fontWeight: 600, color: "ink", mb: "2" })}>
                       {story.title}
                     </Box>
-                    <Box as="p" className={css({ fontSize: "13px", color: "ink2", lineHeight: 1.6 })}>
+                    <Box as="p" className={css({ textStyle: "ui", color: "ink2" })}>
                       {story.text}
                     </Box>
                   </Box>
@@ -448,10 +446,10 @@ export default function WhyKickAirPage() {
                   >
                     <img src={story.img} alt={story.name} className={avatarImg} />
                     <Box>
-                      <Box as="p" className={css({ fontSize: "12px", fontWeight: 600, color: "ink" })}>
+                      <Box as="p" className={css({ textStyle: "meta", fontWeight: 600, color: "ink" })}>
                         {story.name}
                       </Box>
-                      <Box as="p" className={css({ fontSize: "11px", color: "ink2" })}>
+                      <Box as="p" className={css({ textStyle: "micro", color: "ink2" })}>
                         {story.role}
                       </Box>
                     </Box>
@@ -485,10 +483,10 @@ export default function WhyKickAirPage() {
                 <Star key={i} size={28} fill="black" color="black" />
               ))}
             </Box>
-            <Box as="p" className={css({ fontSize: "48px", fontWeight: 600, color: "ink", mb: "1" })}>
+            <Box as="p" className={css({ textStyle: "display", fontWeight: 600, color: "ink", mb: "1" })}>
               4.9
             </Box>
-            <Box as="p" className={css({ fontSize: "14px", color: "ink2" })}>
+            <Box as="p" className={css({ textStyle: "body", color: "ink2" })}>
               Based on 12,450+ reviews
             </Box>
           </Box>
@@ -512,17 +510,17 @@ export default function WhyKickAirPage() {
                 </Box>
                 <Box
                   as="p"
-                  className={css({ fontSize: "14px", color: "rgba(0, 0, 0, 0.8)", lineHeight: 1.6, mb: "4" })}
+                  className={css({ textStyle: "body", color: "ink", mb: "4" })}
                 >
                   {review.text}
                 </Box>
                 <Box display="flex" alignItems="center" gap="3">
                   <img src={review.img} alt={review.name} className={avatarImg} />
                   <Box>
-                    <Box as="p" className={css({ fontSize: "12px", fontWeight: 600, color: "ink" })}>
+                    <Box as="p" className={css({ textStyle: "meta", fontWeight: 600, color: "ink" })}>
                       {review.name}
                     </Box>
-                    <Box as="p" className={css({ fontSize: "11px", color: "ink2" })}>
+                    <Box as="p" className={css({ textStyle: "micro", color: "ink2" })}>
                       {review.role}
                     </Box>
                   </Box>

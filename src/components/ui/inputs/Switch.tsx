@@ -48,8 +48,8 @@ const thumb = css({
   "&[data-state=checked]": { transform: "translateX(18px)" },
 });
 
-const labelCss = css({ fontSize: "14.5px", color: "heading" });
-const descCss = css({ fontSize: "13px", color: "muted" });
+const labelCss = css({ textStyle: "body", color: "heading" });
+const descCss = css({ textStyle: "ui", color: "muted" });
 
 export default function Switch({ checked, onChange, label, description, disabled }: SwitchProps) {
   const hasText = !!(label || description);

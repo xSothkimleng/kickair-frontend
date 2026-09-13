@@ -28,7 +28,7 @@ const barCss = css({
   borderBottomStyle: "solid",
   borderBottomColor: "hairline",
 });
-const countCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const countCss = css({ textStyle: "ui", color: "ink2" });
 const selectCss = css({ minW: "180px" });
 
 export default function SortBar({ filteredCount, sortBy, setSortBy }: SortBarProps) {

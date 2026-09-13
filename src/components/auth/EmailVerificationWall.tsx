@@ -25,15 +25,13 @@ const emailRow = css({
   borderStyle: "solid",
   borderColor: "hairline",
 });
-const emailText = css({ fontFamily: "mono", fontSize: "14px", lineHeight: 1.5, color: "ink", wordBreak: "break-all" });
+const emailText = css({ fontVariantNumeric: "tabular-nums", textStyle: "body", color: "ink", wordBreak: "break-all" });
 const notYou = css({
   flexShrink: 0,
   bg: "none",
   border: "0",
   p: "0",
-  fontFamily: "inherit",
-  fontSize: "12px",
-  lineHeight: 1.5,
+  textStyle: "meta",
   fontWeight: 600,
   color: "accent",
   cursor: "pointer",
@@ -43,8 +41,8 @@ const notYou = css({
 const strong = css({ color: "ink", fontWeight: 600 });
 const actions = css({ mt: "28px", display: "flex", gap: "12px", flexWrap: "wrap" });
 const footer = css({ mt: "36px", pt: "24px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
-const footerTitle = css({ fontSize: "13px", lineHeight: 1.5, fontWeight: 600, color: "ink", mb: "4px" });
-const footerBody = css({ fontSize: "13px", lineHeight: 1.6, color: "ink3" });
+const footerTitle = css({ textStyle: "ui", fontWeight: 600, color: "ink", mb: "4px" });
+const footerBody = css({ textStyle: "ui", color: "ink3" });
 
 /** Full-screen wall shown in place of the app until the user clicks the verification link. */
 export default function EmailVerificationWall({ email, onResend, onLogout }: EmailVerificationWallProps) {

@@ -107,7 +107,7 @@ Values: **write px strings** (`p: "16px"`), not MUI spacing numbers — MUI `p: 
 - `display: { xs: "none", md: "block" }` etc. port directly.
 - `theme.palette.*`, `primary.main` → tokens below. `"text.secondary"` → `muted`/`ink2` depending on the page palette (see tokens).
 - `component="span"` → just render that element. `noWrap` → `truncate` on `Text` / `whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"`.
-- With Panda `preflight` off (still the case): buttons/inputs you hand-roll need `fontFamily: "inherit"`, `border: "none"`/explicit borders, `bg`, `cursor`, `p: 0`; elements are **`content-box`**, so anything with `w: "100%"` plus horizontal padding needs `boxSizing: "border-box"` or it overflows the viewport. `globals.css` zeroes margins on `p, h1–h6, ul` and sets `a { color: inherit }` **outside any layer**, so those beat utilities: put padding/margins on a wrapping `div`, and use `!important` for link colours (`color: "var(--colors-accent) !important"`) or the ds `Link`. Turning preflight on later means auditing the pre-rulebook files for exactly these two things (dead margins that would come alive, containers that shrink under border-box).
+- With Panda `preflight` off (still the case): buttons/inputs you hand-roll inherit font, size and line-height from `globals.css`; they still need `border: "none"`/explicit borders, `bg`, `cursor`, `p: 0`; elements are **`content-box`**, so anything with `w: "100%"` plus horizontal padding needs `boxSizing: "border-box"` or it overflows the viewport. `globals.css` zeroes margins on `p, h1–h6, ul` and sets `a { color: inherit }` **outside any layer**, so those beat utilities: put padding/margins on a wrapping `div`, and use `!important` for link colours (`color: "var(--colors-accent) !important"`) or the ds `Link`. Turning preflight on later means auditing the pre-rulebook files for exactly these two things (dead margins that would come alive, containers that shrink under border-box).
 - Ark parts that hide via the `hidden` attribute need `"&[hidden]": { display: "none" }` if your class sets `display`.
 - **Panda only extracts what it can read statically.** A value pulled from an imported constant (`color: tokens.accent`, `` border: `1px solid ${C.border}` ``) still produces a class name at runtime, but **no CSS is emitted** and the element silently falls back to browser defaults. Inside `css()`/`cva()` use Panda token names or inline literals only; write template-literal borders as `borderWidth`/`borderStyle`/`borderColor`. Colours that really are dynamic go through a `style={{ color: "var(--colors-accent)" }}` prop, not through `css()`. Check with `grep -n 'tokens\.\|\${' <file>` and, if in doubt, dump `document.styleSheets` for one of your class names.
 - Two atomic classes for the same property (`cx(mgCard, css({ bg: … }))`) are resolved by stylesheet order, not by `cx` order. To override a shared class's property from a variant, hook it on an attribute: `css({ "&[data-muted]": { bg: "#FBFBFD" } })` + `data-muted={muted ? "" : undefined}` — the attribute selector outranks the base class.
@@ -135,25 +135,28 @@ Two palettes exist today and both are in Panda. Keep whichever the file used.
 | `brand` | `brand` |
 | `abaNavy` `abaNavy2` `abaBlue` `abaBg` | `aba.navy` `aba.navy2` `aba.blue` `aba.bg` |
 | `radius.card 16` / `cardSm 12` / `tile 10` / `input 10` / `pill 999` | `borderRadius: "card" / "cardSm" / "tile" / "input" / "pill"` |
-| `mono` | `fontFamily: "mono"` |
+| `mono` | `fontVariantNumeric: "tabular-nums"` — one font site-wide, see TYPOGRAPHY.md |
 | `logoRadius` | literal `"50%"` |
 
-Other radii: MUI `borderRadius: 1`=4px, `2`=8px, `3`=12px, `4`=16px → px strings. Shadows: keep literal strings. Fonts: the site font is inherited from `body`; never set `fontFamily` except `mono`/`inherit`.
+Other radii: MUI `borderRadius: 1`=4px, `2`=8px, `3`=12px, `4`=16px → px strings. Shadows: keep literal strings. Fonts: one family, set on `<html>` in `src/app/layout.tsx` and inherited everywhere; never set `fontFamily`. Sizes, line-heights and tracking come from `textStyle` roles (TYPOGRAPHY.md).
 
 ## Typography
 
-| MUI variant (default) | Text props |
+Sizes are roles, not numbers — `textStyle: "<role>"` or `<Text size="<role>">` (see TYPOGRAPHY.md for the table). Old MUI variants map as:
+
+| MUI variant (default) | Role |
 |---|---|
-| `h4` 34px/700 | `Heading size="3xl"` (32px) |
-| `h5` 24px/700 | `Heading size="2xl"` (26px) or `css({ fontSize: "24px", fontWeight: 700 })` |
-| `h6` 20px/600 | `Heading size="xl" weight="semibold"` |
-| `subtitle1` 16px/500 | `Text size="md" weight="medium"` |
-| `subtitle2` 14px/600 | `Text size="sm" weight="semibold"` (13px) or fontSize 14px |
-| `body1` 16px | `Text size="md"` (15px) — use `css({ fontSize: "16px" })` when the 1px matters |
-| `body2` 14px | `css({ fontSize: "14px", lineHeight: 1.43 })` |
-| `caption` 12px | `Text size="xs"` |
-| `overline` | `Text size="xs"` + `textTransform: "uppercase", letterSpacing: ".06em"` |
-Most Typography in this codebase sets explicit `fontSize`/`fontWeight`/`color` in `sx` — just port those literally onto `Text` (`className`) or a `p`/`span`.
+| `h4` 34px | `stat` (32px) |
+| `h5` 24px | `heading` (24px) |
+| `h6` 20px | `title` (20px) |
+| `subtitle1` 16px | `lead` (16px) |
+| `subtitle2` 14px/600 | `body` + `fontWeight: 600` |
+| `body1` 16px | `lead` (marketing) or `body` (app UI, 14px) |
+| `body2` 14px | `body` |
+| `caption` 12px | `meta` |
+| `overline` | `eyebrow` |
+
+Weight and colour stay separate props. Never port MUI line-heights (`1.75`, `1.66`, `1.43`, `1.334`…) or letter-spacings (`0.02857em`…): the role carries them.
 
 ## Verification (every file, before you report)
 

@@ -13,7 +13,7 @@ export const skeleton = cva({
   defaultVariants: { variant: "text" },
 });
 
-/** Replaces MUI <Skeleton>. `width`/`height` accept px numbers or CSS strings. */
+/** `width`/`height` accept px numbers or CSS strings. */
 export function Skeleton({ variant, width, height, className, style }: { variant?: "text" | "rect" | "circle"; width?: number | string; height?: number | string; className?: string; style?: CSSProperties }) {
   return <span aria-hidden="true" className={cx(skeleton({ variant }), className)} style={{ width: width ?? (variant === "circle" ? height : "100%"), height, ...style }} />;
 }

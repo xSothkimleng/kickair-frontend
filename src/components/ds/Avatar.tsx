@@ -14,17 +14,16 @@ export const avatar = cva({
     flexShrink: 0,
     borderRadius: "pill",
     fontWeight: 600,
-    letterSpacing: "0.01em",
     overflow: "hidden",
     userSelect: "none",
   },
   variants: {
     size: {
-      xs: { w: "24px", h: "24px", fontSize: "10px" },
-      sm: { w: "32px", h: "32px", fontSize: "12px" },
-      md: { w: "40px", h: "40px", fontSize: "14px" },
-      lg: { w: "56px", h: "56px", fontSize: "18px" },
-      xl: { w: "80px", h: "80px", fontSize: "26px" },
+      xs: { w: "24px", h: "24px", textStyle: "micro" },
+      sm: { w: "32px", h: "32px", textStyle: "meta" },
+      md: { w: "40px", h: "40px", textStyle: "body" },
+      lg: { w: "56px", h: "56px", textStyle: "title" },
+      xl: { w: "80px", h: "80px", textStyle: "heading" },
     },
     shape: { round: {}, square: { borderRadius: "cardSm" } },
   },
@@ -42,12 +41,13 @@ export interface AvatarProps {
   style?: CSSProperties;
 }
 
-/** Replaces MUI <Avatar>. Photo with initials fallback (also when the image fails to load). */
+/** Photo with initials fallback (also when the image fails to load). */
 export function Avatar({ name, src, size, px, shape, className, style }: AvatarProps) {
   const [failed, setFailed] = useState<string | null>(null);
   const label = (name ?? "").trim();
   const initials = label ? label.split(/\s+/).slice(0, 2).map((p) => p[0]!.toUpperCase()).join("") : "?";
   const seed = label.length % palette.length;
+  // eslint-disable-next-line no-restricted-syntax -- initials scale with the avatar's pixel size, not the type scale
   const sizeStyle: CSSProperties | undefined = px ? { width: px, height: px, fontSize: Math.round(px * 0.36) } : undefined;
   if (src && failed !== src) {
     return (

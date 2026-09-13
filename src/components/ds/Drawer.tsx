@@ -6,7 +6,7 @@ import type { ReactNode } from "react";
 import { css, cva, cx } from "styled-system/css";
 import { iconButton } from "./IconButton";
 
-/** Side panel on Ark Dialog (focus trap, ESC, aria). Replaces MUI <Drawer>. */
+/** Side panel on Ark Dialog (focus trap, ESC, aria). */
 const backdropCss = css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.45)", zIndex: 1300, animation: "fadeIn .16s ease-out" });
 const positionerCss = css({ position: "fixed", inset: 0, zIndex: 1300, display: "flex", pointerEvents: "none" });
 const panel = cva({
@@ -24,7 +24,7 @@ const panel = cva({
   defaultVariants: { side: "right", size: "md" },
 });
 const headerCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", px: "20px", py: "16px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "border" });
-const titleCss = css({ fontSize: "17px", fontWeight: 700, color: "heading", m: 0 });
+const titleCss = css({ textStyle: "lead", fontWeight: 700, color: "heading", m: 0 });
 const bodyCss = css({ flex: 1, overflowY: "auto", px: "20px", py: "16px" });
 const footerCss = css({ px: "20px", py: "14px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "border" });
 

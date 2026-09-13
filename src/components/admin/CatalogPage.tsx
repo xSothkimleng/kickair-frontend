@@ -98,7 +98,7 @@ export default function CatalogPage() {
         ) : (
           <>
             <span className="name">{c.category_name}</span>
-            <span className={text({ size: "sm", tone: 3 })}>{n ? `${n} listing${n === 1 ? "" : "s"}` : isParent ? `${kids} ${kids === 1 ? "subcategory" : "subcategories"}` : "empty"}</span>
+            <span className={text({ size: "meta", tone: 3 })}>{n ? `${n} listing${n === 1 ? "" : "s"}` : isParent ? `${kids} ${kids === 1 ? "subcategory" : "subcategories"}` : "empty"}</span>
             {!c.is_active ? <Pill tone="neutral">Hidden</Pill> : null}
             <span className="tools">
               {isParent ? <Btn size="xs" variant="ghost" onClick={() => { setAdding(c.id); setAddName(""); }}><Plus size={12} /> Subcategory</Btn> : null}
@@ -122,7 +122,7 @@ export default function CatalogPage() {
             <Input placeholder="New top-level group, e.g. Music & Audio" value={newTop} onChange={(e) => setNewTop(e.target.value)} onKeyDown={(e) => e.key === "Enter" && commitAdd(null)} />
             <Btn variant="primary" disabled={!newTop.trim() || busy} onClick={() => commitAdd(null)}><Plus size={14} /> Add group</Btn>
           </div>
-          {categories.isLoading ? <Loading /> : categories.isError ? <ErrorState onRetry={() => categories.refetch()} /> : parents.length === 0 ? <p className={cx(text({ size: "sm", tone: 3 }), css({ p: "20px" }))}>No categories yet. Add a top-level group to start.</p> : parents.map((p) => (
+          {categories.isLoading ? <Loading /> : categories.isError ? <ErrorState onRetry={() => categories.refetch()} /> : parents.length === 0 ? <p className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>No categories yet. Add a top-level group to start.</p> : parents.map((p) => (
             <div key={p.id}>
               <Row c={p} />
               {children(p.id).map((c) => <Row key={c.id} c={c} />)}
@@ -147,12 +147,12 @@ export default function CatalogPage() {
             <div className={searchWrap}><Search size={14} /><Input placeholder="Filter skills" value={skillQ} onChange={(e) => setSkillQ(e.target.value)} className={css({ h: "32px" })} /></div>
           </div>
           <div className={css({ maxH: "560px", overflowY: "auto" })}>
-            {skills.isLoading ? <Loading /> : skills.isError ? <ErrorState onRetry={() => skills.refetch()} /> : filteredSkills.length === 0 ? <div className={cx(text({ size: "sm", tone: 3 }), css({ p: "16px" }))}>{allSkills.length ? "No skill matches." : "No skills yet."}</div> : filteredSkills.map((s) => {
+            {skills.isLoading ? <Loading /> : skills.isError ? <ErrorState onRetry={() => skills.refetch()} /> : filteredSkills.length === 0 ? <div className={cx(text({ size: "meta", tone: 3 }), css({ p: "16px" }))}>{allSkills.length ? "No skill matches." : "No skills yet."}</div> : filteredSkills.map((s) => {
               const used = s.freelancer_profiles_count ?? 0;
               return (
                 <div key={s.id} className={skillRow}>
                   <span className={text({ weight: 500 })}>{s.expertise_name}</span>
-                  <span className={text({ size: "sm", tone: 3 })}>{used ? `${used} ${used === 1 ? "freelancer" : "freelancers"}` : "unused"}</span>
+                  <span className={text({ size: "meta", tone: 3 })}>{used ? `${used} ${used === 1 ? "freelancer" : "freelancers"}` : "unused"}</span>
                   <span className="tools"><IconBtn size="sm" title={used ? "In use on freelancer profiles" : "Delete"} disabled={used > 0 || busy} className={disabledBtn} onClick={() => removeSkill(s)}><Trash2 size={14} /></IconBtn></span>
                 </div>
               );

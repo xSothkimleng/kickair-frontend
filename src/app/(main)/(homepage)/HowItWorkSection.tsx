@@ -16,9 +16,8 @@ const ctaOutline = css({
   borderColor: "accent",
   bg: "transparent",
   color: "accent",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   cursor: "pointer",
   transition: "background-color .15s, color .15s, border-color .15s",
   _hover: { bg: "accent", color: "white" },
@@ -34,7 +33,7 @@ const stepCircle = css({
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
 });
 
@@ -54,7 +53,7 @@ function StepColumn({ heading, steps }: { heading: string; steps: Step[] }) {
       <Box
         as="h3"
         className={css({
-          fontSize: "24px",
+          textStyle: "heading",
           fontWeight: 600,
           color: "ink",
           mb: "6",
@@ -68,10 +67,10 @@ function StepColumn({ heading, steps }: { heading: string; steps: Step[] }) {
           <Box key={step.number} display="flex" gap="4">
             <Box className={stepCircle}>{step.number}</Box>
             <Box>
-              <Box as="p" className={css({ fontSize: "15px", fontWeight: 600, color: "ink", mb: "1" })}>
+              <Box as="p" className={css({ textStyle: "body", fontWeight: 600, color: "ink", mb: "1" })}>
                 {step.title}
               </Box>
-              <Box as="p" className={css({ fontSize: "13px", color: "ink2", lineHeight: 1.6 })}>
+              <Box as="p" className={css({ textStyle: "ui", color: "ink2" })}>
                 {step.description}
               </Box>
             </Box>
@@ -127,16 +126,15 @@ export default function HowItWorksSection() {
           <Box
             as="h2"
             className={css({
-              fontSize: { base: "28px", md: "40px" },
+              textStyle: { base: "stat", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
               mb: "3",
             })}
           >
             How It Works
           </Box>
-          <Box as="p" className={css({ fontSize: { base: "16px", md: "19px" }, color: "ink2" })}>
+          <Box as="p" className={css({ textStyle: { base: "lead", md: "title" }, color: "ink2" })}>
             Get started in minutes, hire in hours
           </Box>
         </Box>

@@ -7,7 +7,7 @@ import { css, cx } from "styled-system/css";
 import { iconButton } from "./IconButton";
 
 /**
- * App-wide toasts on Ark Toast. Replaces MUI <Snackbar>/<Alert> stacks.
+ * App-wide toasts on Ark Toast.
  * Mount <AppToaster /> once (root layout) and call `toast.success("…")` anywhere.
  */
 export const toaster = createToaster({ placement: "top-end", overlap: false, gap: 10, max: 4, offsets: { top: "80px", right: "16px", bottom: "16px", left: "16px" } });
@@ -54,8 +54,8 @@ const rootCss = css({
   transition: "translate .3s, scale .3s, opacity .3s, height .3s",
   "& svg": { flexShrink: 0 },
 });
-const titleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.3, m: 0 });
-const descCss = css({ fontSize: "12px", color: "muted", lineHeight: 1.4, m: 0, mt: "2px" });
+const titleCss = css({ textStyle: "ui", fontWeight: 600, m: 0 });
+const descCss = css({ textStyle: "meta", color: "muted", m: 0, mt: "2px" });
 
 export function AppToaster() {
   return (

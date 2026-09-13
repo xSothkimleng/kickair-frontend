@@ -45,8 +45,8 @@ const box = css({
   "&[data-disabled]": { opacity: 0.5 },
 });
 
-const labelCss = css({ fontSize: "14.5px", color: "heading", "&[data-disabled]": { color: "placeholder" } });
-const descCss = css({ display: "block", fontSize: "13px", color: "muted" });
+const labelCss = css({ textStyle: "body", color: "heading", "&[data-disabled]": { color: "placeholder" } });
+const descCss = css({ display: "block", textStyle: "ui", color: "muted" });
 
 export default function Checkbox({ checked, onChange, label, description, indeterminate, disabled }: CheckboxProps) {
   return (

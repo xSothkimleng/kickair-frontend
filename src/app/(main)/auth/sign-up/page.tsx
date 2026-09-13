@@ -21,7 +21,7 @@ type Method = "email" | "phone";
 const pagePad = css({ py: "32px" });
 const intro = css({ textAlign: "center", mb: "20px" });
 const alertGap = css({ mb: "16px" });
-const orRow = css({ lineHeight: 1.5 });
+const orRow = css({});
 const contactRow = css({ display: "flex", gap: "8px" });
 const contactField = css({ flex: 1 });
 const methodSelect = css({ minW: "104px" });
@@ -190,7 +190,7 @@ function SignUpContent() {
                 Sign in
               </Link>
             </p>
-            <Text size="xs" tone="muted" align="center">
+            <Text size="meta" tone="muted" align="center">
               By continuing, you agree to KickAir&rsquo;s Terms of Service and Privacy Policy.
             </Text>
           </div>

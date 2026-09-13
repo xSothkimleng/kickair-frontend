@@ -39,18 +39,17 @@ const sectionHeaderCss = css({
   border: "none",
   bg: "transparent",
   color: "inherit",
-  fontFamily: "inherit",
   textAlign: "left",
   cursor: "pointer",
   userSelect: "none",
 });
-// MUI `Stack spacing={1}` put a margin-left on the meta, but the unlayered
+// The old stack spacing put a margin-left on the meta, but the unlayered
 // `globals.css` `p { margin: 0 }` beat it — so the two labels really do sit flush.
 const sectionTitleRowCss = css({ display: "flex", alignItems: "center" });
-const sectionTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.87)", letterSpacing: "-0.005em" });
-const sectionMetaCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.38)" });
+const sectionTitleCss = css({ textStyle: "ui", fontWeight: 600, color: "ink" });
+const sectionMetaCss = css({ textStyle: "meta", color: "ink3" });
 const sectionChevronCss = css({
-  color: "rgba(0,0,0,0.38)",
+  color: "ink3",
   flexShrink: 0,
   transform: "rotate(-90deg)",
   transition: "transform 0.2s ease",
@@ -113,9 +112,8 @@ const fieldAdornCss = css({
   display: "inline-flex",
   alignItems: "center",
   flexShrink: 0,
-  color: "rgba(0,0,0,0.38)",
-  fontSize: "13px",
-  lineHeight: 1,
+  color: "ink3",
+  textStyle: "ui",
   "& svg": { display: "block" },
 });
 const fieldInputCss = css({
@@ -129,9 +127,7 @@ const fieldInputCss = css({
   outline: "none",
   bg: "transparent",
   appearance: "none",
-  fontFamily: "inherit",
-  fontSize: "13px",
-  lineHeight: 1.5,
+  textStyle: "ui",
   color: "heading",
   _placeholder: { color: "placeholder", opacity: 1 },
 });
@@ -146,7 +142,7 @@ const chipCss = css({
   borderRadius: "pill",
   bg: "fill",
   color: "heading",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
   whiteSpace: "nowrap",
 });
@@ -163,7 +159,6 @@ const chipRemoveCss = css({
   bg: "transparent",
   color: "placeholder",
   cursor: "pointer",
-  fontFamily: "inherit",
   transition: "color .15s",
   _hover: { color: "heading" },
   "& svg": { display: "block" },
@@ -210,8 +205,8 @@ const catBoxCss = css({
   "&[data-focus-visible]": { boxShadow: "focusRing" },
 });
 const catLabelRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, w: "100%" });
-const catLabelCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2", fontWeight: 400, "&[data-state=checked]": { color: "rgba(0,0,0,0.87)", fontWeight: 500 } });
-const catCountCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.38)", fontVariantNumeric: "tabular-nums" });
+const catLabelCss = css({ textStyle: "ui", color: "ink2", fontWeight: 400, "&[data-state=checked]": { color: "ink", fontWeight: 500 } });
+const catCountCss = css({ textStyle: "meta", color: "ink3", fontVariantNumeric: "tabular-nums" });
 
 /* ── Radio rows ────────────────────────────────────────────────────────────── */
 
@@ -228,7 +223,7 @@ const radioRowCss = css({
   _hover: { bg: "fill" },
 });
 const radioControlSpacing = css({ mr: "10px" });
-const radioLabelCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2", fontWeight: 400, "&[data-state=checked]": { color: "rgba(0,0,0,0.87)", fontWeight: 500 } });
+const radioLabelCss = css({ textStyle: "ui", color: "ink2", fontWeight: 400, "&[data-state=checked]": { color: "ink", fontWeight: 500 } });
 
 /* ── Budget ────────────────────────────────────────────────────────────────── */
 
@@ -237,13 +232,10 @@ const sliderCss = css({ mt: "8px", mb: "20px" });
 const budgetRowCss = css({ display: "flex", alignItems: "flex-end", gap: "8px" });
 const budgetFieldCss = css({ flex: 1 });
 const budgetLabelCss = css({
-  fontSize: "11px",
-  lineHeight: 1.5,
+  textStyle: "eyebrow",
   color: "ink2",
   fontWeight: 500,
   mb: "4px",
-  textTransform: "uppercase",
-  letterSpacing: "0.04em",
 });
 const budgetDashCss = css({ pb: "8px", color: "borderStrong" });
 
@@ -271,7 +263,7 @@ const headerCss = css({
   "&[data-expanded]": { mb: "16px" },
 });
 const headerLeftCss = css({ display: "flex", alignItems: "center", gap: "8px" });
-const headerTitleCss = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.01em" });
+const headerTitleCss = css({ textStyle: "body", fontWeight: 600 });
 const countBadgeCss = css({
   display: "inline-flex",
   alignItems: "center",
@@ -283,11 +275,11 @@ const countBadgeCss = css({
   borderRadius: "pill",
   bg: "heading",
   color: "#FFF",
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 600,
 });
 const headerChevronCss = css({
-  color: "rgba(0,0,0,0.38)",
+  color: "ink3",
   flexShrink: 0,
   ml: "auto",
   transition: "transform 0.2s ease",
@@ -301,14 +293,11 @@ const resetBtnCss = css({
   borderRadius: "4px",
   bg: "transparent",
   color: "ink2",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
-  letterSpacing: "0.02857em",
   cursor: "pointer",
   transition: "color .15s",
-  _hover: { color: "rgba(0,0,0,0.87)", bg: "transparent" },
+  _hover: { color: "ink", bg: "transparent" },
 });
 const chipsWrapCss = css({ display: "flex", flexWrap: "wrap", gap: "6px", mb: "20px" });
 const dividerCss = css({ h: "1px", my: "12px", bg: "fill", border: "none" });

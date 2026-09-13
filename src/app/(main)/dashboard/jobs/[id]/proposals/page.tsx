@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { ChevronLeft, Check, X, Pencil, RotateCcw, Info, FileText, Inbox } from "lucide-react";
 import { css, cva, cx } from "styled-system/css";
+import { tapTarget } from "@/components/ds/tap";
 import { Alert, Avatar, Pager, Skeleton, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { JobPost, Proposal, ProposalStatus, JobPostStatus } from "@/types/job";
@@ -53,7 +54,7 @@ const PROP_STATUS: Record<ProposalStatus, { tone: Tone; label: string }> = {
 /* ── static styles ── */
 const chipBase = cva({
   base: { display: "inline-flex", alignItems: "center", gap: "6px", borderRadius: "pill", fontWeight: 600 },
-  variants: { size: { md: { h: "26px", px: "10px", fontSize: "12px" }, lg: { h: "34px", px: "14px", fontSize: "13px" } } },
+  variants: { size: { md: { h: "26px", px: "10px", textStyle: "meta" }, lg: { h: "34px", px: "14px", textStyle: "ui" } } },
   defaultVariants: { size: "md" },
 });
 const chipDot = css({ w: "6px", h: "6px", borderRadius: "50%", bg: "currentColor" });
@@ -68,8 +69,7 @@ const backBtn = css({
   alignSelf: "flex-start",
   display: "inline-flex", alignItems: "center", gap: "8px",
   m: 0, p: "2px 4px", border: "none", bg: "transparent",
-  color: "ink2", fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "color .25s",
+  color: "ink2", textStyle: "body", fontWeight: 500, cursor: "pointer", transition: "color .25s",
   _hover: { color: "#000", bg: "transparent" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
@@ -78,8 +78,7 @@ const alertRounded = css({ borderRadius: "8px" });
 const retryBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, p: "4px 5px", minW: "64px", border: "none", borderRadius: "4px",
-  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  bg: "transparent", color: "inherit", textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "rgba(0,0,0,0.06)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
@@ -93,14 +92,13 @@ const rejectIcon = css({
   w: "36px", h: "36px", borderRadius: "50%", bg: "rgba(220,38,38,0.14)", color: "error",
   display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
 });
-const rejectTitle = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600, color: "errorText" });
-const rejectBody = css({ fontSize: "13.5px", lineHeight: 1.55, color: "ink2" });
+const rejectTitle = css({ textStyle: "body", fontWeight: 600, color: "errorText" });
+const rejectBody = css({ textStyle: "ui", color: "ink2" });
 
 const pillBtnBase = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, h: "36px", minW: "64px", border: "none", borderRadius: "pill",
-  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s, color .25s",
+  textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   _disabled: { pointerEvents: "none", color: "rgba(0, 0, 0, 0.26)" },
   "& svg": { flexShrink: 0 },
@@ -120,42 +118,43 @@ const headerCard = css({
 });
 const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexDirection: { base: "column", md: "row" } });
 const headMain = css({ display: "flex", flexDirection: "column", gap: "12px", minW: 0 });
-const jobTitle = css({ fontSize: { base: "22px", md: "28px" }, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15 });
+const jobTitle = css({ textStyle: { base: "title", md: "stat" }, fontWeight: 600 });
 const hiredRow = css({ display: "flex", alignItems: "center", gap: "9px" });
 const hiredIcon = css({ w: "22px", h: "22px", borderRadius: "50%", bg: "successTint", color: "success", display: "flex", alignItems: "center", justifyContent: "center" });
-const hiredName = css({ lineHeight: 1.5, fontSize: "18px", fontWeight: 600 });
+const hiredName = css({ textStyle: "title", fontWeight: 600 });
 const dotSep = css({ color: "ink3" });
-const hiredCount = css({ lineHeight: 1.5, fontSize: "15px", color: "ink2" });
-const noProposalsYet = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 500, color: "ink2" });
+const hiredCount = css({ textStyle: "body", color: "ink2" });
+const noProposalsYet = css({ textStyle: "lead", fontWeight: 500, color: "ink2" });
 const proposalTally = css({ display: "flex", alignItems: "baseline", gap: "9px" });
-const tallyMain = css({ lineHeight: 1.5, fontSize: "19px", fontWeight: 600, letterSpacing: "-0.015em" });
-const tallyFresh = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600, color: "accent" });
+const tallyMain = css({ textStyle: "title", fontWeight: 600 });
+const tallyFresh = css({ textStyle: "body", fontWeight: 600, color: "accent" });
 const ownerActions = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 
 const factsRow = css({ display: "flex", flexWrap: "wrap", rowGap: "18px", my: { base: "20px", md: "22px" } });
 const factCell = css({ display: "flex", flex: { base: "0 0 50%", md: "none" } });
 const factSep = css({ w: "1px", h: "30px", bg: "hairline", mx: "24px", display: { base: "none", md: "block" } });
 const factWrap = css({ display: "flex", flexDirection: "column", gap: "3px", minW: 0 });
-const factLabel = css({ lineHeight: 1.5, fontSize: "10.5px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const factLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
 const factValue = cva({
-  base: { lineHeight: 1.5, fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em", whiteSpace: "nowrap" },
+  base: { textStyle: "body", fontWeight: 600, whiteSpace: "nowrap" },
   variants: { urgent: { true: { color: "errorText" }, false: { color: "ink" } } },
 });
-const factSub = css({ fontWeight: 400, color: "ink3", ml: "6px", fontSize: "13px" });
+const factSub = css({ fontWeight: 400, color: "ink3", ml: "6px", textStyle: "ui" });
 
 const skillWrap = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
-const skillChip = css({ display: "inline-flex", alignItems: "center", h: "30px", px: "13px", borderRadius: "pill", fontSize: "12.5px", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
+const skillChip = css({ display: "inline-flex", alignItems: "center", h: "30px", px: "13px", borderRadius: "pill", textStyle: "meta", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
 const rule = css({ h: "1px", bg: "hairline", my: { base: "20px", md: "24px" } });
-const capLabel = css({ lineHeight: 1.5, fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const capLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
 
 const proposalsRegion = css({ display: "flex", flexDirection: "column", gap: "16px" });
 const regionHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" });
-const regionTitle = css({ lineHeight: 1.5, fontSize: "22px", fontWeight: 600, letterSpacing: "-0.015em" });
+const regionTitle = css({ textStyle: "title", fontWeight: 600 });
 const filterRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 const filterPill = cva({
   base: {
+    ...tapTarget,
     h: "34px", px: "16px", m: 0, borderRadius: "pill", border: "none",
-    cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: 500,
+    cursor: "pointer", textStyle: "ui", fontWeight: 500,
     _focusVisible: { outline: "none", boxShadow: "focusRing" },
   },
   variants: {
@@ -172,7 +171,7 @@ const filterCount = cva({
 const list = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const emptyFilter = css({
   bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card",
-  p: "40px", textAlign: "center", color: "ink2", fontSize: "14px",
+  p: "40px", textAlign: "center", color: "ink2", textStyle: "body",
 });
 const pagerRow = css({ display: "flex", justifyContent: "center", pt: "8px" });
 
@@ -206,19 +205,19 @@ const propAside = css({
 const propChipDesktop = css({ display: { base: "none", sm: "flex" }, justifyContent: "flex-end" });
 const propChipMobile = css({ display: { base: "flex", sm: "none" }, px: "18px", pb: "18px", mt: "-8px" });
 const nameRowCss = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
-const nameText = css({ lineHeight: 1.5, fontSize: "15.5px", fontWeight: 600, letterSpacing: "-0.01em" });
-const newFlag = css({ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 600, color: "accent" });
+const nameText = css({ textStyle: "lead", fontWeight: 600 });
+const newFlag = css({ display: "inline-flex", alignItems: "center", gap: "5px", textStyle: "micro", fontWeight: 600, color: "accent" });
 const newDot = css({ w: "7px", h: "7px", borderRadius: "50%", bg: "accent" });
-const updatedFlag = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "9px", borderRadius: "pill", fontSize: "11px", fontWeight: 600, bg: "rgba(37,99,235,0.1)", color: "#1d4ed8" });
-const submittedText = css({ lineHeight: 1.5, fontSize: "12px", fontWeight: 500, color: "ink2" });
-const snippetText = css({ fontSize: "13.5px", lineHeight: 1.5, color: "ink2", lineClamp: 2 });
+const updatedFlag = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "9px", borderRadius: "pill", textStyle: "micro", fontWeight: 600, bg: "rgba(37,99,235,0.1)", color: "#1d4ed8" });
+const submittedText = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
+const snippetText = css({ textStyle: "ui", color: "ink2", lineClamp: 2 });
 const priceWrap = css({ display: "flex", flexDirection: "column", gap: "2px", alignItems: { base: "flex-start", sm: "flex-end" } });
-const priceLabel = css({ lineHeight: 1.5, fontSize: "10px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const priceLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
 const priceValue = cva({
-  base: { fontFamily: "mono", fontSize: { base: "27px", sm: "30px" }, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1 },
+  base: { fontVariantNumeric: "tabular-nums", textStyle: "stat", fontWeight: 600 },
   variants: { dim: { true: { color: "ink2" }, false: { color: "ink" } } },
 });
-const priceDays = css({ lineHeight: 1.5, fontSize: "11.5px", fontWeight: 500, color: "ink2" });
+const priceDays = css({ textStyle: "micro", fontWeight: 500, color: "ink2" });
 const propActions = css({ display: "flex", gap: "8px", w: { base: "100%", sm: "auto" } });
 const propActionBtn = css({ flex: { base: 1, sm: "none" } });
 
@@ -239,8 +238,8 @@ const pdfTile = css({
   _hover: { bg: "surface2", borderColor: "hairlineStrong" },
 });
 const pdfIcon = css({ w: "38px", h: "38px", borderRadius: "9px", bg: "errorTint", color: "errorText", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" });
-const pdfName = css({ lineHeight: 1.5, fontSize: "13.5px", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "ink" });
-const pdfMeta = css({ lineHeight: 1.5, fontSize: "11px", fontWeight: 500, color: "ink2" });
+const pdfName = css({ textStyle: "ui", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "ink" });
+const pdfMeta = css({ textStyle: "micro", fontWeight: 500, color: "ink2" });
 
 /* ── empty state ── */
 const emptyCard = css({
@@ -254,8 +253,8 @@ const emptyIcon = css({
   display: "flex", alignItems: "center", justifyContent: "center", color: "ink3",
 });
 const emptyTextWrap = css({ maxW: "420px" });
-const emptyTitle = css({ lineHeight: 1.5, fontSize: "18px", fontWeight: 600, letterSpacing: "-0.01em" });
-const emptyBody = css({ fontSize: "14px", lineHeight: 1.55, color: "ink2" });
+const emptyTitle = css({ textStyle: "title", fontWeight: 600 });
+const emptyBody = css({ textStyle: "body", color: "ink2" });
 const emptyActions = css({ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" });
 
 /* ── loading skeleton ── */

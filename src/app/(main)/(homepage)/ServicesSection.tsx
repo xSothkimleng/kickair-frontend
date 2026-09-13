@@ -25,9 +25,8 @@ const viewAllBtn = css({
   borderWidth: "2px",
   borderStyle: "solid",
   borderColor: "rgba(0, 0, 0, 0.1)",
-  fontSize: "15px",
+  textStyle: "body",
   fontWeight: 600,
-  fontFamily: "inherit",
   cursor: "pointer",
   boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
   transition: "color .15s, border-color .15s",
@@ -43,10 +42,9 @@ export default function ServicesSection({ serviceCategories }: ServicesSectionPr
           <Box
             as="h2"
             className={css({
-              fontSize: { base: "28px", md: "40px" },
+              textStyle: { base: "stat", md: "display" },
               fontWeight: 600,
               color: "ink",
-              letterSpacing: "-0.02em",
               mb: "3",
             })}
           >
@@ -55,7 +53,7 @@ export default function ServicesSection({ serviceCategories }: ServicesSectionPr
           <Box
             as="p"
             className={css({
-              fontSize: { base: "16px", md: "19px" },
+              textStyle: { base: "lead", md: "title" },
               color: "ink2",
             })}
           >

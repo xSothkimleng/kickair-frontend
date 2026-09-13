@@ -14,14 +14,12 @@ const wrapCss = css({
 });
 
 const titleCss = css({
-  fontSize: "32px",
+  textStyle: "stat",
   fontWeight: 600,
-  lineHeight: 1.235,
   color: "ink",
-  letterSpacing: "-0.01em",
 });
 
-const descriptionCss = css({ fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+const descriptionCss = css({ textStyle: "body", color: "ink2" });
 
 export default function DashboardHeader({ title, description }: DashboardHeaderProps) {
   return (

@@ -12,9 +12,9 @@ export const divider = cva({
   defaultVariants: { orientation: "horizontal" },
 });
 
-const withLabel = css({ display: "flex", alignItems: "center", gap: "12px", w: "100%", color: "muted", fontSize: "13px", "& > hr": { flex: 1 } });
+const withLabel = css({ display: "flex", alignItems: "center", gap: "12px", w: "100%", color: "muted", textStyle: "ui", "& > hr": { flex: 1 } });
 
-/** Replaces MUI <Divider>. Pass `children` for a centred label ("or"). */
+/** Pass `children` for a centred label ("or"). */
 export function Divider({ orientation, children, className }: { orientation?: "horizontal" | "vertical"; children?: ReactNode; className?: string }) {
   if (children) {
     return (

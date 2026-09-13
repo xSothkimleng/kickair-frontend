@@ -140,6 +140,30 @@ Kimleng wants MUI gone. The admin console is already Panda; the **site** is the 
 - The React Compiler lint rules are on: no `Date.now()`/`new Date()` in render (use a client-only `useSyncExternalStore` like `OverviewPage`), no `setState` inside `useEffect` bodies.
 - Keep `OrderRecord` as the single order history while porting it — same rule as before.
 
+## Status after the 2026-09-13 typography session — committed, not pushed
+
+Kimleng's ask: the site's fonts and sizes were "random" (vibe-coded), make it one system and make it easy to change later. Audit found: numbers asked for Roboto Mono, which was never loaded, so they fell back to Menlo on Mac and a different system mono on every other platform; ~1,500 raw `fontSize` declarations with 70+ distinct values; line-heights/letter-spacings copied from MUI defaults; two text-colour sets (slate `heading/body/muted` vs black `ink/ink2/ink3`); `ink3` at 40 % black failed the 4.5:1 contrast floor.
+
+### What changed — where things live
+- **Font: Inter** (chosen over Geist by eye from a side-by-side specimen), variable weight + `opsz`, loaded in `src/app/layout.tsx` as `--font-sans`; **Kantumruy Pro** as the Khmer fallback (`--font-khmer`). `globals.css` sets the stack on `html` and, inside `@layer base`, makes `button/input/select/textarea` inherit font/size/line-height (layered on purpose — unlayered it beat every Panda textStyle). Admin console dropped its own Geist/Geist Mono and uses the same font.
+- **Roles, not numbers:** `panda.config.ts` → `textStyles` — `micro, eyebrow, meta, ui, body, lead, title, heading, stat, display` + `input/inputSm` (16px on phones so iOS Safari does not zoom). Each carries its line-height and tracking. Components write `textStyle: "ui"`; `ds/Text` and the admin `text()` recipe take the same role names (`<Text size="ui">`). `ds/Text` also exports a `money` recipe (tabular digits + weight 600).
+- **No mono anywhere:** every `fontFamily: "mono"` / `"monospace"` became `fontVariantNumeric: "tabular-nums"`; the `fonts.mono` token is gone (`fonts.sans` replaces it). `customOrders/kit.tsx` `Money` now takes a role (`size="stat"`) instead of a pixel number.
+- **Text colours:** `heading/body/muted/placeholder` are now aliases of `ink/ink2/ink3/placeholder` (`{colors.ink}` references); `ink2` 0.6 → 0.7, `ink3` 0.4 → 0.55 (4.7:1 on white). `color: rgba(0,0,0,a)` literals on text were mapped to the tokens by alpha.
+- **Tap targets:** `ds/tap.ts` → `tapTarget` / `tapTargetIcon` (`@media (pointer: coarse) { minH: 36px }`), composed into the ds `IconButton` and the sub-36px controls (finance filters, notification-bell filters, wallet chip, sign-in, bell buttons, custom-order icon button, KYC back, proposals filter pills).
+- **Guard:** `eslint.config.mjs` rejects `fontSize` / `lineHeight` (except `1`) / `letterSpacing` / `fontFamily` as object props *and* as styled-system/jsx attributes under `src/` (website-v2 exempt). Escape hatch: `// eslint-disable-next-line no-restricted-syntax -- why` (used twice, for avatar initials that scale with the avatar's pixel size).
+- **MUI leftovers:** `muiBtnRaw` → `navBtnRaw`, `muiTextBtn` → `textBtn`, the `coBtn` `font: "13.5" | "14"` variants → `"ui" | "body"`, ~200 comment lines that described MUI metrics reworded, MUI line-heights (1.75/1.66/1.43/1.334…) and letter-spacings (0.02857em…) gone with the text styles.
+- **Docs:** `TYPOGRAPHY.md` (the rules + "to change X edit Y" table), CLAUDE.md pointer, MIGRATION-PANDA.md typography table now maps MUI variants to roles.
+
+### How it was done / verified
+One AST codemod (TypeScript compiler API, one-shot, not kept in the repo) rewrote 166 files / ~3,000 edits surgically (trailing commas and formatting preserved), then seven inline `style={{ fontSize }}` sites by hand. Baseline and after screenshots of 6 public pages (desktop + phone) and 9 dashboard pages + 4 admin pages (bob@example.com / admin@kickair.com via Sanctum tokens, since deleted) were compared; headless-Chrome `CSS.getPlatformFontsForNode` confirms text and figures paint in Inter and inputs/buttons keep their role sizes. `tsc` clean (the `.next/dev/types` `/website-v2` route-type errors are stale generated files, pre-existing); `eslint src` has 0 errors outside `src/hooks/useFormRecovery.ts` ("Cannot access refs during render", pre-existing, file untouched).
+
+### Not done / next passes (Kimleng's call)
+- **Spacing scale** (paddings like 7.2px / 3.2px everywhere) — same method, next pass.
+- **Preflight** still off (see panda.config.ts note).
+- **Colour beyond text** — backgrounds/borders still carry rgba literals; text tones were unified, the rest was not.
+- website-v2 spike untouched (renders in Inter now via the root layout; still throwaway).
+- The Khmer language switcher in the navbar has no i18n behind it; the Kantumruy fallback only covers user-entered Khmer today.
+
 ## Design workflow note
 Some pages were built from **Claude Design** handoff bundles. **Find Freelancers** and **Order Detail** came from those bundles.
 

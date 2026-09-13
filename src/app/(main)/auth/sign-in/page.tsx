@@ -12,10 +12,10 @@ import { safeRedirect } from "@/lib/redirect";
 import { User } from "@/types/user";
 
 const intro = css({ textAlign: "center", mb: "32px" });
-const orRow = css({ my: "20px", lineHeight: 1.5 });
+const orRow = css({ my: "20px" });
 const alertGap = css({ mb: "20px" });
 const labelRow = css({ display: "flex", justifyContent: "space-between", alignItems: "baseline", mb: "7px" });
-const label = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.5, color: "body" });
+const label = css({ textStyle: "ui", fontWeight: 500, color: "body" });
 const footer = css({ mt: "32px" });
 
 function SignInContent() {

@@ -18,17 +18,14 @@ export const ABA_METHODS: { id: AbaMethod; name: string; desc: string; logos: Pa
 const listCss = css({ display: "flex", flexDirection: "column", gap: "10px" });
 const headCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "2px" });
 const headLabelCss = css({
-  fontSize: "11px",
+  textStyle: "eyebrow",
   fontWeight: 600,
-  letterSpacing: "0.06em",
-  textTransform: "uppercase",
   color: "ink3",
-  lineHeight: 1.5,
 });
 const rowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" });
 const textColCss = css({ minWidth: 0 });
-const nameCss = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5 });
-const descCss = css({ fontSize: "13px", color: "ink2", lineHeight: 1.5 });
+const nameCss = css({ fontWeight: 600, textStyle: "body" });
+const descCss = css({ textStyle: "ui", color: "ink2" });
 const logosCss = css({ display: "flex", gap: "6px", flexShrink: 0 });
 
 /** ABA step 6 — select payment method on our page (handed to ABA's popup after). */

@@ -80,11 +80,11 @@ const closeBtn = css(iconButton.raw({ size: "md", shape: "round", variant: "ghos
 const brandRow = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", mb: "20px" });
 const brandMark = css({ w: "22px", h: "22px", borderRadius: "7px", bg: "accent", display: "flex", alignItems: "center", justifyContent: "center" });
 const brandDot = css({ w: "8px", h: "8px", borderRadius: "2px", bg: "#fff", transform: "rotate(45deg)" });
-const brandName = css({ fontSize: "16px", fontWeight: 700, letterSpacing: "-0.01em" });
-// The `mb` these two carried as MUI Typography never applied — globals.css's
+const brandName = css({ textStyle: "lead", fontWeight: 700 });
+// The `mb` these two carried as Typography never applied — globals.css's
 // unlayered `p, h1-h6 { margin: 0 }` outranks any layered rule — so it's dropped.
-const headingCss = css({ fontSize: "20px", fontWeight: 700, lineHeight: 1.25, letterSpacing: "-0.01em", color: "ink" });
-const bodyText = css({ fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+const headingCss = css({ textStyle: "title", fontWeight: 700, color: "ink" });
+const bodyText = css({ textStyle: "body", color: "ink2" });
 // GoogleButton merges an extra `className` with `cx`, which can't override its
 // own atomic classes — a descendant selector on a wrapper wins on specificity.
 const googleWrap = css({
@@ -98,7 +98,7 @@ const googleWrap = css({
 });
 const orRow = css({ display: "flex", alignItems: "center", gap: "12px", my: "16px" });
 const orRule = css({ flex: 1, h: "1px", bg: "hairline" });
-const orLabel = css({ fontSize: "12px", color: "ink3" });
+const orLabel = css({ textStyle: "meta", color: "ink3" });
 const errorBox = css({
   display: "flex",
   alignItems: "flex-start",
@@ -112,10 +112,10 @@ const errorBox = css({
   mb: "14px",
 });
 const errorIcon = css({ flex: "0 0 16px", mt: "1px", color: "error" });
-const errorText = css({ fontSize: "13px", lineHeight: 1.4, color: "error" });
+const errorText = css({ textStyle: "ui", color: "error" });
 const stepsRow = css({ display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", mb: "18px" });
 const primaryBtn = css(pillButton.raw({ tone: "accent", size: "md", full: true }), { h: "46px" });
-// `_disabled` reproduces MUI's disabled Button text colour (the gate greys the
+// `_disabled` reproduces the disabled button text colour (the gate greys the
 // secondary out while "Become a client" is in flight).
 const secondaryBtn = css(pillButton.raw({ tone: "grey", size: "md", full: true }), {
   h: "46px",
@@ -339,13 +339,13 @@ const summaryThumb = css({
 });
 const summaryThumbEmpty = css({ backgroundImage: "repeating-linear-gradient(45deg,rgba(0,0,0,0.05) 0 6px,rgba(0,0,0,0.09) 6px 12px)" });
 const summaryThumbImg = css({ w: "100%", h: "100%", objectFit: "cover" });
-const summaryPlaceholder = css({ fontFamily: "mono", fontSize: "7px", color: "ink3", textAlign: "center", lineHeight: 1.2 });
+const summaryPlaceholder = css({ fontVariantNumeric: "tabular-nums", textStyle: "micro", color: "ink3", textAlign: "center" });
 const summaryMain = css({ flex: 1, minWidth: 0 });
-const summaryTitle = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const summaryTitle = css({ textStyle: "body", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 const summaryMeta = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
 const summaryMetaGap = css({ mb: "4px" });
 const summaryTier = css({
-  fontSize: "11px",
+  textStyle: "micro",
   fontWeight: 500,
   color: "accent",
   bg: "accentFill",
@@ -356,9 +356,9 @@ const summaryTier = css({
   px: "9px",
   py: "1px",
 });
-const summarySeller = css({ fontSize: "12px", color: "ink2" });
-const summaryLine = css({ fontSize: "12px", color: "ink3" });
-const summaryAmount = css({ fontFamily: "mono", fontSize: "16px", fontWeight: 600, fontVariantNumeric: "tabular-nums", alignSelf: "flex-start" });
+const summarySeller = css({ textStyle: "meta", color: "ink2" });
+const summaryLine = css({ textStyle: "meta", color: "ink3" });
+const summaryAmount = css({ textStyle: "lead", fontWeight: 600, fontVariantNumeric: "tabular-nums", alignSelf: "flex-start" });
 
 function OrderSummaryCard({ summary }: { summary: PurchaseSummary }) {
   return (
@@ -389,7 +389,7 @@ function OrderSummaryCard({ summary }: { summary: PurchaseSummary }) {
 }
 
 const stepPill = cva({
-  base: { fontSize: "12px", fontWeight: 500, borderRadius: "pill", px: "12px", py: "5px", borderWidth: "1px", borderStyle: "solid" },
+  base: { textStyle: "meta", fontWeight: 500, borderRadius: "pill", px: "12px", py: "5px", borderWidth: "1px", borderStyle: "solid" },
   variants: {
     done: {
       true: { color: "successText", bg: "successTint", borderColor: "#16a34a33" },
@@ -403,15 +403,15 @@ function StepPill({ children, done }: { children: React.ReactNode; done?: boolea
   return <span className={stepPill({ done })}>{children}</span>;
 }
 
-const arrowCss = css({ color: "ink3", fontSize: "12px" });
+const arrowCss = css({ color: "ink3", textStyle: "meta" });
 
 function Arrow() {
   return <span className={arrowCss}>→</span>;
 }
 
-// `& svg` keeps MUI SvgIcon's `flex-shrink: 0` for the icons passed in.
+// `& svg` keeps The old icon set's `flex-shrink: 0` for the icons passed in.
 const trustItem = css({ display: "flex", alignItems: "center", gap: "5px", color: "ink3", "& svg": { flexShrink: 0 } });
-const trustLabel = css({ fontSize: "11px", color: "ink3" });
+const trustLabel = css({ textStyle: "micro", color: "ink3" });
 
 function TrustItem({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
   return (

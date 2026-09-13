@@ -22,7 +22,7 @@ import CustomOrdersSection from "./CustomOrdersSection";
 // import RequirementsSection from "./RequirementsSection";
 
 const page = css({ display: "flex", flexDirection: "column", gap: "16px" });
-/* MUI text `Button` metrics: 500 weight, 1.75 line-height, no padding here. */
+/* Text button metrics: 500 weight, no padding here. */
 const backBtn = css({
   display: "inline-flex",
   alignItems: "center",
@@ -33,18 +33,16 @@ const backBtn = css({
   border: "none",
   bg: "transparent",
   color: "ink2",
-  fontFamily: "inherit",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "color .25s",
   _hover: { color: "ink" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
 });
-const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
-const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const pageTitle = css({ textStyle: "stat", fontWeight: 600, color: "ink" });
+const pageSub = css({ textStyle: "ui", color: "ink2" });
 
 const banner = css({
   borderRadius: "cardSm",
@@ -59,7 +57,7 @@ const banner = css({
   flexWrap: "wrap",
 });
 const bannerIcon = css({ color: "pendingText", flexShrink: 0 });
-const bannerText = css({ lineHeight: 1.5, fontSize: "13px", color: "#92400e", flex: 1, minW: "200px" });
+const bannerText = css({ textStyle: "ui", color: "#92400e", flex: 1, minW: "200px" });
 const smallBtnBase = css({
   display: "inline-flex",
   alignItems: "center",
@@ -71,10 +69,8 @@ const smallBtnBase = css({
   minW: "64px",
   border: "none",
   borderRadius: "8px",
-  fontFamily: "inherit",
-  fontSize: "12px",
+  textStyle: "meta",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "background-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
@@ -83,7 +79,7 @@ const amberBtn = css({ bg: "pendingText", color: "white", _hover: { bg: "#92400e
 const amberGhostBtn = css({ bg: "transparent", color: "#92400e", _hover: { bg: "rgba(245,158,11,0.12)" } });
 
 const mediaError = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "#ef4444", borderRadius: "card" });
-const errorText = css({ lineHeight: 1.5, fontSize: "12px", color: "#ef4444" });
+const errorText = css({ textStyle: "meta", color: "#ef4444" });
 
 const termsCard = css({
   bg: "surface",
@@ -94,8 +90,8 @@ const termsCard = css({
   p: "32px",
 });
 const termsRow = css({ display: "flex", alignItems: "center" });
-const termsText = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
-const termsLink = css({ lineHeight: 1.5, fontSize: "11px", color: "accent", cursor: "pointer", _hover: { textDecoration: "underline" } });
+const termsText = css({ textStyle: "micro", color: "ink2" });
+const termsLink = css({ textStyle: "micro", color: "accent", cursor: "pointer", _hover: { textDecoration: "underline" } });
 const actions = css({ display: "flex", alignItems: "center", gap: "12px" });
 /* Base metrics only — `bg`/`cursor` live on the per-button classes so no two
    atomic classes ever fight (Panda's `cx` concatenates, it can't resolve conflicts). */
@@ -110,10 +106,8 @@ const bigBtnBase = css({
   h: "44px",
   minW: "64px",
   border: "none",
-  fontFamily: "inherit",
-  fontSize: "13px",
+  textStyle: "ui",
   fontWeight: 500,
-  lineHeight: 1.75,
   transition: "background-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   _disabled: { pointerEvents: "none" },
@@ -130,12 +124,12 @@ const publishBtn = cva({
 const draftBtn = css({ borderRadius: "40px", color: "ink", bg: "rgba(0, 0, 0, 0.05)", cursor: "pointer", _hover: { bg: "rgba(0, 0, 0, 0.1)" } });
 const cancelBtn = css({ color: "ink2", bg: "transparent", cursor: "pointer", _hover: { color: "ink", bg: "transparent" } });
 
-/* Saved-as-draft dialog (MUI `Dialog maxWidth="xs" fullWidth` + `PaperProps p:1`). */
+/* Saved-as-draft dialog (Dialog + `PaperProps p:1`). */
 const dialogPanel = css({ p: "8px" });
 const dialogBody = css({ p: "20px 24px", overflowY: "auto", flex: 1 });
-const dialogTitleRow = css({ display: "flex", alignItems: "center", gap: "12px", fontSize: "18px", fontWeight: 600, pt: "8px", mb: "8px", color: "ink" });
-const dialogText = css({ lineHeight: 1.5, fontSize: "14px", color: "rgba(0,0,0,0.75)" });
-const dialogText2 = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(0,0,0,0.55)" });
+const dialogTitleRow = css({ display: "flex", alignItems: "center", gap: "12px", textStyle: "title", fontWeight: 600, pt: "8px", mb: "8px", color: "ink" });
+const dialogText = css({ textStyle: "body", color: "ink2" });
+const dialogText2 = css({ textStyle: "ui", color: "ink2" });
 const dialogActions = css({ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", p: "8px 24px 16px", flex: "0 0 auto" });
 const dialogTextBtn = css({
   display: "inline-flex",
@@ -149,10 +143,8 @@ const dialogTextBtn = css({
   borderRadius: "4px",
   bg: "transparent",
   color: "ink2",
-  fontFamily: "inherit",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   transition: "background-color .25s",
   _hover: { bg: "rgba(0, 0, 0, 0.04)" },
@@ -170,10 +162,8 @@ const dialogSolidBtn = css({
   borderRadius: "32px",
   bg: "ink",
   color: "white",
-  fontFamily: "inherit",
-  fontSize: "14px",
+  textStyle: "body",
   fontWeight: 500,
-  lineHeight: 1.75,
   cursor: "pointer",
   boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
   transition: "background-color .25s, box-shadow .25s",
@@ -620,7 +610,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
             onClick={handleSaveDraft}
             disabled={submitting || savingDraft}
             className={cx(bigBtnBase, draftBtn)}>
-            {savingDraft ? <Spinner size={18} className={css({ color: "rgba(0,0,0,0.5)" })} /> : "Save as Draft"}
+            {savingDraft ? <Spinner size={18} className={css({ color: "ink2" })} /> : "Save as Draft"}
           </button>
 
           <button

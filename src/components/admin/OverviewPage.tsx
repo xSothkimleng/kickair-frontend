@@ -18,9 +18,9 @@ const queueCard = css({
   "&:hover .arrow": { opacity: 1 },
 });
 const iconBox = css({ w: "34px", h: "34px", borderRadius: "10px", display: "grid", placeItems: "center", bg: "var(--td-hover)", color: "var(--td-ink-2)", "&[data-hot=true]": { bg: "var(--td-amber-soft)", color: "var(--td-amber)" } });
-const bigNum = css({ fontSize: "30px", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1, fontVariantNumeric: "tabular-nums" });
+const bigNum = css({ textStyle: "stat", fontWeight: 600, fontVariantNumeric: "tabular-nums" });
 const kpiStrip = css({ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", "& > div": { p: "18px 20px", borderRightWidth: "1px", borderRightStyle: "solid", borderRightColor: "var(--td-line)" }, "& > div:last-child": { borderRight: "none" } });
-const kpiNum = css({ fontSize: "24px", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.1, fontVariantNumeric: "tabular-nums", mt: "6px" });
+const kpiNum = css({ textStyle: "heading", fontWeight: 600, fontVariantNumeric: "tabular-nums", mt: "6px" });
 const listRow = css({ display: "flex", alignItems: "center", gap: "12px", px: "20px", py: "11px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)", _hover: { bg: "var(--td-surface-2)" }, "&:last-child": { borderBottom: "none" } });
 
 const WEEK = 7 * 86_400_000;
@@ -82,7 +82,7 @@ export default function OverviewPage() {
                 <div>
                   <p className={bigNum}>{stats.isLoading ? "–" : c.count}</p>
                   <p className={cx(text({ weight: 600 }), css({ mt: "8px" }))}>{c.label}</p>
-                  <p className={text({ size: "sm", tone: 2 })}>{stats.isLoading ? " " : c.sub}</p>
+                  <p className={text({ size: "meta", tone: 2 })}>{stats.isLoading ? " " : c.sub}</p>
                 </div>
               </Link>
             ))}
@@ -96,24 +96,24 @@ export default function OverviewPage() {
           {s ? (
             <div className={kpiStrip}>
               <div>
-                <p className={text({ size: "sm", tone: 2 })}>Gross volume today</p>
+                <p className={text({ size: "meta", tone: 2 })}>Gross volume today</p>
                 <p className={kpiNum}>{money(s.gmv.today)}</p>
-                <p className={cx(text({ size: "sm", tone: 3 }), css({ mt: "4px" }))}>{money(s.gmv.total)} all time</p>
+                <p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{money(s.gmv.total)} all time</p>
               </div>
               <div>
-                <p className={text({ size: "sm", tone: 2 })}>Sign-ups today</p>
+                <p className={text({ size: "meta", tone: 2 })}>Sign-ups today</p>
                 <p className={kpiNum}>{s.users.new_today}</p>
-                <p className={cx(text({ size: "sm", tone: 3 }), css({ mt: "4px" }))}>{s.users.new_freelancers_today} freelancers · {s.users.new_clients_today} clients · {num(s.users.total)} total</p>
+                <p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{s.users.new_freelancers_today} freelancers · {s.users.new_clients_today} clients · {num(s.users.total)} total</p>
               </div>
               <div>
-                <p className={text({ size: "sm", tone: 2 })}>Active orders</p>
+                <p className={text({ size: "meta", tone: 2 })}>Active orders</p>
                 <p className={kpiNum}>{s.orders.active}</p>
-                <p className={cx(text({ size: "sm", tone: 3 }), css({ mt: "4px" }))}>In progress right now</p>
+                <p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>In progress right now</p>
               </div>
               <div>
-                <p className={text({ size: "sm", tone: 2 })}>Completed today</p>
+                <p className={text({ size: "meta", tone: 2 })}>Completed today</p>
                 <p className={kpiNum}>{s.orders.completed_today}</p>
-                <p className={cx(text({ size: "sm", tone: 3 }), css({ mt: "4px" }))}>{num(s.orders.total_completed)} all time</p>
+                <p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{num(s.orders.total_completed)} all time</p>
               </div>
             </div>
           ) : stats.isError ? <ErrorState onRetry={() => stats.refetch()} /> : <Loading />}
@@ -122,30 +122,30 @@ export default function OverviewPage() {
 
       <section className={cx(grid({ cols: 2 }), css({ mt: "28px", gap: "20px" }))}>
         <Panel>
-          <PanelHead title="Recent activity" actions={<Link href="/admin/inbox" className={text({ size: "sm", tone: "accent", weight: 500 })}>Open inbox</Link>} />
-          {notices.isLoading ? <Loading /> : recent.length === 0 ? <p className={cx(text({ size: "sm", tone: 3 }), css({ p: "20px" }))}>Nothing has happened yet.</p> : recent.map((n) => (
+          <PanelHead title="Recent activity" actions={<Link href="/admin/inbox" className={text({ size: "meta", tone: "accent", weight: 500 })}>Open inbox</Link>} />
+          {notices.isLoading ? <Loading /> : recent.length === 0 ? <p className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>Nothing has happened yet.</p> : recent.map((n) => (
             <Link key={n.id} href={adminNotificationRoute(n)} className={listRow}>
               <span className={css({ w: "6px", h: "6px", borderRadius: "999px", bg: "var(--td-accent)", flexShrink: 0, "&[data-read=true]": { bg: "var(--td-line-2)" } })} data-read={!!n.readAt} />
               <div className={css({ minW: 0, flex: 1 })}>
-                <p className={text({ size: "sm", weight: 600, truncate: true })}>{n.title}</p>
-                <p className={text({ size: "sm", tone: 2, truncate: true })}>{n.body}</p>
+                <p className={text({ size: "meta", weight: 600, truncate: true })}>{n.title}</p>
+                <p className={text({ size: "meta", tone: 2, truncate: true })}>{n.body}</p>
               </div>
-              <span className={text({ size: "xs", tone: 3 })}>{ago(n.createdAt)}</span>
+              <span className={text({ size: "micro", tone: 3 })}>{ago(n.createdAt)}</span>
             </Link>
           ))}
         </Panel>
         <Panel>
-          <PanelHead title="Joined this week" meta={newest.data ? plural(joined.length, "person", "people") : undefined} actions={<Link href="/admin/people" className={text({ size: "sm", tone: "accent", weight: 500 })}>All people</Link>} />
-          {newest.isLoading ? <Loading /> : joined.length === 0 ? <p className={cx(text({ size: "sm", tone: 3 }), css({ p: "20px" }))}>No sign-ups in the last 7 days.</p> : joined.map((u) => (
+          <PanelHead title="Joined this week" meta={newest.data ? plural(joined.length, "person", "people") : undefined} actions={<Link href="/admin/people" className={text({ size: "meta", tone: "accent", weight: 500 })}>All people</Link>} />
+          {newest.isLoading ? <Loading /> : joined.length === 0 ? <p className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>No sign-ups in the last 7 days.</p> : joined.map((u) => (
             <Link key={u.id} href={`/admin/people/${u.id}`} className={listRow}>
               <Avatar name={u.name} size="sm" seed={u.id} src={u.avatar_url} />
               <div className={css({ minW: 0, flex: 1 })}>
-                <p className={text({ size: "sm", weight: 600, truncate: true })}>{u.name}</p>
-                <p className={text({ size: "sm", tone: 2, truncate: true })}>{roleLabels(u).join(" · ") || "No role yet"}{u.email ? ` · ${u.email}` : ""}</p>
+                <p className={text({ size: "meta", weight: 600, truncate: true })}>{u.name}</p>
+                <p className={text({ size: "meta", tone: 2, truncate: true })}>{roleLabels(u).join(" · ") || "No role yet"}{u.email ? ` · ${u.email}` : ""}</p>
               </div>
               <div className={row({ gap: 2 })}>
                 {u.is_freelancer ? <Pill tone={kycLabel[kycState(u.kyc_status)].tone}>{kycLabel[kycState(u.kyc_status)].label}</Pill> : null}
-                <span className={text({ size: "xs", tone: 3 })}>{ago(u.created_at)}</span>
+                <span className={text({ size: "micro", tone: 3 })}>{ago(u.created_at)}</span>
               </div>
             </Link>
           ))}

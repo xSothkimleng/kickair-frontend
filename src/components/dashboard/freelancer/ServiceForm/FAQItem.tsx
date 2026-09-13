@@ -18,7 +18,7 @@ const removeBtn = css(iconButton.raw({ shape: "square" }), {
   w: "32px",
   h: "32px",
   borderRadius: "8px",
-  color: "rgba(0, 0, 0, 0.45)",
+  color: "ink3",
   bg: "rgba(0, 0, 0, 0.05)",
   borderWidth: "1px",
   borderStyle: "solid",

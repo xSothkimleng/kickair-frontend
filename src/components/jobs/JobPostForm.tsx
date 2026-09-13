@@ -44,12 +44,11 @@ const parseYmd = (s: string): Date | null => {
 const toYmd = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 /* ── static styles ── */
-/* MUI text `Button` metrics with `pl: 0`. */
+/* Text button metrics with `pl: 0`. */
 const backBtn = css({
   display: "inline-flex", alignItems: "center", gap: "8px",
   m: 0, mb: "16px", p: "6px 8px 6px 0", border: "none", bg: "transparent",
-  color: "ink2", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "color .25s",
+  color: "ink2", textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "color .25s",
   _hover: { color: "ink" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
@@ -63,9 +62,9 @@ const paper = css({
   p: "32px",
 });
 /* globals.css zeroes `p` margins outside any layer, so the old Typography `mb` never applied. */
-const formTitle = css({ lineHeight: 1.5, fontSize: "24px", fontWeight: 600 });
-const formSub = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(0,0,0,0.5)" });
-const alertBox = css({ mb: "24px", borderRadius: "8px", fontSize: "13px" });
+const formTitle = css({ textStyle: "heading", fontWeight: 600 });
+const formSub = css({ textStyle: "ui", color: "ink2" });
+const alertBox = css({ mb: "24px", borderRadius: "8px", textStyle: "ui" });
 
 const banner = css({
   borderRadius: "cardSm",
@@ -81,13 +80,12 @@ const banner = css({
   flexWrap: "wrap",
 });
 const bannerIcon = css({ color: "pendingText", flexShrink: 0 });
-const bannerText = css({ lineHeight: 1.5, fontSize: "13px", color: "#92400e", flex: 1, minW: "200px" });
+const bannerText = css({ textStyle: "ui", color: "#92400e", flex: 1, minW: "200px" });
 const smallBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", m: 0, px: "16px", h: "32px", minW: "64px",
   border: "none", borderRadius: "8px",
-  fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s, color .25s",
+  textStyle: "meta", fontWeight: 500, cursor: "pointer", transition: "background-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });
 const amberBtn = css({ bg: "pendingText", color: "white", _hover: { bg: "#92400e" } });
@@ -95,11 +93,11 @@ const amberGhostBtn = css({ bg: "transparent", color: "#92400e", _hover: { bg: "
 
 const stack = css({ display: "flex", flexDirection: "column", gap: "24px" });
 const fieldLabel = cva({
-  base: { lineHeight: 1.5, fontSize: "13px", fontWeight: 500 },
-  variants: { invalid: { true: { color: "#d32f2f" }, false: { color: "rgba(0,0,0,0.7)" } } },
+  base: { textStyle: "ui", fontWeight: 500 },
+  variants: { invalid: { true: { color: "#d32f2f" }, false: { color: "ink2" } } },
 });
 const editorError = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "#d32f2f", borderRadius: "8px" });
-const helperError = css({ lineHeight: 1.5, fontSize: "12px", color: "#d32f2f" });
+const helperError = css({ textStyle: "meta", color: "#d32f2f" });
 const twoCol = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "16px" });
 
 const mediaGrid = css({
@@ -118,16 +116,15 @@ const thumb = css({
 const pdfPreview = css({
   w: "100%", h: "100%",
   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-  bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)",
+  bg: "rgba(0,0,0,0.06)", color: "ink3",
 });
-const pdfName = css({ lineHeight: 1.5, fontSize: "9px", color: "rgba(0,0,0,0.5)", px: "8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxW: "100%" });
+const pdfName = css({ textStyle: "micro", color: "ink2", px: "8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxW: "100%" });
 const deleteOverlay = css({ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bg: "rgba(0,0,0,0.3)" });
 const deleteBtn = css({
   position: "absolute", top: "6px", right: "6px",
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   p: "6px", m: 0, border: "none", borderRadius: "50%",
-  bg: "#ef4444", color: "white", cursor: "pointer", fontFamily: "inherit",
-  opacity: 0, transition: "opacity 0.2s, background-color .2s",
+  bg: "#ef4444", color: "white", cursor: "pointer", opacity: 0, transition: "opacity 0.2s, background-color .2s",
   _hover: { bg: "#dc2626" },
   _focusVisible: { opacity: 1, outline: "none", boxShadow: "focusRing" },
   "& svg": { display: "block" },
@@ -140,25 +137,23 @@ const uploadBox = css({
   borderRadius: "cardSm",
   display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
   borderWidth: "2px", borderStyle: "dashed", borderColor: "rgba(0,0,0,0.15)",
-  cursor: "pointer", fontFamily: "inherit",
-  transition: "background-color .25s, border-color .25s",
+  cursor: "pointer", transition: "background-color .25s, border-color .25s",
   _hover: { bg: "rgba(0,113,227,0.04)", borderColor: "accent" },
   "&[data-disabled]": { pointerEvents: "none", bg: "rgba(0,0,0,0.04)" },
 });
-const uploadIcon = css({ color: "rgba(0,0,0,0.4)", mb: "6px" });
-const uploadText = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0,0,0,0.6)" });
-const uploadHint = css({ lineHeight: 1.5, fontSize: "10px", color: "rgba(0,0,0,0.4)" });
+const uploadIcon = css({ color: "ink3", mb: "6px" });
+const uploadText = css({ textStyle: "micro", color: "ink2" });
+const uploadHint = css({ textStyle: "micro", color: "ink3" });
 const hintRow = css({ display: "flex", alignItems: "center", gap: "16px", mt: "12px" });
-const hintItem = css({ display: "flex", alignItems: "center", gap: "4px", color: "rgba(0,0,0,0.4)" });
-const hintText = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0,0,0,0.5)" });
-const hintCount = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0,0,0,0.4)" });
+const hintItem = css({ display: "flex", alignItems: "center", gap: "4px", color: "ink3" });
+const hintText = css({ textStyle: "micro", color: "ink2" });
+const hintCount = css({ textStyle: "micro", color: "ink3" });
 
 const actions = css({ display: "flex", gap: "16px", pt: "8px" });
 const bigBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, flex: 1, minW: "64px", borderRadius: "40px",
-  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s, box-shadow .25s",
+  textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s, box-shadow .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   _disabled: { pointerEvents: "none" },
 });
@@ -609,7 +604,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
               {tempUploads.length < MAX_FILES && (
                 <label className={uploadBox} data-disabled={uploading ? "" : undefined}>
                   {uploading ? (
-                    <Spinner size={22} className={css({ color: "rgba(0,0,0,0.4)" })} />
+                    <Spinner size={22} className={css({ color: "ink3" })} />
                   ) : (
                     <>
                       <CloudUpload size={22} className={uploadIcon} />
@@ -659,7 +654,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 onClick={() => handleSave(true)}
                 disabled={submitting || savingDraft}
                 className={cx(bigBtn, draftBtn)}>
-                {savingDraft ? <Spinner size={18} className={css({ color: "rgba(0,0,0,0.5)" })} /> : "Save as Draft"}
+                {savingDraft ? <Spinner size={18} className={css({ color: "ink2" })} /> : "Save as Draft"}
               </button>
             )}
             <button

@@ -59,13 +59,13 @@ const PROP_TONE: Record<ProposalStatus, { tone: Tone; label: string }> = {
 /* ── static styles ── */
 const chipBase = cva({
   base: { display: "inline-flex", alignItems: "center", gap: "6px", borderRadius: "pill", fontWeight: 600 },
-  variants: { size: { md: { h: "26px", px: "10px", fontSize: "12px" }, lg: { h: "34px", px: "14px", fontSize: "13px" } } },
+  variants: { size: { md: { h: "26px", px: "10px", textStyle: "meta" }, lg: { h: "34px", px: "14px", textStyle: "ui" } } },
   defaultVariants: { size: "md" },
 });
 const chipDot = css({ w: "6px", h: "6px", borderRadius: "50%", bg: "currentColor" });
-const labelBase = css({ lineHeight: 1.5, fontSize: "10.5px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
-const label10 = css({ fontSize: "10px" });
-const label95 = css({ fontSize: "9.5px" });
+const labelBase = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
+const label10 = css({ textStyle: "micro" });
+const label95 = css({ textStyle: "micro" });
 const cardBase = css({
   bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card", p: "22px",
 });
@@ -93,8 +93,7 @@ const skelBack = css({ mb: "16px" });
 const backBtn = css({
   display: "inline-flex", alignItems: "center", gap: "8px",
   m: 0, mb: "18px", p: "2px 4px", border: "none", bg: "transparent",
-  color: "ink2", fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "color .25s",
+  color: "ink2", textStyle: "body", fontWeight: 500, cursor: "pointer", transition: "color .25s",
   _hover: { color: "#000", bg: "transparent" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
@@ -107,16 +106,15 @@ const stickyCol = css({ position: { md: "sticky" }, top: { md: "24px" } });
 const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" });
 const headMain = css({ display: "flex", flexDirection: "column", gap: "12px", minW: 0 });
 const chipRow = css({ display: "flex", gap: "10px", flexWrap: "wrap" });
-const categoryChip = css({ display: "inline-flex", alignItems: "center", h: "34px", px: "14px", borderRadius: "pill", fontSize: "13px", fontWeight: 600, bg: "rgba(0,0,0,0.05)", color: "ink2" });
-const jobTitle = css({ fontSize: { base: "22px", md: "28px" }, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15 });
-const postedLine = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "ink2" });
+const categoryChip = css({ display: "inline-flex", alignItems: "center", h: "34px", px: "14px", borderRadius: "pill", textStyle: "ui", fontWeight: 600, bg: "rgba(0,0,0,0.05)", color: "ink2" });
+const jobTitle = css({ textStyle: { base: "title", md: "stat" }, fontWeight: 600 });
+const postedLine = css({ textStyle: "ui", fontWeight: 500, color: "ink2" });
 const headActions = css({ display: { base: "none", md: "flex" }, gap: "8px", flex: "none" });
 const outlineBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, h: "40px", minW: "64px", borderRadius: "pill",
   borderWidth: "1px", borderStyle: "solid", borderColor: "hairlineStrong",
-  bg: "surface", fontFamily: "inherit", fontSize: "13.5px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s",
+  bg: "surface", textStyle: "ui", fontWeight: 500, cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s",
   _hover: { borderColor: "ink3", bg: "surface2" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   "& svg": { flexShrink: 0 },
@@ -134,12 +132,12 @@ const rule = css({ h: "1px", bg: "hairline", my: { base: "20px", md: "24px" } })
 const ruleTight = css({ h: "1px", bg: "hairline", my: "18px" });
 const ruleFlat = css({ h: "1px", bg: "hairline" });
 
-const budgetFigure = css({ fontFamily: "mono", fontSize: "30px", fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1, color: "successText", whiteSpace: "nowrap" });
+const budgetFigure = css({ fontVariantNumeric: "tabular-nums", textStyle: "stat", fontWeight: 600, color: "successText", whiteSpace: "nowrap" });
 const budgetDash = css({ color: "ink3", fontWeight: 500 });
-const budgetNote = css({ lineHeight: 1.5, fontSize: "11.5px", fontWeight: 500, color: "ink2" });
+const budgetNote = css({ textStyle: "micro", fontWeight: 500, color: "ink2" });
 
 const sectionBlock = css({ mt: "26px" });
-const skillChip = css({ display: "inline-flex", alignItems: "center", h: "30px", px: "13px", borderRadius: "pill", fontSize: "12.5px", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
+const skillChip = css({ display: "inline-flex", alignItems: "center", h: "30px", px: "13px", borderRadius: "pill", textStyle: "meta", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
 const skillWrap = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 const imageGrid = cva({
   base: { display: "grid", gridTemplateColumns: { base: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: "10px" },
@@ -159,7 +157,7 @@ const pdfTile = css({
   _hover: { bg: "surface2", borderColor: "hairlineStrong" },
 });
 const pdfIcon = css({ w: "38px", h: "38px", borderRadius: "9px", bg: "errorTint", color: "errorText", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" });
-const pdfName = css({ lineHeight: 1.5, fontSize: "13.5px", fontWeight: 600, color: "ink", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
+const pdfName = css({ textStyle: "ui", fontWeight: 600, color: "ink", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" });
 
 const stackSm = css({ display: "flex", flexDirection: "column", gap: "14px" });
 const proposalBox = css({ p: "16px", bg: "surface2", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm" });
@@ -167,15 +165,15 @@ const proposalHead = css({ display: "flex", justifyContent: "space-between", ali
 const proposalFacts = css({ display: "flex" });
 const factCol = css({ flex: 1 });
 const factSep = css({ w: "1px", bg: "hairline", mx: "16px" });
-const factPrice = css({ lineHeight: 1.5, fontFamily: "mono", fontSize: "22px", fontWeight: 600, letterSpacing: "-0.02em" });
-const factDays = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 600 });
+const factPrice = css({ fontVariantNumeric: "tabular-nums", textStyle: "title", fontWeight: 600 });
+const factDays = css({ textStyle: "lead", fontWeight: 600 });
 const btnRow = css({ display: "flex", gap: "8px" });
-const centredNote = css({ fontSize: "12px", lineHeight: 1.45, textAlign: "center", color: "ink2" });
+const centredNote = css({ textStyle: "meta", textAlign: "center", color: "ink2" });
 
 const pillBtnBase = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
   boxSizing: "border-box", m: 0, minW: "64px", border: "none", borderRadius: "pill",
-  fontFamily: "inherit", fontWeight: 500, lineHeight: 1.75, cursor: "pointer",
+  fontWeight: 500, cursor: "pointer",
   transition: "background-color .25s, color .25s",
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
   _disabled: { pointerEvents: "none", color: "rgba(0, 0, 0, 0.26)" },
@@ -184,42 +182,42 @@ const pillBtnBase = css({
 const softBtn = css({ bg: "rgba(0,0,0,0.05)", color: "#000", _hover: { bg: "rgba(0,0,0,0.1)" } });
 const darkBtn = css({ bg: "#000", color: "#fff", _hover: { bg: "rgba(0,0,0,0.8)" } });
 const dangerGhostBtn = css({ bg: "transparent", color: "errorText", _hover: { bg: "errorTint" } });
-const h44 = css({ h: "44px", px: "16px", fontSize: "14px" });
-const h52 = css({ h: "52px", px: "16px", fontSize: "16px" });
-const h46 = css({ h: "46px", px: "22px", fontSize: "15px" });
+const h44 = css({ h: "44px", px: "16px", textStyle: "body" });
+const h52 = css({ h: "52px", px: "16px", textStyle: "lead" });
+const h46 = css({ h: "46px", px: "22px", textStyle: "body" });
 const fullW = css({ w: "100%" });
 
 const closedBlock = css({ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "12px" });
 const closedIcon = css({ w: "46px", h: "46px", borderRadius: "50%", bg: "rgba(0,0,0,0.05)", color: "ink3", display: "flex", alignItems: "center", justifyContent: "center" });
-const closedTitle = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600 });
-const closedBody = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const closedTitle = css({ textStyle: "body", fontWeight: 600 });
+const closedBody = css({ textStyle: "meta", color: "ink2" });
 const closedBtnSpacing = css({ mt: "4px" });
 const applyNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "8px", color: "ink3" });
-const applyNoteText = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const applyNoteText = css({ textStyle: "meta", color: "ink2" });
 
-const cardTitle = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600 });
+const cardTitle = css({ textStyle: "body", fontWeight: 600 });
 const rowList = css({ display: "flex", flexDirection: "column", gap: "13px" });
 const rowWrap = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" });
-const rowLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "ink2", whiteSpace: "nowrap" });
+const rowLabel = css({ textStyle: "ui", fontWeight: 500, color: "ink2", whiteSpace: "nowrap" });
 const rowValue = cva({
-  base: { lineHeight: 1.5, fontSize: "13.5px", fontWeight: 600, whiteSpace: "nowrap" },
+  base: { textStyle: "ui", fontWeight: 600, whiteSpace: "nowrap" },
   variants: { urgent: { true: { color: "errorText" }, false: { color: "ink" } } },
 });
 const slotsBlock = css({ mt: "18px" });
 const slotsHead = css({ display: "flex", justifyContent: "space-between", mb: "8px" });
-const slotsCount = css({ lineHeight: 1.5, fontFamily: "mono", fontSize: "12px", fontWeight: 600, color: "ink2" });
+const slotsCount = css({ fontVariantNumeric: "tabular-nums", textStyle: "meta", fontWeight: 600, color: "ink2" });
 const slotsTrack = css({ h: "6px", borderRadius: "pill", bg: "rgba(0,0,0,0.07)", overflow: "hidden" });
 const slotsFill = css({ h: "100%", bg: "ink" });
 
 const clientHead = css({ display: "flex", gap: "13px", mb: "16px" });
-const clientName = css({ lineHeight: 1.5, fontSize: "15.5px", fontWeight: 600, letterSpacing: "-0.01em" });
-const clientMetaRow = css({ display: "flex", alignItems: "center", gap: "6px", fontSize: "13px", color: "ink2" });
+const clientName = css({ textStyle: "lead", fontWeight: 600 });
+const clientMetaRow = css({ display: "flex", alignItems: "center", gap: "6px", textStyle: "ui", color: "ink2" });
 const clientFacts = css({ display: "flex", flexDirection: "column", gap: "11px", mb: "16px" });
-const clientFact = css({ display: "flex", alignItems: "center", gap: "9px", fontSize: "13.5px", color: "ink2" });
+const clientFact = css({ display: "flex", alignItems: "center", gap: "9px", textStyle: "ui", color: "ink2" });
 const trustList = css({ display: "flex", flexDirection: "column", gap: "11px" });
 const trustRow = css({ display: "flex", alignItems: "center", gap: "9px" });
 const trustText = cva({
-  base: { lineHeight: 1.5, fontSize: "13.5px", fontWeight: 500 },
+  base: { textStyle: "ui", fontWeight: 500 },
   variants: { ok: { true: { color: "ink" }, false: { color: "ink3" } } },
 });
 const iconMuted = css({ color: "ink3", flexShrink: 0 });
@@ -237,13 +235,12 @@ const stickyBar = css({
   borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline",
   boxSizing: "border-box",
 });
-const stickyPrice = css({ lineHeight: 1.5, fontFamily: "mono", fontSize: "17px", fontWeight: 600, letterSpacing: "-0.02em", color: "successText", whiteSpace: "nowrap" });
+const stickyPrice = css({ fontVariantNumeric: "tabular-nums", textStyle: "lead", fontWeight: 600, color: "successText", whiteSpace: "nowrap" });
 const closedPill = css({ bg: "rgba(0,0,0,0.05)", color: "ink2" });
 const errorRetryBtn = css({
   display: "inline-flex", alignItems: "center", justifyContent: "center",
   boxSizing: "border-box", mt: "16px", p: "6px 8px", minW: "64px", border: "none", borderRadius: "4px",
-  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
-  cursor: "pointer", transition: "background-color .25s",
+  bg: "transparent", color: "ink", textStyle: "body", fontWeight: 500, cursor: "pointer", transition: "background-color .25s",
   _hover: { bg: "rgba(0,0,0,0.04)" },
   _focusVisible: { outline: "none", boxShadow: "focusRing" },
 });

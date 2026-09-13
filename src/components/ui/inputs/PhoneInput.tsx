@@ -23,8 +23,7 @@ const prefix = css({
   borderRightColor: "border",
   color: "body",
   fontWeight: 500,
-  fontSize: "15px",
-  lineHeight: 1.4,
+  textStyle: "body",
 });
 
 export default function PhoneInput({

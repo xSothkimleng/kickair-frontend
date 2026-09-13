@@ -7,7 +7,7 @@ import { css, cx } from "styled-system/css";
 
 /**
  * Modal dialog on Ark UI (accessible: focus trap, ESC, aria wiring) styled with
- * Panda. Replaces MUI <Dialog>. Controlled via `open`/`onOpenChange`, or
+ * Panda. Controlled via `open`/`onOpenChange`, or
  * uncontrolled via `trigger`. Raw Ark parts are re-exported as `Dialog` for
  * bespoke layouts.
  */
@@ -59,8 +59,8 @@ const headerCss = css({
   pb: "2",
 });
 
-const titleCss = css({ fontSize: "18px", fontWeight: 700, color: "heading", margin: 0 });
-const descCss = css({ fontSize: "14px", color: "muted", margin: 0, mt: "1" });
+const titleCss = css({ textStyle: "title", fontWeight: 700, color: "heading", margin: 0 });
+const descCss = css({ textStyle: "body", color: "muted", margin: 0, mt: "1" });
 
 const closeBtnCss = css({
   display: "inline-flex",

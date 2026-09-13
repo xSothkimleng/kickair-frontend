@@ -35,16 +35,16 @@ const externalUrl = (url: string) => (/^[a-z][a-z0-9+.-]*:\/\//i.test(url) ? url
 
 /* ── Buttons: black pill (primary) and outlined pill (secondary), on the ds button recipe ── */
 const pill = css.raw({ borderRadius: "pill", h: "40px", boxShadow: "none" });
-const primaryRaw = css.raw({ bg: "#000", color: "#fff", fontSize: "14px", px: "16px", _hover: { bg: "rgba(0,0,0,0.8)" } });
-const secRaw = css.raw({ bg: "surface", color: "ink", fontSize: "13.5px", px: "16px", borderColor: "hairlineStrong", _hover: { bg: "surface2", borderColor: "hairlineStrong" } });
+const primaryRaw = css.raw({ bg: "#000", color: "#fff", textStyle: "body", px: "16px", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const secRaw = css.raw({ bg: "surface", color: "ink", textStyle: "ui", px: "16px", borderColor: "hairlineStrong", _hover: { bg: "surface2", borderColor: "hairlineStrong" } });
 const heroPrimaryBtn = css(button.raw({ variant: "solid", size: "sm" }), pill, primaryRaw, { px: "22px" });
 const heroPrimaryBtnFull = css(button.raw({ variant: "solid", size: "sm", full: true }), pill, primaryRaw, { h: "44px" });
 const heroPrimaryBtnBar = css(button.raw({ variant: "solid", size: "sm" }), pill, primaryRaw, { flex: 1, h: "46px" });
 const heroSecBtn = css(button.raw({ variant: "outline", size: "sm" }), pill, secRaw);
 const heroSecBtnFull = css(button.raw({ variant: "outline", size: "sm", full: true }), pill, secRaw, { h: "44px" });
 const heroSecBtnFlex = css(button.raw({ variant: "outline", size: "sm" }), pill, secRaw, { flex: 1 });
-const backBtn = css(button.raw({ variant: "ghost", size: "sm" }), { h: "auto", minW: "64px", py: "6px", px: "8px", gap: "8px", fontSize: "12.5px", fontWeight: 500, color: "ink2", _hover: { color: "ink", bg: "transparent" } });
-const retryBtn = css(button.raw({ variant: "text", size: "sm" }), { mt: "12px", h: "auto", py: "6px", px: "8px", fontSize: "13px", fontWeight: 500, color: "accent", _hover: { color: "accent", textDecoration: "none", bg: "rgba(0,113,227,0.04)" } });
+const backBtn = css(button.raw({ variant: "ghost", size: "sm" }), { h: "auto", minW: "64px", py: "6px", px: "8px", gap: "8px", textStyle: "meta", fontWeight: 500, color: "ink2", _hover: { color: "ink", bg: "transparent" } });
+const retryBtn = css(button.raw({ variant: "text", size: "sm" }), { mt: "12px", h: "auto", py: "6px", px: "8px", textStyle: "ui", fontWeight: 500, color: "accent", _hover: { color: "accent", textDecoration: "none", bg: "rgba(0,113,227,0.04)" } });
 const whiteSpinner = css({ color: "#fff" });
 
 /* ── Hero icon buttons (40px outlined) ── */
@@ -65,31 +65,31 @@ const heroRow = css({ display: "flex", flexDirection: { base: "column", md: "row
 const avatarRing = css({ borderRadius: "50%", borderWidth: "4px", borderStyle: "solid", borderColor: "surface", bg: "surface" });
 const heroText = css({ flex: 1, minW: 0, pb: { md: "4px" } });
 const nameRow = css({ display: "flex", alignItems: "center", gap: "9px", flexWrap: "wrap" });
-const heroName = css({ fontSize: { base: "23px", md: "27px" }, fontWeight: 600, letterSpacing: "-0.025em" });
-const tagline = css({ fontSize: { base: "14.5px", md: "16px" }, color: "ink", mt: "6px", lineHeight: 1.4 });
+const heroName = css({ textStyle: { base: "heading", md: "stat" }, fontWeight: 600 });
+const tagline = css({ textStyle: { base: "body", md: "lead" }, color: "ink", mt: "6px" });
 const noTagline = css({ color: "ink3" });
-const metaRow = css({ display: "flex", alignItems: "center", gap: "14px", mt: "10px", flexWrap: "wrap", fontSize: "13.5px", color: "ink2" });
+const metaRow = css({ display: "flex", alignItems: "center", gap: "14px", mt: "10px", flexWrap: "wrap", textStyle: "ui", color: "ink2" });
 const metaItem = css({ display: "inline-flex", alignItems: "center", gap: "5px" });
 const metaVerified = css({ display: "inline-flex", alignItems: "center", gap: "5px", color: "accent" });
 const desktopActions = css({ display: { base: "none", md: "flex" }, gap: "9px", flex: "none", pb: "4px" });
 const statStrip = css({ display: "flex", alignItems: "center", gap: { base: "16px", md: "26px" }, mt: "18px", pt: "16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", flexWrap: "wrap" });
 const statCol = css({ display: "flex", flexDirection: "column", gap: "3px", minW: 0 });
-const statLabel = css({ fontSize: "10px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
-const statValue = css({ lineHeight: 1.1 });
+const statLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
+const statValue = css({});
 const statDivider = css({ w: "1px", h: "30px", bg: "hairline", flex: "none" });
 const ratingInline = css({ display: "inline-flex", alignItems: "center", gap: "6px" });
-const monoStat = css({ fontSize: "16px", fontWeight: 600, fontFamily: "mono" });
-const ratingCountText = css({ fontSize: "12.5px", color: "ink2" });
-const statNew = css({ fontSize: "14px", color: "ink3" });
-const levelStat = css({ fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em" });
-const langStat = css({ fontSize: "14.5px", fontWeight: 500 });
+const monoStat = css({ textStyle: "lead", fontWeight: 600, fontVariantNumeric: "tabular-nums" });
+const ratingCountText = css({ textStyle: "meta", color: "ink2" });
+const statNew = css({ textStyle: "body", color: "ink3" });
+const levelStat = css({ textStyle: "body", fontWeight: 600 });
+const langStat = css({ textStyle: "body", fontWeight: 500 });
 const langStatWrap = css({ display: { base: "none", md: "contents" } });
 
 const bodyRow = css({ display: "flex", gap: "24px", mt: "18px", alignItems: "flex-start" });
 const bodyMain = css({ flex: 1, minW: 0 });
 const tabBar = css({ display: "flex", gap: "26px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline", mb: "22px", overflowX: "auto", scrollbarWidth: "none", "&::-webkit-scrollbar": { display: "none" } });
 const tabBtn = cva({
-  base: { position: "relative", h: "40px", px: "4px", border: 0, bg: "transparent", cursor: "pointer", fontFamily: "inherit", fontSize: "14.5px", whiteSpace: "nowrap", _hover: { color: "ink" } },
+  base: { position: "relative", h: "40px", px: "4px", border: 0, bg: "transparent", cursor: "pointer", textStyle: "body", whiteSpace: "nowrap", _hover: { color: "ink" } },
   variants: {
     on: {
       true: { fontWeight: 600, color: "ink", _after: { content: '""', position: "absolute", left: 0, right: 0, bottom: "-1px", h: "2px", bg: "#000", borderRadius: "2px" } },
@@ -97,36 +97,36 @@ const tabBtn = cva({
     },
   },
 });
-const tabCount = css({ ml: "6px", fontSize: "12px", color: "ink3" });
+const tabCount = css({ ml: "6px", textStyle: "meta", color: "ink3" });
 const tabPanel = cx(surfaceCard, css({ p: { base: "18px", md: "26px" } }));
 
 const sideCol = css({ display: { base: "none", md: "block" }, w: "290px", flex: "none", position: "sticky", top: "20px" });
 const sideCard = cx(surfaceCard, css({ p: "22px" }));
-const ownerPill = css({ display: "inline-flex", alignItems: "center", gap: "7px", px: "11px", py: "6px", borderRadius: "pill", bg: "accentFill", color: "accent", fontSize: "11.5px", fontWeight: 600, mb: "14px" });
+const ownerPill = css({ display: "inline-flex", alignItems: "center", gap: "7px", px: "11px", py: "6px", borderRadius: "pill", bg: "accentFill", color: "accent", textStyle: "micro", fontWeight: 600, mb: "14px" });
 const sideIdRow = css({ display: "flex", alignItems: "center", gap: "12px" });
 const sideIdText = css({ minW: 0 });
-const sideName = css({ fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em" });
-const sideTagline = css({ fontSize: "12.5px", color: "ink2", mt: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const sideName = css({ textStyle: "body", fontWeight: 600 });
+const sideTagline = css({ textStyle: "meta", color: "ink2", mt: "2px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 const sideActions = css({ display: "flex", flexDirection: "column", gap: "9px", mt: "18px" });
 const sideActionRow = css({ display: "flex", gap: "9px" });
 const sideChecks = css({ mt: "18px", pt: "16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", display: "flex", flexDirection: "column", gap: "11px" });
-const checkRow = css({ display: "flex", alignItems: "center", gap: "9px", fontSize: "13px" });
+const checkRow = css({ display: "flex", alignItems: "center", gap: "9px", textStyle: "ui" });
 const checkIcon = cva({ base: { display: "flex" }, variants: { ok: { true: { color: "success" }, false: { color: "ink3" } } } });
-const checkLabel = cva({ base: { fontSize: "13px" }, variants: { ok: { true: { color: "ink" }, false: { color: "ink3" } } } });
+const checkLabel = cva({ base: { textStyle: "ui" }, variants: { ok: { true: { color: "ink" }, false: { color: "ink3" } } } });
 
 const mobileBar = css({ display: { base: "flex", md: "none" }, position: "sticky", bottom: 0, gap: "9px", p: "12px 14px", bg: "rgba(255,255,255,0.9)", backdropFilter: "saturate(1.4) blur(16px)", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
 
 /* ── Tab bodies ── */
 const aboutCol = css({ display: "flex", flexDirection: "column" });
-const aboutProse = css({ fontSize: "15px", lineHeight: 1.65, color: "ink" });
-const emptyLine = css({ color: "ink3", fontSize: "14px" });
+const aboutProse = css({ textStyle: "body", color: "ink" });
+const emptyLine = css({ color: "ink3", textStyle: "body" });
 const chipWrap = css({ display: "flex", flexWrap: "wrap", gap: "9px" });
 const skillWrap = css({ display: "flex", flexWrap: "wrap", gap: "8px" });
-const skillChip = css({ display: "inline-flex", alignItems: "center", h: "32px", px: "13px", borderRadius: "pill", bg: "rgba(0,0,0,0.045)", fontSize: "13px", fontWeight: 500 });
+const skillChip = css({ display: "inline-flex", alignItems: "center", h: "32px", px: "13px", borderRadius: "pill", bg: "rgba(0,0,0,0.045)", textStyle: "ui", fontWeight: 500 });
 const certRow = css({ display: "flex", alignItems: "center", gap: "8px" });
 const certMain = css({ flex: 1, minW: 0 });
 // globals.css styles `a` outside any layer, so link colour/underline need !important to beat it.
-const certLink = css({ fontSize: "12.5px", fontWeight: 600, color: "var(--colors-accent) !important", textDecoration: "none", whiteSpace: "nowrap", _hover: { textDecoration: "underline !important" } });
+const certLink = css({ textStyle: "meta", fontWeight: 600, color: "var(--colors-accent) !important", textDecoration: "none", whiteSpace: "nowrap", _hover: { textDecoration: "underline !important" } });
 
 const twoColGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "16px" });
 const twoColGridRepeat = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)" }, gap: "16px" });
@@ -137,32 +137,32 @@ const portfolioCard = cva({
 const portfolioCover = css({ position: "relative", aspectRatio: "16 / 10", bg: "rgba(0,0,0,0.04)" });
 const coverImg = css({ w: "100%", h: "100%", objectFit: "cover", display: "block" });
 const coverPlaceholder = css({ w: "100%", h: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "ink3" });
-const coverCount = css({ position: "absolute", top: "10px", right: "10px", display: "inline-flex", alignItems: "center", gap: "4px", h: "26px", px: "9px", borderRadius: "pill", bg: "rgba(0,0,0,0.6)", color: "#fff", fontSize: "11.5px", fontWeight: 600 });
+const coverCount = css({ position: "absolute", top: "10px", right: "10px", display: "inline-flex", alignItems: "center", gap: "4px", h: "26px", px: "9px", borderRadius: "pill", bg: "rgba(0,0,0,0.6)", color: "#fff", textStyle: "micro", fontWeight: 600 });
 const portfolioText = css({ p: "13px 15px" });
-const portfolioTitle = css({ fontSize: "14.5px", fontWeight: 600, letterSpacing: "-0.01em" });
-const portfolioDesc = css({ fontSize: "12.5px", color: "ink2", mt: "5px", lineClamp: 1 });
+const portfolioTitle = css({ textStyle: "body", fontWeight: 600 });
+const portfolioDesc = css({ textStyle: "meta", color: "ink2", mt: "5px", lineClamp: 1 });
 const portfolioMeta = css({ display: "flex", alignItems: "center", gap: "12px", mt: "9px" });
-const portfolioDateText = css({ fontSize: "12px", color: "ink3", fontFamily: "mono" });
-const projectLink = css({ display: "inline-flex", alignItems: "center", gap: "4px", fontSize: "12px", fontWeight: 600, color: "var(--colors-accent) !important", textDecoration: "none", _hover: { textDecoration: "underline !important" } });
+const portfolioDateText = css({ textStyle: "meta", color: "ink3", fontVariantNumeric: "tabular-nums" });
+const projectLink = css({ display: "inline-flex", alignItems: "center", gap: "4px", textStyle: "meta", fontWeight: 600, color: "var(--colors-accent) !important", textDecoration: "none", _hover: { textDecoration: "underline !important" } });
 
 const reviewsHead = css({ display: "flex", flexDirection: { base: "column", sm: "row" }, gap: { base: "16px", sm: "36px" }, alignItems: { base: "flex-start", sm: "center" }, pb: "24px", mb: "24px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
 const reviewsScore = css({ textAlign: { base: "left", sm: "center" }, flex: "none" });
-const reviewsAvg = css({ fontFamily: "mono", fontSize: "44px", fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1 });
+const reviewsAvg = css({ fontVariantNumeric: "tabular-nums", textStyle: "display", fontWeight: 600 });
 const reviewsStars = css({ mt: "8px" });
-const reviewsCount = css({ fontSize: "12.5px", color: "ink2", mt: "6px" });
-const reviewsBlurb = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.6 });
+const reviewsCount = css({ textStyle: "meta", color: "ink2", mt: "6px" });
+const reviewsBlurb = css({ textStyle: "ui", color: "ink2" });
 const reviewsLoadingWrap = css({ display: "flex", justifyContent: "center", py: "48px" });
 const reviewsErrorWrap = css({ textAlign: "center", py: "32px" });
-const reviewsErrorText = css({ fontSize: "14px", color: "ink3" });
+const reviewsErrorText = css({ textStyle: "body", color: "ink3" });
 const reviewsList = css({ display: "flex", flexDirection: "column", gap: "16px" });
-// Selected page is black in this design (was `.Mui-selected` override); nested selector beats the Pager's own accent class.
+// Selected page is black in this design; nested selector beats the Pager's own accent class.
 const pagerWrap = css({ display: "flex", justifyContent: "center", mt: "32px", "& [aria-current=page]": { bg: "#000", color: "#fff", _hover: { bg: "#000", color: "#fff" } } });
 
 /* ── Lightbox ── */
 const lightboxRoot = css({ position: "fixed", inset: 0, zIndex: 1400, bg: "rgba(16,14,12,0.92)", backdropFilter: "blur(8px)", display: "flex", flexDirection: "column" });
 const lightboxHead = css({ display: "flex", alignItems: "center", justifyContent: "space-between", p: "16px 20px", color: "#fff" });
-const lightboxTitle = css({ fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em" });
-const lightboxCounter = css({ fontSize: "12.5px", opacity: 0.6, mt: "2px", fontFamily: "mono" });
+const lightboxTitle = css({ textStyle: "body", fontWeight: 600 });
+const lightboxCounter = css({ textStyle: "meta", opacity: 0.6, mt: "2px", fontVariantNumeric: "tabular-nums" });
 const lightboxBtn = css(iconButton.raw({ variant: "ghost", shape: "round" }), { w: "36px", h: "36px", bg: "rgba(255,255,255,0.1)", color: "#fff", _hover: { bg: "rgba(255,255,255,0.2)", color: "#fff" } });
 const lightboxNav = css(iconButton.raw({ variant: "ghost", shape: "round" }), { position: "absolute", w: "48px", h: "48px", bg: "rgba(255,255,255,0.1)", color: "#fff", _hover: { bg: "rgba(255,255,255,0.2)", color: "#fff" } });
 const lightboxNavLeft = css({ left: "18px" });
@@ -180,7 +180,7 @@ const thumbImg = css({ w: "100%", h: "100%", objectFit: "cover" });
 const ppBlock = css({ pb: "26px", mb: "26px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
 const ppBlockLast = css({ pb: 0, mb: 0, borderBottom: "none" });
 const ppHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "16px" });
-const ppTitle = css({ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.015em" });
+const ppTitle = css({ textStyle: "lead", fontWeight: 600 });
 
 function Stat({ label, children }: { label: string; children: React.ReactNode }) {
   return (
