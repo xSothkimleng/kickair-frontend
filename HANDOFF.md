@@ -140,7 +140,7 @@ Kimleng wants MUI gone. The admin console is already Panda; the **site** is the 
 - The React Compiler lint rules are on: no `Date.now()`/`new Date()` in render (use a client-only `useSyncExternalStore` like `OverviewPage`), no `setState` inside `useEffect` bodies.
 - Keep `OrderRecord` as the single order history while porting it — same rule as before.
 
-## Status after the 2026-09-13 typography session — committed, not pushed
+## Status after the 2026-09-13 typography session — committed & pushed
 
 Kimleng's ask: the site's fonts and sizes were "random" (vibe-coded), make it one system and make it easy to change later. Audit found: numbers asked for Roboto Mono, which was never loaded, so they fell back to Menlo on Mac and a different system mono on every other platform; ~1,500 raw `fontSize` declarations with 70+ distinct values; line-heights/letter-spacings copied from MUI defaults; two text-colour sets (slate `heading/body/muted` vs black `ink/ink2/ink3`); `ink3` at 40 % black failed the 4.5:1 contrast floor.
 
