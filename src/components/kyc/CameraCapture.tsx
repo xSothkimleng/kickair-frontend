@@ -1,13 +1,26 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import { Box, Typography } from "@mui/material";
-import { C } from "./tokens";
+import { css } from "styled-system/css";
 
 interface CameraCaptureProps {
   onCapture: (file: File) => void;
   onUnavailable: () => void;
 }
+
+const viewportCss = css({ position: "relative", w: "100%", aspectRatio: "1 / 1", bg: "#0b1220", borderRadius: "12px", overflow: "hidden" });
+const videoCss = css({ position: "absolute", inset: 0, w: "100%", h: "100%", objectFit: "cover", transform: "scaleX(-1)" });
+const guideWrapCss = css({ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" });
+const guideCss = css({ w: "66%", aspectRatio: "0.8 / 1", borderRadius: "50%", border: "2.5px dashed rgba(255,255,255,.85)", boxShadow: "0 0 0 1000px rgba(8,12,22,.46)" });
+const liveChipCss = css({ position: "absolute", top: "12px", left: "12px", display: "inline-flex", alignItems: "center", gap: "4.8px", h: "22px", px: "8.8px", borderRadius: "7px", bg: "rgba(220,38,38,.92)", color: "#fff", fontSize: "10.5px", fontWeight: 700, letterSpacing: ".04em" });
+const liveDotCss = css({ w: "6px", h: "6px", borderRadius: "50%", bg: "#fff" });
+const instructionWrapCss = css({ position: "absolute", top: "12px", left: 0, right: 0, display: "flex", justifyContent: "center", px: "16px" });
+// The pill's own `px`/`py` are dropped: globals.css's unlayered `p { padding: 0 }`
+// outranks any layered rule, so they never applied here either.
+const instructionCss = css({ maxW: "260px", textAlign: "center", color: "#fff", fontSize: "13.5px", fontWeight: 500, bg: "rgba(8,12,22,.62)", borderRadius: "999px", lineHeight: 1.35 });
+const shutterWrapCss = css({ display: "flex", justifyContent: "center", mt: "16px" });
+const shutterCss = css({ w: "72px", h: "72px", boxSizing: "border-box", borderRadius: "50%", border: "4px solid #cbd5e1", bg: "#fff", p: "4.8px", cursor: "pointer", transition: "border-color .15s", _hover: { borderColor: "accent" } });
+const shutterInnerCss = css({ w: "100%", h: "100%", borderRadius: "50%", bg: "accent" });
 
 /**
  * Live selfie capture via getUserMedia. Streams the front camera into a mirrored
@@ -89,42 +102,31 @@ export default function CameraCapture({ onCapture, onUnavailable }: CameraCaptur
   };
 
   return (
-    <Box>
-      <Box sx={{ position: "relative", width: "100%", aspectRatio: "1 / 1", bgcolor: "#0b1220", borderRadius: 3, overflow: "hidden" }}>
-        <video
-          ref={videoRef}
-          autoPlay
-          playsInline
-          muted
-          style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", transform: "scaleX(-1)" }}
-        />
+    <div>
+      <div className={viewportCss}>
+        <video ref={videoRef} autoPlay playsInline muted className={videoCss} />
         {/* face-oval guide */}
-        <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <Box sx={{ width: "66%", aspectRatio: "0.8 / 1", borderRadius: "50%", border: "2.5px dashed rgba(255,255,255,.85)", boxShadow: "0 0 0 1000px rgba(8,12,22,.46)" }} />
-        </Box>
+        <div className={guideWrapCss}>
+          <div className={guideCss} />
+        </div>
         {/* LIVE chip */}
-        <Box sx={{ position: "absolute", top: 12, left: 12, display: "inline-flex", alignItems: "center", gap: 0.6, height: 22, px: 1.1, borderRadius: 1.75, bgcolor: "rgba(220,38,38,.92)", color: "#fff", fontSize: 10.5, fontWeight: 700, letterSpacing: ".04em" }}>
-          <Box component="span" sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#fff" }} />
+        <div className={liveChipCss}>
+          <span className={liveDotCss} />
           LIVE
-        </Box>
+        </div>
         {/* instruction */}
-        <Box sx={{ position: "absolute", top: 12, left: 0, right: 0, display: "flex", justifyContent: "center", px: 2 }}>
-          <Typography sx={{ maxWidth: 260, textAlign: "center", color: "#fff", fontSize: 13.5, fontWeight: 500, bgcolor: "rgba(8,12,22,.62)", px: 1.75, py: 0.9, borderRadius: 999, lineHeight: 1.35 }}>
+        <div className={instructionWrapCss}>
+          <p className={instructionCss}>
             Center your face in the oval, then capture
-          </Typography>
-        </Box>
-      </Box>
+          </p>
+        </div>
+      </div>
       {/* shutter */}
-      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
-        <Box
-          component="button"
-          onClick={shoot}
-          aria-label="Capture photo"
-          sx={{ width: 72, height: 72, borderRadius: "50%", border: "4px solid #cbd5e1", bgcolor: "#fff", p: 0.6, cursor: "pointer", transition: "border-color .15s", "&:hover": { borderColor: C.accent } }}
-        >
-          <Box sx={{ width: "100%", height: "100%", borderRadius: "50%", bgcolor: C.accent }} />
-        </Box>
-      </Box>
-    </Box>
+      <div className={shutterWrapCss}>
+        <button onClick={shoot} aria-label="Capture photo" className={shutterCss}>
+          <div className={shutterInnerCss} />
+        </button>
+      </div>
+    </div>
   );
 }

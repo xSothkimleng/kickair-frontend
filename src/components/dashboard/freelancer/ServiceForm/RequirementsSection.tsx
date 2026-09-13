@@ -1,7 +1,47 @@
-import { Box, Paper, Typography, Button } from "@mui/material";
-import { AddOutlined, HelpOutlineOutlined } from "@mui/icons-material";
+import { CircleHelp, Plus } from "lucide-react";
+import { css } from "styled-system/css";
 import { ServiceFormData, Requirement } from "../types";
 import RequirementItem from "./RequirementItem";
+
+const sectionCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+const header = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "24px" });
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+/* MUI text `Button` base metrics (500 weight, 1.75 line-height, 64px min-width, 6px/8px padding). */
+const addBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  m: 0,
+  p: "6px 8px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "ink2",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "color .25s",
+  _hover: { color: "ink", bg: "transparent" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const list = css({ display: "flex", flexDirection: "column", gap: "16px" });
+const empty = css({ textAlign: "center", py: "32px", bg: "rgba(0, 0, 0, 0.02)", borderRadius: "cardSm" });
+const emptyIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.2)", mb: "8px" });
+const emptyText = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
 
 interface RequirementsSectionProps {
   formData: ServiceFormData;
@@ -30,32 +70,22 @@ export default function RequirementsSection({ formData, onFormDataChange }: Requ
   };
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 3 }}>
-        <Box>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 0.5 }}>Requirements (Optional)</Typography>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
+    <div className={sectionCard}>
+      <div className={header}>
+        <div>
+          <p className={sectionTitle}>Requirements (Optional)</p>
+          <p className={sectionSub}>
             Questions for clients to answer before ordering. Helps you gather necessary information.
-          </Typography>
-        </Box>
-        <Button
-          onClick={handleAddRequirement}
-          startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
-          sx={{
-            fontSize: 12,
-            color: "rgba(0, 0, 0, 0.6)",
-            textTransform: "none",
-            "&:hover": {
-              color: "black",
-              bgcolor: "transparent",
-            },
-          }}>
+          </p>
+        </div>
+        <button type="button" onClick={handleAddRequirement} className={addBtn}>
+          <Plus size={14} />
           Add Question
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {formData.requirements.length > 0 ? (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div className={list}>
           {formData.requirements.map((req, index) => (
             <RequirementItem
               key={index}
@@ -64,13 +94,13 @@ export default function RequirementsSection({ formData, onFormDataChange }: Requ
               onRemove={() => handleRemoveRequirement(index)}
             />
           ))}
-        </Box>
+        </div>
       ) : (
-        <Box sx={{ textAlign: "center", py: 4, bgcolor: "rgba(0, 0, 0, 0.02)", borderRadius: 3 }}>
-          <HelpOutlineOutlined sx={{ fontSize: 32, color: "rgba(0, 0, 0, 0.2)", mb: 1 }} />
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>No requirements added yet</Typography>
-        </Box>
+        <div className={empty}>
+          <CircleHelp size={32} className={emptyIcon} />
+          <p className={emptyText}>No requirements added yet</p>
+        </div>
       )}
-    </Paper>
+    </div>
   );
 }

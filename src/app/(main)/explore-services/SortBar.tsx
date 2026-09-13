@@ -1,8 +1,8 @@
 // components/services/SortBar.tsx
 "use client";
 
-import { Box, Typography, Select, MenuItem, SelectChangeEvent } from "@mui/material";
-import { KeyboardArrowDown } from "@mui/icons-material";
+import { css } from "styled-system/css";
+import { SelectInput } from "@/components/ui/inputs";
 
 interface SortBarProps {
   filteredCount: number;
@@ -10,59 +10,42 @@ interface SortBarProps {
   setSortBy: (sort: string) => void;
 }
 
+const SORT_OPTIONS = [
+  { value: "relevant", label: "Most Relevant" },
+  { value: "popular", label: "Most Popular" },
+  { value: "rating", label: "Highest Rated" },
+  { value: "price-low", label: "Price: Low to High" },
+  { value: "price-high", label: "Price: High to Low" },
+];
+
+const barCss = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  pb: "16px",
+  mb: "24px",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "hairline",
+});
+const countCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const selectCss = css({ minW: "180px" });
+
 export default function SortBar({ filteredCount, sortBy, setSortBy }: SortBarProps) {
-  const handleChange = (event: SelectChangeEvent) => {
-    setSortBy(event.target.value);
-  };
-
   return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "space-between",
-        pb: 2,
-        mb: 3,
-        borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-      }}>
-      <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>
+    <div className={barCss}>
+      <p className={countCss}>
         Showing {filteredCount} service{filteredCount !== 1 ? "s" : ""}
-      </Typography>
+      </p>
 
-      <Select
+      <SelectInput
         value={sortBy}
-        onChange={handleChange}
-        IconComponent={KeyboardArrowDown}
-        sx={{
-          fontSize: 13,
-          bgcolor: "white",
-          border: "1px solid rgba(0, 0, 0, 0.1)",
-          borderRadius: 1,
-          height: 36,
-          "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-          "&:hover": {
-            border: "1px solid rgba(0, 0, 0, 0.2)",
-          },
-          "&.Mui-focused": {
-            border: "1px solid #0071e3",
-          },
-        }}>
-        <MenuItem value='relevant' sx={{ fontSize: 13 }}>
-          Most Relevant
-        </MenuItem>
-        <MenuItem value='popular' sx={{ fontSize: 13 }}>
-          Most Popular
-        </MenuItem>
-        <MenuItem value='rating' sx={{ fontSize: 13 }}>
-          Highest Rated
-        </MenuItem>
-        <MenuItem value='price-low' sx={{ fontSize: 13 }}>
-          Price: Low to High
-        </MenuItem>
-        <MenuItem value='price-high' sx={{ fontSize: 13 }}>
-          Price: High to Low
-        </MenuItem>
-      </Select>
-    </Box>
+        onChange={v => setSortBy(String(v))}
+        options={SORT_OPTIONS}
+        fullWidth={false}
+        size="sm"
+        className={selectCss}
+      />
+    </div>
   );
 }

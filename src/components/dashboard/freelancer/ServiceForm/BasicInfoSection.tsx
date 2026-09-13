@@ -1,9 +1,23 @@
-import { Box, Paper, Typography } from "@mui/material";
+import { css } from "styled-system/css";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { TextInput, TagInput } from "@/components/ui/inputs";
 import CategoryPicker from "@/components/category/CategoryPicker";
 import { ServiceFormData } from "../types";
 import { ServiceCategory } from "@/types/service";
+
+/* The form sections are white cards (MUI `Paper elevation={0}`, radius 16, 32px pad). */
+const sectionCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const fieldStack = css({ display: "flex", flexDirection: "column", gap: "16px" });
+const editorLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 500, color: "body" });
+const requiredMark = css({ color: "error" });
 
 interface BasicInfoSectionProps {
   formData: ServiceFormData;
@@ -15,10 +29,10 @@ interface BasicInfoSectionProps {
 
 export default function BasicInfoSection({ formData, onFormDataChange, categories, categoriesLoading, fieldErrors }: BasicInfoSectionProps) {
   return (
-    <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 3 }}>Basic Information</Typography>
+    <div className={sectionCard}>
+      <p className={sectionTitle}>Basic Information</p>
 
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+      <div className={fieldStack}>
         <TextInput
           label="Service Title"
           required
@@ -62,18 +76,18 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
           onChange={(v) => onFormDataChange({ ...formData, location: v })}
         />
 
-        <Box>
-          <Typography sx={{ fontSize: 13, fontWeight: 500, color: "#334155", mb: 0.875 }}>
-            Service Description <Typography component="span" sx={{ color: "#DC2626" }}>*</Typography>
-          </Typography>
+        <div>
+          <p className={editorLabel}>
+            Service Description <span className={requiredMark}>*</span>
+          </p>
           <RichTextEditor
             value={formData.description}
             onChange={(html) => onFormDataChange({ ...formData, description: html })}
             placeholder="Describe your service in detail. What will you deliver? What makes your service unique?"
             minHeight={150}
           />
-        </Box>
-      </Box>
-    </Paper>
+        </div>
+      </div>
+    </div>
   );
 }

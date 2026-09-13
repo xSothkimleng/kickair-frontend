@@ -1,6 +1,28 @@
-import { Box, TextField, Select, MenuItem, Checkbox, FormControlLabel, IconButton, Typography } from "@mui/material";
-import { CloseOutlined } from "@mui/icons-material";
+import { X } from "lucide-react";
+import { css } from "styled-system/css";
+import { iconButton } from "@/components/ds";
+import { Checkbox, SelectInput, TextInput } from "@/components/ui/inputs";
 import { Requirement } from "../types";
+
+const itemBox = css({ p: "16px", borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.1)", borderRadius: "cardSm" });
+const row = css({ display: "flex", alignItems: "flex-start", gap: "12px" });
+const fields = css({ flex: 1, display: "flex", flexDirection: "column", gap: "12px" });
+const controls = css({ display: "flex", alignItems: "center", gap: "12px" });
+const typeSelect = css({ minW: "160px" });
+const checkboxLabel = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const removeBtn = css(iconButton.raw({ shape: "square" }), {
+  w: "32px",
+  h: "32px",
+  borderRadius: "8px",
+  color: "rgba(239, 68, 68, 0.6)",
+  _hover: { color: "#ef4444", bg: "rgba(239, 68, 68, 0.05)" },
+});
+
+const TYPE_OPTIONS = [
+  { value: "text", label: "Free Text" },
+  { value: "multiple", label: "Multiple Choice" },
+  { value: "attachment", label: "Attachment" },
+];
 
 interface RequirementItemProps {
   requirement: Requirement;
@@ -10,91 +32,38 @@ interface RequirementItemProps {
 
 export default function RequirementItem({ requirement, onChange, onRemove }: RequirementItemProps) {
   return (
-    <Box sx={{ p: 2, border: "1px solid rgba(0, 0, 0, 0.1)", borderRadius: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "start", gap: 1.5 }}>
-        <Box sx={{ flex: 1, display: "flex", flexDirection: "column", gap: 1.5 }}>
-          <TextField
-            fullWidth
+    <div className={itemBox}>
+      <div className={row}>
+        <div className={fields}>
+          <TextInput
+            size="sm"
             value={requirement.question}
-            onChange={e => onChange({ ...requirement, question: e.target.value })}
+            onChange={v => onChange({ ...requirement, question: v })}
             placeholder="Enter your question"
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                height: 40,
-                borderRadius: 2,
-                bgcolor: "white",
-                fontSize: 13,
-                "& fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.1)",
-                },
-                "&:hover fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                  borderWidth: 1,
-                },
-              },
-            }}
           />
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Select
+          <div className={controls}>
+            <SelectInput
+              size="sm"
+              fullWidth={false}
+              className={typeSelect}
+              options={TYPE_OPTIONS}
               value={requirement.type}
-              onChange={e => onChange({ ...requirement, type: e.target.value })}
-              sx={{
-                height: 36,
-                borderRadius: 2,
-                bgcolor: "white",
-                fontSize: 12,
-                "& fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.1)",
-                },
-                "&:hover fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                },
-                "&.Mui-focused fieldset": {
-                  borderColor: "rgba(0, 0, 0, 0.2)",
-                  borderWidth: 1,
-                },
-              }}>
-              <MenuItem value="text">Free Text</MenuItem>
-              <MenuItem value="multiple">Multiple Choice</MenuItem>
-              <MenuItem value="attachment">Attachment</MenuItem>
-            </Select>
-
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={requirement.required}
-                  onChange={e => onChange({ ...requirement, required: e.target.checked })}
-                  sx={{
-                    color: "rgba(0, 0, 0, 0.2)",
-                    "&.Mui-checked": {
-                      color: "black",
-                    },
-                  }}
-                />
-              }
-              label={<Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>Required</Typography>}
+              onChange={v => onChange({ ...requirement, type: String(v) })}
             />
-          </Box>
-        </Box>
 
-        <IconButton
-          onClick={onRemove}
-          sx={{
-            p: 1,
-            color: "rgba(239, 68, 68, 0.6)",
-            borderRadius: 2,
-            "&:hover": {
-              color: "#ef4444",
-              bgcolor: "rgba(239, 68, 68, 0.05)",
-            },
-          }}>
-          <CloseOutlined sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Box>
-    </Box>
+            <Checkbox
+              checked={requirement.required}
+              onChange={c => onChange({ ...requirement, required: c })}
+              label={<span className={checkboxLabel}>Required</span>}
+            />
+          </div>
+        </div>
+
+        <button type="button" onClick={onRemove} aria-label="Remove requirement" className={removeBtn}>
+          <X size={16} />
+        </button>
+      </div>
+    </div>
   );
 }

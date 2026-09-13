@@ -8,10 +8,15 @@ import { defineConfig } from "@pandacss/dev";
  * `src/components/ui/inputs/tokens.ts` → slate form-field palette) into one
  * typed system.
  *
- * MIGRATION NOTE: `preflight` is OFF on purpose. While MUI/Emotion still render
- * ~170 pages, a global Panda reset would fight MUI's baseline. Panda-migrated
- * pages are fully hand-styled, so they don't need the preflight. Flip this to
- * `true` in the final phase once `@mui/*` + `@emotion/*` are removed.
+ * `preflight` is still OFF after the MUI removal (2026-09-13), on purpose. The
+ * site was built against the browser defaults + the bare rules in globals.css:
+ * flipping it on was measured to move every page (border-box shrinks every
+ * `maxW` + padding container, `html { line-height: 1.5 }` re-flows text, and
+ * margins on `p`/`h*` that the bare globals.css rules used to cancel start to
+ * apply — 52 % of the homepage pixels, +240–360 px on the marketing pages, the
+ * admin console's phone layout collapsing). Turning it on is a separate restyle
+ * pass over the pre-rulebook Panda files (homepage sections, university, why,
+ * Footer, admin/ui.tsx, layout/dashboard); see HANDOFF.md.
  */
 export default defineConfig({
   preflight: false,

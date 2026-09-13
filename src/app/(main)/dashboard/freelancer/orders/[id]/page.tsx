@@ -4,30 +4,35 @@ import { useState, useRef } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { qk } from "@/lib/queryKeys";
 import { useParams, useRouter } from "next/navigation";
-import {
-  Box,
-  Container,
-  Typography,
-  Stack,
-  Button,
-  Avatar,
-  CircularProgress,
-  Alert,
-  Dialog,
-  DialogContent,
-  TextField,
-  IconButton,
-} from "@mui/material";
+import { css } from "styled-system/css";
 import {
   ChevronLeft,
-  InsertDriveFile as FileIcon,
+  FileText as FileIcon,
   Image as ImageIcon,
-  AttachFile as AttachFileIcon,
-  FileDownload as DownloadIcon,
-  CheckCircle as CheckIcon,
+  Paperclip as AttachFileIcon,
+  Download as DownloadIcon,
+  CheckCircle2 as CheckIcon,
   Upload as UploadIcon,
   Star,
-} from "@mui/icons-material";
+  AlertCircle as ErrorIcon,
+  X as CloseIcon,
+} from "lucide-react";
+import { Spinner } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
+import {
+  PageTextArea, backBtnCss, bannerCss, bannerGlyphCss, bodyMutedCss, bodyTextCss, cardCss,
+  cardTitleCss, catChipCss, centerPageCss, centerPageColCss, colStackCss, containerCss,
+  descClamp2Css, dlgBodyCss, dlgFootCss, dlgHeadCss, dlgSubCss, dlgTitleCss, dropIconCss,
+  dropItemCss, dropItemNameCss, dropListCss, dropRemoveCss, dropTextCss, dropWrapCss,
+  dropZoneCss, evidencePartyCss, evidenceRowCss, fieldLabelCss, fileDownloadCss, fileNameCss,
+  fileNameWrapCss, fileRowCss, fileTileCss, headWrapCss, infoGridCss, mb225, mutedSmallCss,
+  notFoundTextCss, outcomeBoxCss, pageBtn, pageCss, pageTitleCss, partyAvatarCss,
+  partyAvatarImgCss, partyMeta16Css, partyMetaCss, partyNameCss, partyRowCss, placedCss,
+  reviewBoxCss, reviewHeadCss, reviewerCss, secLabelCss, stack1Css, starRowCss, startIconCss,
+  statGrid2Css, statGridCss, statusBadgeCss, statusDotCss, tileCss, tileLabelCss,
+  tileLabelPlainCss, tileSmCss, tileValCss, tileValSmCss, titleRowCss, topAlertActionCss,
+  topAlertCloseCss, topAlertCss, topAlertIconCss, topAlertMsgCss, totalRowCss,
+} from "@/components/dashboard/orderPageKit";
 import { api } from "@/lib/api";
 import { downloadOrderAttachment } from "@/lib/downloadFile";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
@@ -35,66 +40,7 @@ import { Order, OrderStatus, Dispute, EvidenceFile } from "@/types/order";
 import OrderRecord from "@/components/dashboard/OrderRecord";
 
 // ─── Design tokens (same as client page) ─────────────────────────────────────
-
-const CARD = {
-  bgcolor: "#FFFFFF",
-  border: "1px solid rgba(15,23,42,0.08)",
-  borderRadius: "14px",
-  p: "24px 28px",
-  boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
-};
-
-const SEC_LABEL = {
-  fontSize: 11,
-  fontWeight: 600,
-  color: "#94A3B8",
-  letterSpacing: "0.06em",
-  textTransform: "uppercase" as const,
-  mb: 1.75,
-};
-
-const BTN_PRIMARY = {
-  height: 40,
-  px: 2.5,
-  borderRadius: "8px",
-  textTransform: "none" as const,
-  fontSize: 13,
-  fontWeight: 600,
-  letterSpacing: "-0.005em",
-  bgcolor: "#0F172A",
-  color: "#FFF",
-  boxShadow: "none",
-  "&:hover": { bgcolor: "#1E293B", boxShadow: "none" },
-  "&.Mui-disabled": { bgcolor: "rgba(15,23,42,0.12)", color: "rgba(15,23,42,0.4)", boxShadow: "none" },
-};
-
-const BTN_OUTLINE = {
-  height: 40,
-  px: 2.5,
-  borderRadius: "8px",
-  textTransform: "none" as const,
-  fontSize: 13,
-  fontWeight: 600,
-  letterSpacing: "-0.005em",
-  color: "#0F172A",
-  borderColor: "#E2E8F0",
-  bgcolor: "#FFF",
-  "&:hover": { bgcolor: "#0F172A", color: "#FFF", borderColor: "#0F172A" },
-};
-
-const BTN_DANGER = {
-  height: 40,
-  px: 2.5,
-  borderRadius: "8px",
-  textTransform: "none" as const,
-  fontSize: 13,
-  fontWeight: 600,
-  letterSpacing: "-0.005em",
-  color: "#DC2626",
-  borderColor: "rgba(220,38,38,0.28)",
-  bgcolor: "#FFF",
-  "&:hover": { bgcolor: "#DC2626", color: "#FFF", borderColor: "#DC2626" },
-};
+// (the CARD / SEC_LABEL / BTN_* objects now live in `dashboard/orderPageKit`)
 
 const STATUS_MAP: Record<OrderStatus, { label: string; bgcolor: string; color: string }> = {
   pending:            { label: "Pending",            bgcolor: "#F1F5F9", color: "#64748B" },
@@ -119,10 +65,10 @@ function formatDate(d: string) {
 function StatusBadge({ status }: { status: OrderStatus }) {
   const cfg = STATUS_MAP[status] ?? { label: status, bgcolor: "#F1F5F9", color: "#64748B" };
   return (
-    <Box sx={{ display: "inline-flex", alignItems: "center", gap: "5px", height: 23, px: 1.25, borderRadius: "999px", bgcolor: cfg.bgcolor, color: cfg.color, fontSize: 12, fontWeight: 600, whiteSpace: "nowrap" }}>
-      <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "currentColor" }} />
+    <span className={statusBadgeCss} style={{ backgroundColor: cfg.bgcolor, color: cfg.color }}>
+      <span className={statusDotCss} />
       {cfg.label}
-    </Box>
+    </span>
   );
 }
 
@@ -140,19 +86,17 @@ function FileRow({ file, orderId }: { file: UploadedFile; orderId?: number }) {
   };
 
   return (
-    <Box component="a" href={file.url} target="_blank" rel="noopener noreferrer"
-      sx={{ display: "flex", alignItems: "center", gap: 1.5, p: "10px 12px", border: "1px solid rgba(15,23,42,0.08)", borderRadius: "8px", textDecoration: "none", color: "inherit", transition: "border-color 0.12s", "&:hover": { borderColor: "#CBD5E1" } }}>
-      <Box sx={{ width: 34, height: 34, bgcolor: "#F1F5F9", borderRadius: "7px", display: "grid", placeItems: "center", color: "#334155", flexShrink: 0 }}>
-        {isImage ? <ImageIcon sx={{ fontSize: 16 }} /> : <FileIcon sx={{ fontSize: 16 }} />}
-      </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: 13, fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.file_name}</Typography>
-      </Box>
-      <Box onClick={handleDownload}
-        sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 12, fontWeight: 600, color: "#334155", px: 1.25, py: 0.75, borderRadius: "6px", "&:hover": { bgcolor: "#F1F5F9" } }}>
-        {downloading ? <CircularProgress size={13} /> : <DownloadIcon sx={{ fontSize: 14 }} />} Download
-      </Box>
-    </Box>
+    <a href={file.url} target="_blank" rel="noopener noreferrer" className={fileRowCss}>
+      <span className={fileTileCss}>
+        {isImage ? <ImageIcon size={16} /> : <FileIcon size={16} />}
+      </span>
+      <span className={fileNameWrapCss}>
+        <span className={fileNameCss}>{file.file_name}</span>
+      </span>
+      <span onClick={handleDownload} className={fileDownloadCss}>
+        {downloading ? <Spinner size={13} /> : <DownloadIcon size={14} />} Download
+      </span>
+    </a>
   );
 }
 
@@ -166,83 +110,78 @@ const OUTCOME_LABEL: Record<string, string> = {
 function EvidenceParty({ label, files, statement, orderId }: { label: string; files: EvidenceFile[] | null; statement: string | null; orderId?: number }) {
   const has = (files?.length ?? 0) > 0 || !!statement;
   return (
-    <Box sx={{ flex: 1, minWidth: 220 }}>
-      <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>{label}</Typography>
+    <div className={evidencePartyCss}>
+      <p className={fieldLabelCss}>{label}</p>
       {!has ? (
-        <Typography sx={{ fontSize: 12, color: "#94A3B8" }}>No evidence submitted yet.</Typography>
+        <p className={mutedSmallCss}>No evidence submitted yet.</p>
       ) : (
         <>
-          {statement && <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6, mb: files?.length ? 1 : 0 }}>{statement}</Typography>}
-          {files?.length ? <Stack spacing={1}>{files.map((f, i) => <FileRow key={i} file={f} orderId={orderId} />)}</Stack> : null}
+          {statement && <p className={bodyMutedCss}>{statement}</p>}
+          {files?.length ? <div className={stack1Css}>{files.map((f, i) => <FileRow key={i} file={f} orderId={orderId} />)}</div> : null}
         </>
       )}
-    </Box>
+    </div>
   );
 }
 
 function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number }) {
   const resolved = dispute.status === "resolved";
   return (
-    <Box sx={CARD}>
-      <Box sx={{
-        display: "flex", alignItems: "flex-start", gap: 1.25, p: "12px 14px", mb: 2.25, fontSize: 13, fontWeight: 500, borderRadius: "8px",
-        ...(resolved
-          ? { bgcolor: "#F0FDF4", color: "#16A34A", border: "1px solid rgba(22,163,74,0.18)" }
-          : { bgcolor: "#FEF2F2", color: "#DC2626", border: "1px solid rgba(220,38,38,0.18)" }),
-      }}>
-        <Box component="span" sx={{ fontSize: 16, mt: "1px", flexShrink: 0 }}>{resolved ? "✓" : "⚠"}</Box>
+    <div className={cardCss}>
+      <div className={`${bannerCss({ tone: resolved ? "success" : "danger" })} ${mb225}`}>
+        <span className={bannerGlyphCss}>{resolved ? "✓" : "⚠"}</span>
         {resolved ? "This dispute has been resolved by an admin." : "This order is under dispute. An admin will review it."}
-      </Box>
+      </div>
 
-      <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Dispute #{dispute.sequence} · reason</Typography>
-      <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{dispute.reason}</Typography>
+      <p className={fieldLabelCss}>Dispute #{dispute.sequence} · reason</p>
+      <p className={bodyTextCss}>{dispute.reason}</p>
 
       {resolved && (
-        <Box sx={{ mt: 1.75, p: "12px 14px", bgcolor: "#F1F5F9", borderRadius: "8px" }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.5 }}>
+        <div className={outcomeBoxCss}>
+          <p className={fieldLabelCss}>
             Outcome: {OUTCOME_LABEL[dispute.outcome ?? ""] ?? "Resolved"}
             {dispute.outcome === "partial" && dispute.partial_freelancer_amount
               ? ` ($${dispute.partial_freelancer_amount} to freelancer)` : ""}
-          </Typography>
+          </p>
           {dispute.admin_note && (
-            <Typography sx={{ fontSize: 13, color: "#475569", lineHeight: 1.6 }}>
+            <p className={bodyMutedCss}>
               <strong>Admin feedback:</strong> {dispute.admin_note}
-            </Typography>
+            </p>
           )}
-        </Box>
+        </div>
       )}
 
-      <Box sx={{ display: "flex", gap: 2.5, flexWrap: "wrap", mt: 2.25 }}>
+      <div className={evidenceRowCss}>
         <EvidenceParty label="Client's evidence" files={dispute.client_evidence} statement={dispute.client_statement} orderId={orderId} />
         <EvidenceParty label="Freelancer's evidence" files={dispute.freelancer_evidence} statement={dispute.freelancer_statement} orderId={orderId} />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
 
 function DialogDropzone({ onFiles, files, onRemove, uploading }: { onFiles: (fl: FileList) => void; files: UploadedFile[]; onRemove: (i: number) => void; uploading: boolean }) {
   const ref = useRef<HTMLInputElement>(null);
   return (
-    <Box sx={{ mt: 1.5 }}>
+    <div className={dropWrapCss}>
       <input ref={ref} type="file" accept="image/jpeg,image/png,image/gif,image/webp,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar" multiple hidden onChange={(e) => e.target.files && onFiles(e.target.files)} />
-      <Box onClick={() => ref.current?.click()} sx={{ border: "1.5px dashed #CBD5E1", borderRadius: "8px", p: 2.25, textAlign: "center", cursor: "pointer", "&:hover": { borderColor: "#94A3B8" } }}>
-        <AttachFileIcon sx={{ fontSize: 20, color: "#94A3B8", display: "block", mx: "auto", mb: 0.5 }} />
-        <Typography sx={{ fontSize: 12, color: "#64748B", fontWeight: 500 }}>
+      <div onClick={() => ref.current?.click()} className={dropZoneCss}>
+        <span className={dropIconCss}><AttachFileIcon size={20} /></span>
+        <p className={dropTextCss}>
           {uploading ? "Uploading…" : "Drag files here or click to upload"}
-        </Typography>
-      </Box>
+        </p>
+      </div>
       {files.length > 0 && (
-        <Stack spacing={0.75} mt={1.25}>
+        <div className={dropListCss}>
           {files.map((f, i) => (
-            <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.25, py: 0.75, bgcolor: "#F1F5F9", borderRadius: "6px" }}>
-              <FileIcon sx={{ fontSize: 14, color: "#64748B" }} />
-              <Typography sx={{ flex: 1, fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.file_name}</Typography>
-              <IconButton size="small" onClick={() => onRemove(i)} sx={{ p: 0.25 }}><Box component="span" sx={{ fontSize: 14, color: "#94A3B8" }}>×</Box></IconButton>
-            </Box>
+            <div key={i} className={dropItemCss}>
+              <FileIcon size={14} style={{ color: "#64748B", flexShrink: 0 }} />
+              <span className={dropItemNameCss}>{f.file_name}</span>
+              <button type="button" aria-label="Remove file" onClick={() => onRemove(i)} className={dropRemoveCss}>×</button>
+            </div>
           ))}
-        </Stack>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
 
@@ -373,18 +312,18 @@ export default function FreelancerOrderDetailPage() {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <CircularProgress sx={{ color: "#0F172A" }} />
-      </Box>
+      <div className={centerPageCss}>
+        <Spinner size={40} style={{ color: "#0F172A" }} />
+      </div>
     );
   }
 
   if (error || !order) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC", display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 2 }}>
-        <Typography sx={{ color: "#64748B" }}>{error ?? "Order not found."}</Typography>
-        <Button onClick={() => router.back()} sx={{ ...BTN_OUTLINE, height: 36 }} variant="outlined">Go back</Button>
-      </Box>
+      <div className={centerPageColCss}>
+        <p className={notFoundTextCss}>{error ?? "Order not found."}</p>
+        <button type="button" onClick={() => router.back()} className={pageBtn({ look: "outline", h36: true })}>Go back</button>
+      </div>
     );
   }
 
@@ -401,141 +340,150 @@ export default function FreelancerOrderDetailPage() {
   const revisions = Number((isCustom ? order.custom_order?.revisions : pricingOption?.revisions) ?? 0);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F8FAFC" }}>
-      <Container disableGutters sx={{ maxWidth: "720px !important", px: { xs: 2.5, sm: 3.5 }, py: 4 }}>
+    <div className={pageCss}>
+      <div className={containerCss}>
 
         {/* Back */}
-        <Button startIcon={<ChevronLeft sx={{ fontSize: 16 }} />} onClick={() => router.back()}
-          sx={{ mb: 2.25, fontSize: 13, fontWeight: 500, color: "#64748B", textTransform: "none", p: 0, minWidth: 0, "&:hover": { color: "#0F172A", bgcolor: "transparent" } }}>
+        <button type="button" onClick={() => router.back()} className={backBtnCss}>
+          <span className={startIconCss}><ChevronLeft size={20} /></span>
           Back to Orders
-        </Button>
+        </button>
 
         {/* Header */}
-        <Box sx={{ mb: 3.5 }}>
-          <Stack direction="row" alignItems="center" gap={1.5} mb={0.75} flexWrap="wrap">
-            <Typography sx={{ fontSize: 28, fontWeight: 700, letterSpacing: "-0.025em", color: "#0F172A" }}>
+        <div className={headWrapCss}>
+          <div className={titleRowCss}>
+            <p className={pageTitleCss}>
               Order {order.reference ?? `#${order.id}`}
-            </Typography>
+            </p>
             <StatusBadge status={order.status} />
-          </Stack>
-          <Typography sx={{ fontSize: 13, color: "#64748B" }}>Received on {formatDate(order.created_at)}</Typography>
-        </Box>
+          </div>
+          <p className={placedCss}>Received on {formatDate(order.created_at)}</p>
+        </div>
 
         {actionError && (
-          <Alert severity="error" onClose={() => setActionError(null)} sx={{ mb: 2.5, borderRadius: "10px" }}>{actionError}</Alert>
+          <div className={topAlertCss}>
+            <span className={topAlertIconCss}><ErrorIcon size={22} /></span>
+            <div className={topAlertMsgCss}>{actionError}</div>
+            <div className={topAlertActionCss}>
+              <button type="button" aria-label="Close" onClick={() => setActionError(null)} className={topAlertCloseCss}><CloseIcon size={20} /></button>
+            </div>
+          </div>
         )}
 
-        <Stack spacing={2.5}>
+        <div className={colStackCss}>
 
           {/* ── Section 2: Info row ── */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+          <div className={infoGridCss}>
             {/* Service */}
-            <Box sx={CARD}>
-              <Typography sx={SEC_LABEL}>Service</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em", mb: 1.25 }}>
+            <div className={cardCss}>
+              <p className={secLabelCss}>Service</p>
+              <p className={cardTitleCss}>
                 {service?.title ?? (isJobBased ? order.proposal?.job_post?.title : "Service")}
-              </Typography>
+              </p>
               {service?.category && (
-                <Box sx={{ display: "inline-flex", alignItems: "center", height: 24, px: 1.25, bgcolor: "#F1F5F9", color: "#334155", borderRadius: "6px", fontSize: 12, fontWeight: 600, mb: 1.25 }}>
+                <div className={catChipCss}>
                   {service.category.category_name}
-                </Box>
+                </div>
               )}
               {service?.description && (
-                <Box sx={{ fontSize: 13, color: "#64748B", lineHeight: 1.6, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden", "& *": { fontSize: "inherit" } }}
+                <div className={descClamp2Css}
                   dangerouslySetInnerHTML={{ __html: service.description }} />
               )}
-            </Box>
+            </div>
 
             {/* Client */}
-            <Box sx={CARD}>
-              <Typography sx={SEC_LABEL}>Client</Typography>
-              <Stack direction="row" spacing={1.75} alignItems="center">
-                <Avatar src={client?.user?.avatar_url ?? undefined} sx={{ width: 48, height: 48, background: "linear-gradient(135deg,#1E293B,#0F172A)", fontSize: 16, fontWeight: 600 }}>
-                  {client?.user?.name?.slice(0, 2).toUpperCase() ?? "?"}
-                </Avatar>
-                <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 700, mb: 0.25 }}>{client?.user?.name ?? "Unknown"}</Typography>
-                  {client?.user?.email && <Typography sx={{ fontSize: 12, color: "#64748B", lineHeight: 1.6 }}>{client.user.email}</Typography>}
-                  {client?.user?.telephone && <Typography sx={{ fontSize: 12, color: "#64748B" }}>{client.user.telephone}</Typography>}
-                </Box>
-              </Stack>
-            </Box>
-          </Box>
+            <div className={cardCss}>
+              <p className={secLabelCss}>Client</p>
+              <div className={partyRowCss}>
+                <span className={partyAvatarCss}>
+                  {client?.user?.avatar_url
+                    /* eslint-disable-next-line @next/next/no-img-element -- remote avatars from many hosts */
+                    ? <img src={client.user.avatar_url} alt={client?.user?.name ?? ""} className={partyAvatarImgCss} />
+                    : (client?.user?.name?.slice(0, 2).toUpperCase() ?? "?")}
+                </span>
+                <div>
+                  <p className={partyNameCss}>{client?.user?.name ?? "Unknown"}</p>
+                  {client?.user?.email && <p className={partyMeta16Css}>{client.user.email}</p>}
+                  {client?.user?.telephone && <p className={partyMetaCss}>{client.user.telephone}</p>}
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* ── Section 3: Package & Pricing ── */}
-          <Box sx={CARD}>
-            <Typography sx={SEC_LABEL}>Package</Typography>
-            <Typography sx={{ fontSize: 16, fontWeight: 700, letterSpacing: "-0.01em", mb: 0.5 }}>
+          <div className={cardCss}>
+            <p className={secLabelCss}>Package</p>
+            <p className={cardTitleCss}>
               {isCustom ? "Custom order" : isJobBased ? "Job Contract" : (pricingOption?.title ?? "Standard")}
-            </Typography>
+            </p>
             {pricingOption?.description && (
-              <Typography sx={{ fontSize: 13, color: "#64748B", mb: 2.25 }}>{pricingOption.description}</Typography>
+              <p className={css({ fontSize: "13px", lineHeight: 1.5, color: "#64748B" })}>{pricingOption.description}</p>
             )}
-            <Box sx={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 1.5, mb: 1.5 }}>
+            <div className={statGridCss}>
               {[
                 { k: "Price", v: `$${pricingOption?.price ?? order.price ?? "0"}` },
                 { k: "Delivery", v: !isNaN(deliveryDays as number) ? `${deliveryDays} day${deliveryDays !== 1 ? "s" : ""}` : "N/A" },
                 { k: "Revisions", v: !isJobBased ? (revisions === -1 ? "Unlimited" : String(revisions)) : "N/A" },
               ].map(({ k, v }) => (
-                <Box key={k} sx={{ bgcolor: "#F1F5F9", borderRadius: "10px", p: "14px 16px" }}>
-                  <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em", mb: 0.5 }}>{k}</Typography>
-                  <Typography sx={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em" }}>{v}</Typography>
-                </Box>
+                <div key={k} className={tileCss}>
+                  <p className={tileLabelCss}>{k}</p>
+                  <p className={tileValCss}>{v}</p>
+                </div>
               ))}
-            </Box>
-            <Box sx={{ bgcolor: "#F1F5F9", borderRadius: "10px", p: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-              <Box>
-                <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#64748B", letterSpacing: "0.02em" }}>Your earnings</Typography>
+            </div>
+            <div className={totalRowCss}>
+              <div>
+                <p className={tileLabelCss}>Your earnings</p>
                 {commissionRate != null && (
-                  <Typography sx={{ fontSize: 10.5, color: "#94A3B8" }}>after the {Math.round(commissionRate * 100)}% platform fee</Typography>
+                  <p className={css({ fontSize: "10.5px", lineHeight: 1.5, color: "#94A3B8" })}>after the {Math.round(commissionRate * 100)}% platform fee</p>
                 )}
-              </Box>
-              <Typography sx={{ fontSize: 18, fontWeight: 700, letterSpacing: "-0.01em", color: "#10B981" }}>
+              </div>
+              <p className={css({ fontSize: "18px", fontWeight: 700, lineHeight: 1.5, letterSpacing: "-0.01em", color: "#10B981" })}>
                 ${(parseFloat(String(pricingOption?.price ?? order.price ?? "0")) * (1 - (commissionRate ?? 0))).toFixed(2)}
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+            </div>
+          </div>
 
           {/* ── Section 3b: Custom-origin orders keep the original request & offer story ── */}
           {isCustom && order.custom_order && (
-            <Box sx={CARD}>
-              <Typography sx={SEC_LABEL}>Original Request &amp; Offer</Typography>
+            <div className={cardCss}>
+              <p className={secLabelCss}>Original Request &amp; Offer</p>
 
               {order.custom_order.description && (
                 <>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Client&apos;s brief</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6, mb: 2 }}>{order.custom_order.description}</Typography>
+                  <p className={fieldLabelCss}>Client&apos;s brief</p>
+                  <p className={bodyTextCss}>{order.custom_order.description}</p>
                 </>
               )}
 
-              <Box sx={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: 1.5, mb: order.custom_order.scope || order.custom_order.offer_note ? 2 : 0 }}>
-                <Box sx={{ bgcolor: "#F1F5F9", borderRadius: "10px", p: "12px 14px" }}>
-                  <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#64748B", mb: 0.5 }}>Requested budget</Typography>
-                  <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
+              <div className={statGrid2Css} style={{ marginBottom: order.custom_order.scope || order.custom_order.offer_note ? 16 : 0 }}>
+                <div className={tileSmCss}>
+                  <p className={tileLabelPlainCss}>Requested budget</p>
+                  <p className={tileValSmCss}>
                     {order.custom_order.budget != null ? `$${Number(order.custom_order.budget).toLocaleString()}` : "—"}
-                  </Typography>
-                </Box>
-                <Box sx={{ bgcolor: "#F1F5F9", borderRadius: "10px", p: "12px 14px" }}>
-                  <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#64748B", mb: 0.5 }}>Requested timeline</Typography>
-                  <Typography sx={{ fontSize: 15, fontWeight: 700 }}>
+                  </p>
+                </div>
+                <div className={tileSmCss}>
+                  <p className={tileLabelPlainCss}>Requested timeline</p>
+                  <p className={tileValSmCss}>
                     {order.custom_order.desired_timeline_days ? `${order.custom_order.desired_timeline_days} days` : "—"}
-                  </Typography>
-                </Box>
-              </Box>
+                  </p>
+                </div>
+              </div>
 
               {order.custom_order.scope && (
                 <>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Your offer scope</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6, mb: order.custom_order.offer_note ? 2 : 0 }}>{order.custom_order.scope}</Typography>
+                  <p className={fieldLabelCss}>Your offer scope</p>
+                  <p className={bodyTextCss}>{order.custom_order.scope}</p>
                 </>
               )}
               {order.custom_order.offer_note && (
                 <>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Offer note</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{order.custom_order.offer_note}</Typography>
+                  <p className={fieldLabelCss}>Offer note</p>
+                  <p className={bodyTextCss}>{order.custom_order.offer_note}</p>
                 </>
               )}
-            </Box>
+            </div>
           )}
 
           {/* ── Section 4: Order record — events, deliveries & revisions in one timeline ── */}
@@ -554,18 +502,18 @@ export default function FreelancerOrderDetailPage() {
 
           {/* Revision requested */}
           {order.status === "revision_requested" && (
-            <Box sx={CARD}>
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25, p: "12px 14px", bgcolor: "#FFF7ED", color: "#C2410C", border: "1px solid rgba(194,65,12,0.18)", borderRadius: "8px", mb: 2.25, fontSize: 13, fontWeight: 500 }}>
-                <Box component="span" sx={{ fontSize: 16, mt: "1px", flexShrink: 0 }}>↺</Box>
+            <div className={cardCss}>
+              <div className={`${bannerCss({ tone: "warning" })} ${mb225}`}>
+                <span className={bannerGlyphCss}>↺</span>
                 Revision requested by client.
-              </Box>
+              </div>
               {order.revision_note && (
                 <>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Client feedback</Typography>
-                  <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{order.revision_note}</Typography>
+                  <p className={fieldLabelCss}>Client feedback</p>
+                  <p className={bodyTextCss}>{order.revision_note}</p>
                 </>
               )}
-            </Box>
+            </div>
           )}
 
           {/* Disputed */}
@@ -577,173 +525,171 @@ export default function FreelancerOrderDetailPage() {
 
           {/* Completed */}
           {order.status === "completed" && (
-            <Box sx={CARD}>
-              <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.25, p: "12px 14px", bgcolor: "#F0FDF4", color: "#16A34A", border: "1px solid rgba(22,163,74,0.18)", borderRadius: "8px", fontSize: 13, fontWeight: 500 }}>
-                <CheckIcon sx={{ fontSize: 16, mt: "1px", flexShrink: 0 }} />
+            <div className={cardCss}>
+              <div className={bannerCss({ tone: "success" })}>
+                <span className={bannerGlyphCss}><CheckIcon size={16} /></span>
                 Order completed.
-              </Box>
+              </div>
 
               {order.review && (
                 <>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mt: 2.25, mb: 1 }}>Client&apos;s review</Typography>
-                  <Box sx={{ bgcolor: "#F1F5F9", borderRadius: "10px", p: "16px 18px" }}>
-                    <Stack direction="row" alignItems="center" spacing={1.25} mb={order.review.comment ? 1 : 0}>
-                      <Box sx={{ display: "flex", gap: "2px" }}>
+                  <p className={fieldLabelCss}>Client&apos;s review</p>
+                  <div className={reviewBoxCss}>
+                    <div className={reviewHeadCss}>
+                      <div className={starRowCss}>
                         {[1, 2, 3, 4, 5].map((s) => (
-                          <Star key={s} sx={{ fontSize: 16, color: s <= order.review!.rating ? "#F59E0B" : "#E2E8F0" }} />
+                          <Star key={s} size={16} fill="currentColor" style={{ color: s <= order.review!.rating ? "#F59E0B" : "#E2E8F0" }} />
                         ))}
-                      </Box>
-                      <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{order.review.rating.toFixed(1)}</Typography>
-                    </Stack>
+                      </div>
+                      <p className={reviewerCss}>{order.review.rating.toFixed(1)}</p>
+                    </div>
                     {order.review.comment && (
-                      <Typography sx={{ fontSize: 13, color: "#334155", lineHeight: 1.6 }}>{order.review.comment}</Typography>
+                      <p className={bodyTextCss}>{order.review.comment}</p>
                     )}
-                  </Box>
+                  </div>
                 </>
               )}
-            </Box>
+            </div>
           )}
 
           {/* ── Section 6: Actions ── */}
-          <Box sx={CARD}>
+          <div className={cardCss}>
             {/* pending */}
             {order.status === "pending" && (
-              <Stack direction="row" justifyContent="flex-end" spacing={1.25}>
-                <Button variant="outlined" disabled={submitting} onClick={handleDecline} sx={BTN_DANGER}>Decline</Button>
-                <Button variant="contained" disabled={submitting} onClick={handleAccept} startIcon={submitting ? <CircularProgress size={14} color="inherit" /> : <CheckIcon sx={{ fontSize: 15 }} />} sx={BTN_PRIMARY}>
+              <div className={css({ display: "flex", justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
+                <button type="button" disabled={submitting} onClick={handleDecline} className={pageBtn({ look: "danger" })}>Decline</button>
+                <button type="button" disabled={submitting} onClick={handleAccept} className={pageBtn({ look: "primary" })}>
+                  <span className={startIconCss}>{submitting ? <Spinner size={14} /> : <CheckIcon size={20} />}</span>
                   Accept Order
-                </Button>
-              </Stack>
+                </button>
+              </div>
             )}
 
             {/* active */}
             {order.status === "active" && (
-              <Stack direction="row" justifyContent="flex-end" spacing={1.25}>
-                <Button variant="outlined" onClick={() => setDisputeOpen(true)} sx={BTN_DANGER}>Open Dispute</Button>
-                <Button variant="contained" onClick={() => setDeliveryOpen(true)} startIcon={<UploadIcon sx={{ fontSize: 15 }} />} sx={BTN_PRIMARY}>
+              <div className={css({ display: "flex", justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
+                <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
+                <button type="button" onClick={() => setDeliveryOpen(true)} className={pageBtn({ look: "primary" })}>
+                  <span className={startIconCss}><UploadIcon size={20} /></span>
                   Submit Delivery
-                </Button>
-              </Stack>
+                </button>
+              </div>
             )}
 
             {/* revision_requested */}
             {order.status === "revision_requested" && (
-              <Stack direction="row" justifyContent="flex-end">
-                <Button variant="contained" onClick={() => setResubmitOpen(true)} sx={BTN_PRIMARY}>
+              <div className={css({ display: "flex", justifyContent: "flex-end" })}>
+                <button type="button" onClick={() => setResubmitOpen(true)} className={pageBtn({ look: "primary" })}>
                   Resubmit Work
-                </Button>
-              </Stack>
+                </button>
+              </div>
             )}
 
             {/* disputed — submit evidence */}
             {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && !order.dispute.freelancer_statement && (
-              <Stack direction="row" justifyContent="flex-end">
-                <Button variant="outlined" onClick={() => setEvidenceOpen(true)} sx={BTN_OUTLINE}>Submit Evidence</Button>
-              </Stack>
+              <div className={css({ display: "flex", justifyContent: "flex-end" })}>
+                <button type="button" onClick={() => setEvidenceOpen(true)} className={pageBtn({ look: "outline" })}>Submit Evidence</button>
+              </div>
             )}
 
             {/* completed */}
             {order.status === "completed" && (
-              <Stack direction="row" justifyContent="flex-end" alignItems="center" spacing={1}>
-                <CheckIcon sx={{ fontSize: 15, color: "#94A3B8" }} />
-                <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#94A3B8" }}>Order Completed</Typography>
-              </Stack>
+              <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
+                <CheckIcon size={15} style={{ color: "#94A3B8", flexShrink: 0 }} />
+                <p className={css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#94A3B8" })}>Order Completed</p>
+              </div>
             )}
 
             {/* cancelled / delivered (no further action) */}
             {(order.status === "cancelled" || order.status === "delivered") && (
-              <Typography sx={{ fontSize: 13, color: "#94A3B8", textAlign: "right" }}>
+              <p className={css({ fontSize: "13px", lineHeight: 1.5, color: "#94A3B8", textAlign: "right" })}>
                 {order.status === "cancelled" ? "Order Cancelled" : "Awaiting client review"}
-              </Typography>
+              </p>
             )}
-          </Box>
+          </div>
 
-        </Stack>
-      </Container>
+        </div>
+      </div>
 
       {/* ── Dialogs ── */}
 
       {/* Submit Delivery */}
-      <Dialog open={deliveryOpen} onClose={() => setDeliveryOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px" } }}>
-        <Box sx={{ p: "22px 24px 0" }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.015em", mb: 0.5 }}>Submit delivery</Typography>
-          <Typography sx={{ fontSize: 13, color: "#64748B" }}>Add a note for the client and attach your final files.</Typography>
-        </Box>
-        <DialogContent sx={{ p: "18px 24px 4px" }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Delivery note</Typography>
-          <TextField multiline minRows={3} fullWidth placeholder="Let the client know what you've delivered…" value={deliveryNote} onChange={(e) => setDeliveryNote(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { fontSize: 13, borderRadius: "8px", "& fieldset": { borderColor: "#E2E8F0" }, "&:hover fieldset": { borderColor: "#CBD5E1" }, "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" } } }} />
+      <BareModal open={deliveryOpen} onOpenChange={(o) => { if (!o) setDeliveryOpen(false); }} maxW="444px">
+        <div className={dlgHeadCss}>
+          <p className={dlgTitleCss}>Submit delivery</p>
+          <p className={dlgSubCss}>Add a note for the client and attach your final files.</p>
+        </div>
+        <div className={dlgBodyCss}>
+          <p className={fieldLabelCss}>Delivery note</p>
+          <PageTextArea minRows={3} placeholder="Let the client know what you've delivered…" value={deliveryNote} onChange={setDeliveryNote} />
           <DialogDropzone onFiles={(fl) => handleFileUpload(fl, setDeliveryFiles, deliveryFiles)} files={deliveryFiles} onRemove={(i) => setDeliveryFiles((p) => p.filter((_, j) => j !== i))} uploading={uploading} />
-        </DialogContent>
-        <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
-          <Button variant="outlined" onClick={() => { setDeliveryOpen(false); setDeliveryNote(""); setDeliveryFiles([]); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="contained" disabled={submitting || uploading} onClick={handleDeliver} sx={BTN_PRIMARY}>
-            {submitting ? <CircularProgress size={14} color="inherit" /> : "Submit delivery"}
-          </Button>
-        </Stack>
-      </Dialog>
+        </div>
+        <div className={dlgFootCss}>
+          <button type="button" onClick={() => { setDeliveryOpen(false); setDeliveryNote(""); setDeliveryFiles([]); }} className={pageBtn({ look: "outline" })}>Cancel</button>
+          <button type="button" disabled={submitting || uploading} onClick={handleDeliver} className={pageBtn({ look: "primary" })}>
+            {submitting ? <Spinner size={14} /> : "Submit delivery"}
+          </button>
+        </div>
+      </BareModal>
 
       {/* Resubmit Work */}
-      <Dialog open={resubmitOpen} onClose={() => setResubmitOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px" } }}>
-        <Box sx={{ p: "22px 24px 0" }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.015em", mb: 0.5 }}>Resubmit work</Typography>
-          <Typography sx={{ fontSize: 13, color: "#64748B" }}>Describe what you changed and attach updated files.</Typography>
-        </Box>
-        <DialogContent sx={{ p: "18px 24px 4px" }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>What changed</Typography>
-          <TextField multiline minRows={3} fullWidth placeholder="Describe the changes made based on feedback…" value={resubmitNote} onChange={(e) => setResubmitNote(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { fontSize: 13, borderRadius: "8px", "& fieldset": { borderColor: "#E2E8F0" }, "&:hover fieldset": { borderColor: "#CBD5E1" }, "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" } } }} />
+      <BareModal open={resubmitOpen} onOpenChange={(o) => { if (!o) setResubmitOpen(false); }} maxW="444px">
+        <div className={dlgHeadCss}>
+          <p className={dlgTitleCss}>Resubmit work</p>
+          <p className={dlgSubCss}>Describe what you changed and attach updated files.</p>
+        </div>
+        <div className={dlgBodyCss}>
+          <p className={fieldLabelCss}>What changed</p>
+          <PageTextArea minRows={3} placeholder="Describe the changes made based on feedback…" value={resubmitNote} onChange={setResubmitNote} />
           <DialogDropzone onFiles={(fl) => handleFileUpload(fl, setResubmitFiles, resubmitFiles)} files={resubmitFiles} onRemove={(i) => setResubmitFiles((p) => p.filter((_, j) => j !== i))} uploading={uploading} />
-        </DialogContent>
-        <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
-          <Button variant="outlined" onClick={() => { setResubmitOpen(false); setResubmitNote(""); setResubmitFiles([]); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="contained" disabled={submitting || uploading} onClick={handleResubmit} sx={BTN_PRIMARY}>
-            {submitting ? <CircularProgress size={14} color="inherit" /> : "Resubmit work"}
-          </Button>
-        </Stack>
-      </Dialog>
+        </div>
+        <div className={dlgFootCss}>
+          <button type="button" onClick={() => { setResubmitOpen(false); setResubmitNote(""); setResubmitFiles([]); }} className={pageBtn({ look: "outline" })}>Cancel</button>
+          <button type="button" disabled={submitting || uploading} onClick={handleResubmit} className={pageBtn({ look: "primary" })}>
+            {submitting ? <Spinner size={14} /> : "Resubmit work"}
+          </button>
+        </div>
+      </BareModal>
 
       {/* Open Dispute */}
-      <Dialog open={disputeOpen} onClose={() => setDisputeOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px" } }}>
-        <Box sx={{ p: "22px 24px 0" }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.015em", mb: 0.5 }}>Open a dispute</Typography>
-          <Typography sx={{ fontSize: 13, color: "#64748B" }}>Our team will review the order. Please describe the issue clearly.</Typography>
-        </Box>
-        <DialogContent sx={{ p: "18px 24px 4px" }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Dispute reason</Typography>
-          <TextField multiline minRows={3} fullWidth placeholder="Explain what went wrong…" value={disputeReason} onChange={(e) => setDisputeReason(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { fontSize: 13, borderRadius: "8px", "& fieldset": { borderColor: "#E2E8F0" }, "&:hover fieldset": { borderColor: "#CBD5E1" }, "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" } } }} />
+      <BareModal open={disputeOpen} onOpenChange={(o) => { if (!o) setDisputeOpen(false); }} maxW="444px">
+        <div className={dlgHeadCss}>
+          <p className={dlgTitleCss}>Open a dispute</p>
+          <p className={dlgSubCss}>Our team will review the order. Please describe the issue clearly.</p>
+        </div>
+        <div className={dlgBodyCss}>
+          <p className={fieldLabelCss}>Dispute reason</p>
+          <PageTextArea minRows={3} placeholder="Explain what went wrong…" value={disputeReason} onChange={setDisputeReason} />
           <DialogDropzone onFiles={(fl) => handleFileUpload(fl, setDisputeFiles, disputeFiles)} files={disputeFiles} onRemove={(i) => setDisputeFiles((p) => p.filter((_, j) => j !== i))} uploading={uploading} />
-        </DialogContent>
-        <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
-          <Button variant="outlined" onClick={() => { setDisputeOpen(false); setDisputeReason(""); setDisputeFiles([]); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="outlined" disabled={submitting || uploading || !disputeReason.trim()} onClick={handleOpenDispute} sx={BTN_DANGER}>
-            {submitting ? <CircularProgress size={14} sx={{ color: "#DC2626" }} /> : "Open dispute"}
-          </Button>
-        </Stack>
-      </Dialog>
+        </div>
+        <div className={dlgFootCss}>
+          <button type="button" onClick={() => { setDisputeOpen(false); setDisputeReason(""); setDisputeFiles([]); }} className={pageBtn({ look: "outline" })}>Cancel</button>
+          <button type="button" disabled={submitting || uploading || !disputeReason.trim()} onClick={handleOpenDispute} className={pageBtn({ look: "danger" })}>
+            {submitting ? <Spinner size={14} style={{ color: "#DC2626" }} /> : "Open dispute"}
+          </button>
+        </div>
+      </BareModal>
 
       {/* Submit Evidence */}
-      <Dialog open={evidenceOpen} onClose={() => setEvidenceOpen(false)} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px" } }}>
-        <Box sx={{ p: "22px 24px 0" }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 700, letterSpacing: "-0.015em", mb: 0.5 }}>Submit evidence</Typography>
-          <Typography sx={{ fontSize: 13, color: "#64748B" }}>Add files and context to support your side of the dispute.</Typography>
-        </Box>
-        <DialogContent sx={{ p: "18px 24px 4px" }}>
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mb: 0.75 }}>Your statement</Typography>
-          <TextField multiline minRows={3} fullWidth placeholder="Explain your side of the dispute…" value={evidenceStatement} onChange={(e) => setEvidenceStatement(e.target.value)}
-            sx={{ "& .MuiOutlinedInput-root": { fontSize: 13, borderRadius: "8px", "& fieldset": { borderColor: "#E2E8F0" }, "&:hover fieldset": { borderColor: "#CBD5E1" }, "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" } } }} />
-          <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", mt: 2, mb: 0.75 }}>Supporting files (optional)</Typography>
+      <BareModal open={evidenceOpen} onOpenChange={(o) => { if (!o) setEvidenceOpen(false); }} maxW="444px">
+        <div className={dlgHeadCss}>
+          <p className={dlgTitleCss}>Submit evidence</p>
+          <p className={dlgSubCss}>Add files and context to support your side of the dispute.</p>
+        </div>
+        <div className={dlgBodyCss}>
+          <p className={fieldLabelCss}>Your statement</p>
+          <PageTextArea minRows={3} placeholder="Explain your side of the dispute…" value={evidenceStatement} onChange={setEvidenceStatement} />
+          <p className={`${fieldLabelCss} ${css({ mt: "16px" })}`}>Supporting files (optional)</p>
           <DialogDropzone onFiles={(fl) => handleFileUpload(fl, setEvidenceFiles, evidenceFiles)} files={evidenceFiles} onRemove={(i) => setEvidenceFiles((p) => p.filter((_, j) => j !== i))} uploading={uploading} />
-        </DialogContent>
-        <Stack direction="row" justifyContent="flex-end" spacing={1.25} sx={{ p: "16px 24px 22px" }}>
-          <Button variant="outlined" onClick={() => { setEvidenceOpen(false); setEvidenceFiles([]); setEvidenceStatement(""); }} sx={BTN_OUTLINE}>Cancel</Button>
-          <Button variant="contained" disabled={submitting || uploading || (!evidenceFiles.length && !evidenceStatement.trim())} onClick={handleSubmitEvidence} sx={BTN_PRIMARY}>
-            {submitting ? <CircularProgress size={14} color="inherit" /> : "Submit evidence"}
-          </Button>
-        </Stack>
-      </Dialog>
+        </div>
+        <div className={dlgFootCss}>
+          <button type="button" onClick={() => { setEvidenceOpen(false); setEvidenceFiles([]); setEvidenceStatement(""); }} className={pageBtn({ look: "outline" })}>Cancel</button>
+          <button type="button" disabled={submitting || uploading || (!evidenceFiles.length && !evidenceStatement.trim())} onClick={handleSubmitEvidence} className={pageBtn({ look: "primary" })}>
+            {submitting ? <Spinner size={14} /> : "Submit evidence"}
+          </button>
+        </div>
+      </BareModal>
 
-    </Box>
+    </div>
   );
 }

@@ -2,56 +2,51 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import {
-  Dialog,
-  Box,
-  Typography,
-  IconButton,
-  Button,
-  TextField,
-  MenuItem,
-  InputAdornment,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import {
-  Close,
-  CheckCircle,
-  LockOutlined,
-} from "@mui/icons-material";
-import { tokens } from "@/theme";
+import { CheckCircle2, Lock, X } from "lucide-react";
+import { css } from "styled-system/css";
+import { Alert, Dialog, Spinner } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { sanitizeMoneyInput } from "@/components/ui/inputs";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { Service } from "@/types/service";
 import { useConversations } from "@/hooks/useConversations";
-import { coLabel, Money } from "./kit";
+import { CoInput, CoSelect, CoTextArea, Money, coBtn, coIconBtn, coLabelAccent } from "./kit";
 import { useCoInvalidate } from "./hooks";
 
-const fieldSx = {
-  "& .MuiOutlinedInput-root": {
-    fontSize: 14,
-    borderRadius: "10px",
-    "& fieldset": { borderColor: tokens.borderStrong },
-    "&:hover fieldset": { borderColor: tokens.text3 },
-    "&.Mui-focused fieldset": { borderColor: tokens.accent, borderWidth: "1px" },
-  },
-};
+const panel = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
+const header = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" });
 
-const labelSx = { fontSize: 12, fontWeight: 600, mb: 0.75, color: tokens.text };
+const dlgTitle = css({ fontSize: "21px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
 
-const primaryBtn = {
-  textTransform: "none" as const,
-  fontWeight: 600,
-  fontSize: 14,
-  borderRadius: "999px",
-  bgcolor: tokens.text,
-  color: "#fff",
-  px: 2.5,
-  height: 44,
-  boxShadow: "none",
-  "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" },
-};
+const labelCss = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "ink" });
+const labelSub = css({ color: "ink3", fontWeight: 400 });
+
+const sentBox = css({ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", p: "24px 36px 32px", gap: "16px" });
+const sentIcon = css({ width: "64px", height: "64px", borderRadius: "50%", bg: "successTint", display: "grid", placeItems: "center" });
+const sentLead = css({ fontSize: "15px", fontWeight: 500, lineHeight: 1.5, color: "ink" });
+const sentBody = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.5 });
+
+const body = css({ display: "flex", flexDirection: "column", gap: "20px", p: "20px 24px" });
+const twoCol = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "16px" });
+const threeCol = css({ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" });
+const priceField = css({ maxW: "220px" });
+
+const footer = css({
+  display: "flex",
+  justifyContent: "space-between",
+  alignItems: "center",
+  gap: "12px",
+  p: "16px 24px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+  bg: "surface2",
+});
+const footNote = css({ display: "flex", alignItems: "center", gap: "8px" });
+const footText = css({ fontSize: "11.5px", color: "ink3", lineHeight: 1.35 });
+const footMoney = css({ fontFamily: "mono", fontWeight: 600, color: "ink2" });
+const actions = css({ display: "flex", gap: "10px" });
 
 /**
  * Freelancer-initiated custom order: pick a client you've talked to, anchor it
@@ -143,132 +138,109 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: "16px", border: `1px solid ${tokens.border}` } }}
-    >
+    <BareModal open={open} onOpenChange={(o) => { if (!o) handleClose(); }} maxW="600px" className={panel} closeOnInteractOutside={!submitting} closeOnEscape={!submitting}>
       {/* header */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" }}>
-        <Box>
-          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>Custom order</Typography>
-          <Typography sx={{ fontSize: 21, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>
-            {sent ? "Offer sent" : "Propose a custom order"}
-          </Typography>
-        </Box>
-        <IconButton onClick={handleClose} size="small"><Close sx={{ fontSize: 20 }} /></IconButton>
-      </Box>
+      <div className={header}>
+        <div>
+          <p className={coLabelAccent}>Custom order</p>
+          <Dialog.Title className={dlgTitle}>{sent ? "Offer sent" : "Propose a custom order"}</Dialog.Title>
+        </div>
+        <button type="button" aria-label="Close" onClick={handleClose} className={coIconBtn()}><X size={20} /></button>
+      </div>
 
       {sent ? (
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", p: "24px 36px 32px", gap: 2 }}>
-          <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: tokens.successTint, display: "grid", placeItems: "center" }}>
-            <CheckCircle sx={{ fontSize: 32, color: tokens.success }} />
-          </Box>
-          <Typography sx={{ fontSize: 15, fontWeight: 500 }}>
-            Your offer is on its way to {clientName}.
-          </Typography>
-          <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5 }}>
+        <div className={sentBox}>
+          <div className={sentIcon}>
+            <CheckCircle2 size={32} className={css({ color: "success" })} />
+          </div>
+          <p className={sentLead}>Your offer is on its way to {clientName}.</p>
+          <p className={sentBody}>
             They&apos;ll see your offer and can accept whenever they&apos;re ready. Nothing starts until they accept and pay.
-          </Typography>
-          <Button fullWidth sx={primaryBtn} onClick={handleClose}>Done</Button>
-        </Box>
+          </p>
+          <button type="button" onClick={handleClose} className={coBtn({ tone: "black", size: "md", strong: true, full: true })}>Done</button>
+        </div>
       ) : (
         <>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5, p: "20px 24px" }}>
-            {error && <Alert severity="error" sx={{ borderRadius: "10px" }} onClose={() => setError(null)}>{error}</Alert>}
+          <div className={body}>
+            {error && <Alert tone="error" onClose={() => setError(null)}>{error}</Alert>}
 
-            <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2 }}>
-              <Box>
-                <Typography sx={labelSx}>For</Typography>
-                <TextField
-                  select fullWidth value={clientUserId}
-                  onChange={(e) => setClientUserId(e.target.value === "" ? "" : Number(e.target.value))}
-                  sx={fieldSx}
-                  SelectProps={{ displayEmpty: true, renderValue: (v) => (v === "" ? <Box component="span" sx={{ color: tokens.text3 }}>Pick a person…</Box> : people.find((p) => p.id === v)?.name ?? "") }}
-                >
-                  {convsLoading && <MenuItem disabled>Loading conversations…</MenuItem>}
-                  {!convsLoading && people.length === 0 && (
-                    <MenuItem disabled>No conversations yet — message a client first</MenuItem>
-                  )}
-                  {people.map((p) => <MenuItem key={p.id} value={p.id}>{p.name}</MenuItem>)}
-                </TextField>
-              </Box>
-              <Box>
-                <Typography sx={labelSx}>From your service</Typography>
-                <TextField
-                  select fullWidth value={serviceId}
-                  onChange={(e) => setServiceId(e.target.value === "" ? "" : Number(e.target.value))}
-                  sx={fieldSx}
-                  SelectProps={{ displayEmpty: true, renderValue: (v) => (v === "" ? <Box component="span" sx={{ color: tokens.text3 }}>Pick a service…</Box> : activeServices.find((s) => s.id === v)?.title ?? "") }}
-                >
-                  {servicesLoading && <MenuItem disabled>Loading services…</MenuItem>}
-                  {!servicesLoading && activeServices.length === 0 && (
-                    <MenuItem disabled>No active services — publish one first</MenuItem>
-                  )}
-                  {activeServices.map((s) => <MenuItem key={s.id} value={s.id}>{s.title}</MenuItem>)}
-                </TextField>
-              </Box>
-            </Box>
+            <div className={twoCol}>
+              <div>
+                <p className={labelCss}>For</p>
+                <CoSelect
+                  value={clientUserId}
+                  onChange={setClientUserId}
+                  options={people.map((p) => ({ value: p.id, label: p.name }))}
+                  placeholder="Pick a person…"
+                  emptyLabel={convsLoading ? "Loading conversations…" : people.length === 0 ? "No conversations yet — message a client first" : undefined}
+                />
+              </div>
+              <div>
+                <p className={labelCss}>From your service</p>
+                <CoSelect
+                  value={serviceId}
+                  onChange={setServiceId}
+                  options={activeServices.map((s) => ({ value: s.id, label: s.title }))}
+                  placeholder="Pick a service…"
+                  emptyLabel={servicesLoading ? "Loading services…" : activeServices.length === 0 ? "No active services — publish one first" : undefined}
+                />
+              </div>
+            </div>
 
-            <Box>
-              <Typography sx={labelSx}>Scope of work</Typography>
-              <TextField
-                fullWidth multiline minRows={3}
+            <div>
+              <p className={labelCss}>Scope of work</p>
+              <CoTextArea
+                minRows={3}
                 placeholder="What you'll deliver overall — write it the way you'd pitch it to them…"
-                value={scope} onChange={(e) => setScope(e.target.value)} sx={fieldSx}
+                value={scope}
+                onChange={setScope}
               />
-            </Box>
+            </div>
 
-            <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 2 }}>
-              <Box>
-                <Typography sx={labelSx}>Total delivery</Typography>
-                <TextField fullWidth value={deliveryDays} onChange={(e) => setDeliveryDays(e.target.value.replace(/[^0-9]/g, ""))}
-                  InputProps={{ endAdornment: <InputAdornment position="end">days</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={fieldSx} />
-              </Box>
-              <Box>
-                <Typography sx={labelSx}>Revisions</Typography>
-                <TextField fullWidth value={revisions} onChange={(e) => setRevisions(e.target.value.replace(/[^0-9]/g, ""))}
-                  InputProps={{ endAdornment: <InputAdornment position="end">rounds</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={fieldSx} />
-              </Box>
-              <Box>
-                <Typography sx={labelSx}>Expires in</Typography>
-                <TextField fullWidth value={expiresIn} onChange={(e) => setExpiresIn(e.target.value.replace(/[^0-9]/g, ""))}
-                  InputProps={{ endAdornment: <InputAdornment position="end">days</InputAdornment>, sx: { fontFamily: tokens.mono } }} sx={fieldSx} />
-              </Box>
-            </Box>
+            <div className={threeCol}>
+              <div>
+                <p className={labelCss}>Total delivery</p>
+                <CoInput mono value={deliveryDays} onChange={(v) => setDeliveryDays(v.replace(/[^0-9]/g, ""))} end="days" />
+              </div>
+              <div>
+                <p className={labelCss}>Revisions</p>
+                <CoInput mono value={revisions} onChange={(v) => setRevisions(v.replace(/[^0-9]/g, ""))} end="rounds" />
+              </div>
+              <div>
+                <p className={labelCss}>Expires in</p>
+                <CoInput mono value={expiresIn} onChange={(v) => setExpiresIn(v.replace(/[^0-9]/g, ""))} end="days" />
+              </div>
+            </div>
 
             {/* one-time project price */}
-            <Box>
-              <Typography sx={labelSx}>Project price <Box component="span" sx={{ color: tokens.text3, fontWeight: 400 }}>· one-time payment</Box></Typography>
-              <TextField size="small" sx={{ ...fieldSx, maxWidth: 220 }} placeholder="0" value={amount} onChange={(e) => setAmount(sanitizeMoneyInput(e.target.value))}
-                InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment>, sx: { fontFamily: tokens.mono } }} />
-            </Box>
+            <div>
+              <p className={labelCss}>Project price <span className={labelSub}>· one-time payment</span></p>
+              <CoInput mono size="sm" className={priceField} placeholder="0" value={amount} onChange={(v) => setAmount(sanitizeMoneyInput(v))} start="$" />
+            </div>
 
-            <Box>
-              <Typography sx={labelSx}>Note to client <Box component="span" sx={{ color: tokens.text3, fontWeight: 400 }}>· optional</Box></Typography>
-              <TextField fullWidth multiline minRows={2} value={note} onChange={(e) => setNote(e.target.value)} sx={fieldSx} placeholder="Anything they should know about the plan…" />
-            </Box>
-          </Box>
+            <div>
+              <p className={labelCss}>Note to client <span className={labelSub}>· optional</span></p>
+              <CoTextArea minRows={2} value={note} onChange={setNote} placeholder="Anything they should know about the plan…" />
+            </div>
+          </div>
 
           {/* footer */}
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5, p: "16px 24px", borderTop: `1px solid ${tokens.border}`, bgcolor: tokens.surface2 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <LockOutlined sx={{ fontSize: 13, color: tokens.text3 }} />
-              <Typography sx={{ fontSize: 11.5, color: tokens.text3, lineHeight: 1.35 }}>
-                Only the client can accept — total <Box component="span" sx={{ fontFamily: tokens.mono, fontWeight: 600, color: tokens.text2 }}><Money value={total} size={11.5} weight={600} /></Box>
-              </Typography>
-            </Box>
-            <Box sx={{ display: "flex", gap: 1.25 }}>
-              <Button onClick={handleClose} sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, color: tokens.text2, borderRadius: "999px" }}>Cancel</Button>
-              <Button onClick={handleSend} disabled={submitting} sx={primaryBtn}>
-                {submitting ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "Send offer"}
-              </Button>
-            </Box>
-          </Box>
+          <div className={footer}>
+            <div className={footNote}>
+              <Lock size={13} className={css({ color: "ink3", flexShrink: 0 })} />
+              <p className={footText}>
+                Only the client can accept — total <span className={footMoney}><Money value={total} size={11.5} weight={600} /></span>
+              </p>
+            </div>
+            <div className={actions}>
+              <button type="button" onClick={handleClose} className={coBtn({ tone: "quiet", strong: true })}>Cancel</button>
+              <button type="button" onClick={handleSend} disabled={submitting} className={coBtn({ tone: "black", size: "md", strong: true })}>
+                {submitting ? <Spinner size={18} className={css({ color: "#fff" })} /> : "Send offer"}
+              </button>
+            </div>
+          </div>
         </>
       )}
-    </Dialog>
+    </BareModal>
   );
 }

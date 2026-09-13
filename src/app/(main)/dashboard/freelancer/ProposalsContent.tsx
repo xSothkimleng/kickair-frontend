@@ -2,42 +2,22 @@
 
 import { useState } from "react";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { FileText, Sparkles } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Pager, Spinner } from "@/components/ds";
 import { qk } from "@/lib/queryKeys";
-import {
-  Box,
-  Paper,
-  Typography,
-  Button,
-  Stack,
-  Chip,
-  CircularProgress,
-  Pagination,
-  Card,
-  CardActionArea,
-  CardContent,
-  Avatar,
-} from "@mui/material";
-import { DescriptionOutlined, NewReleasesOutlined } from "@mui/icons-material";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { ProposalStatus } from "@/types/job";
 
 type Filter = "all" | ProposalStatus;
 
-function statusColor(status: ProposalStatus) {
-  switch (status) {
-    case "pending":
-      return { bgcolor: "rgba(234,88,12,0.1)", color: "#b45309" };
-    case "accepted":
-      return { bgcolor: "rgba(22,163,74,0.1)", color: "#15803d" };
-    case "rejected":
-      return { bgcolor: "rgba(239,68,68,0.1)", color: "#b91c1c" };
-    case "withdrawn":
-      return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" };
-    default:
-      return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" };
-  }
-}
+const STATUS_CLASS: Record<ProposalStatus, string> = {
+  pending: css({ bg: "rgba(234,88,12,0.1)", color: "pendingText" }),
+  accepted: css({ bg: "rgba(22,163,74,0.1)", color: "successText" }),
+  rejected: css({ bg: "rgba(239,68,68,0.1)", color: "errorText" }),
+  withdrawn: css({ bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" }),
+};
 
 function statusLabel(status: ProposalStatus) {
   return status.charAt(0).toUpperCase() + status.slice(1);
@@ -65,14 +45,87 @@ const FILTERS: { value: Filter; label: string }[] = [
   { value: "withdrawn", label: "Withdrawn" },
 ];
 
+/* ── static styles ── */
+const page = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
+const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const filterRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
+const filterPill = cva({
+  base: {
+    display: "inline-flex", alignItems: "center", justifyContent: "center",
+    boxSizing: "border-box", m: 0, px: "16px", h: "32px", minW: "64px",
+    border: "none", borderRadius: "40px",
+    fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
+    cursor: "pointer", transition: "background-color .25s, color .25s",
+    _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  },
+  variants: {
+    active: {
+      true: { bg: "ink", color: "white", _hover: { bg: "ink" } },
+      false: { bg: "rgba(0,0,0,0.05)", color: "ink2", _hover: { bg: "rgba(0,0,0,0.1)" } },
+    },
+  },
+});
+const panel = css({
+  bg: "surface", borderRadius: "card",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  p: "24px",
+});
+const centreBlock = css({ textAlign: "center", py: "48px" });
+const errorText = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(239,68,68,0.8)" });
+const retryBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, p: "6px 8px", minW: "64px", border: "none", borderRadius: "4px",
+  bg: "transparent", color: "ink", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.04)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const emptyIcon = css({ display: "inline-block", color: "rgba(0,0,0,0.2)", mb: "16px" });
+const emptyText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const cardList = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const proposalCard = css({
+  display: "block", w: "100%", boxSizing: "border-box", m: 0, p: "20px", textAlign: "left",
+  borderRadius: "cardSm",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.07)",
+  bg: "surface", fontFamily: "inherit", cursor: "pointer",
+  transition: "border-color .15s, box-shadow .15s, background-color .15s",
+  _hover: {
+    borderColor: "rgba(0,0,0,0.2)",
+    bg: "rgba(0,0,0,0.02)",
+    boxShadow: "0px 2px 1px -1px rgba(0,0,0,0.2), 0px 1px 1px 0px rgba(0,0,0,0.14), 0px 1px 3px 0px rgba(0,0,0,0.12)",
+  },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const cardRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px" });
+const cardMain = css({ display: "flex", gap: "12px", alignItems: "flex-start", flex: 1, minW: 0 });
+const avatarBox = css({
+  w: "36px", h: "36px", mt: "2px", flexShrink: 0, borderRadius: "50%",
+  bg: "rgba(0,113,227,0.1)", color: "accent",
+  display: "flex", alignItems: "center", justifyContent: "center",
+});
+const cardText = css({ flex: 1, minW: 0 });
+const titleRow = css({ display: "flex", alignItems: "center", gap: "8px", mb: "2px" });
+const jobTitle = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", minW: 0 });
+const updatedChip = css({
+  display: "inline-flex", alignItems: "center", gap: "4px", flexShrink: 0,
+  h: "20px", px: "8px", borderRadius: "pill",
+  fontSize: "10px", bg: "rgba(37,99,235,0.1)", color: "#1e40af",
+});
+const submitted = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const cardAside = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", flexShrink: 0 });
+const priceText = css({ lineHeight: 1.5, fontSize: "14px", fontWeight: 600, color: "successText" });
+const statusChip = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "8px", borderRadius: "pill", fontSize: "11px" });
+const pagerRow = css({ display: "flex", justifyContent: "center", mt: "24px" });
+
 export default function ProposalsContent() {
   const router = useRouter();
-  const [page, setPage] = useState(1);
+  const [page_, setPage] = useState(1);
   const [activeFilter, setActiveFilter] = useState<Filter>("all");
 
   const { data, isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: qk.proposals.list({ page }),
-    queryFn: () => api.getFreelancerProposals(page),
+    queryKey: qk.proposals.list({ page: page_ }),
+    queryFn: () => api.getFreelancerProposals(page_),
     placeholderData: keepPreviousData,
   });
   const proposals = data?.data ?? [];
@@ -84,123 +137,97 @@ export default function ProposalsContent() {
     activeFilter === "all" ? proposals : proposals.filter(p => p.status === activeFilter);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className={page}>
       {/* Header */}
-      <Box>
-        <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>My Proposals</Typography>
-        <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+      <div>
+        <p className={pageTitle}>My Proposals</p>
+        <p className={pageSub}>
           Track all your submitted proposals
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Filter pills */}
-      <Stack direction="row" spacing={1} flexWrap="wrap">
+      <div className={filterRow}>
         {FILTERS.map(f => (
-          <Button
+          <button
             key={f.value}
+            type="button"
             onClick={() => setActiveFilter(f.value)}
-            sx={{
-              fontSize: 12,
-              textTransform: "none",
-              borderRadius: 10,
-              px: 2,
-              height: 32,
-              ...(activeFilter === f.value
-                ? { bgcolor: "black", color: "white", "&:hover": { bgcolor: "black" } }
-                : { bgcolor: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }),
-            }}>
+            className={filterPill({ active: activeFilter === f.value })}>
             {f.label}
-          </Button>
+          </button>
         ))}
-      </Stack>
+      </div>
 
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
+      <div className={panel}>
         {loading ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <CircularProgress size={32} sx={{ color: "rgba(0,0,0,0.4)" }} />
-          </Box>
+          <div className={centreBlock}>
+            <Spinner size={32} className={css({ color: "rgba(0,0,0,0.4)" })} />
+          </div>
         ) : error ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <Typography sx={{ fontSize: 13, color: "rgba(239,68,68,0.8)", mb: 2 }}>{error}</Typography>
-            <Button onClick={() => fetchProposals()} sx={{ fontSize: 12, textTransform: "none" }}>
+          <div className={centreBlock}>
+            <p className={errorText}>{error}</p>
+            <button type="button" onClick={() => fetchProposals()} className={retryBtn}>
               Try again
-            </Button>
-          </Box>
+            </button>
+          </div>
         ) : filtered.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <DescriptionOutlined sx={{ fontSize: 48, color: "rgba(0,0,0,0.2)", mb: 2 }} />
-            <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.6)" }}>
+          <div className={centreBlock}>
+            <FileText size={48} className={emptyIcon} />
+            <p className={emptyText}>
               {activeFilter === "all" ? "No proposals yet" : `No ${activeFilter} proposals`}
-            </Typography>
-          </Box>
+            </p>
+          </div>
         ) : (
-          <Stack spacing={1.5}>
+          <div className={cardList}>
             {filtered.map(proposal => (
-              <Card
-                elevation={0}
+              <button
                 key={proposal.id}
-                sx={{
-                  borderRadius: 3,
-                  border: "1px solid rgba(0,0,0,0.07)",
-                  transition: "all 0.15s",
-                  "&:hover": { borderColor: "rgba(0,0,0,0.2)", boxShadow: 1 },
-                }}>
-                <CardActionArea onClick={() => router.push(`/proposals/${proposal.id}`)} sx={{ borderRadius: 3 }}>
-                  <CardContent sx={{ p: 2.5 }}>
-                    <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-                      <Stack direction="row" spacing={1.5} alignItems="flex-start" flex={1}>
-                        <Avatar sx={{ width: 36, height: 36, bgcolor: "rgba(0,113,227,0.1)", mt: 0.25 }}>
-                          <DescriptionOutlined sx={{ fontSize: 18, color: "#0071e3" }} />
-                        </Avatar>
-                        <Box flex={1} minWidth={0}>
-                          <Stack direction="row" alignItems="center" spacing={1} mb={0.25}>
-                            <Typography sx={{ fontSize: 14, fontWeight: 600 }} noWrap>
-                              {proposal.job_post?.title ?? "Job Post"}
-                            </Typography>
-                            {proposal.is_updated && (
-                              <Chip
-                                icon={<NewReleasesOutlined sx={{ fontSize: 12 }} />}
-                                label="Updated"
-                                size="small"
-                                sx={{ fontSize: 10, height: 20, bgcolor: "rgba(37,99,235,0.1)", color: "#1e40af" }}
-                              />
-                            )}
-                          </Stack>
-                          <Typography sx={{ fontSize: 12, color: "text.secondary" }}>
-                            Submitted {formatDate(proposal.created_at)}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Stack alignItems="flex-end" spacing={0.5} flexShrink={0}>
-                        <Typography sx={{ fontSize: 14, fontWeight: 600, color: "#15803d" }}>
-                          {formatCurrency(proposal.price)}
-                        </Typography>
-                        <Chip
-                          label={statusLabel(proposal.status)}
-                          size="small"
-                          sx={{ fontSize: 11, height: 22, ...statusColor(proposal.status) }}
-                        />
-                      </Stack>
-                    </Stack>
-                  </CardContent>
-                </CardActionArea>
-              </Card>
+                type="button"
+                onClick={() => router.push(`/proposals/${proposal.id}`)}
+                className={proposalCard}>
+                <div className={cardRow}>
+                  <div className={cardMain}>
+                    <span className={avatarBox}>
+                      <FileText size={18} />
+                    </span>
+                    <div className={cardText}>
+                      <div className={titleRow}>
+                        <p className={jobTitle}>
+                          {proposal.job_post?.title ?? "Job Post"}
+                        </p>
+                        {proposal.is_updated && (
+                          <span className={updatedChip}>
+                            <Sparkles size={12} />
+                            Updated
+                          </span>
+                        )}
+                      </div>
+                      <p className={submitted}>
+                        Submitted {formatDate(proposal.created_at)}
+                      </p>
+                    </div>
+                  </div>
+                  <div className={cardAside}>
+                    <p className={priceText}>
+                      {formatCurrency(proposal.price)}
+                    </p>
+                    <span className={cx(statusChip, STATUS_CLASS[proposal.status])}>
+                      {statusLabel(proposal.status)}
+                    </span>
+                  </div>
+                </div>
+              </button>
             ))}
-          </Stack>
+          </div>
         )}
 
         {lastPage > 1 && !loading && (
-          <Box display="flex" justifyContent="center" mt={3}>
-            <Pagination
-              count={lastPage}
-              page={page}
-              onChange={(_, p) => setPage(p)}
-              size="small"
-              shape="rounded"
-            />
-          </Box>
+          <div className={pagerRow}>
+            <Pager count={lastPage} page={page_} onChange={(p) => setPage(p)} />
+          </div>
         )}
-      </Paper>
-    </Box>
+      </div>
+    </div>
   );
 }

@@ -3,37 +3,28 @@
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
-  Box,
-  Container,
-  Typography,
-  Avatar,
-  Button,
-  Dialog,
-  DialogContent,
-  TextField,
-  IconButton,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import {
-  AccessTime,
-  ArrowForward,
-  CheckRounded,
+  ArrowRight,
   Check,
-  ReplayOutlined,
-  LockOutlined,
-  ChatBubbleOutline,
-  Close,
-  ShieldOutlined,
-  FlagOutlined,
   ChevronLeft,
-  AttachFile,
-  InsertDriveFileOutlined,
-} from "@mui/icons-material";
-import { tokens } from "@/theme";
+  Clock,
+  FileText,
+  Flag,
+  Lock,
+  MessageCircle,
+  Paperclip,
+  RotateCcw,
+  Shield,
+  X,
+} from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Alert, Dialog, Spinner } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { api } from "@/lib/api";
 import { CustomOrder, CustomOrderMilestone, MilestoneDeliverable } from "@/types/customOrder";
-import { Money, coCard, coLabel, MsChip, MS_STATUS, AttachChip, initials, EscrowSummary } from "./kit";
+import {
+  AttachChip, CoTextArea, EscrowSummary, MS_STATUS, Money, MsChip,
+  coAvatar, coBtn, coBtnStart, coIconBtn, coLabel, coLabelAccent, initials,
+} from "./kit";
 import { useCoInvalidate } from "./hooks";
 import FundMilestoneDialog from "./FundMilestoneDialog";
 
@@ -42,6 +33,160 @@ type Role = "client" | "freelancer";
 const ESCROW = ["funded", "in_progress", "submitted"];
 const DONE = ["approved", "released"];
 const money = (n: number) => "$" + Number(n).toLocaleString();
+
+/* ── page chrome ── */
+const page = css({ minHeight: "100vh", bg: "canvas" });
+const container = css({
+  w: "100%",
+  maxW: "980px",
+  mx: "auto",
+  boxSizing: "border-box",
+  px: { base: "16px", sm: "32px" },
+  py: { base: "24px", sm: "36px" },
+});
+const backBtn = css({ mb: "16px" });
+const header = css({ display: "flex", justifyContent: "space-between", gap: "12px", flexWrap: "wrap", mb: "16px" });
+
+const pageTitle = css({ fontSize: "28px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
+const pageSub = css({ fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+const headActions = css({ display: "flex", gap: "10px", alignItems: "flex-start" });
+const parties = css({ display: "flex", gap: "16px", flexWrap: "wrap", mb: "18px" });
+
+const turnBanner = cva({
+  base: { display: "flex", gap: "10px", alignItems: "center", p: "12px 16px", borderRadius: "12px", mb: "16px" },
+  variants: {
+    who: {
+      you: { bg: "pendingTint" },
+      done: { bg: "successTint" },
+      them: { bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" },
+    },
+  },
+});
+const turnText = cva({
+  base: { fontSize: "13.5px", lineHeight: 1.5, fontWeight: 500 },
+  variants: { who: { you: { color: "pendingText" }, done: { color: "successText" }, them: { color: "ink2" } } },
+});
+const alertGap = css({ mb: "16px" });
+const escrowGap = css({ mb: "22px" });
+
+/* ── tracker ── */
+const msRow = css({ display: "flex", gap: "18px" });
+const rail = css({ position: "relative", width: "34px", flex: "none", display: "flex", flexDirection: "column", alignItems: "center" });
+const railTop = cva({
+  base: { position: "absolute", top: "-14px", height: "18px", width: "2px" },
+  variants: { done: { true: { bg: "success" }, false: { bg: "hairline" } } },
+});
+const railLine = cva({
+  base: { flex: 1, width: "2px", mt: "4px" },
+  variants: { done: { true: { bg: "success" }, false: { bg: "hairline" } } },
+});
+const railNode = cva({
+  base: {
+    width: "30px",
+    height: "30px",
+    borderRadius: "50%",
+    display: "grid",
+    placeItems: "center",
+    zIndex: 1,
+    fontFamily: "mono",
+    fontSize: "12px",
+    fontWeight: 600,
+    borderWidth: "1.5px",
+    borderStyle: "solid",
+  },
+  variants: {
+    tone: {
+      success: { bg: "success", color: "#fff", borderColor: "success" },
+      pending: { bg: "surface", color: "pendingText", borderColor: "pending" },
+      neutral: { bg: "surface", color: "ink3", borderColor: "hairlineStrong" },
+    },
+    active: { true: { boxShadow: "0 0 0 4px var(--colors-pending-tint)" } },
+  },
+});
+
+// The card style is inlined (not `cx(coCard, …)`) so the `done`/`active`
+// variants override bg/border cleanly inside one recipe.
+const msCard = cva({
+  base: {
+    flex: 1,
+    minWidth: 0,
+    p: "16px 18px",
+    mb: "14px",
+    bg: "surface",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderColor: "hairline",
+    borderRadius: "cardSm",
+  },
+  variants: {
+    done: { true: { bg: "surface2" } },
+    active: { true: { borderColor: "hairlineStrong", boxShadow: "0 6px 22px rgba(0,0,0,0.06)" } },
+  },
+});
+const msHead = css({ display: "flex", justifyContent: "space-between", gap: "12px", alignItems: "flex-start" });
+const msTitleWrap = css({ minWidth: 0, flex: 1 });
+const msTitleRow = css({ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" });
+const msTitle = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5, color: "ink" });
+const msDesc = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const msAmount = css({ textAlign: "right", flex: "none" });
+const msStamp = css({ fontSize: "11px", lineHeight: 1.5, color: "ink3" });
+
+const noteBox = css({ mt: "12px", p: "10px", bg: "surface2", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "8px" });
+const noteLabel = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, color: "ink3" });
+const noteText = css({ fontSize: "13px", color: "ink2", lineHeight: 1.5, whiteSpace: "pre-wrap" });
+const filesRow = css({ display: "flex", gap: "8px", flexWrap: "wrap", mt: "12px" });
+const fileLink = css({ textDecoration: "none" });
+const revBox = css({ mt: "12px", p: "10px", bg: "pendingTint", borderRadius: "8px" });
+const revText = css({ fontSize: "12px", lineHeight: 1.5, color: "pendingText" });
+const actionBar = css({ mt: "14px", pt: "14px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
+const actionRow = css({ display: "flex", gap: "10px", flexWrap: "wrap" });
+
+const partyRow = css({ display: "flex", alignItems: "center", gap: "8px" });
+const partyName = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const partyRole = css({ color: "ink3" });
+
+const waitingRow = cva({
+  base: { display: "flex", alignItems: "center", gap: "7px", fontSize: "12.5px" },
+  variants: { muted: { true: { color: "ink3" }, false: { color: "pendingText" } } },
+});
+
+/* ── dialog chrome (shared by the note / submit / end dialogs) ── */
+const panel = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline" });
+const dlgHeader = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" });
+
+const dlgTitle = css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "ink" });
+const dlgContent = css({ p: "16px 24px 8px" });
+const dlgLabel = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "ink" });
+const dlgFooter = css({ display: "flex", justifyContent: "flex-end", gap: "10px", p: "8px 24px 22px" });
+
+const dropZone = css({
+  borderWidth: "1.5px",
+  borderStyle: "dashed",
+  borderColor: "hairlineStrong",
+  borderRadius: "10px",
+  p: "16px",
+  textAlign: "center",
+  cursor: "pointer",
+  _hover: { borderColor: "ink3" },
+});
+const dropIcon = css({ color: "ink3", display: "block", mx: "auto", mb: "4px" });
+const dropText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const fileList = css({ display: "flex", flexDirection: "column", gap: "6px", mt: "10px" });
+const fileRow = css({ display: "flex", alignItems: "center", gap: "8px", px: "10px", py: "6px", bg: "surface2", borderRadius: "8px" });
+const fileName = css({ flex: 1, fontSize: "12.5px", lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", color: "ink" });
+
+const endBody = css({ display: "flex", flexDirection: "column", gap: "12px", p: "16px 24px 24px" });
+const endIntro = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.5 });
+const endActions = css({ display: "flex", gap: "10px", mt: "4px" });
+const groupBox = css({ p: "16px", borderWidth: "1px", borderStyle: "solid", borderRadius: "12px" });
+const groupHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "12px" });
+const groupHeadLeft = css({ display: "flex", alignItems: "center", gap: "9px" });
+const groupIcon = css({ width: "28px", height: "28px", borderRadius: "8px", display: "grid", placeItems: "center", flex: "none" });
+const groupTitle = css({ fontWeight: 600, fontSize: "14px", lineHeight: 1.5, color: "ink" });
+const groupItems = css({ display: "flex", flexDirection: "column", gap: "7px" });
+const groupItem = css({ display: "flex", justifyContent: "space-between" });
+const groupItemLabel = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const groupNote = css({ fontSize: "11.5px", color: "ink3", lineHeight: 1.45 });
 
 export default function Workspace({ order, role }: { order: CustomOrder; role: Role }) {
   const router = useRouter();
@@ -95,65 +240,66 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
     return { who: "done" as const, text: "" };
   })();
 
-  const turnBg = turn.who === "you" ? tokens.pendingTint : turn.who === "done" ? tokens.successTint : tokens.surface;
-  const turnColor = turn.who === "you" ? tokens.pendingText : turn.who === "done" ? tokens.successText : tokens.text2;
-
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
-      <Container disableGutters sx={{ maxWidth: "980px !important", px: { xs: 2, sm: 4 }, py: { xs: 3, sm: 4.5 } }}>
+    <div className={page}>
+      <div className={container}>
         {/* back to dashboard */}
-        <Button
+        <button
+          type="button"
           onClick={() => router.push(isClient ? "/dashboard/client?tab=orders" : "/dashboard/freelancer?tab=orders")}
-          startIcon={<ChevronLeft sx={{ fontSize: 16 }} />}
-          sx={{ mb: 2, textTransform: "none", fontSize: 13, fontWeight: 500, color: tokens.text2, p: 0, minWidth: 0, "&:hover": { color: tokens.text, bgcolor: "transparent" } }}>
+          className={cx(coBtn({ tone: "link" }), backBtn)}>
+          <ChevronLeft size={16} className={coBtnStart} />
           Back to orders
-        </Button>
+        </button>
 
         {/* header */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, flexWrap: "wrap", mb: 2 }}>
-          <Box>
-            <Typography sx={{ ...coLabel, fontFamily: tokens.mono, color: tokens.accent }}>Project workspace</Typography>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>{order.service.title ?? "Custom order"}</Typography>
-            <Typography sx={{ fontSize: 14, color: tokens.text2 }}>{ms.length > 1 ? "Custom order · paid by milestone" : "Custom order · one-time payment"}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 1.25, alignItems: "flex-start" }}>
+        <div className={header}>
+          <div>
+            <p className={coLabelAccent}>Project workspace</p>
+            <p className={pageTitle}>{order.service.title ?? "Custom order"}</p>
+            <p className={pageSub}>{ms.length > 1 ? "Custom order · paid by milestone" : "Custom order · one-time payment"}</p>
+          </div>
+          <div className={headActions}>
             {order.order && (
-              <Button onClick={openChat}
-                startIcon={<ChatBubbleOutline sx={{ fontSize: 16 }} />}
-                sx={{ textTransform: "none", fontWeight: 600, fontSize: 13.5, borderRadius: "999px", color: tokens.text, bgcolor: "rgba(0,0,0,0.05)", px: 1.75, "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }}>
+              <button type="button" onClick={openChat} className={coBtn({ tone: "grey", size: "px14", font: "13.5", strong: true })}>
+                <MessageCircle size={16} className={coBtnStart} />
                 Message {(isClient ? order.freelancer.name : order.client.name)?.split(" ")[0] ?? "chat"}
-              </Button>
+              </button>
             )}
             {order.order?.status === "active" && (
-              <Button onClick={() => setEndOpen(true)} sx={{ textTransform: "none", fontWeight: 600, fontSize: 13.5, borderRadius: "999px", color: tokens.text2 }}>End order</Button>
+              <button type="button" onClick={() => setEndOpen(true)} className={coBtn({ tone: "quiet", font: "13.5", strong: true })}>End order</button>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* parties */}
-        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 2.25 }}>
+        <div className={parties}>
           <Party name={order.client.name} role="client" />
           <Party name={order.freelancer.name} role="freelancer" />
-        </Box>
+        </div>
 
         {/* turn banner */}
         {turn.text && (
-          <Box sx={{ display: "flex", gap: 1.25, alignItems: "center", p: "12px 16px", borderRadius: "12px", mb: 2, bgcolor: turnBg, border: turn.who === "them" ? `1px solid ${tokens.border}` : "none" }}>
-            {turn.who === "done" ? <CheckRounded sx={{ fontSize: 18, color: tokens.success }} /> : turn.who === "you" ? <ArrowForward sx={{ fontSize: 18, color: tokens.pendingText }} /> : <AccessTime sx={{ fontSize: 18, color: tokens.text3 }} />}
-            <Typography sx={{ fontSize: 13.5, fontWeight: 500, color: turnColor }}>
-              {turn.who === "you" && <Box component="strong">Your turn — </Box>}{turn.text}
-            </Typography>
-          </Box>
+          <div className={turnBanner({ who: turn.who })}>
+            {turn.who === "done"
+              ? <Check size={18} className={css({ color: "success", flexShrink: 0 })} />
+              : turn.who === "you"
+                ? <ArrowRight size={18} className={css({ color: "pendingText", flexShrink: 0 })} />
+                : <Clock size={18} className={css({ color: "ink3", flexShrink: 0 })} />}
+            <p className={turnText({ who: turn.who })}>
+              {turn.who === "you" && <strong>Your turn — </strong>}{turn.text}
+            </p>
+          </div>
         )}
 
-        {error && <Alert severity="error" sx={{ borderRadius: "10px", mb: 2 }} onClose={() => setError(null)}>{error}</Alert>}
+        {error && <Alert tone="error" className={alertGap} onClose={() => setError(null)}>{error}</Alert>}
 
         {/* escrow summary */}
-        <Box sx={{ mb: 2.75 }}><EscrowSummary escrow={order.escrow} /></Box>
+        <div className={escrowGap}><EscrowSummary escrow={order.escrow} /></div>
 
         {/* tracker */}
-        <Typography sx={{ ...coLabel, display: "block", mb: 1.75 }}>{ms.length > 1 ? "Milestones" : "Payment & delivery"}</Typography>
-        <Box>
+        <p className={coLabel}>{ms.length > 1 ? "Milestones" : "Payment & delivery"}</p>
+        <div>
           {ms.map((m, i) => {
             const prevDone = i > 0 && DONE.includes(ms[i - 1].status);
             const done = DONE.includes(m.status);
@@ -161,24 +307,15 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
             const isActive = m.seq === activeSeq && !complete;
             const isFirstUpcoming = i === firstUpcomingIdx;
             return (
-              <Box key={m.id} sx={{ display: "flex", gap: 2.25 }}>
+              <div key={m.id} className={msRow}>
                 {/* rail */}
-                <Box sx={{ position: "relative", width: 34, flex: "none", display: "flex", flexDirection: "column", alignItems: "center" }}>
-                  {i > 0 && <Box sx={{ position: "absolute", top: -14, height: 18, width: "2px", bgcolor: prevDone ? tokens.success : tokens.border }} />}
-                  <Box sx={{
-                    width: 30, height: 30, borderRadius: "50%", display: "grid", placeItems: "center", zIndex: 1,
-                    fontFamily: tokens.mono, fontSize: 12, fontWeight: 600,
-                    ...(tone === "success"
-                      ? { bgcolor: tokens.success, color: "#fff", border: `1.5px solid ${tokens.success}` }
-                      : tone === "pending"
-                        ? { bgcolor: tokens.surface, color: tokens.pendingText, border: `1.5px solid ${tokens.pending}` }
-                        : { bgcolor: tokens.surface, color: tokens.text3, border: `1.5px solid ${tokens.borderStrong}` }),
-                    ...(isActive && { boxShadow: `0 0 0 4px ${tokens.pendingTint}` }),
-                  }}>
-                    {done ? <Check sx={{ fontSize: 16 }} /> : m.seq}
-                  </Box>
-                  {i < ms.length - 1 && <Box sx={{ flex: 1, width: "2px", bgcolor: done ? tokens.success : tokens.border, mt: 0.5 }} />}
-                </Box>
+                <div className={rail}>
+                  {i > 0 && <div className={railTop({ done: prevDone })} />}
+                  <div className={railNode({ tone, active: isActive })}>
+                    {done ? <Check size={16} /> : m.seq}
+                  </div>
+                  {i < ms.length - 1 && <div className={railLine({ done })} />}
+                </div>
 
                 {/* card */}
                 <MilestoneCard
@@ -189,11 +326,11 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
                   onRevision={() => setRevisionTarget(m)}
                   onChat={openChat}
                 />
-              </Box>
+              </div>
             );
           })}
-        </Box>
-      </Container>
+        </div>
+      </div>
 
       {/* fund dialog */}
       {fundTarget && (
@@ -230,8 +367,8 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
       />
 
       {/* end / cancel breakdown */}
-      {endOpen && <EndDialog order={order} role={role} busy={busy} onClose={() => setEndOpen(false)} onConfirm={async () => { const ok = await run(() => api.endCustomOrder(order.id)); if (ok) setEndOpen(false); }} />}
-    </Box>
+      {endOpen && <EndDialog order={order} busy={busy} onClose={() => setEndOpen(false)} onConfirm={async () => { const ok = await run(() => api.endCustomOrder(order.id)); if (ok) setEndOpen(false); }} />}
+    </div>
   );
 }
 
@@ -248,99 +385,90 @@ function MilestoneCard({
   let action: React.ReactNode = null;
   if (m.status === "submitted") {
     action = isClient ? (
-      <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
-        <ActBtn primary onClick={onApprove} disabled={busy} icon={<Check sx={{ fontSize: 16 }} />}>Approve &amp; Release {money(m.amount)}</ActBtn>
-        <ActBtn onClick={onRevision} disabled={busy} icon={<ReplayOutlined sx={{ fontSize: 15 }} />}>Request revision</ActBtn>
-      </Box>
+      <div className={actionRow}>
+        <ActBtn primary onClick={onApprove} disabled={busy} icon={<Check size={16} className={coBtnStart} />}>Approve &amp; Release {money(m.amount)}</ActBtn>
+        <ActBtn onClick={onRevision} disabled={busy} icon={<RotateCcw size={15} className={coBtnStart} />}>Request revision</ActBtn>
+      </div>
     ) : <Waiting text={`Awaiting ${otherName.split(" ")[0]}’s approval`} />;
   } else if (m.status === "funded" || m.status === "in_progress") {
     action = isClient ? <Waiting text={`${otherName.split(" ")[0]} is working on this`} /> : (
-      <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
-        <ActBtn primary onClick={onSubmit} disabled={busy} icon={<ArrowForward sx={{ fontSize: 16 }} />}>Submit work</ActBtn>
+      <div className={actionRow}>
+        <ActBtn primary onClick={onSubmit} disabled={busy} icon={<ArrowRight size={16} className={coBtnStart} />}>Submit work</ActBtn>
         <ActBtn onClick={onChat}>Message client</ActBtn>
-      </Box>
+      </div>
     );
   } else if (m.status === "upcoming" && isFirstUpcoming) {
     action = isClient
-      ? <ActBtn primary onClick={onFund} disabled={busy} icon={<LockOutlined sx={{ fontSize: 15 }} />}>Fund · {money(m.amount)}</ActBtn>
+      ? <ActBtn primary onClick={onFund} disabled={busy} icon={<Lock size={15} className={coBtnStart} />}>Fund · {money(m.amount)}</ActBtn>
       : <Waiting text={`Waiting for ${otherName.split(" ")[0]} to fund`} muted />;
   }
 
   return (
-    <Box sx={{
-      ...coCard, flex: 1, minWidth: 0, p: "16px 18px", mb: 1.75, borderRadius: `${tokens.radius.cardSm}px`,
-      ...(done && { bgcolor: tokens.surface2 }),
-      ...(isActive && { borderColor: tokens.borderStrong, boxShadow: "0 6px 22px rgba(0,0,0,0.06)" }),
-    }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, alignItems: "flex-start" }}>
-        <Box sx={{ minWidth: 0, flex: 1 }}>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", alignItems: "center" }}>
-            <Typography sx={{ fontWeight: 600, fontSize: 15 }}>{m.title}</Typography>
+    <div className={msCard({ done, active: isActive })}>
+      <div className={msHead}>
+        <div className={msTitleWrap}>
+          <div className={msTitleRow}>
+            <p className={msTitle}>{m.title}</p>
             <MsChip status={m.status} />
-          </Box>
-          {m.description && <Typography sx={{ fontSize: 13, color: tokens.text2, mt: 0.5 }}>{m.description}</Typography>}
-        </Box>
-        <Box sx={{ textAlign: "right", flex: "none" }}>
-          <Money value={m.amount} size={16} weight={600} color={done ? tokens.successText : m.status === "upcoming" ? tokens.text3 : tokens.text} />
-          <Typography sx={{ fontSize: 11, color: tokens.text3 }}>{stamp}</Typography>
-        </Box>
-      </Box>
+          </div>
+          {m.description && <p className={msDesc}>{m.description}</p>}
+        </div>
+        <div className={msAmount}>
+          <Money value={m.amount} size={16} weight={600} color={done ? "var(--colors-success-text)" : m.status === "upcoming" ? "var(--colors-ink3)" : "var(--colors-ink)"} />
+          <p className={msStamp}>{stamp}</p>
+        </div>
+      </div>
 
       {(m.status === "submitted" || done) && m.submission_note && (
-        <Box sx={{ mt: 1.5, p: 1.25, bgcolor: tokens.surface2, border: `1px solid ${tokens.border}`, borderRadius: "8px" }}>
-          <Typography sx={{ fontSize: 11, fontWeight: 600, color: tokens.text3, mb: 0.25 }}>Freelancer&apos;s note</Typography>
-          <Typography sx={{ fontSize: 13, color: tokens.text2, lineHeight: 1.5, whiteSpace: "pre-wrap" }}>{m.submission_note}</Typography>
-        </Box>
+        <div className={noteBox}>
+          <p className={noteLabel}>Freelancer&apos;s note</p>
+          <p className={noteText}>{m.submission_note}</p>
+        </div>
       )}
       {(m.status === "submitted" || done) && m.deliverables.length > 0 && (
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 1.5 }}>
+        <div className={filesRow}>
           {m.deliverables.map((d, i) => (
-            <Box key={i} component="a" href={d.url} target="_blank" rel="noopener noreferrer" sx={{ textDecoration: "none" }}>
-              <AttachChip name={d.file_name} icon={<Check sx={{ fontSize: 12, color: tokens.success }} />} />
-            </Box>
+            <a key={i} href={d.url} target="_blank" rel="noopener noreferrer" className={fileLink}>
+              <AttachChip name={d.file_name} icon={<Check size={12} className={css({ color: "success", flexShrink: 0 })} />} />
+            </a>
           ))}
-        </Box>
+        </div>
       )}
       {m.status === "in_progress" && m.revision_note && (
-        <Box sx={{ mt: 1.5, p: 1.25, bgcolor: tokens.pendingTint, borderRadius: "8px" }}>
-          <Typography sx={{ fontSize: 12, color: tokens.pendingText }}><b>Revision requested:</b> {m.revision_note}</Typography>
-        </Box>
+        <div className={revBox}>
+          <p className={revText}><b>Revision requested:</b> {m.revision_note}</p>
+        </div>
       )}
 
-      {action && <Box sx={{ mt: 1.75, pt: 1.75, borderTop: `1px solid ${tokens.border}` }}>{action}</Box>}
-    </Box>
+      {action && <div className={actionBar}>{action}</div>}
+    </div>
   );
 }
 
 /* ── small pieces ── */
 function Party({ name, role }: { name: string | null; role: string }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-      <Avatar sx={{ width: 26, height: 26, bgcolor: tokens.text, fontSize: 11, fontWeight: 600 }}>{initials(name)}</Avatar>
-      <Typography sx={{ fontSize: 12.5, color: tokens.text2 }}>{name ?? "—"} <Box component="span" sx={{ color: tokens.text3 }}>· {role}</Box></Typography>
-    </Box>
+    <div className={partyRow}>
+      <span className={coAvatar({ size: "xs" })}>{initials(name)}</span>
+      <p className={partyName}>{name ?? "—"} <span className={partyRole}>· {role}</span></p>
+    </div>
   );
 }
 
 function Waiting({ text, muted }: { text: string; muted?: boolean }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.875, color: muted ? tokens.text3 : tokens.pendingText, fontSize: 12.5 }}>
-      {muted ? <LockOutlined sx={{ fontSize: 14 }} /> : <AccessTime sx={{ fontSize: 14 }} />}{text}
-    </Box>
+    <div className={waitingRow({ muted: !!muted })}>
+      {muted ? <Lock size={14} className={css({ flexShrink: 0 })} /> : <Clock size={14} className={css({ flexShrink: 0 })} />}{text}
+    </div>
   );
 }
 
 function ActBtn({ children, primary, onClick, disabled, icon }: { children: React.ReactNode; primary?: boolean; onClick: () => void; disabled?: boolean; icon?: React.ReactNode }) {
   return (
-    <Button onClick={onClick} disabled={disabled} startIcon={icon}
-      sx={{
-        textTransform: "none", fontWeight: 600, fontSize: 13, borderRadius: "999px", height: 38, px: 2,
-        ...(primary
-          ? { bgcolor: tokens.text, color: "#fff", "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }
-          : { bgcolor: "rgba(0,0,0,0.05)", color: tokens.text, "&:hover": { bgcolor: "rgba(0,0,0,0.09)" } }),
-      }}>
+    <button type="button" onClick={onClick} disabled={disabled} className={coBtn({ tone: primary ? "black" : "grey", size: "xs", strong: true })}>
+      {icon}
       {children}
-    </Button>
+    </button>
   );
 }
 
@@ -355,27 +483,25 @@ function NoteDialog({ open, title, annotation, label, placeholder, cta, busy, re
 }) {
   const [note, setNote] = useState("");
   return (
-    <Dialog open={open} onClose={busy ? undefined : onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "16px", border: `1px solid ${tokens.border}` } }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" }}>
-        <Box>
-          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>{annotation}</Typography>
-          <Typography sx={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>{title}</Typography>
-        </Box>
-        <IconButton onClick={onClose} size="small" disabled={busy}><Close sx={{ fontSize: 20 }} /></IconButton>
-      </Box>
-      <DialogContent sx={{ p: "16px 24px 8px" }}>
-        <Typography sx={{ fontSize: 12, fontWeight: 600, mb: 0.75 }}>{label}</Typography>
-        <TextField fullWidth multiline minRows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder={placeholder}
-          sx={{ "& .MuiOutlinedInput-root": { fontSize: 13.5, borderRadius: "10px", "& fieldset": { borderColor: tokens.borderStrong }, "&.Mui-focused fieldset": { borderColor: tokens.accent } } }} />
-      </DialogContent>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25, p: "8px 24px 22px" }}>
-        <Button onClick={onClose} disabled={busy} sx={{ textTransform: "none", fontWeight: 600, color: tokens.text2, borderRadius: "999px" }}>Cancel</Button>
-        <Button onClick={() => onConfirm(note.trim())} disabled={busy || (required && !note.trim())}
-          sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", px: 2.5, height: 42, "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }}>
-          {busy ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : cta}
-        </Button>
-      </Box>
-    </Dialog>
+    <BareModal open={open} onOpenChange={(o) => { if (!o && !busy) onClose(); }} maxW="444px" className={panel} closeOnInteractOutside={!busy} closeOnEscape={!busy}>
+      <div className={dlgHeader}>
+        <div>
+          <p className={coLabelAccent}>{annotation}</p>
+          <Dialog.Title className={dlgTitle}>{title}</Dialog.Title>
+        </div>
+        <button type="button" aria-label="Close" onClick={onClose} disabled={busy} className={coIconBtn()}><X size={20} /></button>
+      </div>
+      <div className={dlgContent}>
+        <p className={dlgLabel}>{label}</p>
+        <CoTextArea font="13.5" hover="strong" focus="thick" minRows={3} value={note} onChange={setNote} placeholder={placeholder} />
+      </div>
+      <div className={dlgFooter}>
+        <button type="button" onClick={onClose} disabled={busy} className={coBtn({ tone: "quiet", strong: true })}>Cancel</button>
+        <button type="button" onClick={() => onConfirm(note.trim())} disabled={busy || (required && !note.trim())} className={coBtn({ tone: "black", size: "sm", strong: true })}>
+          {busy ? <Spinner size={16} className={css({ color: "#fff" })} /> : cta}
+        </button>
+      </div>
+    </BareModal>
   );
 }
 
@@ -410,107 +536,112 @@ function SubmitMilestoneDialog({ open, busy, onClose, onConfirm }: {
   };
 
   return (
-    <Dialog open={open} onClose={close} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "16px", border: `1px solid ${tokens.border}` } }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" }}>
-        <Box>
-          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>Deliver your work</Typography>
-          <Typography sx={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>Submit work</Typography>
-        </Box>
-        <IconButton onClick={close} size="small" disabled={busy || uploading}><Close sx={{ fontSize: 20 }} /></IconButton>
-      </Box>
-      <DialogContent sx={{ p: "16px 24px 8px" }}>
-        <Typography sx={{ fontSize: 12, fontWeight: 600, mb: 0.75 }}>Note to client · optional</Typography>
-        <TextField fullWidth multiline minRows={3} value={note} onChange={(e) => setNote(e.target.value)} placeholder="Summarise what you delivered…"
-          sx={{ "& .MuiOutlinedInput-root": { fontSize: 13.5, borderRadius: "10px", "& fieldset": { borderColor: tokens.borderStrong }, "&.Mui-focused fieldset": { borderColor: tokens.accent } } }} />
+    <BareModal open={open} onOpenChange={(o) => { if (!o) close(); }} maxW="444px" className={panel} closeOnInteractOutside={!busy && !uploading} closeOnEscape={!busy && !uploading}>
+      <div className={dlgHeader}>
+        <div>
+          <p className={coLabelAccent}>Deliver your work</p>
+          <Dialog.Title className={dlgTitle}>Submit work</Dialog.Title>
+        </div>
+        <button type="button" aria-label="Close" onClick={close} disabled={busy || uploading} className={coIconBtn()}><X size={20} /></button>
+      </div>
+      <div className={dlgContent}>
+        <p className={dlgLabel}>Note to client · optional</p>
+        <CoTextArea font="13.5" hover="strong" focus="thick" minRows={3} value={note} onChange={setNote} placeholder="Summarise what you delivered…" />
 
-        <Typography sx={{ fontSize: 12, fontWeight: 600, mt: 2, mb: 0.75 }}>Deliverable files · optional</Typography>
+        <p className={dlgLabel}>Deliverable files · optional</p>
         <input ref={inputRef} type="file" multiple hidden onChange={(e) => e.target.files && upload(e.target.files)} />
-        <Box onClick={() => !uploading && inputRef.current?.click()}
-          sx={{ border: `1.5px dashed ${tokens.borderStrong}`, borderRadius: "10px", p: 2, textAlign: "center", cursor: "pointer", "&:hover": { borderColor: tokens.text3 } }}>
-          <AttachFile sx={{ fontSize: 20, color: tokens.text3, display: "block", mx: "auto", mb: 0.5 }} />
-          <Typography sx={{ fontSize: 12.5, color: tokens.text2 }}>{uploading ? "Uploading…" : "Click to upload files"}</Typography>
-        </Box>
+        <div onClick={() => !uploading && inputRef.current?.click()} className={dropZone}>
+          <Paperclip size={20} className={dropIcon} />
+          <p className={dropText}>{uploading ? "Uploading…" : "Click to upload files"}</p>
+        </div>
         {files.length > 0 && (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.75, mt: 1.25 }}>
+          <div className={fileList}>
             {files.map((f, i) => (
-              <Box key={i} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.25, py: 0.75, bgcolor: tokens.surface2, borderRadius: "8px" }}>
-                <InsertDriveFileOutlined sx={{ fontSize: 15, color: tokens.text3 }} />
-                <Typography sx={{ flex: 1, fontSize: 12.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{f.file_name}</Typography>
-                <IconButton size="small" onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))} sx={{ p: 0.25 }}><Close sx={{ fontSize: 14, color: tokens.text3 }} /></IconButton>
-              </Box>
+              <div key={i} className={fileRow}>
+                <FileText size={15} className={css({ color: "ink3", flexShrink: 0 })} />
+                <p className={fileName}>{f.file_name}</p>
+                <button type="button" aria-label={`Remove ${f.file_name}`} onClick={() => setFiles((prev) => prev.filter((_, j) => j !== i))} className={coIconBtn({ size: "xs" })}>
+                  <X size={14} className={css({ color: "ink3" })} />
+                </button>
+              </div>
             ))}
-          </Box>
+          </div>
         )}
-      </DialogContent>
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1.25, p: "8px 24px 22px" }}>
-        <Button onClick={close} disabled={busy || uploading} sx={{ textTransform: "none", fontWeight: 600, color: tokens.text2, borderRadius: "999px" }}>Cancel</Button>
-        <Button onClick={() => onConfirm(note.trim(), files)} disabled={busy || uploading}
-          sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", px: 2.5, height: 42, "&:hover": { bgcolor: "rgba(0,0,0,0.82)" } }}>
-          {busy ? <CircularProgress size={16} sx={{ color: "#fff" }} /> : "Submit for review"}
-        </Button>
-      </Box>
-    </Dialog>
+      </div>
+      <div className={dlgFooter}>
+        <button type="button" onClick={close} disabled={busy || uploading} className={coBtn({ tone: "quiet", strong: true })}>Cancel</button>
+        <button type="button" onClick={() => onConfirm(note.trim(), files)} disabled={busy || uploading} className={coBtn({ tone: "black", size: "sm", strong: true })}>
+          {busy ? <Spinner size={16} className={css({ color: "#fff" })} /> : "Submit for review"}
+        </button>
+      </div>
+    </BareModal>
   );
 }
 
 /* ── end / cancel fair-split breakdown ── */
-function EndDialog({ order, role, busy, onClose, onConfirm }: { order: CustomOrder; role: Role; busy: boolean; onClose: () => void; onConfirm: () => void }) {
+function Group({ icon, title, note, items, color, bg }: { icon: React.ReactNode; title: string; note: string; items: CustomOrderMilestone[]; color: string; bg: string }) {
+  if (items.length === 0) return null;
+  const total = items.reduce((s, m) => s + m.amount, 0);
+  return (
+    <div className={groupBox} style={{ borderColor: bg }}>
+      <div className={groupHead}>
+        <div className={groupHeadLeft}>
+          <div className={groupIcon} style={{ background: bg, color }}>{icon}</div>
+          <p className={groupTitle}>{title}</p>
+        </div>
+        <Money value={total} size={15} weight={600} color={color} />
+      </div>
+      <div className={groupItems}>
+        {items.map((m) => (
+          <div key={m.id} className={groupItem}>
+            <p className={groupItemLabel}>{m.seq}. {m.title}</p>
+            <Money value={m.amount} size={13} weight={500} color="var(--colors-ink2)" />
+          </div>
+        ))}
+      </div>
+      <p className={groupNote}>{note}</p>
+    </div>
+  );
+}
+
+function EndDialog({ order, busy, onClose, onConfirm }: { order: CustomOrder; busy: boolean; onClose: () => void; onConfirm: () => void }) {
   const ms = order.milestones;
   const released = ms.filter((m) => DONE.includes(m.status));
   const inEscrow = ms.filter((m) => ESCROW.includes(m.status));
   const unfunded = ms.filter((m) => m.status === "upcoming");
-  const sum = (arr: CustomOrderMilestone[]) => arr.reduce((s, m) => s + m.amount, 0);
-
-  const Group = ({ icon, title, note, items, color, bg }: { icon: React.ReactNode; title: string; note: string; items: CustomOrderMilestone[]; color: string; bg: string }) =>
-    items.length === 0 ? null : (
-      <Box sx={{ p: 2, border: `1px solid ${bg}`, borderRadius: "12px" }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.125 }}>
-            <Box sx={{ width: 28, height: 28, borderRadius: "8px", bgcolor: bg, display: "grid", placeItems: "center", flex: "none", color }}>{icon}</Box>
-            <Typography sx={{ fontWeight: 600, fontSize: 14 }}>{title}</Typography>
-          </Box>
-          <Money value={sum(items)} size={15} weight={600} color={color} />
-        </Box>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.875 }}>
-          {items.map((m) => (
-            <Box key={m.id} sx={{ display: "flex", justifyContent: "space-between" }}>
-              <Typography sx={{ fontSize: 13, color: tokens.text2 }}>{m.seq}. {m.title}</Typography>
-              <Money value={m.amount} size={13} weight={500} color={tokens.text2} />
-            </Box>
-          ))}
-        </Box>
-        <Typography sx={{ fontSize: 11.5, color: tokens.text3, mt: 1.5, lineHeight: 1.45 }}>{note}</Typography>
-      </Box>
-    );
 
   return (
-    <Dialog open onClose={busy ? undefined : onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: "16px", border: `1px solid ${tokens.border}` } }}>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", p: "22px 24px 0" }}>
-        <Box>
-          <Typography sx={{ ...coLabel, color: tokens.accent, fontFamily: tokens.mono }}>End / cancel order</Typography>
-          <Typography sx={{ fontSize: 20, fontWeight: 600, letterSpacing: "-0.02em", mt: 0.5 }}>If you end this order now</Typography>
-        </Box>
-        <IconButton onClick={onClose} size="small" disabled={busy}><Close sx={{ fontSize: 20 }} /></IconButton>
-      </Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, p: "16px 24px 24px" }}>
-        <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5 }}>
+    <BareModal open onOpenChange={(o) => { if (!o && !busy) onClose(); }} maxW="600px" className={panel} closeOnInteractOutside={!busy} closeOnEscape={!busy}>
+      <div className={dlgHeader}>
+        <div>
+          <p className={coLabelAccent}>End / cancel order</p>
+          <Dialog.Title className={dlgTitle}>If you end this order now</Dialog.Title>
+        </div>
+        <button type="button" aria-label="Close" onClick={onClose} disabled={busy} className={coIconBtn()}><X size={20} /></button>
+      </div>
+      <div className={endBody}>
+        <p className={endIntro}>
           Milestone escrow keeps the split fair — you only ever settle for the work that actually changed hands.
-        </Typography>
-        <Group icon={<Check sx={{ fontSize: 15 }} />} title="Released payments stay paid" color={tokens.successText} bg={tokens.successTint} items={released}
+        </p>
+        <Group icon={<Check size={15} />} title="Released payments stay paid" color="var(--colors-success-text)" bg="var(--colors-success-tint)" items={released}
           note="Approved work has already been released to the freelancer. Nothing here is refundable." />
-        <Group icon={<ShieldOutlined sx={{ fontSize: 15 }} />} title="Held in escrow" color={tokens.pendingText} bg={tokens.pendingTint} items={inEscrow}
+        <Group icon={<Shield size={15} />} title="Held in escrow" color="var(--colors-pending-text)" bg="var(--colors-pending-tint)" items={inEscrow}
           note="Held funds are refunded to you when the order ends." />
-        <Group icon={<Close sx={{ fontSize: 15 }} />} title="Unfunded work cancelled" color={tokens.text3} bg="rgba(0,0,0,0.05)" items={unfunded}
+        <Group icon={<X size={15} />} title="Unfunded work cancelled" color="var(--colors-ink3)" bg="rgba(0,0,0,0.05)" items={unfunded}
           note="Never funded, so they’re simply cancelled. You pay nothing for these." />
 
-        <Box sx={{ display: "flex", gap: 1.25, mt: 0.5 }}>
-          <Button fullWidth onClick={onClose} disabled={busy} sx={{ textTransform: "none", fontWeight: 600, color: tokens.text2, borderRadius: "999px", height: 44 }}>Keep working</Button>
-          <Button fullWidth onClick={onConfirm} disabled={busy} startIcon={!busy && <FlagOutlined sx={{ fontSize: 16 }} />}
-            sx={{ textTransform: "none", fontWeight: 600, fontSize: 14, borderRadius: "999px", bgcolor: tokens.error, color: "#fff", height: 44, "&:hover": { bgcolor: "#b91c1c" } }}>
-            {busy ? <CircularProgress size={18} sx={{ color: "#fff" }} /> : "End order"}
-          </Button>
-        </Box>
-      </Box>
-    </Dialog>
+        <div className={endActions}>
+          <button type="button" onClick={onClose} disabled={busy} className={coBtn({ tone: "quiet", size: "h44", strong: true, full: true })}>Keep working</button>
+          <button type="button" onClick={onConfirm} disabled={busy} className={coBtn({ tone: "danger", size: "h44", strong: true, full: true })}>
+            {busy ? <Spinner size={18} className={css({ color: "#fff" })} /> : (
+              <>
+                <Flag size={16} className={coBtnStart} />
+                End order
+              </>
+            )}
+          </button>
+        </div>
+      </div>
+    </BareModal>
   );
 }

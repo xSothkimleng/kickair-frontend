@@ -2,14 +2,14 @@
 
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { qk } from "@/lib/queryKeys";
-import { Box, Paper, Typography, Stack, Chip, CircularProgress } from "@mui/material";
+import { css, cva } from "styled-system/css";
 import {
-  AddShoppingCart, CheckCircle, Replay, LocalShipping, Gavel,
-  AttachFile, Cancel, RadioButtonChecked, InsertDriveFile as FileIcon,
-  Image as ImageIcon, Download as DownloadIcon,
-  RequestQuoteOutlined, LocalOfferOutlined,
-} from "@mui/icons-material";
+  ShoppingCart, CheckCircle2, RotateCcw, Truck, Gavel,
+  Paperclip, XCircle, CircleDot, FileText, Image as ImageIcon,
+  Download as DownloadIcon, Receipt, Tag,
+} from "lucide-react";
+import { Spinner } from "@/components/ds";
+import { qk } from "@/lib/queryKeys";
 import { api } from "@/lib/api";
 import { OrderTimelineEvent } from "@/types/order";
 import { downloadOrderAttachment } from "@/lib/downloadFile";
@@ -19,25 +19,149 @@ type DeliveryEntry = { note: string | null; attachments: Attachment[]; submitted
 type RevisionEntry = { note: string | null; requested_at: string };
 
 const EVENT_STYLE: Record<string, { icon: React.ReactNode; color: string }> = {
-  request_sent:       { icon: <RequestQuoteOutlined sx={{ fontSize: 13 }} />, color: "#64748B" },
-  offer_sent:         { icon: <LocalOfferOutlined sx={{ fontSize: 13 }} />, color: "#7C3AED" },
-  order_placed:       { icon: <AddShoppingCart sx={{ fontSize: 13 }} />, color: "#0F172A" },
-  order_accepted:     { icon: <CheckCircle sx={{ fontSize: 13 }} />,     color: "#2563EB" },
-  work_delivered:     { icon: <LocalShipping sx={{ fontSize: 13 }} />,   color: "#16A34A" },
-  work_resubmitted:   { icon: <LocalShipping sx={{ fontSize: 13 }} />,   color: "#16A34A" },
-  revision_requested: { icon: <Replay sx={{ fontSize: 13 }} />,          color: "#C2410C" },
-  order_completed:    { icon: <CheckCircle sx={{ fontSize: 13 }} />,     color: "#16A34A" },
-  order_cancelled:    { icon: <Cancel sx={{ fontSize: 13 }} />,          color: "#94A3B8" },
-  dispute_opened:     { icon: <Gavel sx={{ fontSize: 13 }} />,           color: "#DC2626" },
-  dispute_feedback:   { icon: <Gavel sx={{ fontSize: 13 }} />,           color: "#2563EB" },
-  dispute_resolved:   { icon: <Gavel sx={{ fontSize: 13 }} />,           color: "#16A34A" },
-  evidence_submitted: { icon: <AttachFile sx={{ fontSize: 13 }} />,      color: "#64748B" },
+  request_sent:       { icon: <Receipt size={13} />,      color: "#64748B" },
+  offer_sent:         { icon: <Tag size={13} />,          color: "#7C3AED" },
+  order_placed:       { icon: <ShoppingCart size={13} />, color: "#0F172A" },
+  order_accepted:     { icon: <CheckCircle2 size={13} />, color: "#2563EB" },
+  work_delivered:     { icon: <Truck size={13} />,        color: "#16A34A" },
+  work_resubmitted:   { icon: <Truck size={13} />,        color: "#16A34A" },
+  revision_requested: { icon: <RotateCcw size={13} />,    color: "#C2410C" },
+  order_completed:    { icon: <CheckCircle2 size={13} />, color: "#16A34A" },
+  order_cancelled:    { icon: <XCircle size={13} />,      color: "#94A3B8" },
+  dispute_opened:     { icon: <Gavel size={13} />,        color: "#DC2626" },
+  dispute_feedback:   { icon: <Gavel size={13} />,        color: "#2563EB" },
+  dispute_resolved:   { icon: <Gavel size={13} />,        color: "#16A34A" },
+  evidence_submitted: { icon: <Paperclip size={13} />,    color: "#64748B" },
 };
-const FALLBACK_STYLE = { icon: <RadioButtonChecked sx={{ fontSize: 13 }} />, color: "#64748B" };
+const FALLBACK_STYLE = { icon: <CircleDot size={13} />, color: "#64748B" };
 /** Event types that open an order's story; a log without one gets a synthetic first row. */
 const START_EVENTS = new Set(["order_placed", "order_accepted", "custom_order_accepted"]);
 
 const titleFor = (t: string) => t.split("_").map((w) => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+
+/* ── Styles (MUI Paper/Typography/Chip metrics, measured against the MUI build) ── */
+
+/** `Paper variant="outlined"`: white, 1px divider hairline, 8px radius, 16/20px pad. */
+const cardCss = css({
+  bg: "#FFFFFF",
+  color: "rgba(0,0,0,0.87)",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0,0,0,0.12)",
+  borderRadius: "8px",
+  p: { base: "16px", md: "20px" },
+});
+
+const eyebrowCss = css({
+  fontSize: "11px",
+  fontWeight: 600,
+  lineHeight: 1.5,
+  color: "#94A3B8",
+  letterSpacing: "0.06em",
+  textTransform: "uppercase",
+});
+/** MUI `caption`: 12px / 1.66. */
+const captionCss = css({ fontSize: "12px", lineHeight: 1.66, color: "rgba(0,0,0,0.6)" });
+
+const loadingWrapCss = css({ display: "flex", justifyContent: "center", py: "24px" });
+const emptyCss = css({ fontSize: "13px", lineHeight: 1.5, color: "#94A3B8" });
+
+const rowsCss = css({ mt: "20px" });
+const rowCss = css({ display: "flex", gap: "14px", position: "relative" });
+const whenCss = css({ width: "92px", flexShrink: 0, textAlign: "right", pt: "1px" });
+const whenDateCss = css({ fontSize: "12px", fontWeight: 600, color: "#334155", lineHeight: 1.35 });
+const whenTimeCss = css({ fontSize: "11.5px", lineHeight: 1.5, color: "#94A3B8" });
+
+const railColCss = css({ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 });
+/** 20px content box + 2px border = the 24px dot MUI drew (preflight off → content-box). */
+const dotCss = css({
+  width: "20px",
+  height: "20px",
+  borderRadius: "50%",
+  bg: "#FFF",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  display: "grid",
+  placeItems: "center",
+  zIndex: 1,
+});
+const railCss = css({ width: "1.5px", flex: 1, bg: "#E2E8F0", minHeight: "14px" });
+
+const bodyCss = cva({
+  base: { minWidth: 0, flex: 1 },
+  variants: { last: { true: { pb: 0 }, false: { pb: "20px" } } },
+});
+const headRowCss = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
+const titleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#0F172A" });
+const actorCss = css({ fontSize: "11.5px", lineHeight: 1.5, color: "#94A3B8" });
+const descCss = css({ fontSize: "13px", color: "#475569", lineHeight: 1.5 });
+/** The note is a `<p>`; `globals.css` zeroes its padding/margin, so MUI never drew either. */
+const noteCss = css({
+  fontSize: "13px",
+  color: "#334155",
+  lineHeight: 1.6,
+  whiteSpace: "pre-wrap",
+  bg: "#F8FAFC",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "#F1F5F9",
+  borderRadius: "8px",
+});
+const attachListCss = css({ display: "flex", flexDirection: "column", gap: "6px", mt: "8px" });
+
+/** `Chip size="small" variant="outlined"` in the success / warning palette. */
+const badgeCss = cva({
+  base: {
+    display: "inline-flex",
+    alignItems: "center",
+    justifyContent: "center",
+    boxSizing: "border-box",
+    height: "18px",
+    px: "7px",
+    borderWidth: "1px",
+    borderStyle: "solid",
+    borderRadius: "16px",
+    bg: "transparent",
+    fontSize: "10.5px",
+    fontWeight: 700,
+    lineHeight: 1.5,
+    whiteSpace: "nowrap",
+    maxWidth: "100%",
+    verticalAlign: "middle",
+  },
+  variants: {
+    tone: {
+      success: { color: "#2e7d32", borderColor: "rgba(46,125,50,0.7)" },
+      warning: { color: "#ed6c02", borderColor: "rgba(237,108,2,0.7)" },
+    },
+  },
+  defaultVariants: { tone: "success" },
+});
+
+const fileRowCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  p: "6px 10px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0,0,0,0.1)",
+  borderRadius: "6px",
+  maxWidth: "420px",
+});
+const fileIconCss = css({ color: "rgba(0,0,0,0.54)", flexShrink: 0, "& svg": { display: "block" } });
+const fileNameCss = css({ flex: 1, fontSize: "12px", lineHeight: 1.66, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const fileErrCss = css({ fontSize: "12px", lineHeight: 1.66, color: "#d32f2f" });
+const fileOpenCss = css({ fontSize: "12px", lineHeight: 1.66, textDecoration: "none" });
+const fileDlCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "3.2px",
+  cursor: "pointer",
+  color: "#1976d2",
+  _hover: { textDecoration: "underline" },
+});
+const fileDlTextCss = css({ fontSize: "12px", lineHeight: 1.66, color: "#1976d2" });
 
 function AttachmentRow({ file, orderId }: { file: Attachment; orderId: number }) {
   const [downloading, setDownloading] = useState(false);
@@ -49,19 +173,20 @@ function AttachmentRow({ file, orderId }: { file: Attachment; orderId: number })
     finally { setDownloading(false); }
   };
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, p: "6px 10px", border: "1px solid rgba(0,0,0,0.1)", borderRadius: 1.5, maxWidth: 420 }}>
-      {file.file_type === "image" ? <ImageIcon sx={{ fontSize: 16 }} color="action" /> : <FileIcon sx={{ fontSize: 16 }} color="action" />}
-      <Typography variant="caption" sx={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{file.file_name}</Typography>
-      {error && <Typography variant="caption" color="error">Unavailable</Typography>}
-      <Typography component="a" href={file.url} target="_blank" rel="noopener noreferrer" variant="caption" color="primary" sx={{ textDecoration: "none" }}>
+    <div className={fileRowCss}>
+      <span className={fileIconCss}>
+        {file.file_type === "image" ? <ImageIcon size={16} /> : <FileText size={16} />}
+      </span>
+      <span className={fileNameCss}>{file.file_name}</span>
+      {error && <span className={fileErrCss}>Unavailable</span>}
+      <a href={file.url} target="_blank" rel="noopener noreferrer" className={fileOpenCss}>
         Open
-      </Typography>
-      <Box onClick={downloading ? undefined : handleDownload}
-        sx={{ display: "flex", alignItems: "center", gap: 0.4, cursor: "pointer", color: "primary.main", "&:hover": { textDecoration: "underline" } }}>
-        {downloading ? <CircularProgress size={11} /> : <DownloadIcon sx={{ fontSize: 13 }} />}
-        <Typography variant="caption" color="primary">Download</Typography>
-      </Box>
-    </Box>
+      </a>
+      <div onClick={downloading ? undefined : handleDownload} className={fileDlCss}>
+        {downloading ? <Spinner size={11} /> : <DownloadIcon size={13} />}
+        <span className={fileDlTextCss}>Download</span>
+      </div>
+    </div>
   );
 }
 
@@ -171,79 +296,79 @@ export default function OrderRecord({
   rows.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
   return (
-    <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 2 }}>
-      <Typography sx={{ fontSize: 11, fontWeight: 600, color: "#94A3B8", letterSpacing: "0.06em", textTransform: "uppercase", mb: 0.5 }}>
+    <div className={cardCss}>
+      <p className={eyebrowCss}>
         Order Record
-      </Typography>
-      <Typography variant="caption" color="text.secondary">
+      </p>
+      <span className={captionCss}>
         Everything that happened on this order — activity, deliveries, and revisions — in one timeline.
-      </Typography>
+      </span>
 
       {loading ? (
-        <Box sx={{ display: "flex", justifyContent: "center", py: 3 }}>
-          <CircularProgress size={20} sx={{ color: "#94A3B8" }} />
-        </Box>
+        <div className={loadingWrapCss}>
+          <Spinner size={20} style={{ color: "#94A3B8" }} />
+        </div>
       ) : rows.length === 0 ? (
-        <Typography sx={{ fontSize: 13, color: "#94A3B8", mt: 2 }}>No activity recorded yet.</Typography>
+        <p className={emptyCss}>No activity recorded yet.</p>
       ) : (
-        <Box sx={{ mt: 2.5 }}>
+        <div className={rowsCss}>
           {rows.map((row, i) => {
             const style = EVENT_STYLE[row.eventType] ?? FALLBACK_STYLE;
             const d = new Date(row.at);
             return (
-              <Box key={row.key} sx={{ display: "flex", gap: 1.75, position: "relative" }}>
+              <div key={row.key} className={rowCss}>
                 {/* Date & time on the left */}
-                <Box sx={{ width: 92, flexShrink: 0, textAlign: "right", pt: "1px" }}>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "#334155", lineHeight: 1.35 }}>
+                <div className={whenCss}>
+                  <p className={whenDateCss}>
                     {d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                  </Typography>
-                  <Typography sx={{ fontSize: 11.5, color: "#94A3B8" }}>
+                  </p>
+                  <p className={whenTimeCss}>
                     {d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
 
                 {/* Icon + connecting rail */}
-                <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", flexShrink: 0 }}>
-                  <Box sx={{ width: 20, height: 20, borderRadius: "50%", bgcolor: "#FFF", border: `2px solid ${style.color}`, color: style.color, display: "grid", placeItems: "center", zIndex: 1 }}>
+                <div className={railColCss}>
+                  <div className={dotCss} style={{ borderColor: style.color, color: style.color }}>
                     {style.icon}
-                  </Box>
-                  {i < rows.length - 1 && <Box sx={{ width: "1.5px", flex: 1, bgcolor: "#E2E8F0", minHeight: 14 }} />}
-                </Box>
+                  </div>
+                  {i < rows.length - 1 && <div className={railCss} />}
+                </div>
 
                 {/* Content */}
-                <Box sx={{ pb: i === rows.length - 1 ? 0 : 2.5, minWidth: 0, flex: 1 }}>
-                  <Stack direction="row" alignItems="center" gap={1} flexWrap="wrap">
-                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#0F172A" }}>{row.title}</Typography>
+                <div className={bodyCss({ last: i === rows.length - 1 })}>
+                  <div className={headRowCss}>
+                    <p className={titleCss}>{row.title}</p>
                     {row.badge && (
-                      <Chip label={row.badge} size="small" variant="outlined"
-                        color={row.eventType === "revision_requested" ? "warning" : "success"}
-                        sx={{ height: 18, fontSize: 10.5, fontWeight: 700 }} />
+                      <span className={badgeCss({ tone: row.eventType === "revision_requested" ? "warning" : "success" })}>
+                        {row.badge}
+                      </span>
                     )}
                     {row.actor && (
-                      <Typography sx={{ fontSize: 11.5, color: "#94A3B8" }}>
+                      <p className={actorCss}>
                         {row.actor.charAt(0).toUpperCase() + row.actor.slice(1)}
-                      </Typography>
+                      </p>
                     )}
-                  </Stack>
+                  </div>
                   {row.description && (
-                    <Typography sx={{ fontSize: 13, color: "#475569", mt: "2px", lineHeight: 1.5 }}>{row.description}</Typography>
+                    <p className={descCss}>{row.description}</p>
                   )}
                   {row.note && (
-                    <Typography sx={{ fontSize: 13, color: "#334155", mt: 0.75, lineHeight: 1.6, whiteSpace: "pre-wrap", bgcolor: "#F8FAFC", border: "1px solid #F1F5F9", borderRadius: "8px", p: "8px 12px" }}>
+                    <p className={noteCss}>
                       {row.note}
-                    </Typography>
+                    </p>
                   )}
                   {!!row.attachments?.length && (
-                    <Stack spacing={0.75} mt={1}>
+                    <div className={attachListCss}>
                       {row.attachments.map((f, fi) => <AttachmentRow key={fi} file={f} orderId={orderId} />)}
-                    </Stack>
+                    </div>
                   )}
-                </Box>
-              </Box>
+                </div>
+              </div>
             );
           })}
-        </Box>
+        </div>
       )}
-    </Paper>
+    </div>
   );
 }

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
-import { Box, Paper, Typography, Button, Stack, Grid, IconButton, CircularProgress, Alert } from "@mui/material";
-import { ChevronLeftOutlined, CloudUploadOutlined, CloseOutlined, InsertDriveFileOutlined, ImageOutlined, RestoreOutlined } from "@mui/icons-material";
+import { ChevronLeft, CloudUpload, X, FileText, Image as ImageIcon, History } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Alert, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { JobPost, CreateJobPostRequest } from "@/types/job";
 import { ServiceCategory } from "@/types/service";
@@ -41,6 +42,146 @@ const parseYmd = (s: string): Date | null => {
   return Number.isNaN(date.getTime()) ? null : date;
 };
 const toYmd = (d: Date): string => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/* ── static styles ── */
+/* MUI text `Button` metrics with `pl: 0`. */
+const backBtn = css({
+  display: "inline-flex", alignItems: "center", gap: "8px",
+  m: 0, mb: "16px", p: "6px 8px 6px 0", border: "none", bg: "transparent",
+  color: "ink2", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "color .25s",
+  _hover: { color: "ink" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const paper = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+/* globals.css zeroes `p` margins outside any layer, so the old Typography `mb` never applied. */
+const formTitle = css({ lineHeight: 1.5, fontSize: "24px", fontWeight: 600 });
+const formSub = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(0,0,0,0.5)" });
+const alertBox = css({ mb: "24px", borderRadius: "8px", fontSize: "13px" });
+
+const banner = css({
+  borderRadius: "cardSm",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(245, 158, 11, 0.35)",
+  bg: "rgba(245, 158, 11, 0.06)",
+  p: "16px",
+  mb: "24px",
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  flexWrap: "wrap",
+});
+const bannerIcon = css({ color: "pendingText", flexShrink: 0 });
+const bannerText = css({ lineHeight: 1.5, fontSize: "13px", color: "#92400e", flex: 1, minW: "200px" });
+const smallBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, px: "16px", h: "32px", minW: "64px",
+  border: "none", borderRadius: "8px",
+  fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s, color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const amberBtn = css({ bg: "pendingText", color: "white", _hover: { bg: "#92400e" } });
+const amberGhostBtn = css({ bg: "transparent", color: "#92400e", _hover: { bg: "rgba(245,158,11,0.12)" } });
+
+const stack = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const fieldLabel = cva({
+  base: { lineHeight: 1.5, fontSize: "13px", fontWeight: 500 },
+  variants: { invalid: { true: { color: "#d32f2f" }, false: { color: "rgba(0,0,0,0.7)" } } },
+});
+const editorError = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "#d32f2f", borderRadius: "8px" });
+const helperError = css({ lineHeight: 1.5, fontSize: "12px", color: "#d32f2f" });
+const twoCol = css({ display: "grid", gridTemplateColumns: { base: "1fr", sm: "1fr 1fr" }, gap: "16px" });
+
+const mediaGrid = css({
+  display: "grid",
+  gridTemplateColumns: { base: "repeat(2, 1fr)", sm: "repeat(3, 1fr)", md: "repeat(4, 1fr)" },
+  gap: "12px",
+});
+const thumb = css({
+  position: "relative",
+  aspectRatio: "1",
+  bg: "rgba(0,0,0,0.05)",
+  borderRadius: "cardSm",
+  overflow: "hidden",
+  "&:hover .delete-btn": { opacity: 1 },
+});
+const pdfPreview = css({
+  w: "100%", h: "100%",
+  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+  bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.4)",
+});
+const pdfName = css({ lineHeight: 1.5, fontSize: "9px", color: "rgba(0,0,0,0.5)", px: "8px", textAlign: "center", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxW: "100%" });
+const deleteOverlay = css({ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bg: "rgba(0,0,0,0.3)" });
+const deleteBtn = css({
+  position: "absolute", top: "6px", right: "6px",
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  p: "6px", m: 0, border: "none", borderRadius: "50%",
+  bg: "#ef4444", color: "white", cursor: "pointer", fontFamily: "inherit",
+  opacity: 0, transition: "opacity 0.2s, background-color .2s",
+  _hover: { bg: "#dc2626" },
+  _focusVisible: { opacity: 1, outline: "none", boxShadow: "focusRing" },
+  "& svg": { display: "block" },
+});
+const uploadBox = css({
+  aspectRatio: "1",
+  w: "100%",
+  boxSizing: "border-box",
+  bg: "rgba(0,0,0,0.04)",
+  borderRadius: "cardSm",
+  display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
+  borderWidth: "2px", borderStyle: "dashed", borderColor: "rgba(0,0,0,0.15)",
+  cursor: "pointer", fontFamily: "inherit",
+  transition: "background-color .25s, border-color .25s",
+  _hover: { bg: "rgba(0,113,227,0.04)", borderColor: "accent" },
+  "&[data-disabled]": { pointerEvents: "none", bg: "rgba(0,0,0,0.04)" },
+});
+const uploadIcon = css({ color: "rgba(0,0,0,0.4)", mb: "6px" });
+const uploadText = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0,0,0,0.6)" });
+const uploadHint = css({ lineHeight: 1.5, fontSize: "10px", color: "rgba(0,0,0,0.4)" });
+const hintRow = css({ display: "flex", alignItems: "center", gap: "16px", mt: "12px" });
+const hintItem = css({ display: "flex", alignItems: "center", gap: "4px", color: "rgba(0,0,0,0.4)" });
+const hintText = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0,0,0,0.5)" });
+const hintCount = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0,0,0,0.4)" });
+
+const actions = css({ display: "flex", gap: "16px", pt: "8px" });
+const bigBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  boxSizing: "border-box", m: 0, flex: 1, minW: "64px", borderRadius: "40px",
+  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s, box-shadow .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  _disabled: { pointerEvents: "none" },
+});
+const cancelBtn = css({
+  p: "5px 15px",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.2)",
+  bg: "transparent", color: "ink",
+  _hover: { borderColor: "rgba(0,0,0,0.4)", bg: "transparent" },
+  _disabled: { color: "rgba(0, 0, 0, 0.26)", borderColor: "rgba(0, 0, 0, 0.12)" },
+});
+const draftBtn = css({
+  p: "6px 16px", border: "none",
+  bg: "rgba(0,0,0,0.05)", color: "ink",
+  _hover: { bg: "rgba(0,0,0,0.1)" },
+  _disabled: { color: "rgba(0, 0, 0, 0.26)" },
+});
+const primaryBtn = css({
+  p: "6px 16px", border: "none",
+  bg: "accent", color: "white",
+  boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
+  _hover: { bg: "accentHover" },
+  _disabled: { bg: "rgba(0, 0, 0, 0.12)", color: "rgba(0, 0, 0, 0.26)", boxShadow: "none" },
+});
 
 export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) {
   const isEditing = !!job;
@@ -275,21 +416,12 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   const renderPreview = (item: { file_url: string; file_type: string; file_name: string }) => {
     if (item.file_type === "pdf") {
       return (
-        <Box
-          sx={{
-            width: "100%",
-            height: "100%",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            bgcolor: "rgba(0,0,0,0.06)",
-          }}>
-          <InsertDriveFileOutlined sx={{ fontSize: 28, color: "rgba(0,0,0,0.4)" }} />
-          <Typography sx={{ fontSize: 9, color: "rgba(0,0,0,0.5)", mt: 0.5, px: 1, textAlign: "center" }} noWrap>
+        <div className={pdfPreview}>
+          <FileText size={28} />
+          <p className={pdfName}>
             {item.file_name}
-          </Typography>
-        </Box>
+          </p>
+        </div>
       );
     }
     return (
@@ -305,59 +437,42 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   };
 
   return (
-    <Box>
+    <div>
       {/* Back button */}
-      <Button
-        startIcon={<ChevronLeftOutlined />}
-        onClick={onBack}
-        sx={{ mb: 2, textTransform: "none", fontSize: 13, color: "rgba(0,0,0,0.6)", pl: 0 }}>
+      <button type="button" onClick={onBack} className={backBtn}>
+        <ChevronLeft size={24} />
         Back to Jobs
-      </Button>
+      </button>
 
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 4 }}>
-        <Typography sx={{ fontSize: 24, fontWeight: 600, mb: 0.5 }}>{isEditing ? "Edit Job Post" : "Post a Job"}</Typography>
-        <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.5)", mb: 4 }}>
+      <div className={paper}>
+        <p className={formTitle}>{isEditing ? "Edit Job Post" : "Post a Job"}</p>
+        <p className={formSub}>
           {isEditing ? "Update your job details." : "Describe the work you need done and attract the right freelancers."}
-        </Typography>
+        </p>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3, borderRadius: 2, fontSize: 13 }} onClose={() => setError(null)}>
+          <Alert tone="error" className={alertBox} onClose={() => setError(null)}>
             {error}
           </Alert>
         )}
 
         {/* Unsaved-changes recovery banner (local-storage safety net) */}
         {recovered && (
-          <Box
-            sx={{
-              borderRadius: 3,
-              border: "1px solid rgba(245, 158, 11, 0.35)",
-              bgcolor: "rgba(245, 158, 11, 0.06)",
-              p: 2,
-              mb: 3,
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              flexWrap: "wrap",
-            }}>
-            <RestoreOutlined sx={{ fontSize: 20, color: "#b45309" }} />
-            <Typography sx={{ fontSize: 13, color: "#92400e", flex: 1, minWidth: 200 }}>
+          <div className={banner}>
+            <History size={20} className={bannerIcon} />
+            <p className={bannerText}>
               You have unsaved changes from a previous session.
-            </Typography>
-            <Button
-              onClick={() => restoreDraft(recovered.data)}
-              sx={{ px: 2, height: 32, fontSize: 12, color: "white", bgcolor: "#b45309", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "#92400e" } }}>
+            </p>
+            <button type="button" onClick={() => restoreDraft(recovered.data)} className={cx(smallBtn, amberBtn)}>
               Restore
-            </Button>
-            <Button
-              onClick={discardRecovery}
-              sx={{ px: 2, height: 32, fontSize: 12, color: "#92400e", bgcolor: "transparent", borderRadius: 2, textTransform: "none", "&:hover": { bgcolor: "rgba(245,158,11,0.12)" } }}>
+            </button>
+            <button type="button" onClick={discardRecovery} className={cx(smallBtn, amberGhostBtn)}>
               Discard
-            </Button>
-          </Box>
+            </button>
+          </div>
         )}
 
-        <Stack spacing={3}>
+        <div className={stack}>
           {/* Title */}
           <div id="job-field-title">
             <TextInput
@@ -381,24 +496,24 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
           </div>
 
           {/* Description */}
-          <Box id="job-field-description">
-            <Typography sx={{ fontSize: 13, fontWeight: 500, mb: 1, color: fieldErrors.description ? "#d32f2f" : "rgba(0,0,0,0.7)" }}>Description</Typography>
-            <Box sx={fieldErrors.description ? { border: "1px solid #d32f2f", borderRadius: 2 } : undefined}>
+          <div id="job-field-description">
+            <p className={fieldLabel({ invalid: !!fieldErrors.description })}>Description</p>
+            <div className={fieldErrors.description ? editorError : undefined}>
               <RichTextEditor
                 value={description}
                 onChange={(v) => { setDescription(v); clearFieldError("description"); }}
                 placeholder="Describe the project in detail — goals, features, requirements..."
                 minHeight={180}
               />
-            </Box>
+            </div>
             {fieldErrors.description && (
-              <Typography sx={{ fontSize: 12, color: "#d32f2f", mt: 0.5, ml: 0.5 }}>{fieldErrors.description}</Typography>
+              <p className={helperError}>{fieldErrors.description}</p>
             )}
-          </Box>
+          </div>
 
           {/* Budget */}
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }} id="job-field-budget-min">
+          <div className={twoCol}>
+            <div id="job-field-budget-min">
               <TextInput
                 label="Budget Min (USD)"
                 inputMode="decimal"
@@ -408,8 +523,8 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 error={fieldErrors.budgetMin}
                 startIcon="$"
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }} id="job-field-budget-max">
+            </div>
+            <div id="job-field-budget-max">
               <TextInput
                 label="Budget Max (USD)"
                 inputMode="decimal"
@@ -419,12 +534,12 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 error={fieldErrors.budgetMax}
                 startIcon="$"
               />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
 
           {/* Deadline + Max Proposals */}
-          <Grid container spacing={2}>
-            <Grid size={{ xs: 12, sm: 6 }} id="job-field-deadline">
+          <div className={twoCol}>
+            <div id="job-field-deadline">
               <DatePicker
                 label="Deadline"
                 value={parseYmd(deadline)}
@@ -432,8 +547,8 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 minDate={minDeadline}
                 error={fieldErrors.deadline}
               />
-            </Grid>
-            <Grid size={{ xs: 12, sm: 6 }}>
+            </div>
+            <div>
               <TextInput
                 label="Max Proposals (optional)"
                 inputMode="numeric"
@@ -441,8 +556,8 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
                 onChange={setMaxProposals}
                 placeholder="50"
               />
-            </Grid>
-          </Grid>
+            </div>
+          </div>
 
           {/* Required Skills */}
           <MultiSelectInput
@@ -455,184 +570,108 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
           />
 
           {/* Attachments — gallery grid */}
-          <Box>
-            <Typography sx={{ fontSize: 13, fontWeight: 500, mb: 1.5, color: "rgba(0,0,0,0.7)" }}>
+          <div>
+            <p className={fieldLabel({ invalid: false })}>
               Attachments (optional)
-            </Typography>
+            </p>
 
-            <Grid container spacing={1.5}>
+            <div className={mediaGrid}>
               {/* Existing media for editing — read-only thumbnails */}
               {isEditing && (job?.media ?? []).map(mediaItem => (
-                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={`media-${mediaItem.id}`}>
-                  <Box
-                    sx={{
-                      position: "relative",
-                      aspectRatio: "1",
-                      bgcolor: "rgba(0,0,0,0.05)",
-                      borderRadius: 3,
-                      overflow: "hidden",
-                    }}>
-                    {renderPreview(mediaItem)}
-                  </Box>
-                </Grid>
+                <div className={thumb} key={`media-${mediaItem.id}`}>
+                  {renderPreview(mediaItem)}
+                </div>
               ))}
 
               {/* Newly added uploads (new job or edit) */}
               {tempUploads.map(tempItem => (
-                <Grid size={{ xs: 6, sm: 4, md: 3 }} key={`temp-${tempItem.id}`}>
-                  <Box
-                    sx={{
-                      position: "relative",
-                      aspectRatio: "1",
-                      bgcolor: "rgba(0,0,0,0.05)",
-                      borderRadius: 3,
-                      overflow: "hidden",
-                      "&:hover .delete-btn": { opacity: 1 },
-                    }}>
-                    {renderPreview(tempItem)}
+                <div className={thumb} key={`temp-${tempItem.id}`}>
+                  {renderPreview(tempItem)}
 
-                    {/* Delete overlay */}
-                    {deletingId === tempItem.id ? (
-                      <Box
-                        sx={{
-                          position: "absolute",
-                          inset: 0,
-                          display: "flex",
-                          alignItems: "center",
-                          justifyContent: "center",
-                          bgcolor: "rgba(0,0,0,0.3)",
-                        }}>
-                        <CircularProgress size={24} sx={{ color: "white" }} />
-                      </Box>
-                    ) : (
-                      <IconButton
-                        className="delete-btn"
-                        onClick={() => handleDeleteTempUpload(tempItem.id)}
-                        sx={{
-                          position: "absolute",
-                          top: 6,
-                          right: 6,
-                          p: 0.75,
-                          bgcolor: "#ef4444",
-                          color: "white",
-                          opacity: 0,
-                          transition: "opacity 0.2s",
-                          "&:hover": { bgcolor: "#dc2626" },
-                        }}>
-                        <CloseOutlined sx={{ fontSize: 12 }} />
-                      </IconButton>
-                    )}
-                  </Box>
-                </Grid>
+                  {/* Delete overlay */}
+                  {deletingId === tempItem.id ? (
+                    <div className={deleteOverlay}>
+                      <Spinner size={24} className={css({ color: "white" })} />
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      aria-label={`Remove ${tempItem.file_name}`}
+                      className={cx("delete-btn", deleteBtn)}
+                      onClick={() => handleDeleteTempUpload(tempItem.id)}>
+                      <X size={12} />
+                    </button>
+                  )}
+                </div>
               ))}
 
               {/* Upload button */}
               {tempUploads.length < MAX_FILES && (
-                <Grid size={{ xs: 6, sm: 4, md: 3 }}>
-                  <Button
-                    component="label"
-                    disabled={uploading}
-                    sx={{
-                      aspectRatio: "1",
-                      width: "100%",
-                      bgcolor: "rgba(0,0,0,0.04)",
-                      borderRadius: 3,
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      textTransform: "none",
-                      border: "2px dashed rgba(0,0,0,0.15)",
-                      "&:hover": { bgcolor: "rgba(0,113,227,0.04)", borderColor: "#0071e3" },
-                      "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.04)" },
-                    }}>
-                    {uploading ? (
-                      <CircularProgress size={22} sx={{ color: "rgba(0,0,0,0.4)" }} />
-                    ) : (
-                      <>
-                        <CloudUploadOutlined sx={{ fontSize: 22, color: "rgba(0,0,0,0.4)", mb: 0.75 }} />
-                        <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.6)" }}>Upload</Typography>
-                        <Typography sx={{ fontSize: 10, color: "rgba(0,0,0,0.4)", mt: 0.25 }}>Image or PDF</Typography>
-                      </>
-                    )}
-                    <input
-                      type="file"
-                      multiple
-                      hidden
-                      accept={ACCEPTED_EXTENSIONS.map(ext => `.${ext}`).join(",")}
-                      onChange={handleFileSelect}
-                    />
-                  </Button>
-                </Grid>
+                <label className={uploadBox} data-disabled={uploading ? "" : undefined}>
+                  {uploading ? (
+                    <Spinner size={22} className={css({ color: "rgba(0,0,0,0.4)" })} />
+                  ) : (
+                    <>
+                      <CloudUpload size={22} className={uploadIcon} />
+                      <span className={uploadText}>Upload</span>
+                      <span className={uploadHint}>Image or PDF</span>
+                    </>
+                  )}
+                  <input
+                    type="file"
+                    multiple
+                    hidden
+                    accept={ACCEPTED_EXTENSIONS.map(ext => `.${ext}`).join(",")}
+                    onChange={handleFileSelect}
+                  />
+                </label>
               )}
-            </Grid>
+            </div>
 
             {/* File type hints + counter */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2, mt: 1.5 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <ImageOutlined sx={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }} />
-                <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)" }}>Images (5MB)</Typography>
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <InsertDriveFileOutlined sx={{ fontSize: 13, color: "rgba(0,0,0,0.4)" }} />
-                <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)" }}>PDFs (10MB)</Typography>
-              </Box>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)", ml: "auto" }}>
+            <div className={hintRow}>
+              <div className={hintItem}>
+                <ImageIcon size={13} />
+                <span className={hintText}>Images (5MB)</span>
+              </div>
+              <div className={hintItem}>
+                <FileText size={13} />
+                <span className={hintText}>PDFs (10MB)</span>
+              </div>
+              <p className={hintCount}>
                 {tempUploads.length}/{MAX_FILES} new file{tempUploads.length !== 1 ? "s" : ""}
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+            </div>
+          </div>
 
           {/* Submit */}
-          <Stack direction="row" spacing={2} pt={1}>
-            <Button
-              variant="outlined"
+          <div className={actions}>
+            <button
+              type="button"
               onClick={onBack}
               disabled={submitting || savingDraft}
-              sx={{
-                flex: 1,
-                fontSize: 13,
-                textTransform: "none",
-                borderRadius: 10,
-                borderColor: "rgba(0,0,0,0.2)",
-                color: "black",
-                "&:hover": { borderColor: "rgba(0,0,0,0.4)", bgcolor: "transparent" },
-              }}>
+              className={cx(bigBtn, cancelBtn)}>
               Cancel
-            </Button>
+            </button>
             {canSaveDraft && (
-              <Button
+              <button
+                type="button"
                 onClick={() => handleSave(true)}
                 disabled={submitting || savingDraft}
-                sx={{
-                  flex: 1,
-                  fontSize: 13,
-                  textTransform: "none",
-                  borderRadius: 10,
-                  color: "black",
-                  bgcolor: "rgba(0,0,0,0.05)",
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.1)" },
-                }}>
-                {savingDraft ? <CircularProgress size={18} sx={{ color: "rgba(0,0,0,0.5)" }} /> : "Save as Draft"}
-              </Button>
+                className={cx(bigBtn, draftBtn)}>
+                {savingDraft ? <Spinner size={18} className={css({ color: "rgba(0,0,0,0.5)" })} /> : "Save as Draft"}
+              </button>
             )}
-            <Button
-              variant="contained"
+            <button
+              type="button"
               disabled={submitting || savingDraft}
               onClick={() => handleSave(false)}
-              sx={{
-                flex: 1,
-                fontSize: 13,
-                textTransform: "none",
-                borderRadius: 10,
-                bgcolor: "#0071e3",
-                "&:hover": { bgcolor: "#0077ED" },
-              }}>
-              {submitting ? <CircularProgress size={18} sx={{ color: "white" }} /> : primaryLabel}
-            </Button>
-          </Stack>
-        </Stack>
-      </Paper>
-    </Box>
+              className={cx(bigBtn, primaryBtn)}>
+              {submitting ? <Spinner size={18} className={css({ color: "white" })} /> : primaryLabel}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

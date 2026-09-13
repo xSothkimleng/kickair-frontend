@@ -1,8 +1,30 @@
-import { Box, Paper, Typography, Grid } from "@mui/material";
+import { css, cva } from "styled-system/css";
 import { ServiceFormData } from "../types";
 import PricingTierCard from "./PricingTierCard";
 import EarningsBreakdown from "./EarningsBreakdown";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
+
+const sectionCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionSub = cva({
+  base: { fontSize: "11px", lineHeight: 1.5 },
+  variants: {
+    invalid: {
+      true: { color: "#ef4444", fontWeight: 600 },
+      false: { color: "ink2", fontWeight: 400 },
+    },
+  },
+});
+const tierGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "repeat(3, 1fr)" }, gap: "16px" });
+const noteBox = css({ mt: "16px", p: "16px", bg: "rgba(37, 99, 235, 0.05)", borderRadius: "cardSm" });
+const noteText = css({ lineHeight: 1.5, fontSize: "11px", color: "rgb(29, 78, 216)" });
 
 interface PricingSectionProps {
   formData: ServiceFormData;
@@ -35,15 +57,15 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
   };
 
   return (
-    <Paper id='svc-section-pricing' elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>Pricing Options</Typography>
-      <Typography sx={{ fontSize: 11, color: fieldErrors?.noTier ? "#ef4444" : "rgba(0, 0, 0, 0.6)", fontWeight: fieldErrors?.noTier ? 600 : 400, mb: 3 }}>
+    <div id='svc-section-pricing' className={sectionCard}>
+      <p className={sectionTitle}>Pricing Options</p>
+      <p className={sectionSub({ invalid: !!fieldErrors?.noTier })}>
         {fieldErrors?.noTier || "Enable the tiers you want to offer. At least one tier is required."}
-      </Typography>
+      </p>
 
-      <Grid container spacing={2}>
+      <div className={tierGrid}>
         {(["basic", "standard", "premium"] as const).map(tier => (
-          <Grid size={{ xs: 12, md: 4 }} key={tier} id={`svc-tier-${tier}`}>
+          <div key={tier} id={`svc-tier-${tier}`}>
             <PricingTierCard
               tier={tier}
               data={formData.pricing[tier]}
@@ -57,20 +79,20 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
               onClearError={(field) => onClearTierError?.(`${tier}_${field}`)}
               commissionRate={commissionRate}
             />
-          </Grid>
+          </div>
         ))}
-      </Grid>
+      </div>
 
-      <Box sx={{ mt: 2, p: 2, bgcolor: "rgba(37, 99, 235, 0.05)", borderRadius: 3 }}>
-        <Typography sx={{ fontSize: 11, color: "rgb(29, 78, 216)" }}>
+      <div className={noteBox}>
+        <p className={noteText}>
           <strong>Note:</strong> You can update pricing anytime, but edits to a live service go back to admin review and the
           listing is hidden until approved. Existing orders keep the exact price and details they were purchased with — only
           new orders use the updated pricing.
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* What the freelancer nets per tier — lives at the foot of the pricing card */}
       <EarningsBreakdown pricing={formData.pricing} />
-    </Paper>
+    </div>
   );
 }

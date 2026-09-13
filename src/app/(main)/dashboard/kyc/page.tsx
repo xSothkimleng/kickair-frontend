@@ -2,7 +2,8 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Box, CircularProgress, Container } from "@mui/material";
+import { css } from "styled-system/css";
+import { Spinner } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { IdentityVerification } from "@/types/user";
@@ -15,6 +16,13 @@ const DOC_LABEL: Record<string, string> = {
   passport: "Passport",
   drivers_license: "Driver's License",
 };
+
+const pageCss = css({ minH: "100vh", bg: "#F5F5F7" });
+// MUI `Container maxWidth="sm"`: 600px cap, 16px gutters that grow to 24px at the
+// sm breakpoint, centred, border-box (preflight is off, so it must be explicit).
+const containerCss = css({ w: "100%", boxSizing: "border-box", mx: "auto", maxW: "600px", px: { base: "16px", sm: "24px" }, py: "32px" });
+const loadingCss = css({ display: "flex", justifyContent: "center", py: "64px" });
+const spinnerCss = css({ color: "accent" });
 
 export default function KycPage() {
   const { user, refreshUser } = useAuth();
@@ -53,9 +61,9 @@ export default function KycPage() {
   let body: React.ReactNode;
   if (loading) {
     body = (
-      <Box sx={{ display: "flex", justifyContent: "center", py: 8 }}>
-        <CircularProgress />
-      </Box>
+      <div className={loadingCss}>
+        <Spinner size={40} className={spinnerCss} />
+      </div>
     );
   } else if (isApproved) {
     body = <KycApprovedView onDone={goToDashboard} />;
@@ -68,11 +76,11 @@ export default function KycPage() {
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
+    <div className={pageCss}>
       <DashboardHeader title="Identity Verification" description="Verify your identity to unlock all platform features" />
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <div className={containerCss}>
         {body}
-      </Container>
-    </Box>
+      </div>
+    </div>
   );
 }

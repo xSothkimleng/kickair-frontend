@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Box, Paper, Typography, LinearProgress, Grid, Chip, CircularProgress, Skeleton } from "@mui/material";
-import { CheckCircleOutlined } from "@mui/icons-material";
+import { CheckCircle2 } from "lucide-react";
+import { css } from "styled-system/css";
+import { Progress, Skeleton } from "@/components/ds";
 import { api } from "@/lib/api";
 import { LevelStats } from "@/types/dashboard";
 
@@ -43,13 +44,119 @@ const LEVEL_BENEFITS = [
   },
 ];
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const pageStack = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const panel = css({
+  bg: "surface", color: "rgba(0,0,0,0.87)", borderRadius: "16px",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.08)", p: "32px",
+});
+const centerBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "200px" });
+const errorText = css({ color: "rgba(0,0,0,0.5)", fontSize: "14px", lineHeight: 1.5 });
+
+const headRow = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "32px" });
+const headTitle = css({ fontSize: "28px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const headSub = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const levelChipBox = css({ px: "24px", py: "12px", borderRadius: "12px" });
+const levelChipLabel = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(255, 255, 255, 0.8)" });
+const levelChipValue = css({ fontSize: "24px", fontWeight: 600, lineHeight: 1.5, color: "white" });
+
+const progressBlock = css({ mb: "32px" });
+const progressHead = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "12px" });
+const xpLine = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.8)", fontWeight: 500 });
+const xpSub = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const xpPercent = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const xpBar = css({
+  h: "12px", borderRadius: "pill", bg: "rgba(0, 0, 0, 0.05)",
+  "& > div": { background: "linear-gradient(90deg, #0071e3 0%, #0077ED 100%)", borderRadius: "999px" },
+});
+
+const levelGrid = css({
+  display: "grid", gap: "12px",
+  gridTemplateColumns: { base: "repeat(1, minmax(0, 1fr))", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
+});
+const levelTile = css({
+  position: "relative", p: "16px", borderRadius: "12px",
+  borderWidth: "2px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.1)", bg: "white",
+  transition: "all 0.3s",
+  "&[data-passed]": { borderColor: "rgba(34, 197, 94, 0.3)", bg: "rgba(34, 197, 94, 0.05)" },
+  "&[data-current]": { borderColor: "black", bg: "rgba(0, 0, 0, 0.05)" },
+});
+const levelDot = css({ w: "32px", h: "32px", borderRadius: "50%", mb: "8px" });
+const levelName = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const levelPts = css({ fontSize: "10px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const passedMark = css({ position: "absolute", top: "8px", right: "8px", color: "#16a34a", display: "flex" });
+const currentChip = css({
+  position: "absolute", top: "-12px", left: "50%", transform: "translateX(-50%)",
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  h: "20px", px: "12px", borderRadius: "pill", bg: "black", color: "white",
+  fontSize: "9px", fontWeight: 500, whiteSpace: "nowrap",
+});
+
+const statsGrid = css({
+  display: "grid", gap: "16px",
+  gridTemplateColumns: { base: "repeat(2, minmax(0, 1fr))", sm: "repeat(4, minmax(0, 1fr))" },
+});
+const statCard = css({
+  bg: "surface", color: "rgba(0,0,0,0.87)", p: "20px", borderRadius: "12px",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0,0,0,0.08)", textAlign: "center",
+});
+const statValue = css({ fontSize: "22px", fontWeight: 700, lineHeight: 1.5, color: "black" });
+const statLabel = css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
+const statSub = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.4)" });
+
+const sectionTitle = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const sectionSub = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.6)" });
+const benefitsGrid = css({
+  display: "grid", gap: "16px",
+  gridTemplateColumns: { base: "repeat(1, minmax(0, 1fr))", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(5, minmax(0, 1fr))" },
+});
+const benefitCard = css({
+  bg: "white", color: "rgba(0,0,0,0.87)", p: "20px", borderRadius: "12px", h: "100%",
+  borderWidth: "2px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.1)",
+  "&[data-passed]": { borderColor: "rgba(34, 197, 94, 0.2)", bg: "rgba(34, 197, 94, 0.05)" },
+  "&[data-current]": { borderColor: "black", bg: "rgba(0, 0, 0, 0.05)" },
+});
+const benefitHead = css({ display: "flex", alignItems: "center", gap: "8px", mb: "16px" });
+const benefitDot = css({ w: "24px", h: "24px", borderRadius: "50%" });
+const benefitLevel = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const benefitList = css({ m: 0, p: 0, pl: "16px", display: "flex", flexDirection: "column", gap: "8px" });
+const benefitItem = css({
+  fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.4)",
+  "&[data-on]": { color: "rgba(0,0,0,0.7)" },
+});
+const currentFoot = css({ mt: "16px", pt: "16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0,0,0,0.1)" });
+const currentWide = css({
+  display: "flex", alignItems: "center", justifyContent: "center",
+  w: "100%", h: "24px", px: "12px", borderRadius: "pill", boxSizing: "border-box",
+  bg: "black", color: "white", fontSize: "9px", fontWeight: 500,
+});
+
+const earnPanel = css({
+  background: "linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)",
+  color: "rgba(0,0,0,0.87)",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(37, 99, 235, 0.2)",
+  borderRadius: "16px", p: "32px",
+});
+const earnGrid = css({
+  display: "grid", gap: "16px",
+  gridTemplateColumns: { base: "repeat(1, minmax(0, 1fr))", sm: "repeat(3, minmax(0, 1fr))" },
+});
+const earnCard = css({ p: "20px", borderRadius: "12px", bg: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)", color: "rgba(0,0,0,0.87)" });
+const earnIcon = css({ fontSize: "24px", lineHeight: 1.5, mb: "8px" });
+const earnTitle = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "black" });
+const earnDesc = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
+const earnPts = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#3b82f6" });
+const tipCard = css({ mt: "24px", p: "16px", borderRadius: "12px", bg: "rgba(255,255,255,0.8)", color: "rgba(0,0,0,0.87)" });
+const tipText = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.8)" });
+
 function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   return (
-    <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", textAlign: "center" }}>
-      <Typography sx={{ fontSize: 22, fontWeight: 700, color: "black", mb: 0.25 }}>{value}</Typography>
-      <Typography sx={{ fontSize: 12, fontWeight: 600, color: "rgba(0,0,0,0.7)", mb: sub ? 0.25 : 0 }}>{label}</Typography>
-      {sub && <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>{sub}</Typography>}
-    </Paper>
+    <div className={statCard}>
+      <p className={statValue}>{value}</p>
+      <p className={statLabel}>{label}</p>
+      {sub && <p className={statSub}>{sub}</p>}
+    </div>
   );
 }
 
@@ -67,19 +174,19 @@ export default function LevelContent() {
 
   if (loading) {
     return (
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-        <Skeleton variant="rounded" height={280} sx={{ borderRadius: 4 }} />
-        <Skeleton variant="rounded" height={120} sx={{ borderRadius: 4 }} />
-        <Skeleton variant="rounded" height={320} sx={{ borderRadius: 4 }} />
-      </Box>
+      <div className={pageStack}>
+        <Skeleton variant="rect" height={280} style={{ borderRadius: 16 }} />
+        <Skeleton variant="rect" height={120} style={{ borderRadius: 16 }} />
+        <Skeleton variant="rect" height={320} style={{ borderRadius: 16 }} />
+      </div>
     );
   }
 
   if (error || !stats) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
-        <Typography sx={{ color: "rgba(0,0,0,0.5)", fontSize: 14 }}>{error ?? "No data available"}</Typography>
-      </Box>
+      <div className={centerBlock}>
+        <p className={errorText}>{error ?? "No data available"}</p>
+      </div>
     );
   }
 
@@ -89,218 +196,151 @@ export default function LevelContent() {
   const isDiamond = stats.next_level_threshold === null;
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className={pageStack}>
 
       {/* Current Level Overview */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 4 }}>
-          <Box>
-            <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 1 }}>Freelancer Level</Typography>
-            <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>
+      <div className={panel}>
+        <div className={headRow}>
+          <div>
+            <p className={headTitle}>Freelancer Level</p>
+            <p className={headSub}>
               Build your reputation and unlock exclusive benefits
-            </Typography>
-          </Box>
-          <Box sx={{ px: 3, py: 1.5, background: currentLevelData.color, borderRadius: 3 }}>
-            <Typography sx={{ fontSize: 11, color: "rgba(255, 255, 255, 0.8)", mb: 0.5 }}>Current Level</Typography>
-            <Typography sx={{ fontSize: 24, fontWeight: 600, color: "white" }}>{stats.level}</Typography>
-          </Box>
-        </Box>
+            </p>
+          </div>
+          <div className={levelChipBox} style={{ background: currentLevelData.color }}>
+            <p className={levelChipLabel}>Current Level</p>
+            <p className={levelChipValue}>{stats.level}</p>
+          </div>
+        </div>
 
         {/* Progress bar */}
-        <Box sx={{ mb: 4 }}>
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-            <Box>
-              <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.8)", fontWeight: 500, mb: 0.5 }}>
+        <div className={progressBlock}>
+          <div className={progressHead}>
+            <div>
+              <p className={xpLine}>
                 {stats.xp_points.toLocaleString()} XP
                 {!isDiamond && ` / ${stats.next_level_threshold!.toLocaleString()} XP`}
-              </Typography>
-              <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
+              </p>
+              <p className={xpSub}>
                 {isDiamond
                   ? "You've reached the top level!"
                   : `${stats.points_to_next_level.toLocaleString()} points to ${nextLevelName}`}
-              </Typography>
-            </Box>
-            <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>
+              </p>
+            </div>
+            <p className={xpPercent}>
               {stats.level_progress_percent}%
-            </Typography>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={stats.level_progress_percent}
-            sx={{
-              height: 12,
-              borderRadius: 10,
-              bgcolor: "rgba(0, 0, 0, 0.05)",
-              "& .MuiLinearProgress-bar": {
-                background: "linear-gradient(90deg, #0071e3 0%, #0077ED 100%)",
-                borderRadius: 10,
-              },
-            }}
-          />
-        </Box>
+            </p>
+          </div>
+          <Progress value={stats.level_progress_percent} className={xpBar} />
+        </div>
 
         {/* Level Progression chips */}
-        <Grid container spacing={1.5}>
+        <div className={levelGrid}>
           {LEVELS.map((level, idx) => {
             const isPassed = idx < currentLevelIndex;
             const isCurrent = idx === currentLevelIndex;
             return (
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={level.name}>
-                <Box
-                  sx={{
-                    position: "relative",
-                    p: 2,
-                    borderRadius: 3,
-                    border: "2px solid",
-                    borderColor: isCurrent ? "black" : isPassed ? "rgba(34, 197, 94, 0.3)" : "rgba(0, 0, 0, 0.1)",
-                    bgcolor: isCurrent ? "rgba(0, 0, 0, 0.05)" : isPassed ? "rgba(34, 197, 94, 0.05)" : "white",
-                    transition: "all 0.3s",
-                  }}>
-                  <Box sx={{ width: 32, height: 32, borderRadius: "50%", background: level.color, mb: 1 }} />
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "black", mb: 0.5 }}>{level.name}</Typography>
-                  <Typography sx={{ fontSize: 10, color: "rgba(0, 0, 0, 0.6)" }}>{level.minPoints.toLocaleString()} pts</Typography>
-                  {isPassed && (
-                    <Box sx={{ position: "absolute", top: 8, right: 8 }}>
-                      <CheckCircleOutlined sx={{ fontSize: 20, color: "#16a34a" }} />
-                    </Box>
-                  )}
-                  {isCurrent && (
-                    <Chip
-                      label="Current"
-                      sx={{
-                        position: "absolute", top: -12, left: "50%", transform: "translateX(-50%)",
-                        height: 20, bgcolor: "black", color: "white", fontSize: 9, fontWeight: 500,
-                      }}
-                    />
-                  )}
-                </Box>
-              </Grid>
+              <div key={level.name} className={levelTile} data-passed={isPassed ? "" : undefined} data-current={isCurrent ? "" : undefined}>
+                <div className={levelDot} style={{ background: level.color }} />
+                <p className={levelName}>{level.name}</p>
+                <p className={levelPts}>{level.minPoints.toLocaleString()} pts</p>
+                {isPassed && (
+                  <div className={passedMark}>
+                    <CheckCircle2 size={20} />
+                  </div>
+                )}
+                {isCurrent && <span className={currentChip}>Current</span>}
+              </div>
             );
           })}
-        </Grid>
-      </Paper>
+        </div>
+      </div>
 
       {/* Quick stats row */}
-      <Grid container spacing={2}>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard
-            label="Completed Orders"
-            value={stats.completed_orders_count}
-          />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard
-            label="Success Rate"
-            value={`${stats.success_rate}%`}
-            sub={`${stats.cancellation_count} cancelled`}
-          />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard
-            label="Avg Rating"
-            value={stats.rating_count > 0 ? parseFloat(stats.rating_average ?? "0").toFixed(1) : "—"}
-            sub={stats.rating_count > 0 ? `${stats.rating_count} review${stats.rating_count !== 1 ? "s" : ""}` : "No reviews yet"}
-          />
-        </Grid>
-        <Grid size={{ xs: 6, sm: 3 }}>
-          <StatCard
-            label="Total Earnings"
-            value={`$${parseFloat(stats.total_earnings).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
-          />
-        </Grid>
-      </Grid>
+      <div className={statsGrid}>
+        <StatCard
+          label="Completed Orders"
+          value={stats.completed_orders_count}
+        />
+        <StatCard
+          label="Success Rate"
+          value={`${stats.success_rate}%`}
+          sub={`${stats.cancellation_count} cancelled`}
+        />
+        <StatCard
+          label="Avg Rating"
+          value={stats.rating_count > 0 ? parseFloat(stats.rating_average ?? "0").toFixed(1) : "—"}
+          sub={stats.rating_count > 0 ? `${stats.rating_count} review${stats.rating_count !== 1 ? "s" : ""}` : "No reviews yet"}
+        />
+        <StatCard
+          label="Total Earnings"
+          value={`$${parseFloat(stats.total_earnings).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
+        />
+      </div>
 
       {/* Performance Metrics — TODO: wire to real API data */}
-      {/* <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        ...
-      </Paper> */}
-
       {/* Achievements & Badges — TODO: wire to real API data */}
-      {/* <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        ...
-      </Paper> */}
 
       {/* Level Benefits */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 1 }}>Level Benefits</Typography>
-        <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 3 }}>
+      <div className={panel}>
+        <p className={sectionTitle}>Level Benefits</p>
+        <p className={sectionSub}>
           See what you unlock as you progress through levels
-        </Typography>
-        <Grid container spacing={2}>
+        </p>
+        <div className={benefitsGrid}>
           {LEVEL_BENEFITS.map(levelBenefit => {
             const thisLevelIndex = LEVELS.findIndex(l => l.name === levelBenefit.level);
             const isPassed = thisLevelIndex < currentLevelIndex;
             const isCurrent = thisLevelIndex === currentLevelIndex;
             const levelData = LEVELS[thisLevelIndex];
             return (
-              <Grid size={{ xs: 12, sm: 6, md: 2.4 }} key={levelBenefit.level}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    p: 2.5, borderRadius: 3, border: "2px solid", height: "100%",
-                    borderColor: isCurrent ? "black" : isPassed ? "rgba(34, 197, 94, 0.2)" : "rgba(0, 0, 0, 0.1)",
-                    bgcolor: isCurrent ? "rgba(0, 0, 0, 0.05)" : isPassed ? "rgba(34, 197, 94, 0.05)" : "white",
-                  }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-                    <Box sx={{ width: 24, height: 24, borderRadius: "50%", background: levelData.color }} />
-                    <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black" }}>{levelBenefit.level}</Typography>
-                  </Box>
-                  <Box component="ul" sx={{ m: 0, p: 0, pl: 2, display: "flex", flexDirection: "column", gap: 1 }}>
-                    {levelBenefit.benefits.map((benefit, idx) => (
-                      <Box
-                        component="li" key={idx}
-                        sx={{ fontSize: 11, color: isPassed || isCurrent ? "rgba(0,0,0,0.7)" : "rgba(0,0,0,0.4)", lineHeight: 1.5 }}>
-                        {benefit}
-                      </Box>
-                    ))}
-                  </Box>
-                  {isCurrent && (
-                    <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid rgba(0,0,0,0.1)" }}>
-                      <Chip
-                        label="Your Current Level"
-                        sx={{ width: "100%", height: 24, bgcolor: "black", color: "white", fontSize: 9, fontWeight: 500 }}
-                      />
-                    </Box>
-                  )}
-                </Paper>
-              </Grid>
+              <div key={levelBenefit.level} className={benefitCard} data-passed={isPassed ? "" : undefined} data-current={isCurrent ? "" : undefined}>
+                <div className={benefitHead}>
+                  <div className={benefitDot} style={{ background: levelData.color }} />
+                  <p className={benefitLevel}>{levelBenefit.level}</p>
+                </div>
+                <ul className={benefitList}>
+                  {levelBenefit.benefits.map((benefit, idx) => (
+                    <li key={idx} className={benefitItem} data-on={isPassed || isCurrent ? "" : undefined}>
+                      {benefit}
+                    </li>
+                  ))}
+                </ul>
+                {isCurrent && (
+                  <div className={currentFoot}>
+                    <span className={currentWide}>Your Current Level</span>
+                  </div>
+                )}
+              </div>
             );
           })}
-        </Grid>
-      </Paper>
+        </div>
+      </div>
 
       {/* How to Earn Points */}
-      <Paper
-        elevation={0}
-        sx={{
-          background: "linear-gradient(135deg, rgba(37, 99, 235, 0.1) 0%, rgba(168, 85, 247, 0.1) 100%)",
-          border: "1px solid rgba(37, 99, 235, 0.2)",
-          borderRadius: 4,
-          p: 4,
-        }}>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 3 }}>How to Earn Points & Level Up</Typography>
-        <Grid container spacing={2}>
+      <div className={earnPanel}>
+        {/* `mb` on a <p> never rendered under MUI either (globals.css resets p margins) — dropped. */}
+        <p className={sectionTitle}>How to Earn Points &amp; Level Up</p>
+        <div className={earnGrid}>
           {[
             { icon: "📋", title: "Complete Your Profile", desc: "Every profile step pays one-time XP — a finished profile reaches Silver on its own", pts: "+135 XP total" },
             { icon: "✅", title: "Complete Projects", desc: "Successfully complete projects — XP scales with order value", pts: "+51–100 XP per project" },
             { icon: "⭐", title: "Get High Ratings", desc: "Every review earns XP; higher ratings earn significantly more", pts: "+30–70 XP per review" },
           ].map(item => (
-            <Grid size={{ xs: 12, sm: 4 }} key={item.title}>
-              <Paper elevation={0} sx={{ p: 2.5, borderRadius: 3, bgcolor: "rgba(255,255,255,0.6)", backdropFilter: "blur(8px)" }}>
-                <Typography sx={{ fontSize: 24, mb: 1 }}>{item.icon}</Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 600, color: "black", mb: 1 }}>{item.title}</Typography>
-                <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.7)", mb: 1 }}>{item.desc}</Typography>
-                <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#3b82f6" }}>{item.pts}</Typography>
-              </Paper>
-            </Grid>
+            <div className={earnCard} key={item.title}>
+              <p className={earnIcon}>{item.icon}</p>
+              <p className={earnTitle}>{item.title}</p>
+              <p className={earnDesc}>{item.desc}</p>
+              <p className={earnPts}>{item.pts}</p>
+            </div>
           ))}
-        </Grid>
-        <Paper elevation={0} sx={{ mt: 3, p: 2, borderRadius: 3, bgcolor: "rgba(255,255,255,0.8)" }}>
-          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.8)" }}>
+        </div>
+        <div className={tipCard}>
+          <p className={tipText}>
             <strong>💡 Pro Tip:</strong> Focus on delivering high-quality work and getting great reviews — a 5-star review gives up to 70 XP, more than completing a small order!
-          </Typography>
-        </Paper>
-      </Paper>
-    </Box>
+          </p>
+        </div>
+      </div>
+    </div>
   );
 }

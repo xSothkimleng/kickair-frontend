@@ -1,27 +1,40 @@
 "use client";
-import { Alert, Button } from "@mui/material";
-import { BadgeOutlined, CheckCircleOutline, HourglassEmptyOutlined, WarningAmberOutlined } from "@mui/icons-material";
+import { AlertTriangle, Hourglass, IdCard } from "lucide-react";
 import Link from "next/link";
+import { css } from "styled-system/css";
+import { Alert } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
+
+const banner = css({ mb: "24px" });
+const bannerIcon = css({ mt: "1px" });
+// The "Resubmit" / "Verify Now" action: a small text button in the alert's ink.
+const bannerAction = css({
+  alignSelf: "center",
+  flexShrink: 0,
+  ml: "8px",
+  px: "8px",
+  py: "4px",
+  borderRadius: "6px",
+  fontSize: "13px",
+  fontWeight: 600,
+  lineHeight: 1.5,
+  whiteSpace: "nowrap",
+  color: "inherit !important",
+  textDecoration: "none",
+  _hover: { bg: "rgba(0, 0, 0, 0.05)", textDecoration: "none" },
+});
 
 export default function KycBanner() {
   const { user } = useAuth();
 
   if (!user) return null;
 
-  // Already approved — show nothing (or a subtle confirmed badge)
-  if (user.is_verified_id) {
-    return null;
-  }
+  if (user.is_verified_id) return null;
 
   // Pending review
   if (user.kyc_status === "pending") {
     return (
-      <Alert
-        icon={<HourglassEmptyOutlined />}
-        severity="info"
-        sx={{ mb: 3, borderRadius: 2 }}
-      >
+      <Alert tone="info" icon={<Hourglass size={18} className={bannerIcon} />} className={banner}>
         Your identity documents are under review. Some actions are restricted until approval.
       </Alert>
     );
@@ -31,17 +44,10 @@ export default function KycBanner() {
   if (user.kyc_status === "rejected") {
     return (
       <Alert
-        icon={<WarningAmberOutlined />}
-        severity="error"
-        sx={{ mb: 3, borderRadius: 2 }}
-        action={
-          <Link href="/dashboard/kyc" style={{ textDecoration: "none" }}>
-            <Button color="inherit" size="small" sx={{ textTransform: "none", fontWeight: 600 }}>
-              Resubmit
-            </Button>
-          </Link>
-        }
-      >
+        tone="error"
+        icon={<AlertTriangle size={18} className={bannerIcon} />}
+        className={banner}
+        action={<Link href="/dashboard/kyc" className={bannerAction}>Resubmit</Link>}>
         Your KYC was rejected. Please re-upload your documents to unlock all features.
       </Alert>
     );
@@ -50,17 +56,10 @@ export default function KycBanner() {
   // Not submitted yet
   return (
     <Alert
-      icon={<BadgeOutlined />}
-      severity="warning"
-      sx={{ mb: 3, borderRadius: 2 }}
-      action={
-        <Link href="/dashboard/kyc" style={{ textDecoration: "none" }}>
-          <Button color="inherit" size="small" sx={{ textTransform: "none", fontWeight: 600 }}>
-            Verify Now
-          </Button>
-        </Link>
-      }
-    >
+      tone="warning"
+      icon={<IdCard size={18} className={bannerIcon} />}
+      className={banner}
+      action={<Link href="/dashboard/kyc" className={bannerAction}>Verify Now</Link>}>
       Identity verification is required to offer services, deliver orders, or post jobs. Complete KYC to unlock these features.
     </Alert>
   );

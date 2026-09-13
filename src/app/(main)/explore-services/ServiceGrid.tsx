@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Button, Stack } from "@mui/material";
+import { css } from "styled-system/css";
 import ServiceCard from "./ServiceCard";
 import ServiceListCard from "./ServiceListCard";
 import { Service } from "@/types/service";
@@ -12,62 +12,72 @@ interface ServiceGridProps {
   view?: "grid" | "list";
 }
 
+const emptyWrapCss = css({ textAlign: "center", py: "80px" });
+const emptyTextCss = css({ fontSize: "15px", color: "ink2", mb: "16px" });
+const clearBtnCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  px: "24px",
+  h: "40px",
+  m: 0,
+  bg: "white",
+  color: "ink",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0, 0, 0, 0.1)",
+  borderRadius: "100px",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "border-color .25s",
+  _hover: { borderColor: "rgba(0, 0, 0, 0.2)", bg: "white" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+
+const listCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const gridWrapCss = css({ minH: "800px" });
+const gridCss = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", sm: "repeat(2, 1fr)", lg: "repeat(3, 1fr)" },
+  gap: "24px",
+});
+
 export default function ServiceGrid({ services, searchQuery, clearAllFilters, view = "grid" }: ServiceGridProps) {
   if (services.length === 0) {
     return (
-      <Box sx={{ textAlign: "center", py: 10 }}>
-        <Box sx={{ fontSize: 15, color: "rgba(0, 0, 0, 0.6)", mb: 2 }}>
+      <div className={emptyWrapCss}>
+        <div className={emptyTextCss}>
           {searchQuery ? `No results found for "${searchQuery}".` : "No services found matching your filters."}
-        </Box>
-        <Button
-          onClick={clearAllFilters}
-          variant='outlined'
-          sx={{
-            px: 3,
-            height: 40,
-            fontSize: 13,
-            color: "black",
-            bgcolor: "white",
-            border: "1px solid rgba(0, 0, 0, 0.1)",
-            borderRadius: 25,
-            textTransform: "none",
-            "&:hover": {
-              border: "1px solid rgba(0, 0, 0, 0.2)",
-              bgcolor: "white",
-            },
-          }}>
+        </div>
+        <button type="button" onClick={clearAllFilters} className={clearBtnCss}>
           Clear Filters
-        </Button>
-      </Box>
+        </button>
+      </div>
     );
   }
 
   if (view === "list") {
     return (
-      <Stack spacing={1.5}>
+      <div className={listCss}>
         {services.map(service => (
           <ServiceListCard key={service.id} service={service} />
         ))}
-      </Stack>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ minHeight: 800 }}>
-      <Box
-        sx={{
-          display: "grid",
-          gridTemplateColumns: {
-            xs: "1fr",
-            sm: "repeat(2, 1fr)",
-            lg: "repeat(3, 1fr)",
-          },
-          gap: 3,
-        }}>
+    <div className={gridWrapCss}>
+      <div className={gridCss}>
         {services.map(service => (
           <ServiceCard key={service.id} service={service} />
         ))}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }

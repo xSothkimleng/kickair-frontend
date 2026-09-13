@@ -1,28 +1,11 @@
 "use client";
 
 import * as React from "react";
-import {
-  Box,
-  Stack,
-  Typography,
-  Button,
-  Chip,
-  Collapse,
-  TextField,
-  InputAdornment,
-  Checkbox,
-  FormControlLabel,
-  Radio,
-  RadioGroup,
-  Slider,
-  Divider,
-  Badge,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import CloseIcon from "@mui/icons-material/Close";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { Checkbox as ArkCheckbox, Collapsible } from "@ark-ui/react";
+import { Check, ChevronDown, Search, X } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Slider } from "@/components/ds/Slider";
+import { RadioGroupPrimitive, radioControl } from "@/components/ds/RadioGroup";
 
 export type FilterCategory = { id: string; label: string; count?: number };
 
@@ -41,6 +24,41 @@ interface FiltersSidebarProps {
   budgetMax?: number;
 }
 
+/* ── Section shell ─────────────────────────────────────────────────────────── */
+
+const sectionCss = css({ py: "4px" });
+const sectionHeaderCss = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  w: "100%",
+  boxSizing: "border-box",
+  m: 0,
+  p: 0,
+  py: "6px",
+  border: "none",
+  bg: "transparent",
+  color: "inherit",
+  fontFamily: "inherit",
+  textAlign: "left",
+  cursor: "pointer",
+  userSelect: "none",
+});
+// MUI `Stack spacing={1}` put a margin-left on the meta, but the unlayered
+// `globals.css` `p { margin: 0 }` beat it — so the two labels really do sit flush.
+const sectionTitleRowCss = css({ display: "flex", alignItems: "center" });
+const sectionTitleCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.87)", letterSpacing: "-0.005em" });
+const sectionMetaCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.38)" });
+const sectionChevronCss = css({
+  color: "rgba(0,0,0,0.38)",
+  flexShrink: 0,
+  transform: "rotate(-90deg)",
+  transition: "transform 0.2s ease",
+  "[data-state=open] > &": { transform: "rotate(0deg)" },
+});
+const sectionBodyCss = css({ pt: "8px" });
+const collapseCss = css({ overflow: "hidden", "&[hidden]": { display: "none" } });
+
 function FilterSection({
   title,
   meta,
@@ -54,83 +72,276 @@ function FilterSection({
 }) {
   const [open, setOpen] = React.useState(defaultOpen);
   return (
-    <Box sx={{ py: 0.5 }}>
-      <Box
-        role="button"
-        onClick={() => setOpen(v => !v)}
-        sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", cursor: "pointer", py: 0.75, userSelect: "none" }}>
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <Typography sx={{ fontSize: 13, fontWeight: 600, color: "text.primary", letterSpacing: "-0.005em" }}>{title}</Typography>
-          {meta && <Typography sx={{ fontSize: 12, color: "text.disabled" }}>{meta}</Typography>}
-        </Stack>
-        <KeyboardArrowDownIcon
-          sx={{ fontSize: 18, color: "text.disabled", transform: open ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.2s ease" }}
-        />
-      </Box>
-      <Collapse in={open} unmountOnExit={false}>
-        <Box sx={{ pt: 1 }}>{children}</Box>
-      </Collapse>
-    </Box>
+    <div className={sectionCss}>
+      <Collapsible.Root open={open} onOpenChange={d => setOpen(d.open)} lazyMount={false} unmountOnExit={false}>
+        <Collapsible.Trigger className={sectionHeaderCss}>
+          <span className={sectionTitleRowCss}>
+            <span className={sectionTitleCss}>{title}</span>
+            {meta && <span className={sectionMetaCss}>{meta}</span>}
+          </span>
+          <ChevronDown size={18} className={sectionChevronCss} />
+        </Collapsible.Trigger>
+        <Collapsible.Content className={collapseCss}>
+          <div className={sectionBodyCss}>{children}</div>
+        </Collapsible.Content>
+      </Collapsible.Root>
+    </div>
   );
 }
 
-const inputSx = {
-  "& .MuiOutlinedInput-root": {
-    height: 36,
-    fontSize: 13,
-    borderRadius: "8px",
-    backgroundColor: "#FFFFFF",
-    "& fieldset": { borderColor: "#E2E8F0" },
-    "&:hover fieldset": { borderColor: "#CBD5E1" },
-    "&.Mui-focused fieldset": { borderColor: "#0F172A", borderWidth: "1px" },
-    "&.Mui-focused": { boxShadow: "0 0 0 3px rgba(15, 23, 42, 0.06)" },
-  },
-  "& .MuiOutlinedInput-input": {
-    p: "0 12px",
-    color: "#0F172A",
-    "&::placeholder": { color: "#94A3B8", opacity: 1 },
-  },
-};
+/* ── Field (the old `inputSx` outlined input) ──────────────────────────────── */
 
-const chipSx = {
-  height: 26,
-  borderRadius: "999px",
-  backgroundColor: "#F1F5F9",
-  color: "#0F172A",
-  fontSize: 12,
+const fieldCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  w: "100%",
+  boxSizing: "border-box",
+  h: "36px",
+  px: "12px",
+  bg: "field",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border",
+  borderRadius: "8px",
+  transition: "border-color .15s, box-shadow .15s",
+  _hover: { borderColor: "borderStrong" },
+  _focusWithin: { borderColor: "heading", boxShadow: "0 0 0 3px rgba(15, 23, 42, 0.06)" },
+});
+const fieldSmCss = css({ h: "34px" });
+const fieldAdornCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  flexShrink: 0,
+  color: "rgba(0,0,0,0.38)",
+  fontSize: "13px",
+  lineHeight: 1,
+  "& svg": { display: "block" },
+});
+const fieldInputCss = css({
+  flex: 1,
+  minW: 0,
+  w: "100%",
+  boxSizing: "border-box",
+  m: 0,
+  p: 0,
+  border: "none",
+  outline: "none",
+  bg: "transparent",
+  appearance: "none",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  lineHeight: 1.5,
+  color: "heading",
+  _placeholder: { color: "placeholder", opacity: 1 },
+});
+
+/* ── Chips ─────────────────────────────────────────────────────────────────── */
+
+const chipCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  boxSizing: "border-box",
+  h: "26px",
+  borderRadius: "pill",
+  bg: "fill",
+  color: "heading",
+  fontSize: "12px",
   fontWeight: 500,
-  "& .MuiChip-label": { px: 1.25 },
-  "& .MuiChip-deleteIcon": { fontSize: 14, color: "#94A3B8", mr: 0.5, "&:hover": { color: "#0F172A" } },
-};
+  whiteSpace: "nowrap",
+});
+const chipLabelCss = css({ px: "10px" });
+const chipRemoveCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  ml: "-6px",
+  mr: "4px",
+  p: 0,
+  border: "none",
+  bg: "transparent",
+  color: "placeholder",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  transition: "color .15s",
+  _hover: { color: "heading" },
+  "& svg": { display: "block" },
+});
+
+/* ── Category rows ─────────────────────────────────────────────────────────── */
+
+const catListCss = css({
+  maxH: "240px",
+  overflowY: "auto",
+  mx: "-8px",
+  px: "8px",
+  "&::-webkit-scrollbar": { width: "6px" },
+  "&::-webkit-scrollbar-thumb": { backgroundColor: "#E2E8F0", borderRadius: "4px" },
+});
+const rowCss = css({
+  display: "flex",
+  alignItems: "center",
+  m: 0,
+  py: "7px",
+  px: "8px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  _hover: { bg: "fill" },
+});
+const catBoxCss = css({
+  boxSizing: "border-box",
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flexShrink: 0,
+  w: "18px",
+  h: "18px",
+  mr: "10px",
+  borderRadius: "3px",
+  borderWidth: "1.6px",
+  borderStyle: "solid",
+  borderColor: "borderStrong",
+  bg: "transparent",
+  color: "white",
+  transition: "background-color .12s, border-color .12s",
+  "& svg": { display: "block", opacity: 0 },
+  "&[data-state=checked]": { bg: "heading", borderColor: "heading", "& svg": { opacity: 1 } },
+  "&[data-focus-visible]": { boxShadow: "focusRing" },
+});
+const catLabelRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", flex: 1, w: "100%" });
+const catLabelCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2", fontWeight: 400, "&[data-state=checked]": { color: "rgba(0,0,0,0.87)", fontWeight: 500 } });
+const catCountCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.38)", fontVariantNumeric: "tabular-nums" });
+
+/* ── Radio rows ────────────────────────────────────────────────────────────── */
+
+const radioGroupCss = css({ display: "flex", flexDirection: "column", gap: "2px" });
+const radioRowCss = css({
+  display: "flex",
+  alignItems: "center",
+  m: 0,
+  mx: "-8px",
+  py: "7px",
+  px: "8px",
+  borderRadius: "6px",
+  cursor: "pointer",
+  _hover: { bg: "fill" },
+});
+const radioControlSpacing = css({ mr: "10px" });
+const radioLabelCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2", fontWeight: 400, "&[data-state=checked]": { color: "rgba(0,0,0,0.87)", fontWeight: 500 } });
+
+/* ── Budget ────────────────────────────────────────────────────────────────── */
+
+const budgetWrapCss = css({ px: "6px" });
+const sliderCss = css({ mt: "8px", mb: "20px" });
+const budgetRowCss = css({ display: "flex", alignItems: "flex-end", gap: "8px" });
+const budgetFieldCss = css({ flex: 1 });
+const budgetLabelCss = css({
+  fontSize: "11px",
+  lineHeight: 1.5,
+  color: "ink2",
+  fontWeight: 500,
+  mb: "4px",
+  textTransform: "uppercase",
+  letterSpacing: "0.04em",
+});
+const budgetDashCss = css({ pb: "8px", color: "borderStrong" });
+
+/* ── Sidebar shell ─────────────────────────────────────────────────────────── */
+
+const asideCss = css({
+  bg: "field",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "border",
+  borderRadius: "14px",
+  boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
+  overflow: "hidden",
+  md: { position: "sticky", top: "96px" },
+});
+const padCss = css({ p: "14px 20px", "&[data-expanded]": { p: "20px 20px 24px" } });
+const headerCss = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  userSelect: "none",
+  cursor: "pointer",
+  mb: 0,
+  lg: { cursor: "default" },
+  "&[data-expanded]": { mb: "16px" },
+});
+const headerLeftCss = css({ display: "flex", alignItems: "center", gap: "8px" });
+const headerTitleCss = css({ fontSize: "15px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.01em" });
+const countBadgeCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  h: "18px",
+  minW: "18px",
+  px: "6px",
+  borderRadius: "pill",
+  bg: "heading",
+  color: "#FFF",
+  fontSize: "11px",
+  fontWeight: 600,
+});
+const headerChevronCss = css({
+  color: "rgba(0,0,0,0.38)",
+  flexShrink: 0,
+  ml: "auto",
+  transition: "transform 0.2s ease",
+  "[data-expanded] > &": { transform: "rotate(180deg)" },
+});
+const resetBtnCss = css({
+  minW: 0,
+  m: 0,
+  p: "2px 4px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "ink2",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "color .15s",
+  _hover: { color: "rgba(0,0,0,0.87)", bg: "transparent" },
+});
+const chipsWrapCss = css({ display: "flex", flexWrap: "wrap", gap: "6px", mb: "20px" });
+const dividerCss = css({ h: "1px", my: "12px", bg: "fill", border: "none" });
 
 function BudgetField({ label, value, onChange }: { label: string; value: number; onChange: (n: number) => void }) {
   return (
-    <Box sx={{ flex: 1 }}>
-      <Typography sx={{ fontSize: 11, color: "text.secondary", fontWeight: 500, mb: 0.5, textTransform: "uppercase", letterSpacing: "0.04em" }}>
-        {label}
-      </Typography>
-      <TextField
-        value={value.toLocaleString()}
-        onChange={e => {
-          const n = Number(e.target.value.replace(/[^0-9]/g, ""));
-          onChange(Number.isFinite(n) ? n : 0);
-        }}
-        size="small"
-        fullWidth
-        sx={{ ...inputSx, "& .MuiOutlinedInput-root": { ...inputSx["& .MuiOutlinedInput-root"], height: 34 } }}
-        slotProps={{
-          input: {
-            startAdornment: (
-              <InputAdornment position="start">
-                <Typography sx={{ fontSize: 13, color: "text.disabled" }}>$</Typography>
-              </InputAdornment>
-            ),
-          },
-        }}
-      />
-    </Box>
+    <div className={budgetFieldCss}>
+      <div className={budgetLabelCss}>{label}</div>
+      <div className={cx(fieldCss, fieldSmCss)}>
+        <span className={fieldAdornCss}>$</span>
+        <input
+          className={fieldInputCss}
+          value={value.toLocaleString()}
+          onChange={e => {
+            const n = Number(e.target.value.replace(/[^0-9]/g, ""));
+            onChange(Number.isFinite(n) ? n : 0);
+          }}
+        />
+      </div>
+    </div>
   );
 }
+
+// On small screens the sidebar sits above the results and would otherwise fill
+// the whole viewport — collapse it behind the "Filters" header there.
+const DESKTOP_MQ = "(min-width: 1024px)";
+const subscribeDesktop = (cb: () => void) => {
+  const mq = window.matchMedia(DESKTOP_MQ);
+  mq.addEventListener("change", cb);
+  return () => mq.removeEventListener("change", cb);
+};
+const getDesktop = () => window.matchMedia(DESKTOP_MQ).matches;
+const getDesktopServer = () => false;
 
 export default function FiltersSidebar({ filters, onChange, categories, budgetMax = 10000 }: FiltersSidebarProps) {
   const [catQuery, setCatQuery] = React.useState("");
@@ -154,238 +365,177 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
   const filteredCats = categories.filter(c => c.label.toLowerCase().includes(catQuery.toLowerCase()));
   const fmt = (n: number) => (n >= 1000 ? `$${(n / 1000).toFixed(n % 1000 === 0 ? 0 : 1)}k` : `$${n}`);
 
-  // On small screens the sidebar sits above the results and would otherwise fill
-  // the whole viewport — collapse it behind the "Filters" header there.
-  const theme = useTheme();
-  const desktop = useMediaQuery(theme.breakpoints.up("lg"), { noSsr: true });
+  const desktop = React.useSyncExternalStore(subscribeDesktop, getDesktop, getDesktopServer);
   const [mobileOpen, setMobileOpen] = React.useState(false);
   const expanded = desktop || mobileOpen;
 
   return (
-    <Box
-      component="aside"
-      sx={{
-        position: { md: "sticky" },
-        top: { md: 96 },
-        backgroundColor: "#FFFFFF",
-        border: "1px solid",
-        borderColor: "#E2E8F0",
-        borderRadius: "14px",
-        boxShadow: "0 1px 2px rgba(15, 23, 42, 0.04)",
-        overflow: "hidden",
-      }}>
-      <Box
-        sx={{ p: expanded ? "20px 20px 24px" : "14px 20px" }}>
+    <aside className={asideCss}>
+      <div className={padCss} data-expanded={expanded ? "" : undefined}>
         {/* Header — tap to expand/collapse on mobile */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          justifyContent="space-between"
-          onClick={() => { if (!desktop) setMobileOpen(v => !v); }}
-          sx={{ mb: expanded ? 2 : 0, cursor: { xs: "pointer", lg: "default" }, userSelect: "none" }}>
-          <Stack direction="row" alignItems="center" spacing={1}>
-            <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em" }}>Filters</Typography>
-            {activeCount > 0 && (
-              <Badge
-                badgeContent={activeCount}
-                sx={{
-                  "& .MuiBadge-badge": {
-                    position: "static",
-                    transform: "none",
-                    backgroundColor: "#0F172A",
-                    color: "#FFF",
-                    fontSize: 11,
-                    fontWeight: 600,
-                    height: 18,
-                    minWidth: 18,
-                    borderRadius: "999px",
-                    px: 0.75,
-                  },
-                }}
-              />
-            )}
-          </Stack>
-          {!desktop && (
-            <KeyboardArrowDownIcon
-              sx={{ fontSize: 20, color: "text.disabled", transform: expanded ? "rotate(180deg)" : "none", transition: "transform 0.2s ease", ml: "auto" }}
-            />
-          )}
+        <div
+          className={headerCss}
+          data-expanded={expanded ? "" : undefined}
+          onClick={() => { if (!desktop) setMobileOpen(v => !v); }}>
+          <span className={headerLeftCss}>
+            <span className={headerTitleCss}>Filters</span>
+            {activeCount > 0 && <span className={countBadgeCss}>{activeCount}</span>}
+          </span>
+          {!desktop && <ChevronDown size={20} className={headerChevronCss} />}
           {activeCount > 0 && (
-            <Button
+            <button
+              type="button"
               onClick={e => { e.stopPropagation(); reset(); }}
-              variant="text"
-              size="small"
-              sx={{
-                textTransform: "none",
-                fontSize: 13,
-                fontWeight: 500,
-                color: "text.secondary",
-                minWidth: 0,
-                p: "2px 4px",
-                "&:hover": { color: "text.primary", backgroundColor: "transparent" },
-              }}>
+              className={resetBtnCss}>
               Reset
-            </Button>
+            </button>
           )}
-        </Stack>
+        </div>
 
-        <Collapse in={expanded} unmountOnExit={false}>
+        <Collapsible.Root open={expanded} lazyMount={false} unmountOnExit={false}>
+          <Collapsible.Content className={collapseCss}>
         {/* Active filter chips */}
         {activeCount > 0 && (
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75, mb: 2.5 }}>
+          <div className={chipsWrapCss}>
             {filters.categories.map(id => {
               const cat = categories.find(c => c.id === id);
               if (!cat) return null;
-              return <Chip key={id} label={cat.label} onDelete={() => toggleCategory(id)} deleteIcon={<CloseIcon />} sx={chipSx} />;
+              return (
+                <span key={id} className={chipCss}>
+                  <span className={chipLabelCss}>{cat.label}</span>
+                  <button type="button" aria-label={`Remove ${cat.label}`} onClick={() => toggleCategory(id)} className={chipRemoveCss}>
+                    <X size={14} />
+                  </button>
+                </span>
+              );
             })}
             {(filters.budget[0] !== 0 || filters.budget[1] !== budgetMax) && (
-              <Chip
-                label={`${fmt(filters.budget[0])} – ${fmt(filters.budget[1])}`}
-                onDelete={() => set("budget", [0, budgetMax])}
-                deleteIcon={<CloseIcon />}
-                sx={chipSx}
-              />
+              <span className={chipCss}>
+                <span className={chipLabelCss}>{`${fmt(filters.budget[0])} – ${fmt(filters.budget[1])}`}</span>
+                <button type="button" aria-label="Clear budget filter" onClick={() => set("budget", [0, budgetMax])} className={chipRemoveCss}>
+                  <X size={14} />
+                </button>
+              </span>
             )}
             {filters.delivery !== "any" && (
-              <Chip label={`≤ ${filters.delivery} days`} onDelete={() => set("delivery", "any")} deleteIcon={<CloseIcon />} sx={chipSx} />
+              <span className={chipCss}>
+                <span className={chipLabelCss}>{`≤ ${filters.delivery} days`}</span>
+                <button type="button" aria-label="Clear delivery filter" onClick={() => set("delivery", "any")} className={chipRemoveCss}>
+                  <X size={14} />
+                </button>
+              </span>
             )}
             {filters.rating !== "any" && (
-              <Chip label={`${filters.rating}★ & up`} onDelete={() => set("rating", "any")} deleteIcon={<CloseIcon />} sx={chipSx} />
+              <span className={chipCss}>
+                <span className={chipLabelCss}>{`${filters.rating}★ & up`}</span>
+                <button type="button" aria-label="Clear rating filter" onClick={() => set("rating", "any")} className={chipRemoveCss}>
+                  <X size={14} />
+                </button>
+              </span>
             )}
-          </Box>
+          </div>
         )}
 
         {/* Category */}
         <FilterSection title="Category" meta={filters.categories.length > 0 ? `${filters.categories.length} selected` : undefined}>
-          <TextField
-            placeholder="Search categories"
-            value={catQuery}
-            onChange={e => setCatQuery(e.target.value)}
-            fullWidth
-            size="small"
-            sx={{ ...inputSx, mb: 1 }}
-            slotProps={{
-              input: {
-                startAdornment: (
-                  <InputAdornment position="start">
-                    <SearchIcon sx={{ fontSize: 16, color: "text.disabled" }} />
-                  </InputAdornment>
-                ),
-              },
-            }}
-          />
-          <Box sx={{ maxHeight: 240, overflowY: "auto", mx: -1, px: 1, "&::-webkit-scrollbar": { width: 6 }, "&::-webkit-scrollbar-thumb": { backgroundColor: "#E2E8F0", borderRadius: 4 } }}>
+          <div className={cx(fieldCss, css({ mb: "8px" }))}>
+            <span className={fieldAdornCss}>
+              <Search size={16} />
+            </span>
+            <input
+              className={fieldInputCss}
+              placeholder="Search categories"
+              value={catQuery}
+              onChange={e => setCatQuery(e.target.value)}
+            />
+          </div>
+          <div className={catListCss}>
             {filteredCats.map(cat => {
               const checked = filters.categories.includes(cat.id);
               return (
-                <FormControlLabel
+                <ArkCheckbox.Root
                   key={cat.id}
-                  onClick={e => { e.preventDefault(); toggleCategory(cat.id); }}
-                  control={
-                    <Checkbox
-                      checked={checked}
-                      disableRipple
-                      sx={{ p: 0, mr: 1.25, color: "#CBD5E1", "&.Mui-checked": { color: "#0F172A" }, "& .MuiSvgIcon-root": { fontSize: 18 } }}
-                    />
-                  }
-                  label={
-                    <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ flex: 1, width: "100%" }}>
-                      <Typography sx={{ fontSize: 13, color: checked ? "text.primary" : "text.secondary", fontWeight: checked ? 500 : 400 }}>
-                        {cat.label}
-                      </Typography>
-                      {cat.count != null && (
-                        <Typography sx={{ fontSize: 12, color: "text.disabled", fontVariantNumeric: "tabular-nums" }}>{cat.count}</Typography>
-                      )}
-                    </Stack>
-                  }
-                  sx={{
-                    display: "flex",
-                    m: 0,
-                    py: 0.875,
-                    px: 1,
-                    borderRadius: "6px",
-                    cursor: "pointer",
-                    "&:hover": { backgroundColor: "#F1F5F9" },
-                    "& .MuiFormControlLabel-label": { flex: 1, width: "100%" },
-                  }}
-                />
+                  checked={checked}
+                  onCheckedChange={() => toggleCategory(cat.id)}
+                  className={rowCss}>
+                  <ArkCheckbox.Control className={catBoxCss}>
+                    <Check size={13} strokeWidth={3} />
+                  </ArkCheckbox.Control>
+                  <span className={catLabelRowCss}>
+                    <ArkCheckbox.Label className={catLabelCss}>{cat.label}</ArkCheckbox.Label>
+                    {cat.count != null && <span className={catCountCss}>{cat.count}</span>}
+                  </span>
+                  <ArkCheckbox.HiddenInput />
+                </ArkCheckbox.Root>
               );
             })}
-          </Box>
+          </div>
         </FilterSection>
 
-        <Divider sx={{ my: 1.5, borderColor: "#F1F5F9" }} />
+        <hr className={dividerCss} />
 
         {/* Budget */}
         <FilterSection title="Budget" meta={`${fmt(filters.budget[0])} – ${fmt(filters.budget[1])}`}>
-          <Box sx={{ px: 0.75 }}>
+          <div className={budgetWrapCss}>
             <Slider
+              className={sliderCss}
               value={filters.budget}
-              onChange={(_, v) => set("budget", v as [number, number])}
+              onValueChange={v => set("budget", [v[0], v[1]] as [number, number])}
               min={0}
               max={budgetMax}
               step={50}
-              valueLabelDisplay="auto"
-              valueLabelFormat={fmt}
-              sx={{
-                color: "#0F172A",
-                height: 4,
-                mt: 1,
-                mb: 2.5,
-                "& .MuiSlider-rail": { backgroundColor: "#E2E8F0", opacity: 1 },
-                "& .MuiSlider-thumb": {
-                  width: 16, height: 16, backgroundColor: "#FFF", border: "2px solid #0F172A",
-                  "&:hover, &.Mui-focusVisible, &.Mui-active": { boxShadow: "0 0 0 6px rgba(15, 23, 42, 0.08)" },
-                },
-                "& .MuiSlider-valueLabel": { fontSize: 11, backgroundColor: "#0F172A", borderRadius: "6px", px: 1, py: 0.25 },
-              }}
+              formatValue={fmt}
+              ariaLabels={["Minimum budget", "Maximum budget"]}
             />
-            <Stack direction="row" alignItems="end" spacing={1}>
+            <div className={budgetRowCss}>
               <BudgetField label="Min" value={filters.budget[0]} onChange={v => set("budget", [v, filters.budget[1]])} />
-              <Box sx={{ pb: 1, color: "#CBD5E1" }}>–</Box>
+              <div className={budgetDashCss}>–</div>
               <BudgetField label="Max" value={filters.budget[1]} onChange={v => set("budget", [filters.budget[0], v])} />
-            </Stack>
-          </Box>
+            </div>
+          </div>
         </FilterSection>
 
-        <Divider sx={{ my: 1.5, borderColor: "#F1F5F9" }} />
+        <hr className={dividerCss} />
 
         {/* Delivery */}
         <FilterSection title="Delivery time" meta={filters.delivery === "any" ? undefined : `≤ ${filters.delivery} days`}>
-          <RadioGroup value={filters.delivery} onChange={e => set("delivery", e.target.value as Filters["delivery"])} sx={{ gap: 0.25 }}>
-            {(["any", "3", "7", "14", "30"] as const).map((v, i) => {
+          <RadioGroupPrimitive.Root
+            value={filters.delivery}
+            onValueChange={d => { if (d.value) set("delivery", d.value as Filters["delivery"]); }}
+            className={radioGroupCss}>
+            {(["any", "3", "7", "14", "30"] as const).map(v => {
               const label = v === "any" ? "Any time" : `Up to ${v} days`;
               return (
-                <FormControlLabel
-                  key={v}
-                  value={v}
-                  control={<Radio disableRipple sx={{ p: 0, mr: 1.25, color: "#CBD5E1", "&.Mui-checked": { color: "#0F172A" }, "& .MuiSvgIcon-root": { fontSize: 18 } }} />}
-                  label={<Typography sx={{ fontSize: 13, color: filters.delivery === v ? "text.primary" : "text.secondary", fontWeight: filters.delivery === v ? 500 : 400 }}>{label}</Typography>}
-                  sx={{ m: 0, mx: -1, py: 0.875, px: 1, borderRadius: "6px", "&:hover": { backgroundColor: "#F1F5F9" } }}
-                />
+                <RadioGroupPrimitive.Item key={v} value={v} className={radioRowCss}>
+                  <RadioGroupPrimitive.ItemControl className={cx(radioControl, radioControlSpacing)} />
+                  <RadioGroupPrimitive.ItemText className={radioLabelCss}>{label}</RadioGroupPrimitive.ItemText>
+                  <RadioGroupPrimitive.ItemHiddenInput />
+                </RadioGroupPrimitive.Item>
               );
             })}
-          </RadioGroup>
+          </RadioGroupPrimitive.Root>
         </FilterSection>
 
-        <Divider sx={{ my: 1.5, borderColor: "#F1F5F9" }} />
+        <hr className={dividerCss} />
 
         {/* Rating */}
         <FilterSection title="Freelancer rating" defaultOpen={false} meta={filters.rating === "any" ? undefined : `${filters.rating}★ & up`}>
-          <RadioGroup value={filters.rating} onChange={e => set("rating", e.target.value as Filters["rating"])} sx={{ gap: 0.25 }}>
+          <RadioGroupPrimitive.Root
+            value={filters.rating}
+            onValueChange={d => { if (d.value) set("rating", d.value as Filters["rating"]); }}
+            className={radioGroupCss}>
             {([{ v: "any", label: "Any rating" }, { v: "4.5", label: "4.5 & up" }, { v: "4.0", label: "4.0 & up" }] as const).map(opt => (
-              <FormControlLabel
-                key={opt.v}
-                value={opt.v}
-                control={<Radio disableRipple sx={{ p: 0, mr: 1.25, color: "#CBD5E1", "&.Mui-checked": { color: "#0F172A" }, "& .MuiSvgIcon-root": { fontSize: 18 } }} />}
-                label={<Typography sx={{ fontSize: 13, color: filters.rating === opt.v ? "text.primary" : "text.secondary", fontWeight: filters.rating === opt.v ? 500 : 400 }}>{opt.label}</Typography>}
-                sx={{ m: 0, mx: -1, py: 0.875, px: 1, borderRadius: "6px", "&:hover": { backgroundColor: "#F1F5F9" } }}
-              />
+              <RadioGroupPrimitive.Item key={opt.v} value={opt.v} className={radioRowCss}>
+                <RadioGroupPrimitive.ItemControl className={cx(radioControl, radioControlSpacing)} />
+                <RadioGroupPrimitive.ItemText className={radioLabelCss}>{opt.label}</RadioGroupPrimitive.ItemText>
+                <RadioGroupPrimitive.ItemHiddenInput />
+              </RadioGroupPrimitive.Item>
             ))}
-          </RadioGroup>
+          </RadioGroupPrimitive.Root>
         </FilterSection>
-        </Collapse>
-      </Box>
-    </Box>
+          </Collapsible.Content>
+        </Collapsible.Root>
+      </div>
+    </aside>
   );
 }

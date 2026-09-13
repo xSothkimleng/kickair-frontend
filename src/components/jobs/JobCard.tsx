@@ -1,18 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography } from "@mui/material";
-import {
-  BookmarkBorderOutlined,
-  Bookmark as BookmarkFilled,
-  BoltOutlined,
-  PeopleOutlineOutlined,
-  CalendarTodayOutlined,
-  LocationOnOutlined,
-} from "@mui/icons-material";
+import { Bookmark, Zap, Users, Calendar, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { css, cva } from "styled-system/css";
 import { JobPost } from "@/types/job";
-import { tokens } from "@/theme";
 
 function money(value: string | number) {
   const n = typeof value === "string" ? parseFloat(value) : value;
@@ -33,39 +25,100 @@ function timeAgo(dateStr: string) {
 function daysLeft(dateStr: string) {
   return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86_400_000);
 }
-function urgencyColor(d: number) {
-  return d <= 3 ? tokens.errorText : d <= 6 ? tokens.pendingText : tokens.text2;
-}
+
+/* ── static styles ── */
+const skillRow = css({ display: "flex", gap: "7px", flexWrap: "wrap" });
+const skillPill = css({ display: "inline-flex", alignItems: "center", h: "28px", px: "12px", borderRadius: "pill", fontSize: "12.5px", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
+const skillMore = css({ display: "inline-flex", alignItems: "center", h: "28px", px: "11px", borderRadius: "pill", fontSize: "12.5px", fontWeight: 600, color: "ink3" });
+
+const signal = cva({
+  base: { display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12.5px", fontWeight: 500, whiteSpace: "nowrap", "& svg": { flexShrink: 0 } },
+  variants: { tone: { plain: { color: "ink2" }, accent: { color: "accent" }, error: { color: "errorText" } } },
+  defaultVariants: { tone: "plain" },
+});
+
+const budgetBlock = cva({
+  base: { display: "flex", flexDirection: "column", gap: "2px", flex: "none" },
+  variants: { mobile: { true: { alignItems: "flex-start" }, false: { alignItems: "flex-end" } } },
+});
+const budgetFigure = cva({
+  base: { fontFamily: "mono", fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.05, color: "successText", whiteSpace: "nowrap" },
+  variants: { mobile: { true: { fontSize: "19px" }, false: { fontSize: "20px" } } },
+});
+const budgetDash = css({ color: "ink3", fontWeight: 500 });
+const budgetLabel = css({ lineHeight: 1.5, fontSize: "10px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3", whiteSpace: "nowrap" });
+
+const bookmarkBtn = cva({
+  base: {
+    w: "38px", h: "38px", p: 0, m: 0, borderRadius: "10px",
+    borderWidth: "1px", borderStyle: "solid", borderColor: "transparent",
+    bg: "transparent", fontFamily: "inherit",
+    display: "flex", alignItems: "center", justifyContent: "center",
+    cursor: "pointer", flex: "none",
+    _hover: { bg: "rgba(0,0,0,0.05)" },
+    _focusVisible: { outline: "none", boxShadow: "focusRing" },
+    "& svg": { display: "block" },
+  },
+  variants: { saved: { true: { color: "accent" }, false: { color: "ink3" } } },
+});
+
+const metaRow = css({ display: "flex", alignItems: "center", gap: "8px", minW: 0 });
+const categoryPill = css({ display: "inline-flex", alignItems: "center", h: "24px", px: "10px", borderRadius: "pill", fontSize: "11.5px", fontWeight: 600, bg: "rgba(0,0,0,0.05)", color: "ink2", whiteSpace: "nowrap" });
+const postedText = css({ lineHeight: 1.5, fontSize: "12px", fontWeight: 500, color: "ink2", whiteSpace: "nowrap" });
+const previewText = css({ fontSize: "13.5px", lineHeight: 1.55, color: "ink2", lineClamp: 2 });
+const hairlineRow = css({ h: "1px", bg: "hairline", my: "3px" });
+const footerRow = css({ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: "8px" });
+const footerSep = css({ w: "1px", h: "12px", bg: "hairlineStrong", mx: "14px" });
+
+const jobCard = css({
+  bg: "surface",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "card",
+  cursor: "pointer",
+  transition: "border-color .15s, box-shadow .15s, transform .08s",
+  _hover: { borderColor: "hairlineStrong", boxShadow: "0 6px 24px rgba(0,0,0,0.06)", transform: "translateY(-1px)" },
+});
+const mobileBody = css({ display: { base: "flex", md: "none" }, flexDirection: "column", gap: "13px", p: "18px" });
+const mobileTop = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "10px" });
+const mobileTitle = css({ fontSize: "17px", fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 });
+const desktopBody = css({ display: { base: "none", md: "flex" }, flexDirection: "column", gap: "14px", p: "24px" });
+const desktopTop = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px" });
+const desktopHead = css({ display: "flex", flexDirection: "column", gap: "12px", minW: 0, flex: 1 });
+const desktopTitle = css({ fontSize: "19px", fontWeight: 600, letterSpacing: "-0.018em", lineHeight: 1.2 });
+const desktopAside = css({ display: "flex", gap: "12px", alignItems: "flex-start", flex: "none" });
 
 function SkillRow({ skills, cap }: { skills: string[]; cap: number }) {
   const shown = skills.slice(0, cap);
   const extra = skills.length - shown.length;
   return (
-    <Box sx={{ display: "flex", gap: 0.875, flexWrap: "wrap" }}>
+    <div className={skillRow}>
       {shown.map(s => (
-        <Box key={s} component="span" sx={{ display: "inline-flex", alignItems: "center", height: 28, px: 1.5, borderRadius: "999px", fontSize: 12.5, fontWeight: 500, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2 }}>{s}</Box>
+        <span key={s} className={skillPill}>{s}</span>
       ))}
-      {extra > 0 && <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 28, px: 1.375, borderRadius: "999px", fontSize: 12.5, fontWeight: 600, color: tokens.text3 }}>+{extra}</Box>}
-    </Box>
+      {extra > 0 && <span className={skillMore}>+{extra}</span>}
+    </div>
   );
 }
 
-function FooterSignal({ icon, color, children }: { icon: React.ReactNode; color?: string; children: React.ReactNode }) {
+function FooterSignal({ icon, tone, children }: { icon: React.ReactNode; tone?: "accent" | "error"; children: React.ReactNode }) {
   return (
-    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, color: color || tokens.text2, fontSize: 12.5, fontWeight: 500, whiteSpace: "nowrap" }}>
+    <span className={signal({ tone: tone ?? "plain" })}>
       {icon}{children}
-    </Box>
+    </span>
   );
 }
 
 function BudgetBlock({ job, mobile }: { job: JobPost; mobile?: boolean }) {
+  const isMobile = !!mobile;
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, alignItems: mobile ? "flex-start" : "flex-end", flex: "none" }}>
-      <Typography sx={{ fontFamily: tokens.mono, fontSize: mobile ? 19 : 20, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.05, color: tokens.successText, whiteSpace: "nowrap" }}>
-        {money(job.budget_min)}<Box component="span" sx={{ color: tokens.text3, fontWeight: 500 }}> – </Box>{money(job.budget_max)}
-      </Typography>
-      <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, whiteSpace: "nowrap" }}>Budget · USD</Typography>
-    </Box>
+    <div className={budgetBlock({ mobile: isMobile })}>
+      <p className={budgetFigure({ mobile: isMobile })}>
+        {money(job.budget_min)}<span className={budgetDash}> – </span>{money(job.budget_max)}
+      </p>
+      <p className={budgetLabel}>Budget · USD</p>
+    </div>
   );
 }
 
@@ -81,86 +134,77 @@ export default function JobCard({ job }: { job: JobPost }) {
   const proposalText = isFirst ? "Be the first to apply" : job.proposal_count >= 20 ? "20+ proposals" : `${job.proposal_count} proposal${job.proposal_count !== 1 ? "s" : ""}`;
 
   const bookmark = (
-    <Box
-      component="button"
+    <button
+      type="button"
       aria-label={saved ? "Saved" : "Save job"}
       onClick={e => { e.stopPropagation(); setSaved(s => !s); }}
-      sx={{ width: 38, height: 38, borderRadius: "10px", border: "1px solid transparent", bgcolor: "transparent", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", flex: "none", color: saved ? tokens.accent : tokens.text3, "&:hover": { bgcolor: "rgba(0,0,0,0.05)" } }}>
-      {saved ? <BookmarkFilled sx={{ fontSize: 19 }} /> : <BookmarkBorderOutlined sx={{ fontSize: 19 }} />}
-    </Box>
+      className={bookmarkBtn({ saved })}>
+      <Bookmark size={19} fill={saved ? "currentColor" : "none"} />
+    </button>
   );
 
   const metaLine = (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
-      <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 24, px: 1.25, borderRadius: "999px", fontSize: 11.5, fontWeight: 600, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2, whiteSpace: "nowrap" }}>{job.category?.category_name ?? "Uncategorized"}</Box>
-      <Typography sx={{ fontSize: 12, fontWeight: 500, color: tokens.text2, whiteSpace: "nowrap" }}>{timeAgo(job.created_at)}</Typography>
-    </Box>
+    <div className={metaRow}>
+      <span className={categoryPill}>{job.category?.category_name ?? "Uncategorized"}</span>
+      <p className={postedText}>{timeAgo(job.created_at)}</p>
+    </div>
   );
 
   const preview = job.description ? (
-    <Typography sx={{ fontSize: 13.5, lineHeight: 1.55, color: tokens.text2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{stripHtml(job.description)}</Typography>
+    <p className={previewText}>{stripHtml(job.description)}</p>
   ) : null;
 
-  const divider = <Box sx={{ height: "1px", bgcolor: tokens.border, my: "3px" }} />;
+  const divider = <div className={hairlineRow} />;
 
   const footer = (
-    <Box sx={{ display: "flex", alignItems: "center", flexWrap: "wrap", rowGap: 1 }}>
-      <FooterSignal color={isFirst ? tokens.accent : undefined} icon={isFirst ? <BoltOutlined sx={{ fontSize: 15 }} /> : <PeopleOutlineOutlined sx={{ fontSize: 15 }} />}>{proposalText}</FooterSignal>
+    <div className={footerRow}>
+      <FooterSignal tone={isFirst ? "accent" : undefined} icon={isFirst ? <Zap size={15} /> : <Users size={15} />}>{proposalText}</FooterSignal>
       {dl !== null && (
         <>
-          <Box sx={{ width: "1px", height: 12, bgcolor: tokens.borderStrong, mx: 1.75 }} />
-          <FooterSignal color={urgent ? tokens.errorText : undefined} icon={<CalendarTodayOutlined sx={{ fontSize: 14 }} />}>
+          <div className={footerSep} />
+          <FooterSignal tone={urgent ? "error" : undefined} icon={<Calendar size={14} />}>
             {dl <= 0 ? "Overdue" : `${dl} day${dl !== 1 ? "s" : ""} left`}
           </FooterSignal>
         </>
       )}
       {location && (
         <>
-          <Box sx={{ width: "1px", height: 12, bgcolor: tokens.borderStrong, mx: 1.75 }} />
-          <FooterSignal icon={<LocationOnOutlined sx={{ fontSize: 15 }} />}>{location}</FooterSignal>
+          <div className={footerSep} />
+          <FooterSignal icon={<MapPin size={15} />}>{location}</FooterSignal>
         </>
       )}
-    </Box>
+    </div>
   );
 
-  const cardSx = {
-    bgcolor: tokens.surface,
-    border: `1px solid ${tokens.border}`,
-    borderRadius: `${tokens.radius.card}px`,
-    cursor: "pointer",
-    transition: "border-color .15s, box-shadow .15s, transform .08s",
-    "&:hover": { borderColor: tokens.borderStrong, boxShadow: "0 6px 24px rgba(0,0,0,0.06)", transform: "translateY(-1px)" },
-  } as const;
-
   return (
-    <Box component="article" role="button" tabIndex={0} onClick={() => router.push(`/jobs/${job.id}`)} sx={cardSx}>
+    <article role="button" tabIndex={0} onClick={() => router.push(`/jobs/${job.id}`)} className={jobCard}>
       {/* mobile */}
-      <Box sx={{ display: { xs: "flex", md: "none" }, flexDirection: "column", gap: 1.625, p: 2.25 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 1.25 }}>{metaLine}{bookmark}</Box>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.015em", lineHeight: 1.25 }}>{job.title}</Typography>
+      <div className={mobileBody}>
+        <div className={mobileTop}>{metaLine}{bookmark}</div>
+        <p className={mobileTitle}>{job.title}</p>
         <BudgetBlock job={job} mobile />
         {preview}
         {skills.length > 0 && <SkillRow skills={skills} cap={3} />}
         {divider}
         {footer}
-      </Box>
+      </div>
       {/* desktop */}
-      <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 1.75, p: 3 }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2 }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0, flex: 1 }}>
+      <div className={desktopBody}>
+        <div className={desktopTop}>
+          <div className={desktopHead}>
             {metaLine}
-            <Typography sx={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.018em", lineHeight: 1.2 }}>{job.title}</Typography>
-          </Box>
-          <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start", flex: "none" }}>
+            <p className={desktopTitle}>{job.title}</p>
+          </div>
+          <div className={desktopAside}>
             <BudgetBlock job={job} />
             {bookmark}
-          </Box>
-        </Box>
+          </div>
+        </div>
         {preview}
         {skills.length > 0 && <SkillRow skills={skills} cap={4} />}
         {divider}
         {footer}
-      </Box>
-    </Box>
+      </div>
+    </article>
   );
 }

@@ -2,18 +2,11 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Button, CircularProgress, Typography } from "@mui/material";
-import {
-  AccountBalanceWallet as WalletIcon,
-  Add as AddIcon,
-  ArrowUpward as ArrowUpIcon,
-  ArrowDownward as ArrowDownIcon,
-  VerifiedUser as ShieldIcon,
-  Schedule as PendingIcon,
-} from "@mui/icons-material";
+import { Wallet as WalletIcon, Plus as AddIcon, ArrowUp as ArrowUpIcon, ArrowDown as ArrowDownIcon, ShieldCheck as ShieldIcon, Clock as PendingIcon } from "lucide-react";
+import { css } from "styled-system/css";
+import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
-import { tokens } from "@/theme";
 import { Wallet, Transaction, TransactionRole } from "@/types/wallet";
 import { Annot, PayLogo, PaymentFooterLogos, StatusChip, TopUpDialog, WithdrawDialog, fmtUsd, type PayLogoId } from "@/components/payment";
 
@@ -67,6 +60,142 @@ const ROLE_TAG: Record<TransactionRole, { label: string; color: string; bg: stri
   account: { label: "Account", color: "#475569", bg: "rgba(0,0,0,0.05)" },
 };
 
+// ─── Styles ──────────────────────────────────────────────────────────────────
+
+const loadingBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "400px", color: "ink3" });
+const errorBlock = css({ textAlign: "center", py: "48px" });
+const errorText = css({ fontSize: "13px", lineHeight: 1.5, color: "errorText" });
+const retryBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  minW: "64px", px: "8px", py: "6px", border: "none", borderRadius: "4px",
+  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "12px", fontWeight: 500,
+  lineHeight: 1.75, cursor: "pointer",
+  _hover: { bg: "rgba(0,0,0,0.04)" },
+});
+
+const head = css({ display: "flex", flexDirection: "column", gap: "8px", mb: "24px" });
+const headTitle = css({ fontSize: { base: "28px", md: "34px" }, fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.03em" });
+
+const layout = css({
+  display: "grid", gap: "24px", alignItems: "start",
+  gridTemplateColumns: { base: "1fr", lg: "1fr 320px" },
+});
+const leftCol = css({ display: "flex", flexDirection: "column", gap: "16px", minW: 0 });
+const balanceGrid = css({
+  display: "grid", gap: "12px",
+  gridTemplateColumns: { base: "1fr", sm: "repeat(3, minmax(0, 1fr))" },
+});
+
+const balanceCard = css({
+  position: "relative", overflow: "hidden", display: "flex", flexDirection: "column",
+  borderRadius: "card", p: "18px", color: "#fff",
+  background: "linear-gradient(135deg, #000, rgba(0,0,0,0.82))",
+});
+const cardHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "12px" });
+const cardHeadLeft = css({ display: "flex", alignItems: "center", gap: "7px", minW: 0 });
+const dot = css({ w: "7px", h: "7px", borderRadius: "50%", flexShrink: 0 });
+const balanceLabel = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "rgba(255,255,255,0.72)" });
+const balanceAmountRow = css({ display: "flex", alignItems: "baseline", gap: "3.2px" });
+const balanceCurrency = css({ fontSize: "16px", fontWeight: 500, lineHeight: 1.5, color: "rgba(255,255,255,0.6)" });
+const balanceValue = css({ fontFamily: "mono", fontSize: "30px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em" });
+const balanceNote = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(255,255,255,0.5)" });
+const balanceActions = css({ display: "flex", gap: "8px", mt: "auto", pt: "14px" });
+const topUpBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  flex: 1, minW: 0, h: "36px", px: "16px", borderRadius: "999px", border: "none",
+  bg: "#fff", color: "#000", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
+  lineHeight: 1.75, cursor: "pointer",
+  _hover: { bg: "rgba(255,255,255,0.88)" },
+  "& svg": { display: "block" },
+});
+const withdrawBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  flex: 1, minW: 0, h: "36px", px: "16px", borderRadius: "999px", boxSizing: "border-box",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(255,255,255,0.28)",
+  bg: "transparent", color: "#fff", fontFamily: "inherit", fontSize: "13px", fontWeight: 600,
+  lineHeight: 1.75, cursor: "pointer",
+  _hover: { bg: "rgba(255,255,255,0.1)", borderColor: "rgba(255,255,255,0.4)" },
+  "& svg": { display: "block" },
+});
+
+const escrowCard = css({
+  display: "flex", flexDirection: "column", bg: "surface",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  borderRadius: "card", p: "18px",
+});
+const escrowLabel = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "ink2" });
+const escrowValue = css({ fontFamily: "mono", fontSize: "24px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em" });
+const escrowValueGreen = css({ fontFamily: "mono", fontSize: "24px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.02em", color: "successText" });
+// `mt: auto` never applied to these <p>s under MUI (globals.css resets p margins) — only the 4px padding did.
+const escrowNote = css({ fontSize: "11px", lineHeight: 1.5, color: "ink3", pt: "4px" });
+
+const lifetimeRow = css({ display: "flex", gap: "24px", px: "4px", flexWrap: "wrap" });
+const lifetimeText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink3" });
+const lifetimeValue = css({ fontFamily: "mono", fontWeight: 600, color: "ink2" });
+
+const panel = css({
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  borderRadius: "card", p: { base: "18px", md: "24px" }, minW: 0,
+});
+const panelTitle = css({ fontSize: "22px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.015em" });
+const panelSub = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink3" });
+
+const filterRow = css({ display: "flex", gap: "8px", flexWrap: "wrap", mb: "8px" });
+const roleBtn = css({
+  h: "34px", px: "16px", borderRadius: "999px", cursor: "pointer", border: "none",
+  fontFamily: "inherit", fontSize: "13px", fontWeight: 500,
+  bg: "rgba(0,0,0,0.05)", color: "ink2",
+  _hover: { bg: "rgba(0,0,0,0.09)" },
+  "&[data-active]": { bg: "#000", color: "#fff", _hover: { bg: "#000" } },
+});
+const statusBtn = css({
+  h: "28px", px: "12px", borderRadius: "999px", cursor: "pointer",
+  fontFamily: "inherit", fontSize: "12px", fontWeight: 500,
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  bg: "transparent", color: "ink2",
+  _hover: { borderColor: "hairlineStrong" },
+  "&[data-active]": { borderColor: "#000", bg: "rgba(0,0,0,0.04)", color: "ink", _hover: { borderColor: "#000" } },
+});
+
+const emptyText = css({ textAlign: "center", py: "32px", fontSize: "14px", lineHeight: 1.5, color: "ink2" });
+const txnRow = css({
+  display: "flex", alignItems: "center", gap: "14px", py: "14px",
+  borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline",
+  "&:last-of-type": { borderBottomStyle: "none" },
+});
+const txnIcon = css({
+  w: "40px", h: "40px", borderRadius: "10px", bg: "canvas",
+  display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
+});
+const txnMain = css({ flex: 1, minW: 0 });
+const txnTitleRow = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
+const txnTitleCss = css({ fontSize: "14.5px", fontWeight: 600, lineHeight: 1.5, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxW: "100%" });
+const txnTag = css({
+  display: "inline-block", px: "7.2px", py: "1.6px", borderRadius: "999px",
+  fontSize: "10.5px", fontWeight: 700, whiteSpace: "nowrap",
+});
+const txnMeta = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "ink2" });
+const txnRef = css({ fontFamily: "mono" });
+const txnNote = css({ fontSize: "12px", lineHeight: 1.5, color: "ink3", fontStyle: "italic", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const txnRight = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" });
+const txnAmount = css({ fontFamily: "mono", fontSize: "15px", fontWeight: 600, lineHeight: 1.5 });
+
+const methodTitle = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.01em" });
+const methodList = css({ display: "flex", flexDirection: "column", gap: "10px" });
+const methodRow = css({
+  display: "flex", alignItems: "center", gap: "12px", p: "12px",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm",
+});
+const methodName = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
+const methodSub = css({ fontSize: "11.5px", fontWeight: 500, lineHeight: 1.5, letterSpacing: "0.02em", color: "ink2" });
+// MUI's height:1 in the old style prop meant 100% (its sizing shorthand), which resolved to a
+// 0px box inside the auto-height column, so this "divider" always rendered as plain
+// whitespace with no line. Ported as rendered: an 18px spacer.
+const hairlineRule = css({ h: "18px" });
+const acceptedLabel = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const logoRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
+const footerWrap = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", mt: "24px", pt: "24px" });
+
 /**
  * The ONE wallet surface, identical in both spaces: same balance, same Top up
  * and Withdraw, same complete history (both roles, correctly labelled), with
@@ -119,217 +248,201 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
 
   if (isLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 400 }}>
-        <CircularProgress size={32} sx={{ color: tokens.text3 }} />
-      </Box>
+      <div className={loadingBlock}>
+        <Spinner size={32} />
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ textAlign: "center", py: 6 }}>
-        <Typography sx={{ fontSize: 13, color: tokens.errorText, mb: 2 }}>
+      <div className={errorBlock}>
+        <p className={errorText}>
           {error instanceof Error ? error.message : "Failed to fetch finance data"}
-        </Typography>
-        <Button onClick={() => refetch()} sx={{ fontSize: 12, textTransform: "none" }}>
+        </p>
+        <button type="button" onClick={() => refetch()} className={retryBtn}>
           Try again
-        </Button>
-      </Box>
+        </button>
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1, mb: 3 }}>
+    <div>
+      <div className={head}>
         <Annot>Finance overview · one shared wallet, both roles</Annot>
-        <Typography sx={{ fontSize: { xs: 28, md: 34 }, fontWeight: 600, letterSpacing: "-0.03em" }}>Wallet</Typography>
-      </Box>
+        <p className={headTitle}>Wallet</p>
+      </div>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 320px" }, gap: 3, alignItems: "start" }}>
+      <div className={layout}>
         {/* Left column */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+        <div className={leftCol}>
           {/* Balance + role-split escrow */}
-          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "repeat(3,1fr)" }, gap: 1.5 }}>
+          <div className={balanceGrid}>
             {/* Available balance — identical in both modes */}
-            <Box sx={{ position: "relative", overflow: "hidden", display: "flex", flexDirection: "column", borderRadius: `${tokens.radius.card}px`, p: 2.25, color: "#fff", background: "linear-gradient(135deg, #000, rgba(0,0,0,0.82))" }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
-                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: tokens.success }} />
-                  <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: "rgba(255,255,255,0.72)" }}>Available balance</Typography>
-                </Box>
-                <WalletIcon sx={{ fontSize: 15, color: "rgba(255,255,255,0.5)" }} />
-              </Box>
-              <Box sx={{ display: "flex", alignItems: "baseline", gap: 0.4 }}>
-                <Typography sx={{ fontSize: 16, fontWeight: 500, color: "rgba(255,255,255,0.6)" }}>$</Typography>
-                <Typography sx={{ fontFamily: tokens.mono, fontSize: 30, fontWeight: 600, letterSpacing: "-0.02em" }}>{balance.toFixed(2)}</Typography>
-              </Box>
-              <Typography sx={{ fontSize: 11, color: "rgba(255,255,255,0.5)", mt: 0.5 }}>One shared wallet · free to spend or withdraw</Typography>
-              <Box sx={{ display: "flex", gap: 1, mt: "auto", pt: 1.75 }}>
-                <Button
-                  onClick={() => setTopUpOpen(true)}
-                  startIcon={<AddIcon sx={{ fontSize: 15 }} />}
-                  sx={{ flex: 1, minWidth: 0, height: 36, borderRadius: "999px", bgcolor: "#fff", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 600, "&:hover": { bgcolor: "rgba(255,255,255,0.88)" } }}>
+            <div className={balanceCard}>
+              <div className={cardHead}>
+                <div className={cardHeadLeft}>
+                  <span className={dot} style={{ background: "var(--colors-success)" }} />
+                  <span className={balanceLabel}>Available balance</span>
+                </div>
+                <WalletIcon size={15} color="rgba(255,255,255,0.5)" />
+              </div>
+              <div className={balanceAmountRow}>
+                <span className={balanceCurrency}>$</span>
+                <span className={balanceValue}>{balance.toFixed(2)}</span>
+              </div>
+              <p className={balanceNote}>One shared wallet · free to spend or withdraw</p>
+              <div className={balanceActions}>
+                <button type="button" onClick={() => setTopUpOpen(true)} className={topUpBtn}>
+                  <AddIcon size={15} />
                   Top up
-                </Button>
-                <Button
-                  onClick={() => setShowWithdraw(true)}
-                  startIcon={<ArrowUpIcon sx={{ fontSize: 15 }} />}
-                  sx={{ flex: 1, minWidth: 0, height: 36, borderRadius: "999px", border: "1px solid rgba(255,255,255,0.28)", color: "#fff", textTransform: "none", fontSize: 13, fontWeight: 600, "&:hover": { bgcolor: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.4)" } }}>
+                </button>
+                <button type="button" onClick={() => setShowWithdraw(true)} className={withdrawBtn}>
+                  <ArrowUpIcon size={15} />
                   Withdraw
-                </Button>
-              </Box>
-            </Box>
+                </button>
+              </div>
+            </div>
 
             {/* Committed to orders — buyer escrow (amber, money out) */}
-            <Box sx={{ display: "flex", flexDirection: "column", bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.25 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
-                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: "#EA580C" }} />
-                  <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>Committed to orders</Typography>
-                </Box>
-                <ShieldIcon sx={{ fontSize: 15, color: tokens.text3 }} />
-              </Box>
-              <Typography sx={{ fontFamily: tokens.mono, fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em" }}>{fmtUsd(committed)}</Typography>
-              <Typography sx={{ fontSize: 11, color: tokens.text3, mt: "auto", pt: 0.5 }}>Held in escrow for gigs you&apos;re buying</Typography>
-            </Box>
+            <div className={escrowCard}>
+              <div className={cardHead}>
+                <div className={cardHeadLeft}>
+                  <span className={dot} style={{ background: "#EA580C" }} />
+                  <span className={escrowLabel}>Committed to orders</span>
+                </div>
+                <ShieldIcon size={15} className={css({ color: "ink3" })} />
+              </div>
+              <p className={escrowValue}>{fmtUsd(committed)}</p>
+              <p className={escrowNote}>Held in escrow for gigs you&apos;re buying</p>
+            </div>
 
             {/* Pending earnings — seller escrow (green, money in) */}
-            <Box sx={{ display: "flex", flexDirection: "column", bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 2.25 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
-                  <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: tokens.success }} />
-                  <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>Pending earnings</Typography>
-                </Box>
-                <PendingIcon sx={{ fontSize: 15, color: tokens.text3 }} />
-              </Box>
-              <Typography sx={{ fontFamily: tokens.mono, fontSize: 24, fontWeight: 600, letterSpacing: "-0.02em", color: tokens.successText }}>{fmtUsd(pendingEarnings)}</Typography>
-              <Typography sx={{ fontSize: 11, color: tokens.text3, mt: "auto", pt: 0.5 }}>Coming to you when your gigs complete</Typography>
-            </Box>
-          </Box>
+            <div className={escrowCard}>
+              <div className={cardHead}>
+                <div className={cardHeadLeft}>
+                  <span className={dot} style={{ background: "var(--colors-success)" }} />
+                  <span className={escrowLabel}>Pending earnings</span>
+                </div>
+                <PendingIcon size={15} className={css({ color: "ink3" })} />
+              </div>
+              <p className={escrowValueGreen}>{fmtUsd(pendingEarnings)}</p>
+              <p className={escrowNote}>Coming to you when your gigs complete</p>
+            </div>
+          </div>
 
           {/* Lifetime totals — deliberately demoted, never confused with live balances */}
-          <Box sx={{ display: "flex", gap: 3, px: 0.5, flexWrap: "wrap" }}>
-            <Typography sx={{ fontSize: 12.5, color: tokens.text3 }}>
-              Lifetime spent as client: <Box component="span" sx={{ fontFamily: tokens.mono, fontWeight: 600, color: tokens.text2 }}>{fmtUsd(totalSpent)}</Box>
-            </Typography>
-            <Typography sx={{ fontSize: 12.5, color: tokens.text3 }}>
-              Lifetime earned as freelancer: <Box component="span" sx={{ fontFamily: tokens.mono, fontWeight: 600, color: tokens.text2 }}>{fmtUsd(totalEarned)}</Box>
-            </Typography>
-          </Box>
+          <div className={lifetimeRow}>
+            <p className={lifetimeText}>
+              Lifetime spent as client: <span className={lifetimeValue}>{fmtUsd(totalSpent)}</span>
+            </p>
+            <p className={lifetimeText}>
+              Lifetime earned as freelancer: <span className={lifetimeValue}>{fmtUsd(totalEarned)}</span>
+            </p>
+          </div>
 
           {/* Transaction history */}
-          <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 3 } }}>
-            <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em", mb: 0.5 }}>Transaction history</Typography>
-            <Typography sx={{ fontSize: 12.5, color: tokens.text3, mb: 2 }}>Your complete financial picture — buying and selling together, every row tagged.</Typography>
+          <div className={panel}>
+            <p className={panelTitle}>Transaction history</p>
+            <p className={panelSub}>Your complete financial picture — buying and selling together, every row tagged.</p>
 
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
-              {ROLE_FILTERS.map(([k, label]) => {
-                const active = roleFilter === k;
-                return (
-                  <Box key={k} component='button' type='button' onClick={() => setRoleFilter(k)}
-                    sx={{ height: 34, px: 2, borderRadius: "999px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 500, border: "none",
-                      bgcolor: active ? "#000" : "rgba(0,0,0,0.05)", color: active ? "#fff" : tokens.text2,
-                      "&:hover": { bgcolor: active ? "#000" : "rgba(0,0,0,0.09)" } }}>
-                    {label}
-                  </Box>
-                );
-              })}
-            </Box>
-            <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 1 }}>
-              {STATUS_FILTERS.map(([k, label]) => {
-                const active = statusFilter === k;
-                return (
-                  <Box key={k} component='button' type='button' onClick={() => setStatusFilter(k)}
-                    sx={{ height: 28, px: 1.5, borderRadius: "999px", cursor: "pointer", font: "inherit", fontSize: 12, fontWeight: 500,
-                      border: `1px solid ${active ? "#000" : tokens.border}`, bgcolor: active ? "rgba(0,0,0,0.04)" : "transparent", color: active ? tokens.text : tokens.text2,
-                      "&:hover": { borderColor: tokens.borderStrong } }}>
-                    {label}
-                  </Box>
-                );
-              })}
-            </Box>
+            <div className={filterRow}>
+              {ROLE_FILTERS.map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setRoleFilter(k)} className={roleBtn} data-active={roleFilter === k ? "" : undefined}>
+                  {label}
+                </button>
+              ))}
+            </div>
+            <div className={filterRow}>
+              {STATUS_FILTERS.map(([k, label]) => (
+                <button key={k} type="button" onClick={() => setStatusFilter(k)} className={statusBtn} data-active={statusFilter === k ? "" : undefined}>
+                  {label}
+                </button>
+              ))}
+            </div>
 
             {filtered.length === 0 ? (
-              <Typography sx={{ textAlign: "center", py: 4, fontSize: 14, color: tokens.text2 }}>No matching transactions.</Typography>
+              <p className={emptyText}>No matching transactions.</p>
             ) : (
-              <Box>
+              <div>
                 {filtered.map(t => {
                   const display = typeDisplay(t);
                   const roleTag = ROLE_TAG[t.role ?? "account"];
                   return (
-                    <Box key={t.id} sx={{ display: "flex", alignItems: "center", gap: 1.75, py: 1.75, borderBottom: `1px solid ${tokens.border}`, "&:last-of-type": { borderBottom: "none" } }}>
-                      <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: tokens.canvas, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
+                    <div key={t.id} className={txnRow}>
+                      <div className={txnIcon}>
                         {display.flow === "in"
-                          ? <ArrowDownIcon sx={{ fontSize: 18, color: tokens.success }} />
+                          ? <ArrowDownIcon size={18} className={css({ color: "success" })} />
                           : display.flow === "out"
-                            ? <ArrowUpIcon sx={{ fontSize: 18, color: tokens.text2 }} />
-                            : <ShieldIcon sx={{ fontSize: 16, color: tokens.text3 }} />}
-                      </Box>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                          <Typography sx={{ fontSize: 14.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: "100%" }}>{txnTitle(t)}</Typography>
-                          <Box sx={{ px: 0.9, py: 0.2, borderRadius: "999px", fontSize: 10.5, fontWeight: 700, color: roleTag.color, bgcolor: roleTag.bg, whiteSpace: "nowrap" }}>
+                            ? <ArrowUpIcon size={18} className={css({ color: "ink2" })} />
+                            : <ShieldIcon size={16} className={css({ color: "ink3" })} />}
+                      </div>
+                      <div className={txnMain}>
+                        <div className={txnTitleRow}>
+                          <p className={txnTitleCss}>{txnTitle(t)}</p>
+                          <span className={txnTag} style={{ color: roleTag.color, background: roleTag.bg }}>
                             {roleTag.label}
-                          </Box>
-                        </Box>
-                        <Typography sx={{ fontSize: 12, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>
+                          </span>
+                        </div>
+                        <p className={txnMeta}>
                           {display.label} · {formatDate(t.created_at)}
-                          {t.order_reference ? <Box component="span" sx={{ fontFamily: tokens.mono }}> · {t.order_reference}</Box> : null}
-                        </Typography>
+                          {t.order_reference ? <span className={txnRef}> · {t.order_reference}</span> : null}
+                        </p>
                         {t.metadata?.note && (
-                          <Typography sx={{ fontSize: 12, color: tokens.text3, fontStyle: "italic", mt: 0.25, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          <p className={txnNote}>
                             “{t.metadata.note}”
-                          </Typography>
+                          </p>
                         )}
-                      </Box>
-                      <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.625 }}>
-                        <Typography sx={{ fontFamily: tokens.mono, fontSize: 15, fontWeight: 600, color: display.flow === "in" ? tokens.successText : display.flow === "out" ? tokens.text : tokens.text3 }}>
+                      </div>
+                      <div className={txnRight}>
+                        <p className={txnAmount} style={{ color: display.flow === "in" ? "var(--colors-successText)" : display.flow === "out" ? "var(--colors-ink)" : "var(--colors-ink3)" }}>
                           {display.flow === "in" ? "+" : display.flow === "out" ? "–" : ""}{fmtUsd(Math.abs(parseFloat(t.amount_raw)))}
-                        </Typography>
+                        </p>
                         <StatusChip status={t.status === "cancelled" ? "failed" : t.status}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</StatusChip>
-                      </Box>
-                    </Box>
+                      </div>
+                    </div>
                   );
                 })}
-              </Box>
+              </div>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* Right column — payment methods */}
-        <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.25, md: 3 } }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, letterSpacing: "-0.01em", mb: 2 }}>Payment methods</Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25 }}>
+        <div className={panel}>
+          <p className={methodTitle}>Payment methods</p>
+          <div className={methodList}>
             {[
               { id: "khqr" as PayLogoId, name: "ABA KHQR", sub: "Default · scan to pay", primary: true },
               { id: "visa" as PayLogoId, name: "Visa ···· 4242", sub: "Expires 09/27", primary: false },
             ].map(m => (
-              <Box key={m.id} sx={{ display: "flex", alignItems: "center", gap: 1.5, p: 1.5, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.cardSm}px` }}>
+              <div key={m.id} className={methodRow}>
                 <PayLogo id={m.id} />
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{m.name}</Typography>
-                  <Typography sx={{ fontSize: 11.5, fontWeight: 500, letterSpacing: "0.02em", color: tokens.text2 }}>{m.sub}</Typography>
-                </Box>
+                <div className={css({ flex: 1, minW: 0 })}>
+                  <p className={methodName}>{m.name}</p>
+                  <p className={methodSub}>{m.sub}</p>
+                </div>
                 {m.primary && <StatusChip status='neutral' dot={false}>Default</StatusChip>}
-              </Box>
+              </div>
             ))}
-          </Box>
-          <Box sx={{ height: 1, bgcolor: tokens.border, my: 2.25 }} />
-          <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, mb: 1.5 }}>Accepted via ABA PayWay</Typography>
-          <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+          </div>
+          <div className={hairlineRule} />
+          <p className={acceptedLabel}>Accepted via ABA PayWay</p>
+          <div className={logoRow}>
             {(["visa", "mc", "unionpay", "jcb", "alipay", "wechat"] as PayLogoId[]).map(id => (
               <PayLogo key={id} id={id} size='sm' />
             ))}
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
 
-      <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: 3, pt: 3 }}>
+      <div className={footerWrap}>
         <PaymentFooterLogos variant='light' />
-      </Box>
+      </div>
 
       <TopUpDialog open={topUpOpen} onClose={() => setTopUpOpen(false)} currentBalance={balance} suggestedAmount={25} />
       <WithdrawDialog open={showWithdraw} onClose={() => setShowWithdraw(false)} available={balance} onSuccess={refresh} />
-    </Box>
+    </div>
   );
 }

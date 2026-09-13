@@ -1,16 +1,85 @@
 "use client";
 
 import { useState } from "react";
-import { Box, Typography, Avatar, Chip } from "@mui/material";
-import { StarRounded, ShoppingBag, AccessTimeOutlined } from "@mui/icons-material";
+import { Clock, ShoppingBag, Star } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import { css } from "styled-system/css";
+import { Avatar } from "@/components/ds";
 import { Service } from "@/types/service";
 import { serviceCoverUrl } from "@/lib/serviceCover";
 
 interface ServiceListCardProps {
   service: Service;
 }
+
+const linkCss = css({ textDecoration: "none" });
+const rowCss = css({
+  display: "flex",
+  gap: "16px",
+  p: "16px",
+  bg: "white",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "12px",
+  transition: "all 0.2s",
+  _hover: {
+    borderColor: "rgba(0,0,0,0.2)",
+    boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
+  },
+});
+const thumbCss = css({
+  flexShrink: 0,
+  w: "140px",
+  h: "100px",
+  borderRadius: "8px",
+  overflow: "hidden",
+  bg: "rgba(0,0,0,0.05)",
+  position: "relative",
+});
+const noImageCss = css({
+  w: "100%",
+  h: "100%",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  fontSize: "11px",
+  color: "rgba(0,0,0,0.3)",
+});
+const detailsCss = css({ flex: 1, minW: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" });
+const sellerRowCss = css({ display: "flex", alignItems: "center", gap: "8px", mb: "6px" });
+const sellerNameCss = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
+const dotCss = css({ fontSize: "11px", lineHeight: 1.5, color: "rgba(0,0,0,0.3)" });
+const chipCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  boxSizing: "border-box",
+  h: "20px",
+  px: "8px",
+  borderRadius: "pill",
+  bg: "rgba(0,0,0,0.05)",
+  color: "ink2",
+  fontSize: "10px",
+  whiteSpace: "nowrap",
+});
+const titleCss = css({
+  fontSize: "14px",
+  fontWeight: 500,
+  color: "ink",
+  lineClamp: 2,
+  lineHeight: 1.4,
+});
+const bottomRowCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mt: "8px" });
+const statsCss = css({ display: "flex", alignItems: "center", gap: "16px" });
+const statCss = css({ display: "flex", alignItems: "center", gap: "4px" });
+const ratingValueCss = css({ fontSize: "12px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
+const ratingCountCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.4)", lineHeight: 1.5 });
+const mutedSmCss = css({ fontSize: "11px", color: "rgba(0,0,0,0.5)", lineHeight: 1.5 });
+const mutedIconCss = css({ color: "rgba(0,0,0,0.4)" });
+const starCss = css({ color: "#f59e0b", fill: "#f59e0b" });
+const priceColCss = css({ textAlign: "right" });
+const priceCss = css({ fontSize: "16px", fontWeight: 600, color: "ink", lineHeight: 1.5 });
 
 export default function ServiceListCard({ service }: ServiceListCardProps) {
   const [imageError, setImageError] = useState(false);
@@ -25,29 +94,10 @@ export default function ServiceListCard({ service }: ServiceListCardProps) {
     : 0;
 
   return (
-    <Link href={`/explore-services/${service.id}`} style={{ textDecoration: "none" }}>
-      <Box
-        sx={{
-          display: "flex",
-          gap: 2,
-          p: 2,
-          bgcolor: "white",
-          border: "1px solid rgba(0,0,0,0.08)",
-          borderRadius: 3,
-          transition: "all 0.2s",
-          "&:hover": { border: "1px solid rgba(0,0,0,0.2)", boxShadow: 2 },
-        }}>
+    <Link href={`/explore-services/${service.id}`} className={linkCss}>
+      <div className={rowCss}>
         {/* Thumbnail */}
-        <Box
-          sx={{
-            flexShrink: 0,
-            width: 140,
-            height: 100,
-            borderRadius: 2,
-            overflow: "hidden",
-            bgcolor: "rgba(0,0,0,0.05)",
-            position: "relative",
-          }}>
+        <div className={thumbCss}>
           {image && !imageError ? (
             <Image
               unoptimized
@@ -59,76 +109,54 @@ export default function ServiceListCard({ service }: ServiceListCardProps) {
               sizes="140px"
             />
           ) : (
-            <Box sx={{ width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.3)" }}>No image</Typography>
-            </Box>
+            <div className={noImageCss}>No image</div>
           )}
-        </Box>
+        </div>
 
         {/* Details */}
-        <Box sx={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-          <Box>
+        <div className={detailsCss}>
+          <div>
             {/* Seller + category */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.75 }}>
-              <Avatar src={freelancerAvatar} alt={freelancerName} sx={{ width: 20, height: 20, fontSize: 10 }}>
-                {freelancerName.charAt(0)}
-              </Avatar>
-              <Typography sx={{ fontSize: 12, fontWeight: 500, color: "rgba(0,0,0,0.7)" }}>{freelancerName}</Typography>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.3)" }}>·</Typography>
-              <Chip
-                label={categoryName}
-                size="small"
-                sx={{ height: 20, fontSize: 10, bgcolor: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", "& .MuiChip-label": { px: 1 } }}
-              />
-            </Box>
+            <div className={sellerRowCss}>
+              <Avatar name={freelancerName} src={freelancerAvatar || null} px={20} />
+              <span className={sellerNameCss}>{freelancerName}</span>
+              <span className={dotCss}>·</span>
+              <span className={chipCss}>{categoryName}</span>
+            </div>
 
             {/* Title */}
-            <Typography
-              sx={{
-                fontSize: 14,
-                fontWeight: 500,
-                color: "black",
-                overflow: "hidden",
-                display: "-webkit-box",
-                WebkitLineClamp: 2,
-                WebkitBoxOrient: "vertical",
-                lineHeight: 1.4,
-              }}>
-              {service.title}
-            </Typography>
-          </Box>
+            <p className={titleCss}>{service.title}</p>
+          </div>
 
           {/* Bottom row: rating, orders, delivery, price */}
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 1 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <div className={bottomRowCss}>
+            <div className={statsCss}>
               {service.rating_count > 0 && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <StarRounded sx={{ fontSize: 13, color: "#f59e0b" }} />
-                  <Typography sx={{ fontSize: 12, fontWeight: 600, color: "black" }}>
-                    {parseFloat(service.rating_average!).toFixed(1)}
-                  </Typography>
-                  <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.4)" }}>({service.rating_count})</Typography>
-                </Box>
+                <div className={statCss}>
+                  <Star size={13} className={starCss} />
+                  <span className={ratingValueCss}>{parseFloat(service.rating_average!).toFixed(1)}</span>
+                  <span className={ratingCountCss}>({service.rating_count})</span>
+                </div>
               )}
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <ShoppingBag sx={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }} />
-                <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)" }}>{service.orders_count} orders</Typography>
-              </Box>
+              <div className={statCss}>
+                <ShoppingBag size={12} className={mutedIconCss} />
+                <span className={mutedSmCss}>{service.orders_count} orders</span>
+              </div>
               {fastestDelivery > 0 && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <AccessTimeOutlined sx={{ fontSize: 12, color: "rgba(0,0,0,0.4)" }} />
-                  <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)" }}>{fastestDelivery} day{fastestDelivery !== 1 ? "s" : ""}</Typography>
-                </Box>
+                <div className={statCss}>
+                  <Clock size={12} className={mutedIconCss} />
+                  <span className={mutedSmCss}>{fastestDelivery} day{fastestDelivery !== 1 ? "s" : ""}</span>
+                </div>
               )}
-            </Box>
+            </div>
 
-            <Box sx={{ textAlign: "right" }}>
-              <Typography sx={{ fontSize: 11, color: "rgba(0,0,0,0.5)" }}>Starting at</Typography>
-              <Typography sx={{ fontSize: 16, fontWeight: 600, color: "black" }}>${lowestPrice}</Typography>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+            <div className={priceColCss}>
+              <p className={mutedSmCss}>Starting at</p>
+              <p className={priceCss}>${lowestPrice}</p>
+            </div>
+          </div>
+        </div>
+      </div>
     </Link>
   );
 }

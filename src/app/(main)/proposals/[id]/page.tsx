@@ -3,29 +3,17 @@
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
 import {
-  Box,
-  Container,
-  Typography,
-  Stack,
-  Chip,
-  Button,
-  CircularProgress,
-  Alert,
-  Paper,
-  Avatar,
-  Grid,
-  Divider,
-} from "@mui/material";
-import {
-  ChevronLeftOutlined,
-  AttachMoneyOutlined,
-  AccessTimeOutlined,
-  CheckCircleOutlineOutlined,
-  CancelOutlined,
-  EditOutlined,
-  ExitToAppOutlined,
-  OpenInNewOutlined,
-} from "@mui/icons-material";
+  ChevronLeft,
+  DollarSign,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  Pencil,
+  LogOut,
+  ExternalLink,
+} from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Alert, Avatar, Spinner } from "@/components/ds";
 import Link from "next/link";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
@@ -45,20 +33,106 @@ function formatDate(dateStr: string) {
   });
 }
 
-function statusColor(status: string) {
-  switch (status) {
-    case "pending": return { bgcolor: "rgba(234,88,12,0.1)", color: "#b45309" };
-    case "accepted": return { bgcolor: "rgba(22,163,74,0.1)", color: "#15803d" };
-    case "rejected": return { bgcolor: "rgba(239,68,68,0.1)", color: "#b91c1c" };
-    case "withdrawn": return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" };
-    default: return { bgcolor: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" };
-  }
-}
+const STATUS_CLASS: Record<string, string> = {
+  pending: css({ bg: "rgba(234,88,12,0.1)", color: "pendingText" }),
+  accepted: css({ bg: "rgba(22,163,74,0.1)", color: "successText" }),
+  rejected: css({ bg: "rgba(239,68,68,0.1)", color: "errorText" }),
+  withdrawn: css({ bg: "rgba(0,0,0,0.06)", color: "rgba(0,0,0,0.5)" }),
+};
+const statusClass = (status: string) => STATUS_CLASS[status] ?? STATUS_CLASS.withdrawn;
+
+/* ── static styles ── */
+const pageRoot = css({ minH: "100vh", bg: "canvas" });
+const backBar = css({ bg: "surface", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline", py: "12px" });
+const container = css({
+  w: "100%", boxSizing: "border-box", maxW: "1200px", mx: "auto",
+  px: { base: "16px", sm: "24px" },
+});
+const containerPad = css({ py: "32px" });
+const containerPadLg = css({ py: "48px" });
+const centreLoading = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "60vh" });
+const backBtn = css({
+  display: "inline-flex", alignItems: "center", gap: "8px",
+  m: 0, p: "6px 8px", border: "none", bg: "transparent",
+  color: "ink2", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "color .25s, background-color .25s",
+  _hover: { bg: "rgba(0,0,0,0.04)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const layout = css({ display: "grid", gridTemplateColumns: { base: "1fr", xl: "8fr 4fr" }, gap: "32px", alignItems: "start" });
+const stack24 = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const stack16 = css({ display: "flex", flexDirection: "column", gap: "16px" });
+const sidebarSticky = css({ position: { xl: "sticky" }, top: { xl: "24px" } });
+const paper = css({
+  bg: "surface", borderRadius: "cardSm",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  p: "32px",
+});
+const paperSm = css({
+  bg: "surface", borderRadius: "cardSm",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  p: "24px",
+});
+const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", mb: "24px" });
+const eyebrow = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const jobLink = css({ textDecoration: "none", display: "inline-block" });
+const jobTitle = css({ lineHeight: 1.5,
+  fontSize: "20px", fontWeight: 700, color: "ink", transition: "color 0.15s",
+  _hover: { color: "accent" },
+});
+const linkIcon = css({ ml: "6px", verticalAlign: "middle", opacity: 0.5, display: "inline" });
+const statusChip = css({ display: "inline-flex", alignItems: "center", flexShrink: 0, h: "28px", px: "12px", borderRadius: "pill", fontSize: "13px" });
+const statsGrid = css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "24px", mb: "24px" });
+const statHead = css({ display: "flex", alignItems: "center", gap: "4px", color: "ink2", mb: "4px" });
+const statLabel = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2", textTransform: "uppercase", letterSpacing: "0.5px" });
+const statValue = css({ lineHeight: 1.5, fontSize: "22px", fontWeight: 700 });
+const statValueGreen = css({ color: "successText" });
+const submittedRow = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
+const updatedChip = css({ display: "inline-flex", alignItems: "center", h: "20px", px: "8px", ml: "8px", borderRadius: "pill", fontSize: "10px", bg: "rgba(37,99,235,0.1)", color: "#1e40af" });
+const divider = css({ h: "1px", bg: "rgba(0,0,0,0.12)", mb: "24px" });
+const coverLabel = css({ lineHeight: 1.5, fontSize: "13px", fontWeight: 600, color: "ink2" });
+const alertRounded = css({ borderRadius: "8px" });
+const alertActionBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, p: "4px 5px", minW: "64px", border: "none", borderRadius: "4px",
+  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "12px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", whiteSpace: "nowrap", transition: "background-color .25s",
+  _hover: { bg: "rgba(0,0,0,0.06)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const actionRow = css({ display: "flex", gap: "16px" });
+const actionBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  boxSizing: "border-box", m: 0, flex: 1, minW: "64px", borderRadius: "40px",
+  fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s, border-color .25s, color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  _disabled: { pointerEvents: "none" },
+  "& svg": { flexShrink: 0 },
+});
+const approveBtn = css({
+  p: "6px 16px", border: "none", bg: "successText", color: "white",
+  boxShadow: "0px 3px 1px -2px rgba(0,0,0,0.2), 0px 2px 2px 0px rgba(0,0,0,0.14), 0px 1px 5px 0px rgba(0,0,0,0.12)",
+  _hover: { bg: "#166534" },
+  _disabled: { bg: "rgba(0, 0, 0, 0.12)", color: "rgba(0, 0, 0, 0.26)", boxShadow: "none" },
+});
+const outlineBtn = css({
+  p: "5px 15px", borderWidth: "1px", borderStyle: "solid", bg: "transparent",
+  _disabled: { color: "rgba(0, 0, 0, 0.26)", borderColor: "rgba(0, 0, 0, 0.12)" },
+});
+const dangerOutline = css({ borderColor: "rgba(239,68,68,0.3)", color: "errorText", _hover: { bg: "rgba(239,68,68,0.04)" } });
+const neutralOutline = css({ borderColor: "rgba(0,0,0,0.2)", color: "ink", _hover: { borderColor: "rgba(0,0,0,0.4)" } });
+const sideLabel = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2", fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.5px" });
+const sideRow = css({ display: "flex", gap: "16px", alignItems: "center" });
+const sideName = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600 });
+const budgetValue = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 600, color: "successText" });
+const budgetMeta = css({ lineHeight: 1.5, fontSize: "12px", color: "ink2" });
 
 export default function ProposalDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const proposalId = Number(params.id);
 
   const [proposal, setProposal] = useState<Proposal | null>(null);
@@ -86,17 +160,17 @@ export default function ProposalDetailPage() {
     load();
   }, [proposalId]);
 
-  if (!user) {
-    if (typeof window !== "undefined") router.replace("/login");
-    return null;
-  }
+  // Guests go to sign-in — but only once auth has resolved (`user` is null while it loads).
+  useEffect(() => {
+    if (!authLoading && !user) router.replace("/auth/sign-in");
+  }, [authLoading, user, router]);
 
-  const isClient = !!user.is_client;
-  const isFreelancer = !!user.is_freelancer;
+  const isClient = !!user?.is_client;
+  const isFreelancer = !!user?.is_freelancer;
 
   // Determine who owns what
-  const isProposalOwner = isFreelancer && proposal?.freelancer_profile_id === user.freelancer_profile?.id;
-  const isJobOwner = isClient && proposal?.job_post?.client_profile?.id === user.client_profile?.id;
+  const isProposalOwner = isFreelancer && proposal?.freelancer_profile_id === user?.freelancer_profile?.id;
+  const isJobOwner = isClient && proposal?.job_post?.client_profile?.id === user?.client_profile?.id;
 
   const handleApprove = async () => {
     if (!proposal) return;
@@ -147,265 +221,205 @@ export default function ProposalDetailPage() {
     setEditOpen(false);
   };
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="60vh">
-        <CircularProgress />
-      </Box>
+      <div className={centreLoading}>
+        <Spinner size={40} className={css({ color: "#1976d2" })} />
+      </div>
     );
   }
 
+  if (!user) return null;
+
   if (error || !proposal) {
     return (
-      <Container sx={{ py: 6 }}>
-        <Alert severity="error">{error ?? "Proposal not found."}</Alert>
-      </Container>
+      <div className={cx(container, containerPadLg)}>
+        <Alert tone="error">{error ?? "Proposal not found."}</Alert>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
+    <div className={pageRoot}>
       {/* Back bar */}
-      <Box sx={{ bgcolor: "white", borderBottom: "1px solid rgba(0,0,0,0.08)", py: 1.5 }}>
-        <Container>
-          <Button
-            startIcon={<ChevronLeftOutlined />}
-            onClick={() => router.back()}
-            sx={{ fontSize: 13, textTransform: "none", color: "rgba(0,0,0,0.6)" }}>
+      <div className={backBar}>
+        <div className={container}>
+          <button type="button" onClick={() => router.back()} className={backBtn}>
+            <ChevronLeft size={20} />
             Back
-          </Button>
-        </Container>
-      </Box>
+          </button>
+        </div>
+      </div>
 
-      <Container sx={{ py: 4 }}>
-        <Grid container spacing={4} alignItems="start">
+      <div className={cx(container, containerPad)}>
+        <div className={layout}>
           {/* Main */}
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Stack spacing={3}>
-              <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 4 }}>
-                {/* Header */}
-                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" mb={3}>
-                  <Box>
-                    <Typography sx={{ fontSize: 13, color: "text.secondary", mb: 0.5 }}>Proposal for</Typography>
-                    <Link href={`/jobs/${proposal.job_post_id}`} passHref style={{ textDecoration: "none" }}>
-                      <Typography
-                        sx={{
-                          fontSize: 20,
-                          fontWeight: 700,
-                          color: "black",
-                          "&:hover": { color: "#0071e3" },
-                          transition: "color 0.15s",
-                        }}>
-                        {proposal.job_post?.title ?? "Job Post"}
-                        <OpenInNewOutlined sx={{ fontSize: 15, ml: 0.75, verticalAlign: "middle", opacity: 0.5 }} />
-                      </Typography>
-                    </Link>
-                  </Box>
-                  <Chip
-                    label={proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
-                    sx={{ fontSize: 13, height: 28, ...statusColor(proposal.status) }}
-                  />
-                </Stack>
+          <div className={stack24}>
+            <div className={paper}>
+              {/* Header */}
+              <div className={headRow}>
+                <div>
+                  <p className={eyebrow}>Proposal for</p>
+                  <Link href={`/jobs/${proposal.job_post_id}`} className={jobLink}>
+                    <p className={jobTitle}>
+                      {proposal.job_post?.title ?? "Job Post"}
+                      <ExternalLink size={15} className={linkIcon} />
+                    </p>
+                  </Link>
+                </div>
+                <span className={cx(statusChip, statusClass(proposal.status))}>
+                  {proposal.status.charAt(0).toUpperCase() + proposal.status.slice(1)}
+                </span>
+              </div>
 
-                {/* Stats */}
-                <Grid container spacing={3} mb={3}>
-                  <Grid size={{ xs: 6 }}>
-                    <Stack spacing={0.5}>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <AttachMoneyOutlined sx={{ fontSize: 15, color: "text.secondary" }} />
-                        <Typography sx={{ fontSize: 11, color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          Proposed Price
-                        </Typography>
-                      </Stack>
-                      <Typography sx={{ fontSize: 22, fontWeight: 700, color: "#15803d" }}>
-                        {formatCurrency(proposal.price)}
-                      </Typography>
-                    </Stack>
-                  </Grid>
-                  <Grid size={{ xs: 6 }}>
-                    <Stack spacing={0.5}>
-                      <Stack direction="row" spacing={0.5} alignItems="center">
-                        <AccessTimeOutlined sx={{ fontSize: 15, color: "text.secondary" }} />
-                        <Typography sx={{ fontSize: 11, color: "text.secondary", textTransform: "uppercase", letterSpacing: 0.5 }}>
-                          Delivery Time
-                        </Typography>
-                      </Stack>
-                      <Typography sx={{ fontSize: 22, fontWeight: 700 }}>
-                        {proposal.timeline_days} day{proposal.timeline_days !== 1 ? "s" : ""}
-                      </Typography>
-                    </Stack>
-                  </Grid>
-                </Grid>
+              {/* Stats */}
+              <div className={statsGrid}>
+                <div>
+                  <div className={statHead}>
+                    <DollarSign size={15} />
+                    <span className={statLabel}>Proposed Price</span>
+                  </div>
+                  <p className={cx(statValue, statValueGreen)}>
+                    {formatCurrency(proposal.price)}
+                  </p>
+                </div>
+                <div>
+                  <div className={statHead}>
+                    <Clock size={15} />
+                    <span className={statLabel}>Delivery Time</span>
+                  </div>
+                  <p className={statValue}>
+                    {proposal.timeline_days} day{proposal.timeline_days !== 1 ? "s" : ""}
+                  </p>
+                </div>
+              </div>
 
-                <Typography sx={{ fontSize: 12, color: "text.secondary", mb: 3 }}>
-                  Submitted {formatDate(proposal.created_at)}
-                  {proposal.is_updated && (
-                    <Chip
-                      label="Updated"
-                      size="small"
-                      sx={{ ml: 1, fontSize: 10, height: 20, bgcolor: "rgba(37,99,235,0.1)", color: "#1e40af" }}
-                    />
-                  )}
-                </Typography>
+              <p className={submittedRow}>
+                Submitted {formatDate(proposal.created_at)}
+                {proposal.is_updated && (
+                  <span className={updatedChip}>Updated</span>
+                )}
+              </p>
 
-                <Divider sx={{ mb: 3 }} />
+              <div className={divider} />
 
-                {/* Cover Letter */}
-                <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 1.5, color: "rgba(0,0,0,0.6)" }}>
-                  COVER LETTER
-                </Typography>
-                <RichTextDisplay value={proposal.cover_letter} />
-              </Paper>
+              {/* Cover Letter */}
+              <p className={coverLabel}>
+                COVER LETTER
+              </p>
+              <RichTextDisplay value={proposal.cover_letter} />
+            </div>
 
-              {/* Order success banner */}
-              {createdOrder && (
-                <Alert
-                  severity="success"
-                  sx={{ borderRadius: 2 }}
-                  action={
-                    <Button
-                      color="inherit"
-                      size="small"
-                      onClick={() => router.push(`/dashboard/client`)}
-                      sx={{ textTransform: "none", fontSize: 12 }}>
-                      View Orders
-                    </Button>
-                  }>
-                  Proposal approved! Order #{createdOrder.id} has been created and the escrow is set up.
-                </Alert>
-              )}
+            {/* Order success banner */}
+            {createdOrder && (
+              <Alert
+                tone="success"
+                className={alertRounded}
+                action={
+                  <button type="button" onClick={() => router.push(`/dashboard/client`)} className={alertActionBtn}>
+                    View Orders
+                  </button>
+                }>
+                Proposal approved! Order #{createdOrder.id} has been created and the escrow is set up.
+              </Alert>
+            )}
 
-              {actionError && (
-                <Alert severity="error" sx={{ borderRadius: 2 }} onClose={() => setActionError(null)}>
-                  {actionError}
-                </Alert>
-              )}
+            {actionError && (
+              <Alert tone="error" className={alertRounded} onClose={() => setActionError(null)}>
+                {actionError}
+              </Alert>
+            )}
 
-              {/* Edit form (freelancer) */}
-              {isProposalOwner && proposal.status === "pending" && editOpen && (
-                <ProposalForm
-                  jobPostId={proposal.job_post_id}
-                  existing={proposal}
-                  onSaved={handleProposalSaved}
-                  onCancel={() => setEditOpen(false)}
-                />
-              )}
+            {/* Edit form (freelancer) */}
+            {isProposalOwner && proposal.status === "pending" && editOpen && (
+              <ProposalForm
+                jobPostId={proposal.job_post_id}
+                existing={proposal}
+                onSaved={handleProposalSaved}
+                onCancel={() => setEditOpen(false)}
+              />
+            )}
 
-              {/* Client actions */}
-              {isJobOwner && proposal.status === "pending" && !createdOrder && (
-                <Stack direction="row" spacing={2}>
-                  <Button
-                    variant="contained"
-                    disabled={actionLoading}
-                    startIcon={<CheckCircleOutlineOutlined />}
-                    onClick={handleApprove}
-                    sx={{
-                      flex: 1,
-                      fontSize: 14,
-                      textTransform: "none",
-                      borderRadius: 10,
-                      bgcolor: "#15803d",
-                      "&:hover": { bgcolor: "#166534" },
-                    }}>
-                    {actionLoading ? <CircularProgress size={18} sx={{ color: "white" }} /> : "Approve Proposal"}
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    disabled={actionLoading}
-                    startIcon={<CancelOutlined />}
-                    onClick={handleReject}
-                    sx={{
-                      flex: 1,
-                      fontSize: 14,
-                      textTransform: "none",
-                      borderRadius: 10,
-                      borderColor: "rgba(239,68,68,0.3)",
-                      color: "#b91c1c",
-                      "&:hover": { bgcolor: "rgba(239,68,68,0.04)" },
-                    }}>
-                    Reject
-                  </Button>
-                </Stack>
-              )}
+            {/* Client actions */}
+            {isJobOwner && proposal.status === "pending" && !createdOrder && (
+              <div className={actionRow}>
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleApprove}
+                  className={cx(actionBtn, approveBtn)}>
+                  {actionLoading ? <Spinner size={18} className={css({ color: "white" })} /> : (<><CheckCircle2 size={20} />Approve Proposal</>)}
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleReject}
+                  className={cx(actionBtn, outlineBtn, dangerOutline)}>
+                  <XCircle size={20} />
+                  Reject
+                </button>
+              </div>
+            )}
 
-              {/* Freelancer actions */}
-              {isProposalOwner && proposal.status === "pending" && !editOpen && (
-                <Stack direction="row" spacing={2}>
-                  <Button
-                    variant="outlined"
-                    startIcon={<EditOutlined />}
-                    onClick={() => setEditOpen(true)}
-                    sx={{
-                      flex: 1,
-                      fontSize: 14,
-                      textTransform: "none",
-                      borderRadius: 10,
-                      borderColor: "rgba(0,0,0,0.2)",
-                      color: "black",
-                    }}>
-                    Edit Proposal
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    disabled={actionLoading}
-                    startIcon={<ExitToAppOutlined />}
-                    onClick={handleWithdraw}
-                    sx={{
-                      flex: 1,
-                      fontSize: 14,
-                      textTransform: "none",
-                      borderRadius: 10,
-                      borderColor: "rgba(239,68,68,0.3)",
-                      color: "#b91c1c",
-                      "&:hover": { bgcolor: "rgba(239,68,68,0.04)" },
-                    }}>
-                    {actionLoading ? <CircularProgress size={18} /> : "Withdraw"}
-                  </Button>
-                </Stack>
-              )}
-            </Stack>
-          </Grid>
+            {/* Freelancer actions */}
+            {isProposalOwner && proposal.status === "pending" && !editOpen && (
+              <div className={actionRow}>
+                <button
+                  type="button"
+                  onClick={() => setEditOpen(true)}
+                  className={cx(actionBtn, outlineBtn, neutralOutline)}>
+                  <Pencil size={20} />
+                  Edit Proposal
+                </button>
+                <button
+                  type="button"
+                  disabled={actionLoading}
+                  onClick={handleWithdraw}
+                  className={cx(actionBtn, outlineBtn, dangerOutline)}>
+                  {actionLoading ? <Spinner size={18} /> : (<><LogOut size={20} />Withdraw</>)}
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Sidebar */}
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Stack spacing={2} sx={{ position: { lg: "sticky" }, top: { lg: 24 } }}>
-              {/* Freelancer card */}
-              {isJobOwner && proposal.freelancer_profile && (
-                <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-                  <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 500, mb: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    Freelancer
-                  </Typography>
-                  <Stack direction="row" spacing={2} alignItems="center">
-                    <Avatar
-                      src={proposal.freelancer_profile.user.avatar_url ?? undefined}
-                      alt={proposal.freelancer_profile.user.name}
-                      sx={{ width: 48, height: 48 }}
-                    />
-                    <Typography sx={{ fontSize: 15, fontWeight: 600 }}>
-                      {proposal.freelancer_profile.user.name}
-                    </Typography>
-                  </Stack>
-                </Paper>
-              )}
+          <div className={cx(stack16, sidebarSticky)}>
+            {/* Freelancer card */}
+            {isJobOwner && proposal.freelancer_profile && (
+              <div className={paperSm}>
+                <p className={sideLabel}>
+                  Freelancer
+                </p>
+                <div className={sideRow}>
+                  <Avatar
+                    src={proposal.freelancer_profile.user.avatar_url ?? undefined}
+                    name={proposal.freelancer_profile.user.name}
+                    px={48}
+                  />
+                  <p className={sideName}>
+                    {proposal.freelancer_profile.user.name}
+                  </p>
+                </div>
+              </div>
+            )}
 
-              {/* Job summary card */}
-              {proposal.job_post && (
-                <Paper elevation={0} sx={{ borderRadius: 3, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-                  <Typography sx={{ fontSize: 12, color: "text.secondary", fontWeight: 500, mb: 2, textTransform: "uppercase", letterSpacing: 0.5 }}>
-                    Job Budget
-                  </Typography>
-                  <Typography sx={{ fontSize: 16, fontWeight: 600, color: "#15803d" }}>
-                    {formatCurrency(proposal.job_post.budget_min)} – {formatCurrency(proposal.job_post.budget_max)}
-                  </Typography>
-                  <Typography sx={{ fontSize: 12, color: "text.secondary", mt: 0.5 }}>
-                    Deadline: {formatDate(proposal.job_post.deadline)}
-                  </Typography>
-                </Paper>
-              )}
-            </Stack>
-          </Grid>
-        </Grid>
-      </Container>
-    </Box>
+            {/* Job summary card */}
+            {proposal.job_post && (
+              <div className={paperSm}>
+                <p className={sideLabel}>
+                  Job Budget
+                </p>
+                <p className={budgetValue}>
+                  {formatCurrency(proposal.job_post.budget_min)} – {formatCurrency(proposal.job_post.budget_max)}
+                </p>
+                <p className={budgetMeta}>
+                  Deadline: {formatDate(proposal.job_post.deadline)}
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

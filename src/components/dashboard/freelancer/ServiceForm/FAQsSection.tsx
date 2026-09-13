@@ -1,7 +1,79 @@
-import { Box, Paper, Typography, Button } from "@mui/material";
-import { AddOutlined, HelpOutlineOutlined } from "@mui/icons-material";
+import { CircleHelp, Plus } from "lucide-react";
+import { css } from "styled-system/css";
 import { ServiceFormData, FAQ } from "../types";
 import FAQItem from "./FAQItem";
+
+const sectionCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "32px",
+});
+const header = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: "24px" });
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const sectionSub = css({ lineHeight: 1.5, fontSize: "11px", color: "ink2" });
+/* MUI `Button` base metrics (500 weight, 1.75 line-height, 64px min-width, 6px/8px padding). */
+const addBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  m: 0,
+  p: "6px 16px",
+  minW: "64px",
+  borderRadius: "8px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0, 0, 0, 0.1)",
+  bg: "transparent",
+  color: "ink",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "background-color .25s, border-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.04)", borderColor: "rgba(0, 0, 0, 0.2)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const list = css({ display: "flex", flexDirection: "column", gap: "16px" });
+const footer = css({ mt: "16px", display: "flex", justifyContent: "space-between", alignItems: "center" });
+const countText = css({ lineHeight: 1.5, fontSize: "11px", color: "ink3" });
+const addMoreBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  gap: "8px",
+  m: 0,
+  p: 0,
+  border: "none",
+  bg: "transparent",
+  color: "ink2",
+  fontFamily: "inherit",
+  fontSize: "11px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "color .25s",
+  _hover: { color: "ink" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const empty = css({
+  textAlign: "center",
+  py: "32px",
+  bg: "rgba(0, 0, 0, 0.02)",
+  borderRadius: "cardSm",
+  borderWidth: "1px",
+  borderStyle: "dashed",
+  borderColor: "rgba(0, 0, 0, 0.1)",
+});
+const emptyIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.15)", mb: "8px" });
+const emptyTitle = css({ lineHeight: 1.5, fontSize: "12px", color: "rgba(0, 0, 0, 0.5)" });
+const emptySub = css({ lineHeight: 1.5, fontSize: "11px", color: "rgba(0, 0, 0, 0.35)" });
 
 interface FAQsSectionProps {
   formData: ServiceFormData;
@@ -35,85 +107,52 @@ export default function FAQsSection({ formData, onFormDataChange }: FAQsSectionP
   };
 
   return (
-    <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 4 }}>
-      <Box sx={{ display: "flex", alignItems: "start", justifyContent: "space-between", mb: 3 }}>
-        <Box>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 0.5 }}>
+    <div className={sectionCard}>
+      <div className={header}>
+        <div>
+          <p className={sectionTitle}>
             Frequently Asked Questions
-          </Typography>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>
+          </p>
+          <p className={sectionSub}>
             Add common questions and answers to help clients understand your service better (optional)
-          </Typography>
-        </Box>
+          </p>
+        </div>
         {canAddMore && (
-          <Button
-            onClick={handleAddFAQ}
-            startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
-            sx={{
-              fontSize: 12,
-              color: "black",
-              textTransform: "none",
-              border: "1px solid rgba(0, 0, 0, 0.1)",
-              borderRadius: 2,
-              px: 2,
-              py: 0.75,
-              "&:hover": {
-                bgcolor: "rgba(0, 0, 0, 0.04)",
-                border: "1px solid rgba(0, 0, 0, 0.2)",
-              },
-            }}>
+          <button type="button" onClick={handleAddFAQ} className={addBtn}>
+            <Plus size={14} />
             Add FAQ
-          </Button>
+          </button>
         )}
-      </Box>
+      </div>
 
       {formData.faqs.length > 0 ? (
         <>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+          <div className={list}>
             {formData.faqs.map((faq, index) => (
               <FAQItem key={index} faq={faq} onChange={faq => handleFAQChange(index, faq)} onRemove={() => handleRemoveFAQ(index)} />
             ))}
-          </Box>
-          <Box sx={{ mt: 2, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.4)" }}>
+          </div>
+          <div className={footer}>
+            <p className={countText}>
               {formData.faqs.length}/{MAX_FAQS} FAQs added
-            </Typography>
+            </p>
             {canAddMore && (
-              <Button
-                onClick={handleAddFAQ}
-                startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
-                sx={{
-                  fontSize: 11,
-                  color: "rgba(0, 0, 0, 0.6)",
-                  textTransform: "none",
-                  p: 0,
-                  minWidth: "auto",
-                  "&:hover": {
-                    bgcolor: "transparent",
-                    color: "black",
-                  },
-                }}>
+              <button type="button" onClick={handleAddFAQ} className={addMoreBtn}>
+                <Plus size={14} />
                 Add another
-              </Button>
+              </button>
             )}
-          </Box>
+          </div>
         </>
       ) : (
-        <Box
-          sx={{
-            textAlign: "center",
-            py: 4,
-            bgcolor: "rgba(0, 0, 0, 0.02)",
-            borderRadius: 3,
-            border: "1px dashed rgba(0, 0, 0, 0.1)",
-          }}>
-          <HelpOutlineOutlined sx={{ fontSize: 32, color: "rgba(0, 0, 0, 0.15)", mb: 1 }} />
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.5)", mb: 0.5 }}>No FAQs added yet</Typography>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.35)" }}>
+        <div className={empty}>
+          <CircleHelp size={32} className={emptyIcon} />
+          <p className={emptyTitle}>No FAQs added yet</p>
+          <p className={emptySub}>
             Click &quot;Add FAQ&quot; to help clients understand your service better
-          </Typography>
-        </Box>
+          </p>
+        </div>
       )}
-    </Paper>
+    </div>
   );
 }

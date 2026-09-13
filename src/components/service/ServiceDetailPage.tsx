@@ -5,44 +5,27 @@ import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
-  Box,
-  Container,
-  Grid,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  IconButton,
-  Collapse,
-  Avatar,
-  Divider,
-  CircularProgress,
-  Alert,
-  Chip,
-  Dialog,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-} from "@mui/material";
-import {
-  ChevronLeft,
-  AccessTime,
   Check,
-  ChatBubbleOutline,
-  FavoriteBorder,
-  Favorite,
-  Share,
+  ChevronDown,
+  ChevronLeft,
+  ChevronUp,
+  Clock,
+  ExternalLink,
+  FileText,
+  Heart,
+  MapPin,
+  MessageCircle,
+  PlayCircle,
+  Receipt,
+  RefreshCw,
+  Share2,
   Shield,
-  Refresh,
-  ExpandMore,
-  ExpandLess,
-  LocationOn,
   ShoppingBag,
-  StarRounded,
-  PlayCircleOutline,
-  PictureAsPdfOutlined,
-  OpenInNew,
-} from "@mui/icons-material";
+  Star,
+} from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Alert, Avatar, Spinner, toast } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { api } from "@/lib/api";
 import { Service, ServiceDetailResponse } from "@/types/service";
 import { useAuth } from "@/components/context/AuthContext";
@@ -50,13 +33,337 @@ import RequestCustomOrderDialog from "@/components/customOrders/RequestCustomOrd
 import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/PurchaseGate";
 import { useServiceListingLive } from "@/hooks/useServiceListingLive";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
-import { RequestQuoteOutlined } from "@mui/icons-material";
 import { LevelBadge } from "@/components/profile/profileKit";
-import { toast } from "@/components/ds";
 
 interface ServiceDetailPageProps {
   serviceId: number;
 }
+
+/* ── layout ────────────────────────────────────────────────────────────────── */
+const pageCss = css({ minH: "100vh", bg: "page" });
+const centeredCss = css({ minH: "100vh", bg: "page", display: "flex", justifyContent: "center", alignItems: "center", color: "accent" });
+const headerBarCss = css({ bg: "white", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const containerCss = css({ w: "100%", boxSizing: "border-box", maxW: "1200px", mx: "auto", px: { base: "16px", sm: "24px" } });
+const containerXlCss = css({ w: "100%", boxSizing: "border-box", maxW: "1536px", mx: "auto", px: "24px" });
+const headerPadCss = css({ py: "16px" });
+const mainPadCss = css({ py: "32px" });
+const errorPadCss = css({ py: "32px" });
+
+/** MUI text Button (medium) with a 20px start icon. */
+const textBtnCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  minW: "64px",
+  p: "6px 8px",
+  m: 0,
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  fontFamily: "inherit",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "background-color .25s, color .25s",
+  "& svg": { display: "block", flexShrink: 0 },
+});
+const backBtnCss = css({
+  ml: "-4px",
+  gap: "8px",
+  color: "ink2",
+  fontSize: "12px",
+  _hover: { color: "black", bg: "transparent" },
+});
+const viewProfileCss = css({ color: "accent", fontSize: "13px", _hover: { bg: "rgba(0, 113, 227, 0.04)" } });
+
+/** MUI contained/outlined Button, pill radius, 44px tall (the sidebar CTAs). */
+const ctaCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  w: "100%",
+  h: "44px",
+  p: "6px 16px",
+  m: 0,
+  border: "none",
+  borderRadius: "112px",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "background-color .25s, box-shadow .25s, border-color .25s",
+  _disabled: { cursor: "default", pointerEvents: "none" },
+  "& svg": { display: "block", flexShrink: 0 },
+});
+const ctaAccentCss = css({
+  bg: "accent",
+  color: "white",
+  boxShadow: "rgba(0,0,0,0.2) 0px 2px 1px -1px, rgba(0,0,0,0.14) 0px 1px 1px 0px, rgba(0,0,0,0.12) 0px 1px 3px 0px",
+  _hover: { bg: "accentHover", boxShadow: "rgba(0,0,0,0.2) 0px 3px 1px -2px, rgba(0,0,0,0.14) 0px 2px 2px 0px, rgba(0,0,0,0.12) 0px 1px 5px 0px" },
+  _disabled: { bg: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)", boxShadow: "none" },
+});
+const ctaBlackCss = css({ bg: "black", color: "white", boxShadow: "none", _hover: { bg: "rgba(0,0,0,0.82)", boxShadow: "none" }, _disabled: { bg: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)" } });
+const ctaOutlineCss = css({
+  p: "5px 15px",
+  bg: "white",
+  color: "black",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0,0,0,0.1)",
+  _hover: { borderColor: "rgba(0,0,0,0.2)", bg: "white" },
+  _disabled: { bg: "white", borderColor: "rgba(0,0,0,0.12)", color: "rgba(0,0,0,0.26)" },
+});
+const ctaGreyCss = css({
+  p: "5px 15px",
+  bg: "rgba(0,0,0,0.04)",
+  color: "black",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0,0,0,0.15)",
+  _hover: { bg: "rgba(0,0,0,0.07)", borderColor: "rgba(0,0,0,0.25)" },
+});
+
+const cardCss = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+});
+const cardPadCss = css({ p: "24px" });
+
+/* ── banners ───────────────────────────────────────────────────────────────── */
+const bannerCss = css({ mb: "24px", p: "16px", borderRadius: "8px", borderWidth: "1px", borderStyle: "solid", display: "flex", gap: "10px", alignItems: "flex-start" });
+const bannerWarnCss = css({ bg: "rgba(245, 158, 11, 0.08)", borderColor: "rgba(245, 158, 11, 0.3)" });
+const bannerErrCss = css({ bg: "rgba(220, 38, 38, 0.06)", borderColor: "rgba(220, 38, 38, 0.25)" });
+const bannerIconWarnCss = css({ color: "#b45309", mt: "1px", flexShrink: 0 });
+const bannerIconErrCss = css({ color: "#dc2626", mt: "1px", flexShrink: 0 });
+const bannerTitleWarnCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#b45309" });
+const bannerTitleErrCss = css({ fontSize: "13px", fontWeight: 600, lineHeight: 1.5, color: "#dc2626" });
+const bannerBodyCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.7)" });
+
+/* ── grid ──────────────────────────────────────────────────────────────────── */
+// MUI Grid `container spacing={4}` with 8/4 items: the columns lose a share of
+// the 32px gutter, so reproduce its exact widths instead of a plain `2fr 1fr`.
+const layoutCss = css({
+  display: "grid",
+  gridTemplateColumns: { base: "1fr", lg: "calc(66.6667% - 10.6667px) calc(33.3333% - 21.3333px)" },
+  gap: "32px",
+  alignItems: "start",
+});
+const leftColCss = css({ display: "flex", flexDirection: "column", gap: "24px", minW: 0 });
+const stickyColCss = css({ position: "sticky", top: "96px", minW: 0 });
+
+/* ── gallery ───────────────────────────────────────────────────────────────── */
+const galleryCardCss = css({ overflow: "hidden" });
+const galleryMainCss = css({ position: "relative", aspectRatio: "16/9", bg: "rgba(0,0,0,0.05)" });
+const galleryEmptyCss = css({ w: "100%", h: "100%", display: "flex", alignItems: "center", justifyContent: "center", bg: "#e0e0e0", color: "ink2", fontSize: "16px" });
+const thumbsCss = css({ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", p: "16px" });
+const thumbCss = css({
+  position: "relative",
+  aspectRatio: "16/9",
+  borderRadius: "8px",
+  overflow: "hidden",
+  borderWidth: "2px",
+  borderStyle: "solid",
+  borderColor: "rgba(0,0,0,0.1)",
+  cursor: "pointer",
+  transition: "all 0.2s",
+  _hover: { borderColor: "rgba(0,0,0,0.2)" },
+  "&[data-selected]": { borderColor: "accent", _hover: { borderColor: "accent" } },
+});
+const thumbVideoOverlayCss = css({ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bg: "rgba(0,0,0,0.25)", color: "#fff" });
+const thumbFallbackCss = css({ w: "100%", h: "100%", bg: "#e0e0e0" });
+
+/* ── title block ───────────────────────────────────────────────────────────── */
+const titleRowCss = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "16px" });
+const breadcrumbCss = css({ display: "flex", alignItems: "center", gap: "4px", mb: "8px", flexWrap: "wrap" });
+const crumbCss = css({ fontSize: "13px", fontWeight: 500, color: "accent" });
+const crumbSepCss = css({ fontSize: "13px", color: "rgba(0,0,0,0.35)" });
+const serviceTitleCss = css({ fontSize: "32px", fontWeight: 600, lineHeight: 1.167 });
+const metaRowCss = css({ display: "flex", alignItems: "center", gap: "16px", fontSize: "13px", flexWrap: "wrap" });
+const metaItemCss = css({ display: "flex", alignItems: "center", gap: "4px" });
+const body2MutedCss = css({ fontSize: "14px", lineHeight: 1.43, color: "ink2" });
+const body2StrongCss = css({ fontSize: "14px", lineHeight: 1.43, fontWeight: 600, color: "black" });
+const iconMutedCss = css({ color: "ink2", flexShrink: 0 });
+const starCss = css({ color: "#f59e0b", fill: "#f59e0b", flexShrink: 0 });
+const actionsCss = css({ display: "flex", gap: "8px", flexShrink: 0 });
+const roundBtnCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  w: "40px",
+  h: "40px",
+  p: 0,
+  m: 0,
+  borderRadius: "50%",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(0,0,0,0.1)",
+  bg: "white",
+  color: "ink3",
+  cursor: "pointer",
+  fontFamily: "inherit",
+  transition: "background-color .25s, border-color .25s, color .25s",
+  _hover: { bg: "rgba(0,0,0,0.02)" },
+  "& svg": { display: "block" },
+  "&[data-active]": { bg: "#ffebee", borderColor: "#ffcdd2", color: "#f44336", _hover: { bg: "#ffebee" } },
+});
+
+/* ── freelancer card ───────────────────────────────────────────────────────── */
+const flRowCss = css({ display: "flex", gap: "16px" });
+const flMainCss = css({ flex: 1, minW: 0 });
+const flHeadCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px" });
+const flNameRowCss = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
+const flNameCss = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.6 });
+const statsGridCss = css({
+  display: "grid",
+  gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+  gap: "16px",
+  pt: "16px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+});
+const captionCss = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "ink2" });
+const statCaptionCss = css({ display: "block", fontSize: "12px", lineHeight: 1.66, color: "ink2", mb: "2px" });
+const statValueCss = css({ fontSize: "14px", lineHeight: 1.43, fontWeight: 500 });
+
+/* ── sections ──────────────────────────────────────────────────────────────── */
+const sectionHeadingCss = css({ fontSize: "21px", fontWeight: 600, lineHeight: 1.334 });
+const descBodyCss = css({ fontSize: "15px", color: "rgba(0,0,0,0.8)", lineHeight: 1.7 });
+const tagsWrapCss = css({ mt: "24px" });
+const tagsLabelCss = css({ fontWeight: 500, fontSize: "14px", lineHeight: 1.5, mb: "12px" });
+const tagsRowCss = css({ display: "flex", flexWrap: "wrap", gap: "8px" });
+const tagCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  boxSizing: "border-box",
+  h: "24px",
+  px: "8px",
+  borderRadius: "16px",
+  bg: "rgba(0, 0, 0, 0.05)",
+  color: "rgba(0, 0, 0, 0.7)",
+  fontSize: "13px",
+  whiteSpace: "nowrap",
+});
+
+const docListCss = css({ display: "flex", flexDirection: "column", gap: "8px" });
+const docRowCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "12px",
+  p: "12px 14px",
+  borderRadius: "8px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  textDecoration: "none",
+  color: "inherit",
+  transition: "all 0.15s",
+  _hover: { borderColor: "rgba(0,0,0,0.2)", bg: "rgba(0,0,0,0.02)" },
+});
+const docIconCss = css({ w: "38px", h: "38px", borderRadius: "12px", bg: "rgba(220,38,38,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, color: "#dc2626" });
+const docNameCss = css({ fontSize: "14px", fontWeight: 500, lineHeight: 1.5, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+const docMetaCss = css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0,0,0,0.5)" });
+
+const faqListCss = css({ display: "flex", flexDirection: "column", gap: "12px", mt: "16px" });
+const faqCardCss = css({ bg: "surface", borderRadius: "12px", borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.12)", overflow: "hidden" });
+const faqBtnCss = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  w: "100%",
+  boxSizing: "border-box",
+  m: 0,
+  p: "16px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "black",
+  fontFamily: "inherit",
+  fontSize: "14px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  textAlign: "left",
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "rgba(0,0,0,0.02)" },
+  "& svg": { display: "block", flexShrink: 0 },
+});
+const faqQuestionCss = css({ fontSize: "15px", fontWeight: 500, lineHeight: 1.5 });
+const faqAnswerWrapCss = css({ px: "16px", pb: "16px" });
+const faqAnswerCss = css({ fontSize: "14px", lineHeight: 1.43, color: "rgba(0,0,0,0.7)" });
+
+const reviewsHeadCss = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "24px" });
+const reviewsScoreCss = css({ display: "flex", alignItems: "center", gap: "6px" });
+const reviewsScoreValueCss = css({ fontSize: "18px", fontWeight: 700, lineHeight: 1.5, color: "black" });
+const reviewListCss = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const reviewDividerCss = css({ h: "1px", bg: "border", mb: "24px", border: "none" });
+const reviewRowCss = css({ display: "flex", gap: "16px" });
+const reviewHeadCss = css({ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "8px", mb: "4px" });
+const reviewNameCss = css({ fontSize: "14px", fontWeight: 600, lineHeight: 1.5 });
+const reviewRightCss = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "2px" });
+const reviewStarsCss = css({ display: "flex" });
+const reviewCommentCss = css({ fontSize: "14px", color: "rgba(0,0,0,0.8)", lineHeight: 1.6, mt: "8px" });
+const starOffCss = css({ color: "rgba(0,0,0,0.15)", fill: "rgba(0,0,0,0.15)", flexShrink: 0 });
+
+/* ── pricing panel ─────────────────────────────────────────────────────────── */
+const pricingCardCss = css({ overflow: "hidden", mb: "16px" });
+const tierTabsCss = css({ display: "flex", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const tierTabCss = css({
+  flex: 1,
+  boxSizing: "border-box",
+  minW: "64px",
+  m: 0,
+  p: "12px 8px",
+  border: "none",
+  borderRadius: 0,
+  bg: "transparent",
+  color: "rgba(0,0,0,0.5)",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "background-color .25s, color .25s",
+  borderBottomWidth: "2px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "transparent",
+  _hover: { bg: "rgba(0,0,0,0.02)", color: "rgba(0,0,0,0.7)" },
+  "&[data-selected]": { color: "black", borderBottomColor: "accent" },
+});
+const priceCss = css({ fontSize: "32px", fontWeight: 600, lineHeight: 1.167, mb: "4px" });
+const priceMetaRowCss = css({ display: "flex", gap: "16px", fontSize: "13px", color: "ink2", mb: "16px" });
+const priceMetaItemCss = css({ display: "flex", alignItems: "center", gap: "4px" });
+const priceMetaTextCss = css({ fontSize: "12px", lineHeight: 1.66 });
+const priceBlockCss = css({ mb: "24px" });
+const tierDescCss = css({ fontSize: "14px", color: "rgba(0,0,0,0.7)", mb: "24px" });
+const ctaColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const ownNoticeCss = css({ textAlign: "center", py: "10px", px: "16px", bg: "rgba(0,0,0,0.04)", borderRadius: "112px" });
+const ownNoticeTextCss = css({ fontSize: "13px", lineHeight: 1.5, color: "rgba(0,0,0,0.5)", fontWeight: 500 });
+const noPricingTextCss = css({ color: "ink2", textAlign: "center", fontSize: "16px", lineHeight: 1.5, mb: "16px" });
+
+const trustColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const trustRowCss = css({ display: "flex", gap: "12px" });
+const trustIconCss = css({ color: "accent", mt: "4px", flexShrink: 0 });
+const trustTitleCss = css({ fontSize: "13px", fontWeight: 500, lineHeight: 1.43 });
+
+/* ── live-edit guard dialog ────────────────────────────────────────────────── */
+const guardPanelCss = css({ borderRadius: "12px" });
+const guardBodyCss = css({ p: "24px 24px 20px" });
+const guardTitleCss = css({ fontSize: "17px", fontWeight: 600, lineHeight: 1.5 });
+const guardTextCss = css({ fontSize: "13.5px", lineHeight: 1.6, color: "rgba(0,0,0,0.7)" });
+const guardActionsCss = css({ display: "flex", p: "8px 24px 20px" });
 
 export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const router = useRouter();
@@ -155,38 +462,31 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   // Loading state
   if (loading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7", display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <CircularProgress sx={{ color: "#0071e3" }} />
-      </Box>
+      <div className={centeredCss}>
+        <Spinner size={40} />
+      </div>
     );
   }
 
   // Error state
   if (error || !service) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
-        <Box sx={{ bgcolor: "white", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-          <Button
-            onClick={() => router.back()}
-            startIcon={<ChevronLeft />}
-            sx={{
-              fontSize: "12px",
-              color: "rgba(0,0,0,0.6)",
-              "&:hover": { color: "black", bgcolor: "transparent" },
-              textTransform: "none",
-            }}>
+      <div className={pageCss}>
+        <div className={headerBarCss}>
+          <button type='button' onClick={() => router.back()} className={cx(textBtnCss, backBtnCss)}>
+            <ChevronLeft size={20} />
             Back to Services
-          </Button>
-        </Box>
-        <Container maxWidth='xl' sx={{ px: 3, py: 4 }}>
-          <Alert severity='error' sx={{ mb: 3 }}>
-            {error || "Service not found"}
-          </Alert>
-          <Button variant='contained' onClick={() => router.push("/explore-services")}>
+          </button>
+        </div>
+        <div className={cx(containerXlCss, errorPadCss)}>
+          <div className={css({ mb: "24px" })}>
+            <Alert tone='error'>{error || "Service not found"}</Alert>
+          </div>
+          <button type='button' onClick={() => router.push("/explore-services")} className={cx(ctaCss, ctaAccentCss, css({ w: "auto", h: "36.5px", borderRadius: "4px", fontSize: "14px" }))}>
             Browse Services
-          </Button>
-        </Container>
-      </Box>
+          </button>
+        </div>
+      </div>
     );
   }
 
@@ -212,535 +512,402 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
   const selectedPricing = pricingOptions[selectedPackage];
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: "#F5F5F7" }}>
+    <div className={pageCss}>
       {/* Header */}
-      <Box sx={{ bgcolor: "white", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
-        <Container sx={{ py: 2 }}>
-          <Button
-            onClick={() => router.back()}
-            startIcon={<ChevronLeft />}
-            sx={{
-              fontSize: "12px",
-              color: "rgba(0,0,0,0.6)",
-              "&:hover": { color: "black", bgcolor: "transparent" },
-              textTransform: "none",
-            }}>
+      <div className={headerBarCss}>
+        <div className={cx(containerCss, headerPadCss)}>
+          <button type='button' onClick={() => router.back()} className={cx(textBtnCss, backBtnCss)}>
+            <ChevronLeft size={20} />
             Back to Services
-          </Button>
-        </Container>
-      </Box>
+          </button>
+        </div>
+      </div>
 
-      <Container sx={{ py: 4 }}>
+      <div className={cx(containerCss, mainPadCss)}>
         {/* Owner-only status banners */}
         {isOwnService && service.status === "pending_review" && (
-          <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: "rgba(245, 158, 11, 0.08)", border: "1px solid rgba(245, 158, 11, 0.3)", display: "flex", gap: 1.25, alignItems: "flex-start" }}>
-            <AccessTime sx={{ fontSize: 18, color: "#b45309", mt: "1px" }} />
-            <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#b45309" }}>Pending review</Typography>
-              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.7)" }}>
+          <div className={cx(bannerCss, bannerWarnCss)}>
+            <Clock size={18} className={bannerIconWarnCss} />
+            <div>
+              <p className={bannerTitleWarnCss}>Pending review</p>
+              <p className={bannerBodyCss}>
                 This is a preview. Your service is awaiting admin approval and is not visible to the public yet.
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+            </div>
+          </div>
         )}
         {isOwnService && service.status === "rejected" && (
-          <Box sx={{ mb: 3, p: 2, borderRadius: 2, bgcolor: "rgba(220, 38, 38, 0.06)", border: "1px solid rgba(220, 38, 38, 0.25)", display: "flex", gap: 1.25, alignItems: "flex-start" }}>
-            <Shield sx={{ fontSize: 18, color: "#dc2626", mt: "1px" }} />
-            <Box>
-              <Typography sx={{ fontSize: 13, fontWeight: 600, color: "#dc2626" }}>Rejected by admin</Typography>
-              <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.7)" }}>
+          <div className={cx(bannerCss, bannerErrCss)}>
+            <Shield size={18} className={bannerIconErrCss} />
+            <div>
+              <p className={bannerTitleErrCss}>Rejected by admin</p>
+              <p className={bannerBodyCss}>
                 {service.rejection_reason || "No reason provided. Edit and resubmit your service for review."}
-              </Typography>
-            </Box>
-          </Box>
+              </p>
+            </div>
+          </div>
         )}
-        <Grid container spacing={4}>
+        <div className={layoutCss}>
           {/* Left Column - Service Details */}
-          <Grid size={{ xs: 12, lg: 8 }}>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-              {/* Image Gallery */}
-              <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)" }}>
-                <Box sx={{ position: "relative", aspectRatio: "16/9", bgcolor: "rgba(0,0,0,0.05)" }}>
-                  {gallery.length > 0 && gallery[selectedImage]?.type === "video" ? (
-                    <video
-                      key={gallery[selectedImage].url}
-                      src={gallery[selectedImage].url}
-                      controls
-                      preload='metadata'
-                      style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
-                    />
-                  ) : gallery.length > 0 && !imageError[`main-${selectedImage}`] ? (
-                    <Image
-                      unoptimized={true}
-                      src={(gallery[selectedImage] || gallery[0]).url}
-                      alt={service.title}
-                      fill
-                      style={{ objectFit: "cover" }}
-                      onError={() => handleImageError(`main-${selectedImage}`)}
-                    />
-                  ) : (
-                    <Box
-                      sx={{
-                        width: "100%",
-                        height: "100%",
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        bgcolor: "#e0e0e0",
-                      }}>
-                      <Typography color='text.secondary'>No image available</Typography>
-                    </Box>
-                  )}
-                </Box>
-                {gallery.length > 1 && (
-                  <Grid container spacing={1.5} sx={{ p: 2 }}>
-                    {gallery.map((item, idx) => (
-                      <Grid size={{ xs: 4 }} key={idx}>
-                        <Box
-                          onClick={() => setSelectedImage(idx)}
-                          sx={{
-                            position: "relative",
-                            aspectRatio: "16/9",
-                            borderRadius: 2,
-                            overflow: "hidden",
-                            border: selectedImage === idx ? "2px solid #0071e3" : "2px solid rgba(0,0,0,0.1)",
-                            cursor: "pointer",
-                            transition: "all 0.2s",
-                            "&:hover": { borderColor: selectedImage === idx ? "#0071e3" : "rgba(0,0,0,0.2)" },
-                          }}>
-                          {item.type === "video" ? (
-                            <>
-                              <video
-                                src={item.url}
-                                preload='metadata'
-                                muted
-                                style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none", background: "#000" }}
-                              />
-                              <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", bgcolor: "rgba(0,0,0,0.25)" }}>
-                                <PlayCircleOutline sx={{ fontSize: 28, color: "#fff" }} />
-                              </Box>
-                            </>
-                          ) : !imageError[`thumb-${idx}`] ? (
-                            <Image
-                              unoptimized={true}
-                              src={item.url}
-                              alt={`Gallery ${idx + 1}`}
-                              fill
-                              style={{ objectFit: "cover" }}
-                              onError={() => handleImageError(`thumb-${idx}`)}
-                            />
-                          ) : (
-                            <Box sx={{ width: "100%", height: "100%", bgcolor: "#e0e0e0" }} />
-                          )}
-                        </Box>
-                      </Grid>
-                    ))}
-                  </Grid>
+          <div className={leftColCss}>
+            {/* Image Gallery */}
+            <div className={cx(cardCss, galleryCardCss)}>
+              <div className={galleryMainCss}>
+                {gallery.length > 0 && gallery[selectedImage]?.type === "video" ? (
+                  <video
+                    key={gallery[selectedImage].url}
+                    src={gallery[selectedImage].url}
+                    controls
+                    preload='metadata'
+                    style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "contain", background: "#000" }}
+                  />
+                ) : gallery.length > 0 && !imageError[`main-${selectedImage}`] ? (
+                  <Image
+                    unoptimized={true}
+                    src={(gallery[selectedImage] || gallery[0]).url}
+                    alt={service.title}
+                    fill
+                    style={{ objectFit: "cover" }}
+                    onError={() => handleImageError(`main-${selectedImage}`)}
+                  />
+                ) : (
+                  <div className={galleryEmptyCss}>No image available</div>
                 )}
-              </Card>
-
-              {/* Title & Actions */}
-              <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2 }}>
-                <Box>
-                  {service.category && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1, flexWrap: "wrap" }}>
-                      {service.category.parent && (
+              </div>
+              {gallery.length > 1 && (
+                <div className={thumbsCss}>
+                  {gallery.map((item, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedImage(idx)}
+                      data-selected={selectedImage === idx ? "" : undefined}
+                      className={thumbCss}>
+                      {item.type === "video" ? (
                         <>
-                          <Typography component='span' sx={{ fontSize: 13, fontWeight: 500, color: "#0071e3" }}>
-                            {service.category.parent.category_name}
-                          </Typography>
-                          <Typography component='span' sx={{ fontSize: 13, color: "rgba(0,0,0,0.35)" }}>
-                            ›
-                          </Typography>
+                          <video
+                            src={item.url}
+                            preload='metadata'
+                            muted
+                            style={{ position: "absolute", inset: 0, width: "100%", height: "100%", objectFit: "cover", pointerEvents: "none", background: "#000" }}
+                          />
+                          <div className={thumbVideoOverlayCss}>
+                            <PlayCircle size={28} />
+                          </div>
                         </>
-                      )}
-                      <Typography component='span' sx={{ fontSize: 13, fontWeight: 500, color: "#0071e3" }}>
-                        {service.category.category_name}
-                      </Typography>
-                    </Box>
-                  )}
-                  <Typography variant='h3' sx={{ fontSize: "32px", fontWeight: 600, mb: 1 }}>
-                    {service.title}
-                  </Typography>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 2, fontSize: "13px", flexWrap: "wrap" }}>
-                    {service.location && (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <LocationOn sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }} />
-                        <Typography variant='body2' color='text.secondary'>
-                          {service.location}
-                        </Typography>
-                      </Box>
-                    )}
-                    {service.rating_count > 0 && (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                        <StarRounded sx={{ fontSize: 15, color: "#f59e0b" }} />
-                        <Typography variant='body2' sx={{ fontWeight: 600, color: "black" }}>
-                          {parseFloat(String(service.rating_average)).toFixed(1)}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          ({service.rating_count} {service.rating_count === 1 ? "review" : "reviews"})
-                        </Typography>
-                      </Box>
-                    )}
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <ShoppingBag sx={{ fontSize: 14, color: "rgba(0,0,0,0.6)" }} />
-                      <Typography variant='body2' color='text.secondary'>
-                        {service.orders_count} orders
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-                <Box sx={{ display: "flex", gap: 1 }}>
-                  <IconButton
-                    onClick={() => setIsFavorite(!isFavorite)}
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: isFavorite ? "#ffebee" : "white",
-                      border: isFavorite ? "1px solid #ffcdd2" : "1px solid rgba(0,0,0,0.1)",
-                      color: isFavorite ? "#f44336" : "rgba(0,0,0,0.4)",
-                      "&:hover": { bgcolor: isFavorite ? "#ffebee" : "rgba(0,0,0,0.02)" },
-                    }}>
-                    {isFavorite ? <Favorite /> : <FavoriteBorder />}
-                  </IconButton>
-                  <IconButton
-                    sx={{
-                      width: 40,
-                      height: 40,
-                      bgcolor: "white",
-                      border: "1px solid rgba(0,0,0,0.1)",
-                      color: "rgba(0,0,0,0.4)",
-                      "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                    }}>
-                    <Share />
-                  </IconButton>
-                </Box>
-              </Box>
-
-              {/* Freelancer Info Card */}
-              <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-                <Box sx={{ display: "flex", gap: 2 }}>
-                  <Avatar src={freelancerAvatar} alt={freelancerName} sx={{ width: 64, height: 64 }}>
-                    {freelancerName.charAt(0)}
-                  </Avatar>
-                  <Box sx={{ flex: 1 }}>
-                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-                        <Typography variant='h6' sx={{ fontSize: "17px", fontWeight: 600 }}>
-                          {freelancerName}
-                        </Typography>
-                        {freelancer?.level && <LevelBadge level={freelancer.level} small />}
-                      </Box>
-                      <Button
-                        onClick={() => router.push(`/find-freelancer/${freelancer?.id}`)}
-                        sx={{ fontSize: "13px", color: "#0071e3", textTransform: "none" }}>
-                        View Profile
-                      </Button>
-                    </Box>
-                    <Grid container spacing={2} sx={{ pt: 2, borderTop: "1px solid rgba(0,0,0,0.08)" }}>
-                      <Grid size={{ xs: 6, md: 3 }}>
-                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
-                          Response Time
-                        </Typography>
-                        <Typography variant='body2' fontWeight={500}>
-                          {"< 1 hour"}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 3 }}>
-                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
-                          Total Orders
-                        </Typography>
-                        <Typography variant='body2' fontWeight={500}>
-                          {service.orders_count}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 3 }}>
-                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
-                          Member Since
-                        </Typography>
-                        <Typography variant='body2' fontWeight={500}>
-                          {user?.created_at
-                            ? new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
-                            : "—"}
-                        </Typography>
-                      </Grid>
-                      <Grid size={{ xs: 6, md: 3 }}>
-                        <Typography variant='caption' color='text.secondary' display='block' sx={{ mb: 0.25 }}>
-                          Languages
-                        </Typography>
-                        <Typography variant='body2' fontWeight={500}>
-                          {freelancer?.languages && freelancer.languages.length > 0
-                            ? freelancer.languages
-                                .slice(0, 2)
-                                .map(l => l.name)
-                                .join(", ")
-                            : "—"}
-                        </Typography>
-                      </Grid>
-                    </Grid>
-                  </Box>
-                </Box>
-              </Card>
-
-              {/* Description */}
-              <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-                <Typography variant='h5' sx={{ fontSize: "21px", fontWeight: 600, mb: 2 }}>
-                  About This Service
-                </Typography>
-                <Box sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)", lineHeight: 1.7 }}>
-                  {service.description ? (
-                    <RichTextDisplay value={service.description} />
-                  ) : (
-                    <Typography variant='body1' sx={{ fontSize: "15px", color: "rgba(0,0,0,0.8)" }}>
-                      No description available.
-                    </Typography>
-                  )}
-                </Box>
-
-                {/* Tags */}
-                {service.search_tags && service.search_tags.length > 0 && (
-                  <Box sx={{ mt: 3 }}>
-                    <Typography sx={{ fontWeight: 500, mb: 1.5, fontSize: 14 }}>Tags</Typography>
-                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                      {service.search_tags.map((tag, index) => (
-                        <Chip
-                          key={index}
-                          label={tag}
-                          size='small'
-                          sx={{ bgcolor: "rgba(0, 0, 0, 0.05)", color: "rgba(0, 0, 0, 0.7)" }}
+                      ) : !imageError[`thumb-${idx}`] ? (
+                        <Image
+                          unoptimized={true}
+                          src={item.url}
+                          alt={`Gallery ${idx + 1}`}
+                          fill
+                          style={{ objectFit: "cover" }}
+                          onError={() => handleImageError(`thumb-${idx}`)}
                         />
-                      ))}
-                    </Box>
-                  </Box>
-                )}
-              </Card>
-
-              {/* Documents (PDF work samples) */}
-              {documents.length > 0 && (
-                <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-                  <Typography variant='h5' sx={{ fontSize: "21px", fontWeight: 600, mb: 2 }}>
-                    Documents
-                  </Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                    {documents.map(doc => (
-                      <Box
-                        key={doc.id}
-                        component='a'
-                        href={doc.file_url}
-                        target='_blank'
-                        rel='noopener noreferrer'
-                        sx={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 1.5,
-                          p: "12px 14px",
-                          borderRadius: 2,
-                          border: "1px solid rgba(0,0,0,0.08)",
-                          textDecoration: "none",
-                          color: "inherit",
-                          transition: "all 0.15s",
-                          "&:hover": { borderColor: "rgba(0,0,0,0.2)", bgcolor: "rgba(0,0,0,0.02)" },
-                        }}>
-                        <Box sx={{ width: 38, height: 38, borderRadius: 1.5, bgcolor: "rgba(220,38,38,0.08)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <PictureAsPdfOutlined sx={{ fontSize: 20, color: "#dc2626" }} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography sx={{ fontSize: 14, fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                            {doc.file_name}
-                          </Typography>
-                          <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.5)" }}>
-                            PDF{doc.file_size ? ` · ${(doc.file_size / 1024 / 1024).toFixed(1)} MB` : ""}
-                          </Typography>
-                        </Box>
-                        <OpenInNew sx={{ fontSize: 16, color: "rgba(0,0,0,0.35)" }} />
-                      </Box>
-                    ))}
-                  </Box>
-                </Card>
+                      ) : (
+                        <div className={thumbFallbackCss} />
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
+            </div>
 
-              {/* FAQ */}
-              {faqs.length > 0 && (
-                <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-                  <Typography variant='h5' sx={{ fontSize: "21px", fontWeight: 600 }}>
-                    Frequently Asked Questions
-                  </Typography>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mt: 2 }}>
-                    {faqs.map((faq, idx) => (
-                      <Card key={idx} variant='outlined' sx={{ borderRadius: 3 }}>
-                        <Button
-                          fullWidth
-                          onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
-                          sx={{
-                            justifyContent: "space-between",
-                            p: 2,
-                            textAlign: "left",
-                            textTransform: "none",
-                            color: "black",
-                            "&:hover": { bgcolor: "rgba(0,0,0,0.02)" },
-                          }}>
-                          <Typography variant='body1' sx={{ fontSize: "15px", fontWeight: 500 }}>
-                            {faq.question}
-                          </Typography>
-                          {openFaq === idx ? <ExpandLess /> : <ExpandMore />}
-                        </Button>
-                        <Collapse in={openFaq === idx}>
-                          <Box sx={{ px: 2, pb: 2 }}>
-                            <Typography variant='body2' sx={{ fontSize: "14px", color: "rgba(0,0,0,0.7)" }}>
-                              {faq.answer}
-                            </Typography>
-                          </Box>
-                        </Collapse>
-                      </Card>
-                    ))}
-                  </Box>
-                </Card>
-              )}
-
-              {/* Reviews */}
-              {service.reviews && service.reviews.length > 0 && (
-                <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3 }}>
-                  {/* Header */}
-                  <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 }}>
-                    <Typography variant='h5' sx={{ fontSize: "21px", fontWeight: 600 }}>
-                      Reviews
-                    </Typography>
-                    {service.rating_count > 0 && (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-                        <StarRounded sx={{ fontSize: 20, color: "#f59e0b" }} />
-                        <Typography sx={{ fontSize: 18, fontWeight: 700, color: "black" }}>
-                          {parseFloat(String(service.rating_average)).toFixed(1)}
-                        </Typography>
-                        <Typography variant='body2' color='text.secondary'>
-                          ({service.rating_count})
-                        </Typography>
-                      </Box>
+            {/* Title & Actions */}
+            <div className={titleRowCss}>
+              <div>
+                {service.category && (
+                  <div className={breadcrumbCss}>
+                    {service.category.parent && (
+                      <>
+                        <span className={crumbCss}>{service.category.parent.category_name}</span>
+                        <span className={crumbSepCss}>›</span>
+                      </>
                     )}
-                  </Box>
+                    <span className={crumbCss}>{service.category.category_name}</span>
+                  </div>
+                )}
+                <h3 className={serviceTitleCss}>{service.title}</h3>
+                <div className={metaRowCss}>
+                  {service.location && (
+                    <div className={metaItemCss}>
+                      <MapPin size={14} className={iconMutedCss} />
+                      <p className={body2MutedCss}>{service.location}</p>
+                    </div>
+                  )}
+                  {service.rating_count > 0 && (
+                    <div className={metaItemCss}>
+                      <Star size={15} className={starCss} />
+                      <p className={body2StrongCss}>{parseFloat(String(service.rating_average)).toFixed(1)}</p>
+                      <p className={body2MutedCss}>
+                        ({service.rating_count} {service.rating_count === 1 ? "review" : "reviews"})
+                      </p>
+                    </div>
+                  )}
+                  <div className={metaItemCss}>
+                    <ShoppingBag size={14} className={iconMutedCss} />
+                    <p className={body2MutedCss}>{service.orders_count} orders</p>
+                  </div>
+                </div>
+              </div>
+              <div className={actionsCss}>
+                <button
+                  type='button'
+                  aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
+                  onClick={() => setIsFavorite(!isFavorite)}
+                  data-active={isFavorite ? "" : undefined}
+                  className={roundBtnCss}>
+                  <Heart size={24} className={isFavorite ? css({ fill: "currentcolor" }) : undefined} />
+                </button>
+                <button type='button' aria-label='Share' className={roundBtnCss}>
+                  <Share2 size={24} />
+                </button>
+              </div>
+            </div>
 
-                  {/* Review list */}
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-                    {service.reviews.map((review, idx) => (
-                      <Box key={review.id}>
-                        {idx > 0 && <Divider sx={{ mb: 3 }} />}
-                        <Box sx={{ display: "flex", gap: 2 }}>
-                          <Avatar
-                            src={review.client_profile?.user?.avatar_url ?? undefined}
-                            alt={review.client_profile?.user?.name ?? "Client"}
-                            sx={{ width: 40, height: 40 }}>
-                            {(review.client_profile?.user?.name ?? "C").charAt(0)}
-                          </Avatar>
-                          <Box sx={{ flex: 1 }}>
-                            <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 0.5 }}>
-                              <Box>
-                                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>{review.client_profile?.user?.name ?? "Client"}</Typography>
-                                <Typography variant='caption' color='text.secondary'>
-                                  {review.pricing_option ? `${review.pricing_option.title} package` : "Custom order"}
-                                </Typography>
-                              </Box>
-                              <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 0.25 }}>
-                                <Box sx={{ display: "flex" }}>
-                                  {[1, 2, 3, 4, 5].map(star => (
-                                    <StarRounded
-                                      key={star}
-                                      sx={{ fontSize: 14, color: star <= review.rating ? "#f59e0b" : "rgba(0,0,0,0.15)" }}
-                                    />
-                                  ))}
-                                </Box>
-                                <Typography variant='caption' color='text.secondary'>
-                                  {new Date(review.created_at).toLocaleDateString("en-US", {
-                                    year: "numeric",
-                                    month: "short",
-                                    day: "numeric",
-                                  })}
-                                </Typography>
-                              </Box>
-                            </Box>
-                            {review.comment && (
-                              <Typography sx={{ fontSize: 14, color: "rgba(0,0,0,0.8)", lineHeight: 1.6, mt: 1 }}>
-                                {review.comment}
-                              </Typography>
-                            )}
-                          </Box>
-                        </Box>
-                      </Box>
+            {/* Freelancer Info Card */}
+            <div className={cx(cardCss, cardPadCss)}>
+              <div className={flRowCss}>
+                <Avatar name={freelancerName} src={freelancerAvatar || null} px={64} />
+                <div className={flMainCss}>
+                  <div className={flHeadCss}>
+                    <div className={flNameRowCss}>
+                      <h6 className={flNameCss}>{freelancerName}</h6>
+                      {freelancer?.level && <LevelBadge level={freelancer.level} small />}
+                    </div>
+                    <button
+                      type='button'
+                      onClick={() => router.push(`/find-freelancer/${freelancer?.id}`)}
+                      className={cx(textBtnCss, viewProfileCss)}>
+                      View Profile
+                    </button>
+                  </div>
+                  <div className={statsGridCss}>
+                    <div>
+                      <span className={statCaptionCss}>Response Time</span>
+                      <p className={statValueCss}>{"< 1 hour"}</p>
+                    </div>
+                    <div>
+                      <span className={statCaptionCss}>Total Orders</span>
+                      <p className={statValueCss}>{service.orders_count}</p>
+                    </div>
+                    <div>
+                      <span className={statCaptionCss}>Member Since</span>
+                      <p className={statValueCss}>
+                        {user?.created_at
+                          ? new Date(user.created_at).toLocaleDateString("en-US", { month: "short", year: "numeric" })
+                          : "—"}
+                      </p>
+                    </div>
+                    <div>
+                      <span className={statCaptionCss}>Languages</span>
+                      <p className={statValueCss}>
+                        {freelancer?.languages && freelancer.languages.length > 0
+                          ? freelancer.languages
+                              .slice(0, 2)
+                              .map(l => l.name)
+                              .join(", ")
+                          : "—"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className={cx(cardCss, cardPadCss)}>
+              <h5 className={sectionHeadingCss}>About This Service</h5>
+              <div className={descBodyCss}>
+                {service.description ? (
+                  <RichTextDisplay value={service.description} />
+                ) : (
+                  <p className={css({ fontSize: "15px", lineHeight: 1.5, color: "rgba(0,0,0,0.8)" })}>No description available.</p>
+                )}
+              </div>
+
+              {/* Tags */}
+              {service.search_tags && service.search_tags.length > 0 && (
+                <div className={tagsWrapCss}>
+                  <p className={tagsLabelCss}>Tags</p>
+                  <div className={tagsRowCss}>
+                    {service.search_tags.map((tag, index) => (
+                      <span key={index} className={tagCss}>{tag}</span>
                     ))}
-                  </Box>
-                </Card>
+                  </div>
+                </div>
               )}
-            </Box>
-          </Grid>
+            </div>
+
+            {/* Documents (PDF work samples) */}
+            {documents.length > 0 && (
+              <div className={cx(cardCss, cardPadCss)}>
+                <h5 className={cx(sectionHeadingCss, css({ mb: "16px" }))}>Documents</h5>
+                <div className={docListCss}>
+                  {documents.map(doc => (
+                    <a
+                      key={doc.id}
+                      href={doc.file_url}
+                      target='_blank'
+                      rel='noopener noreferrer'
+                      className={docRowCss}>
+                      <span className={docIconCss}>
+                        <FileText size={20} />
+                      </span>
+                      <div className={css({ flex: 1, minW: 0 })}>
+                        <p className={docNameCss}>{doc.file_name}</p>
+                        <p className={docMetaCss}>
+                          PDF{doc.file_size ? ` · ${(doc.file_size / 1024 / 1024).toFixed(1)} MB` : ""}
+                        </p>
+                      </div>
+                      <ExternalLink size={16} className={css({ color: "rgba(0,0,0,0.35)", flexShrink: 0 })} />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* FAQ */}
+            {faqs.length > 0 && (
+              <div className={cx(cardCss, cardPadCss)}>
+                <h5 className={sectionHeadingCss}>Frequently Asked Questions</h5>
+                <div className={faqListCss}>
+                  {faqs.map((faq, idx) => (
+                    <div key={idx} className={faqCardCss}>
+                      <button
+                        type='button'
+                        aria-expanded={openFaq === idx}
+                        onClick={() => setOpenFaq(openFaq === idx ? null : idx)}
+                        className={faqBtnCss}>
+                        <span className={faqQuestionCss}>{faq.question}</span>
+                        {openFaq === idx ? <ChevronUp size={24} /> : <ChevronDown size={24} />}
+                      </button>
+                      {openFaq === idx && (
+                        <div className={faqAnswerWrapCss}>
+                          <p className={faqAnswerCss}>{faq.answer}</p>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Reviews */}
+            {service.reviews && service.reviews.length > 0 && (
+              <div className={cx(cardCss, cardPadCss)}>
+                {/* Header */}
+                <div className={reviewsHeadCss}>
+                  <h5 className={sectionHeadingCss}>Reviews</h5>
+                  {service.rating_count > 0 && (
+                    <div className={reviewsScoreCss}>
+                      <Star size={20} className={starCss} />
+                      <p className={reviewsScoreValueCss}>{parseFloat(String(service.rating_average)).toFixed(1)}</p>
+                      <p className={body2MutedCss}>({service.rating_count})</p>
+                    </div>
+                  )}
+                </div>
+
+                {/* Review list */}
+                <div className={reviewListCss}>
+                  {service.reviews.map((review, idx) => (
+                    <div key={review.id}>
+                      {idx > 0 && <hr className={reviewDividerCss} />}
+                      <div className={reviewRowCss}>
+                        <Avatar
+                          name={review.client_profile?.user?.name ?? "Client"}
+                          src={review.client_profile?.user?.avatar_url ?? null}
+                          px={40}
+                        />
+                        <div className={css({ flex: 1, minW: 0 })}>
+                          <div className={reviewHeadCss}>
+                            <div>
+                              <p className={reviewNameCss}>{review.client_profile?.user?.name ?? "Client"}</p>
+                              <span className={captionCss}>
+                                {review.pricing_option ? `${review.pricing_option.title} package` : "Custom order"}
+                              </span>
+                            </div>
+                            <div className={reviewRightCss}>
+                              <div className={reviewStarsCss}>
+                                {[1, 2, 3, 4, 5].map(star => (
+                                  <Star key={star} size={14} className={star <= review.rating ? starCss : starOffCss} />
+                                ))}
+                              </div>
+                              <span className={captionCss}>
+                                {new Date(review.created_at).toLocaleDateString("en-US", {
+                                  year: "numeric",
+                                  month: "short",
+                                  day: "numeric",
+                                })}
+                              </span>
+                            </div>
+                          </div>
+                          {review.comment && <p className={reviewCommentCss}>{review.comment}</p>}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           {/* Right Column - Pricing Packages (Sticky) */}
-          <Grid size={{ xs: 12, lg: 4 }}>
-            <Box sx={{ position: "sticky", top: 96 }}>
+          <div>
+            <div className={stickyColCss}>
               {/* Package Selection */}
               {pricingOptions.length > 0 ? (
-                <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", overflow: "hidden", mb: 2 }}>
+                <div className={cx(cardCss, pricingCardCss)}>
                   {/* Package Tabs */}
                   {pricingOptions.length > 1 && (
-                    <Box sx={{ display: "flex", borderBottom: "1px solid rgba(0,0,0,0.08)" }}>
+                    <div className={tierTabsCss}>
                       {pricingOptions.map((pkg, idx) => (
-                        <Button
+                        <button
                           key={pkg.id}
+                          type='button'
                           onClick={() => setSelectedPackage(idx)}
-                          sx={{
-                            flex: 1,
-                            py: 1.5,
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            textTransform: "none",
-                            borderRadius: 0,
-                            color: selectedPackage === idx ? "black" : "rgba(0,0,0,0.5)",
-                            borderBottom: selectedPackage === idx ? "2px solid #0071e3" : "none",
-                            "&:hover": { bgcolor: "rgba(0,0,0,0.02)", color: "rgba(0,0,0,0.7)" },
-                          }}>
+                          data-selected={selectedPackage === idx ? "" : undefined}
+                          className={tierTabCss}>
                           {pkg.title}
-                        </Button>
+                        </button>
                       ))}
-                    </Box>
+                    </div>
                   )}
 
                   {/* Package Details */}
                   {selectedPricing && (
-                    <CardContent sx={{ p: 3 }}>
-                      <Box sx={{ mb: 3 }}>
-                        <Typography variant='h3' sx={{ fontSize: "32px", fontWeight: 600, mb: 0.5 }}>
-                          ${Number(selectedPricing.price_raw).toFixed(2)}
-                        </Typography>
-                        <Box sx={{ display: "flex", gap: 2, fontSize: "13px", color: "rgba(0,0,0,0.6)", mb: 2 }}>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <AccessTime sx={{ fontSize: 14 }} />
-                            <Typography variant='caption'>{selectedPricing.delivery_time} delivery</Typography>
-                          </Box>
-                          <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <Refresh sx={{ fontSize: 14 }} />
-                            <Typography variant='caption'>
+                    <div className={cardPadCss}>
+                      <div className={priceBlockCss}>
+                        <p className={priceCss}>${Number(selectedPricing.price_raw).toFixed(2)}</p>
+                        <div className={priceMetaRowCss}>
+                          <div className={priceMetaItemCss}>
+                            <Clock size={14} />
+                            <span className={priceMetaTextCss}>{selectedPricing.delivery_time} delivery</span>
+                          </div>
+                          <div className={priceMetaItemCss}>
+                            <RefreshCw size={14} />
+                            <span className={priceMetaTextCss}>
                               {selectedPricing.revisions} {String(selectedPricing.revisions) === "1" ? "revision" : "revisions"}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
+                            </span>
+                          </div>
+                        </div>
+                      </div>
 
                       {/* Description */}
                       {selectedPricing.description && (
-                        <Box sx={{ fontSize: "14px", color: "rgba(0,0,0,0.7)", mb: 3 }}>
+                        <div className={tierDescCss}>
                           <RichTextDisplay value={selectedPricing.description} />
-                        </Box>
+                        </div>
                       )}
 
                       {/* CTA Buttons */}
-                      <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+                      <div className={ctaColCss}>
                         {isOwnService ? (
-                          <Box sx={{ textAlign: "center", py: 1.25, px: 2, bgcolor: "rgba(0,0,0,0.04)", borderRadius: 28 }}>
-                            <Typography sx={{ fontSize: 13, color: "rgba(0,0,0,0.5)", fontWeight: 500 }}>
-                              This is your own service
-                            </Typography>
-                          </Box>
+                          <div className={ownNoticeCss}>
+                            <p className={ownNoticeTextCss}>This is your own service</p>
+                          </div>
                         ) : (
-                          <Button
-                            fullWidth
-                            variant='contained'
+                          <button
+                            type='button'
                             disabled={listingChanged}
                             onClick={() => {
                               if (listingChanged) return;
@@ -748,141 +915,81 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                                 router.push(`/explore-services/${serviceId}/checkout?pricing_option_id=${selectedPricing.id}`);
                               }
                             }}
-                            sx={{
-                              height: 44,
-                              bgcolor: "#0071e3",
-                              fontSize: "13px",
-                              fontWeight: 500,
-                              borderRadius: 28,
-                              textTransform: "none",
-                              boxShadow: 1,
-                              color: "white",
-                              "&:hover": { bgcolor: "#0077ED", boxShadow: 2 },
-                            }}>
+                            className={cx(ctaCss, ctaAccentCss)}>
                             Continue (${Number(selectedPricing.price_raw).toFixed(2)})
-                          </Button>
+                          </button>
                         )}
                         {!isOwnService && service.custom_orders_enabled && (
                           service.my_active_custom_order ? (
-                            <Button
-                              fullWidth
-                              variant='outlined'
-                              startIcon={<RequestQuoteOutlined />}
+                            <button
+                              type='button'
                               onClick={() => router.push(`/dashboard/custom-orders/${service.my_active_custom_order!.id}`)}
-                              sx={{
-                                height: 44,
-                                bgcolor: "rgba(0,0,0,0.04)",
-                                color: "black",
-                                borderColor: "rgba(0,0,0,0.15)",
-                                fontSize: "13px",
-                                fontWeight: 500,
-                                borderRadius: 28,
-                                textTransform: "none",
-                                "&:hover": { bgcolor: "rgba(0,0,0,0.07)", borderColor: "rgba(0,0,0,0.25)" },
-                              }}>
+                              className={cx(ctaCss, ctaGreyCss)}>
+                              <Receipt size={20} />
                               View your custom order
-                            </Button>
+                            </button>
                           ) : (
-                            <Button
-                              fullWidth
-                              variant='contained'
-                              startIcon={<RequestQuoteOutlined />}
+                            <button
+                              type='button'
                               disabled={listingChanged}
                               onClick={() => !listingChanged && setShowCustomOrderDialog(true)}
-                              sx={{
-                                height: 44,
-                                bgcolor: "black",
-                                color: "white",
-                                fontSize: "13px",
-                                fontWeight: 500,
-                                borderRadius: 28,
-                                textTransform: "none",
-                                boxShadow: "none",
-                                "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" },
-                              }}>
+                              className={cx(ctaCss, ctaBlackCss)}>
+                              <Receipt size={20} />
                               Request a Custom Order
-                            </Button>
+                            </button>
                           )
                         )}
-                        <Button
-                          fullWidth
-                          variant='outlined'
-                          startIcon={<ChatBubbleOutline />}
+                        <button
+                          type='button'
                           onClick={handleContact}
                           disabled={contacting || isOwnService || !contactUserId}
-                          sx={{
-                            height: 44,
-                            bgcolor: "white",
-                            color: "black",
-                            borderColor: "rgba(0,0,0,0.1)",
-                            fontSize: "13px",
-                            fontWeight: 500,
-                            borderRadius: 28,
-                            textTransform: "none",
-                            "&:hover": { borderColor: "rgba(0,0,0,0.2)", bgcolor: "white" },
-                          }}>
+                          className={cx(ctaCss, ctaOutlineCss)}>
+                          <MessageCircle size={20} />
                           Contact Freelancer
-                        </Button>
-                      </Box>
-                    </CardContent>
+                        </button>
+                      </div>
+                    </div>
                   )}
-                </Card>
+                </div>
               ) : (
-                <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 3, mb: 2 }}>
-                  <Typography sx={{ color: "rgba(0, 0, 0, 0.6)", textAlign: "center", mb: 2 }}>
+                <div className={cx(cardCss, cardPadCss, css({ mb: "16px" }))}>
+                  <p className={noPricingTextCss}>
                     No pricing options available. Contact the freelancer for a quote.
-                  </Typography>
-                  <Button
-                    fullWidth
-                    variant='contained'
-                    startIcon={<ChatBubbleOutline />}
+                  </p>
+                  <button
+                    type='button'
                     onClick={handleContact}
                     disabled={contacting || isOwnService || !contactUserId}
-                    sx={{
-                      height: 44,
-                      bgcolor: "#0071e3",
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      borderRadius: 28,
-                      textTransform: "none",
-                      "&:hover": { bgcolor: "#0077ED" },
-                    }}>
+                    className={cx(ctaCss, ctaAccentCss)}>
+                    <MessageCircle size={20} />
                     Contact Freelancer
-                  </Button>
-                </Card>
+                  </button>
+                </div>
               )}
 
               {/* Trust Badges */}
-              <Card elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0,0,0,0.08)", p: 2 }}>
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                  <Box sx={{ display: "flex", gap: 1.5 }}>
-                    <Shield sx={{ fontSize: 18, color: "#0071e3", mt: 0.5 }} />
-                    <Box>
-                      <Typography variant='body2' sx={{ fontSize: "13px", fontWeight: 500 }}>
-                        Money Back Guarantee
-                      </Typography>
-                      <Typography variant='caption' color='text.secondary'>
-                        Full refund if not satisfied
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: "flex", gap: 1.5 }}>
-                    <Check sx={{ fontSize: 18, color: "#0071e3", mt: 0.5 }} />
-                    <Box>
-                      <Typography variant='body2' sx={{ fontSize: "13px", fontWeight: 500 }}>
-                        Quality Verified
-                      </Typography>
-                      <Typography variant='caption' color='text.secondary'>
-                        Reviewed by KickAir team
-                      </Typography>
-                    </Box>
-                  </Box>
-                </Box>
-              </Card>
-            </Box>
-          </Grid>
-        </Grid>
-      </Container>
+              <div className={cx(cardCss, css({ p: "16px" }))}>
+                <div className={trustColCss}>
+                  <div className={trustRowCss}>
+                    <Shield size={18} className={trustIconCss} />
+                    <div>
+                      <p className={trustTitleCss}>Money Back Guarantee</p>
+                      <span className={captionCss}>Full refund if not satisfied</span>
+                    </div>
+                  </div>
+                  <div className={trustRowCss}>
+                    <Check size={18} className={trustIconCss} />
+                    <div>
+                      <p className={trustTitleCss}>Quality Verified</p>
+                      <span className={captionCss}>Reviewed by KickAir team</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Request a Custom Order */}
       <RequestCustomOrderDialog
@@ -899,33 +1006,25 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
 
       {/* Live-edit guard — the freelancer changed/removed this service while it was open here.
           Blocking: no onClose, so backdrop clicks and Escape can't dismiss it. */}
-      <Dialog open={listingChanged && !isOwnService} maxWidth='xs' fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
-        <DialogContent sx={{ px: 3, pt: 3 }}>
-          <Typography sx={{ fontSize: 17, fontWeight: 600, mb: 1 }}>This service was just updated</Typography>
-          <DialogContentText sx={{ fontSize: 13.5, lineHeight: 1.6, color: "rgba(0,0,0,0.7)" }}>
+      <BareModal
+        open={listingChanged && !isOwnService}
+        maxW='444px'
+        closeOnInteractOutside={false}
+        closeOnEscape={false}
+        className={guardPanelCss}>
+        <div className={guardBodyCss}>
+          <p className={guardTitleCss}>This service was just updated</p>
+          <p className={guardTextCss}>
             This service was just updated by the freelancer and is awaiting admin approval. It&apos;s no longer
             available in its current form.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button
-            fullWidth
-            variant='contained'
-            onClick={() => window.location.reload()}
-            sx={{
-              height: 44,
-              bgcolor: "#0071e3",
-              color: "white",
-              fontSize: "13px",
-              fontWeight: 500,
-              borderRadius: 28,
-              textTransform: "none",
-              "&:hover": { bgcolor: "#0077ED" },
-            }}>
+          </p>
+        </div>
+        <div className={guardActionsCss}>
+          <button type='button' onClick={() => window.location.reload()} className={cx(ctaCss, ctaAccentCss)}>
             Refresh page
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+          </button>
+        </div>
+      </BareModal>
+    </div>
   );
 }

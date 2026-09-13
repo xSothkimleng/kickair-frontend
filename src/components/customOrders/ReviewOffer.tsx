@@ -1,26 +1,66 @@
 "use client";
 
 import { useState } from "react";
-import {
-  Box,
-  Typography,
-  Avatar,
-  Button,
-  CircularProgress,
-} from "@mui/material";
-import {
-  AccessTime,
-  ReplayOutlined,
-  ShieldOutlined,
-  LockOutlined,
-  StarRounded,
-} from "@mui/icons-material";
-import { tokens } from "@/theme";
+import { Clock, Lock, RotateCcw, Shield, Star } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { CustomOrder } from "@/types/customOrder";
-import { Money, coCard, coLabel, Chip, initials } from "./kit";
+import { Chip, Money, coAvatar, coBtn, coBtnStart, coCard, coLabel, coLabelPending, initials } from "./kit";
 import { useCoInvalidate } from "./hooks";
 import FundMilestoneDialog from "./FundMilestoneDialog";
+
+const grid = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "minmax(0,1fr) 348px" }, gap: "24px", alignItems: "start" });
+const mainCol = css({ display: "flex", flexDirection: "column", gap: "16px" });
+
+const offerCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
+const offerHead = css({ display: "flex", justifyContent: "space-between", gap: "12px", mb: "18px" });
+const who = css({ display: "flex", gap: "12px" });
+const whoName = css({ fontWeight: 600, fontSize: "15.5px", lineHeight: 1.5, color: "ink" });
+const whoMeta = css({ display: "flex", alignItems: "center", gap: "4px", fontSize: "12px", lineHeight: 1.5, color: "ink2" });
+const scopeText = css({ fontSize: "14px", lineHeight: 1.55, color: "ink" });
+const metaRow = css({ display: "flex", gap: "18px", flexWrap: "wrap", color: "ink2", fontSize: "12.5px" });
+const metaItem = css({ display: "flex", alignItems: "center", gap: "6px" });
+
+// Same card, but on surface2 — written out rather than cx()'d over `coCard`
+// so the background isn't a class-order coin flip.
+const shieldCard = css({
+  p: { base: "18px", md: "22px" },
+  bg: "surface2",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "card",
+});
+const shieldRow = css({ display: "flex", gap: "12px", alignItems: "flex-start" });
+const shieldIcon = css({ width: "38px", height: "38px", borderRadius: "10px", bg: "pendingTint", display: "grid", placeItems: "center", flex: "none" });
+const shieldTitle = css({ fontWeight: 600, fontSize: "14.5px", lineHeight: 1.5, color: "ink" });
+const shieldBody = css({ fontSize: "13.5px", color: "ink2", lineHeight: 1.5 });
+
+const aside = cx(coCard, css({ p: { base: "20px", md: "24px" }, position: { md: "sticky" }, top: "24px" }));
+const payBox = css({
+  p: "16px",
+  mt: "12px",
+  mb: "12px",
+  borderRadius: "12px",
+  bg: "pendingTint",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(234,88,12,0.18)",
+});
+
+const payValue = css({ mt: "6px" });
+const payNote = css({ fontSize: "11.5px", lineHeight: 1.5, color: "pendingText", opacity: 0.85 });
+
+const laterList = css({ display: "flex", flexDirection: "column", gap: "10px", mb: "16px" });
+const betweenRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
+const betweenLabel = css({ fontSize: "13.5px", lineHeight: 1.5, color: "ink2" });
+const errorText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "errorText" });
+
+const expiredBox = css({ display: "flex", gap: "8px", p: "12px 14px", bg: "rgba(0,0,0,0.04)", borderRadius: "10px" });
+const expiredText = css({ fontSize: "12.5px", lineHeight: 1.5, color: "ink2" });
+const declineBtn = css({ mt: "10px" });
+const escrowNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", mt: "12px", color: "ink3", fontSize: "11.5px" });
 
 export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; onChanged: () => void }) {
   const invalidate = useCoInvalidate();
@@ -63,92 +103,92 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
   };
 
   const main = (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className={mainCol}>
       {/* freelancer + scope */}
-      <Box sx={{ ...coCard, p: { xs: 2.5, md: 3 } }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, mb: 2.25 }}>
-          <Box sx={{ display: "flex", gap: 1.5 }}>
-            <Avatar sx={{ width: 46, height: 46, bgcolor: tokens.text, fontSize: 15, fontWeight: 600 }}>{initials(freelancerName)}</Avatar>
-            <Box>
-              <Typography sx={{ fontWeight: 600, fontSize: 15.5 }}>{freelancerName}</Typography>
-              <Typography sx={{ display: "flex", alignItems: "center", gap: 0.5, fontSize: 12, color: tokens.text2 }}>
-                <StarRounded sx={{ fontSize: 14, color: tokens.pending }} /> Custom offer
-              </Typography>
-            </Box>
-          </Box>
+      <div className={offerCard}>
+        <div className={offerHead}>
+          <div className={who}>
+            <span className={coAvatar({ size: "lg" })}>{initials(freelancerName)}</span>
+            <div>
+              <p className={whoName}>{freelancerName}</p>
+              <p className={whoMeta}>
+                <Star size={14} fill="currentColor" className={css({ color: "pending", flexShrink: 0 })} /> Custom offer
+              </p>
+            </div>
+          </div>
           {expired ? <Chip tone="neutral">Expired</Chip> : <Chip tone="pending" dot>New offer</Chip>}
-        </Box>
-        <Typography sx={coLabel}>Scope</Typography>
-        <Typography sx={{ fontSize: 14, lineHeight: 1.55, my: 1, mb: 2 }}>{offer.scope}</Typography>
-        <Box sx={{ display: "flex", gap: 2.25, flexWrap: "wrap", color: tokens.text2, fontSize: 12.5 }}>
-          {offer.delivery_days != null && <Span icon={<AccessTime sx={{ fontSize: 14 }} />}>{offer.delivery_days}-day delivery</Span>}
-          {offer.revisions != null && <Span icon={<ReplayOutlined sx={{ fontSize: 14 }} />}>{offer.revisions} revisions</Span>}
-          {offer.expires_at && !expired && <Span icon={<AccessTime sx={{ fontSize: 14 }} />}>Expires {new Date(offer.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</Span>}
-        </Box>
-      </Box>
+        </div>
+        <p className={coLabel}>Scope</p>
+        <p className={scopeText}>{offer.scope}</p>
+        <div className={metaRow}>
+          {offer.delivery_days != null && <Span icon={<Clock size={14} />}>{offer.delivery_days}-day delivery</Span>}
+          {offer.revisions != null && <Span icon={<RotateCcw size={14} />}>{offer.revisions} revisions</Span>}
+          {offer.expires_at && !expired && <Span icon={<Clock size={14} />}>Expires {new Date(offer.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</Span>}
+        </div>
+      </div>
 
       {/* escrow explainer */}
-      <Box sx={{ ...coCard, p: { xs: 2.25, md: 2.75 }, bgcolor: tokens.surface2 }}>
-        <Box sx={{ display: "flex", gap: 1.5, alignItems: "flex-start" }}>
-          <Box sx={{ width: 38, height: 38, borderRadius: "10px", bgcolor: tokens.pendingTint, display: "grid", placeItems: "center", flex: "none" }}>
-            <ShieldOutlined sx={{ fontSize: 19, color: tokens.pendingText }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontWeight: 600, fontSize: 14.5 }}>Your payment is protected</Typography>
-            <Typography sx={{ fontSize: 13.5, color: tokens.text2, lineHeight: 1.5, mt: 0.5 }}>
+      <div className={shieldCard}>
+        <div className={shieldRow}>
+          <div className={shieldIcon}>
+            <Shield size={19} className={css({ color: "pendingText" })} />
+          </div>
+          <div>
+            <p className={shieldTitle}>Your payment is protected</p>
+            <p className={shieldBody}>
               The payment goes into escrow now — it only releases to {freelancerName.split(" ")[0]} after you approve the delivery.
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 
-  const aside = (
-    <Box sx={{ ...coCard, p: { xs: 2.5, md: 3 }, position: { md: "sticky" }, top: 24 }}>
-      <Typography sx={coLabel}>To start the project</Typography>
-      <Box sx={{ p: 2, my: 1.5, borderRadius: "12px", bgcolor: tokens.pendingTint, border: "1px solid rgba(234,88,12,0.18)" }}>
-        <Typography sx={{ ...coLabel, color: tokens.pendingText }}>You pay now</Typography>
-        <Box sx={{ mt: 0.75 }}><Money value={payNow} size={32} weight={600} color={tokens.pendingText} cents /></Box>
-        <Typography sx={{ fontSize: 11.5, color: tokens.pendingText, opacity: 0.85 }}>One-time payment → held in escrow</Typography>
-      </Box>
+  const asideCol = (
+    <div className={aside}>
+      <p className={coLabel}>To start the project</p>
+      <div className={payBox}>
+        <p className={coLabelPending}>You pay now</p>
+        <div className={payValue}><Money value={payNow} size={32} weight={600} color="var(--colors-pending-text)" cents /></div>
+        <p className={payNote}>One-time payment → held in escrow</p>
+      </div>
       {fundedLater > 0 && (
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1.25, mb: 2 }}>
+        <div className={laterList}>
           <Between label="Total project value"><Money value={offer.total} size={14} weight={500} /></Between>
-          <Between label="Funded later"><Money value={fundedLater} size={14} weight={500} color={tokens.text3} /></Between>
-        </Box>
+          <Between label="Funded later"><Money value={fundedLater} size={14} weight={500} color="var(--colors-ink3)" /></Between>
+        </div>
       )}
 
-      {error && <Typography sx={{ fontSize: 12.5, color: tokens.errorText, mb: 1.5 }}>{error}</Typography>}
+      {error && <p className={errorText}>{error}</p>}
 
       {expired ? (
-        <Box sx={{ display: "flex", gap: 1, p: "12px 14px", bgcolor: "rgba(0,0,0,0.04)", borderRadius: "10px" }}>
-          <AccessTime sx={{ fontSize: 15, color: tokens.text3 }} />
-          <Typography sx={{ fontSize: 12.5, color: tokens.text2 }}>This offer expired. Ask {freelancerName.split(" ")[0]} to resend it.</Typography>
-        </Box>
+        <div className={expiredBox}>
+          <Clock size={15} className={css({ color: "ink3", flexShrink: 0 })} />
+          <p className={expiredText}>This offer expired. Ask {freelancerName.split(" ")[0]} to resend it.</p>
+        </div>
       ) : (
         <>
-          <Button fullWidth startIcon={<LockOutlined />} onClick={() => setFundOpen(true)}
-            sx={{ textTransform: "none", fontWeight: 600, fontSize: 15, borderRadius: "999px", bgcolor: tokens.text, color: "#fff", height: 48, boxShadow: "none", "&:hover": { bgcolor: "rgba(0,0,0,0.82)", boxShadow: "none" } }}>
+          <button type="button" onClick={() => setFundOpen(true)} className={coBtn({ tone: "black", size: "xl", strong: true, full: true })}>
+            <Lock size={20} className={coBtnStart} />
             Accept &amp; Pay
-          </Button>
-          <Button fullWidth onClick={handleDecline} disabled={declining} sx={{ mt: 1.25, textTransform: "none", fontWeight: 600, fontSize: 13.5, color: tokens.text2, borderRadius: "999px" }}>
-            {declining ? <CircularProgress size={16} /> : "Decline"}
-          </Button>
-          <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75, mt: 1.5, color: tokens.text3, fontSize: 11.5 }}>
-            <LockOutlined sx={{ fontSize: 12 }} /> Funds held in escrow · refundable until delivery
-          </Box>
+          </button>
+          <button type="button" onClick={handleDecline} disabled={declining} className={cx(coBtn({ tone: "quiet", font: "13.5", strong: true, full: true }), declineBtn)}>
+            {declining ? <Spinner size={16} /> : "Decline"}
+          </button>
+          <div className={escrowNote}>
+            <Lock size={12} /> Funds held in escrow · refundable until delivery
+          </div>
         </>
       )}
-    </Box>
+    </div>
   );
 
   return (
     <>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "minmax(0,1fr) 348px" }, gap: 3, alignItems: "start" }}>
+      <div className={grid}>
         {main}
-        {aside}
-      </Box>
+        {asideCol}
+      </div>
       <FundMilestoneDialog
         open={fundOpen}
         onClose={() => setFundOpen(false)}
@@ -166,14 +206,14 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
 }
 
 function Span({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>{icon}{children}</Box>;
+  return <div className={metaItem}>{icon}{children}</div>;
 }
 
 function Between({ label, children }: { label: string; children: React.ReactNode }) {
   return (
-    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-      <Typography sx={{ fontSize: 13.5, color: tokens.text2 }}>{label}</Typography>
+    <div className={betweenRow}>
+      <p className={betweenLabel}>{label}</p>
       {children}
-    </Box>
+    </div>
   );
 }

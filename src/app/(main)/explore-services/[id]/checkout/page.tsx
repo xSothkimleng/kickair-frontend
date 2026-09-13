@@ -3,30 +3,20 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Button, CircularProgress, Container, Typography, Alert } from "@mui/material";
-import {
-  ArrowBack as ChevronLeft,
-  Lock as LockIcon,
-  AccountBalanceWallet as WalletIcon,
-  CreditCard as CardIcon,
-  VerifiedUser as ShieldIcon,
-  AccessTime as ClockIcon,
-  Autorenew as RevisionIcon,
-  Check as CheckIcon,
-  InfoOutlined as InfoIcon,
-  Add as AddIcon,
-} from "@mui/icons-material";
+import { ArrowLeft, Check, Clock, CreditCard, Info, Lock, Plus, RotateCw, ShieldCheck, Wallet } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Alert, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
-import { tokens } from "@/theme";
 import { useAuth } from "@/components/context/AuthContext";
 import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/PurchaseGate";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
-import type { Service, ServiceDetailResponse } from "@/types/service";
+import type { ServiceDetailResponse } from "@/types/service";
 import type { CreateOrderResponse } from "@/types/order";
-import type { Wallet } from "@/types/wallet";
+import type { Wallet as WalletType } from "@/types/wallet";
 import { serviceCoverUrl } from "@/lib/serviceCover";
+import { pillButton } from "@/components/payment/pill";
 import {
   AbaMethodSelector,
   Annot,
@@ -42,6 +32,146 @@ import {
 } from "@/components/payment";
 
 type PaySource = "wallet" | "aba";
+
+/* ---- styles ---- */
+const pageCss = css({ minH: "100vh", bg: "canvas", pb: "16px" });
+const centeredCss = css({ minH: "100vh", bg: "canvas", display: "flex", justifyContent: "center", alignItems: "center", color: "accent" });
+const containerCss = css({ w: "100%", boxSizing: "border-box", maxW: "1200px", mx: "auto" });
+const headerBarCss = css({ bg: "#fff", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const headerInnerCss = css({ px: "24px", py: "16px" });
+const backBtnCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  minW: "64px",
+  p: "6px 8px",
+  ml: "-4px",
+  m: 0,
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "ink2",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "color .25s",
+  _hover: { color: "#000", bg: "transparent" },
+  "& svg": { display: "block", flexShrink: 0 },
+});
+const bodyCss = css({ px: { base: "16px", md: "32px" }, py: { base: "24px", md: "40px" } });
+const titleRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: { base: "20px", md: "28px" }, gap: "16px" });
+const titleColCss = css({ display: "flex", flexDirection: "column", gap: "8px" });
+const titleCss = css({ fontSize: { base: "28px", md: "40px" }, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.05 });
+const titleAsideCss = css({ display: { base: "none", md: "block" } });
+const gridCss = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "1fr 1fr" }, gap: { base: "16px", md: "24px" }, alignItems: "start" });
+const cardCss = css({
+  bg: "surface",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "card",
+  p: { base: "22px", md: "28px" },
+});
+const labelCss = css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const summaryHeadCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "18px" });
+const sellerRowCss = css({ display: "flex", gap: "14px", mb: "18px", alignItems: "center" });
+const sellerAvatarCss = css({
+  boxSizing: "border-box",
+  w: "48px",
+  h: "48px",
+  borderRadius: "50%",
+  bg: "canvas",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  overflow: "hidden",
+  flex: "none",
+  fontWeight: 600,
+  color: "ink2",
+});
+const sellerNameCss = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5 });
+const sellerRatingCss = css({ fontSize: "12px", fontWeight: 500, lineHeight: 1.5, color: "ink2" });
+const serviceTitleCss = css({ fontSize: "16px", fontWeight: 500, lineHeight: 1.4 });
+const tierBoxCss = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "tile", p: "16px", mb: "20px" });
+const tierHeadCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "12px", gap: "8px" });
+const tierTitleCss = css({ fontWeight: 600, fontSize: "14px", lineHeight: 1.5 });
+const tierMetaRowCss = css({ display: "flex", gap: "16px", flexWrap: "wrap" });
+const metaCss = css({ display: "flex", alignItems: "center", gap: "6px", fontSize: "12px", fontWeight: 500, color: "ink2", "& svg": { color: "ink3", flexShrink: 0 } });
+const tierDescCss = css({
+  mt: "12px",
+  fontSize: "13.5px",
+  color: "ink2",
+  lineHeight: 1.5,
+  "& p": { m: 0 },
+  "& ul, & ol": { m: 0, pl: "20px" },
+});
+const priceColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const hairlineCss = css({ h: "1px", bg: "hairline" });
+const escrowCss = css({ display: "flex", gap: "8px", mt: "18px", p: "12px 14px", bg: "pendingTint", borderRadius: "tile" });
+const escrowIconCss = css({ color: "pendingText", flex: "none" });
+const escrowTextCss = css({ fontSize: "12.5px", color: "pendingText", lineHeight: 1.4 });
+const payHeadingCss = css({ fontSize: "22px", fontWeight: 600, lineHeight: 1.5, letterSpacing: "-0.015em" });
+const optionsColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const optionRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" });
+const optionLeftCss = css({ display: "flex", alignItems: "center", gap: "12px" });
+const optionTitleCss = css({ fontWeight: 600, fontSize: "15px", lineHeight: 1.5 });
+const optionSubCss = css({ fontSize: "13px", lineHeight: 1.5, color: "ink2" });
+const payLogosCss = css({ display: "flex", gap: "6px", flexShrink: 0 });
+const iconTileCss = css({ w: "38px", h: "38px", borderRadius: "10px", bg: "rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none", color: "ink" });
+const lowBalanceCss = css({
+  mt: "16px",
+  p: "16px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "errorTint",
+  bg: "errorTint",
+  borderRadius: "cardSm",
+});
+const lowBalanceHeadCss = css({ display: "flex", gap: "8px", mb: "10px", alignItems: "center", color: "errorText" });
+const lowBalanceTitleCss = css({ fontSize: "13.5px", fontWeight: 600, lineHeight: 1.5, color: "errorText" });
+const lowBalanceTextCss = css({ fontSize: "13px", lineHeight: 1.5, color: "errorText" });
+const topUpBtnCss = css({ px: "16px", fontWeight: 500 });
+const abaWrapCss = css({ mt: "18px" });
+const ctaWrapCss = css({ mt: "22px" });
+const secureNoteCss = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", mt: "12px", color: "ink3" });
+const secureNoteTextCss = css({ fontSize: "12px", lineHeight: 1.5 });
+const footerCss = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", mt: "24px", pt: "24px" });
+const ownWrapCss = css({ minH: "100vh", bg: "canvas", display: "flex", alignItems: "center", justifyContent: "center" });
+const ownInnerCss = css({ textAlign: "center" });
+const ownTextCss = css({ fontSize: "16px", fontWeight: 600, lineHeight: 1.5 });
+const ownBtnCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  minW: "64px",
+  minH: "36.5px",
+  p: "5px 15px",
+  m: 0,
+  bg: "transparent",
+  color: "#000",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "rgba(25, 118, 210, 0.5)",
+  borderRadius: "112px",
+  fontFamily: "inherit",
+  fontSize: "14px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  letterSpacing: "0.02857em",
+  cursor: "pointer",
+  transition: "background-color .25s, border-color .25s",
+  _hover: { bg: "rgba(25, 118, 210, 0.04)", borderColor: "#1976d2" },
+});
+const errorWrapCss = css({ px: "24px", py: "32px" });
 
 function CheckoutContent() {
   const router = useRouter();
@@ -69,7 +199,7 @@ function CheckoutContent() {
 
   const { data: wallet } = useQuery({
     queryKey: qk.wallet(),
-    queryFn: async () => (await api.get("/api/wallet")).data as Wallet,
+    queryFn: async () => (await api.get("/api/wallet")).data as WalletType,
   });
 
   const selectedPricing = service?.pricing_options?.find(p => p.id === Number(pricingOptionId)) ?? null;
@@ -139,34 +269,34 @@ function CheckoutContent() {
 
   if (isLoading) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas, display: "flex", justifyContent: "center", alignItems: "center" }}>
-        <CircularProgress sx={{ color: tokens.accent }} />
-      </Box>
+      <div className={centeredCss}>
+        <Spinner size={40} />
+      </div>
     );
   }
 
   const isOwnService = !!(service && user?.is_freelancer && user.freelancer_profile?.id === service.freelancer_profile_id);
   if (isOwnService) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Box sx={{ textAlign: "center" }}>
-          <Typography sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>You cannot purchase your own service</Typography>
-          <Button onClick={() => router.back()} variant='outlined' sx={{ textTransform: "none", borderRadius: 28 }}>
+      <div className={ownWrapCss}>
+        <div className={ownInnerCss}>
+          <p className={ownTextCss}>You cannot purchase your own service</p>
+          <button type='button' onClick={() => router.back()} className={ownBtnCss}>
             Go back
-          </Button>
-        </Box>
-      </Box>
+          </button>
+        </div>
+      </div>
     );
   }
 
   if (error || !service || !selectedPricing) {
     return (
-      <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
+      <div className={css({ minH: "100vh", bg: "canvas" })}>
         <HeaderBar onBack={() => router.back()} label='Go Back' />
-        <Container maxWidth='lg' sx={{ px: 3, py: 4 }}>
-          <Alert severity='error'>{error instanceof Error ? error.message : "Unable to load checkout"}</Alert>
-        </Container>
-      </Box>
+        <div className={cx(containerCss, errorWrapCss)}>
+          <Alert tone='error'>{error instanceof Error ? error.message : "Unable to load checkout"}</Alert>
+        </div>
+      </div>
     );
   }
 
@@ -174,66 +304,70 @@ function CheckoutContent() {
   const freelancerName = freelancerUser?.name || "Freelancer";
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas, pb: 2 }}>
+    <div className={pageCss}>
       <HeaderBar onBack={() => router.back()} label='Back to Service' />
 
-      <Container maxWidth='lg' sx={{ px: { xs: 2, md: 4 }, py: { xs: 3, md: 5 } }}>
+      <div className={cx(containerCss, bodyCss)}>
         {/* Title */}
-        <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", mb: { xs: 2.5, md: 3.5 }, gap: 2 }}>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+        <div className={titleRowCss}>
+          <div className={titleColCss}>
             <Annot>{["STEP 1 · order initiated", "STEP 3 · proceed to checkout"]}</Annot>
-            <Typography sx={{ fontSize: { xs: 28, md: 40 }, fontWeight: 600, letterSpacing: "-0.03em", lineHeight: 1.05 }}>Checkout</Typography>
-          </Box>
-          <Box sx={{ display: { xs: "none", md: "block" } }}>
+            <p className={titleCss}>Checkout</p>
+          </div>
+          <div className={titleAsideCss}>
             <Annot>Billing address skipped (STEP 5 — digital service)</Annot>
-          </Box>
-        </Box>
+          </div>
+        </div>
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "1fr 1fr" }, gap: { xs: 2, md: 3 }, alignItems: "start" }}>
+        <div className={gridCss}>
           {/* ---- Order summary ---- */}
-          <Card>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.25 }}>
-              <Label>Order summary</Label>
+          <div className={cardCss}>
+            <div className={summaryHeadCss}>
+              <span className={labelCss}>Order summary</span>
               <Annot>STEP 2</Annot>
-            </Box>
+            </div>
 
-            <Box sx={{ display: "flex", gap: 1.75, mb: 2.25, alignItems: "center" }}>
-              <Box sx={{ width: 48, height: 48, borderRadius: "50%", bgcolor: tokens.canvas, border: `1px solid ${tokens.border}`, display: "flex", alignItems: "center", justifyContent: "center", overflow: "hidden", flex: "none", fontWeight: 600, color: tokens.text2 }}>
+            <div className={sellerRowCss}>
+              <div className={sellerAvatarCss}>
                 {freelancerUser?.avatar_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={freelancerUser.avatar_url} alt={freelancerName} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
                 ) : (
                   freelancerName.charAt(0)
                 )}
-              </Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontWeight: 600, fontSize: 15 }}>{freelancerName}</Typography>
+              </div>
+              <div className={css({ minW: 0 })}>
+                <p className={sellerNameCss}>{freelancerName}</p>
                 {service.rating_average && (
-                  <Typography sx={{ fontSize: 12, fontWeight: 500, color: tokens.text2 }}>
+                  <p className={sellerRatingCss}>
                     ★ {Number(service.rating_average).toFixed(1)} ({service.rating_count})
-                  </Typography>
+                  </p>
                 )}
-              </Box>
-            </Box>
+              </div>
+            </div>
 
-            <Typography sx={{ fontSize: 16, fontWeight: 500, lineHeight: 1.4, mb: 2.25 }}>{service.title}</Typography>
+            <p className={serviceTitleCss}>{service.title}</p>
 
-            <Box sx={{ border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.tile}px`, p: 2, mb: 2.5 }}>
-              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 1.5, gap: 1 }}>
-                <Typography sx={{ fontWeight: 600, fontSize: 14 }}>{selectedPricing.title}</Typography>
-              </Box>
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <Meta icon={<ClockIcon sx={{ fontSize: 14, color: tokens.text3 }} />}>{deliveryText(selectedPricing.delivery_time)}</Meta>
-                <Meta icon={<RevisionIcon sx={{ fontSize: 14, color: tokens.text3 }} />}>{revisionsText(selectedPricing.revisions)}</Meta>
-              </Box>
+            <div className={tierBoxCss}>
+              <div className={tierHeadCss}>
+                <p className={tierTitleCss}>{selectedPricing.title}</p>
+              </div>
+              <div className={tierMetaRowCss}>
+                <span className={metaCss}>
+                  <Clock size={14} /> {deliveryText(selectedPricing.delivery_time)}
+                </span>
+                <span className={metaCss}>
+                  <RotateCw size={14} /> {revisionsText(selectedPricing.revisions)}
+                </span>
+              </div>
               {selectedPricing.description && (
-                <Box sx={{ mt: 1.5, fontSize: 13.5, color: tokens.text2, lineHeight: 1.5, "& p": { m: 0 }, "& ul, & ol": { m: 0, pl: 2.5 } }}>
+                <div className={tierDescCss}>
                   <RichTextDisplay value={selectedPricing.description} />
-                </Box>
+                </div>
               )}
-            </Box>
+            </div>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <div className={priceColCss}>
               <PriceRow label='Package price' value={fmtUsd(total)} />
               {paySource === "aba" && shortfall > 0 && (
                 <>
@@ -241,127 +375,118 @@ function CheckoutContent() {
                   <PriceRow label='Top-up via bank transfer' value={fmtUsd(shortfall)} />
                 </>
               )}
-              <Box sx={{ height: 1, bgcolor: tokens.border }} />
+              <div className={hairlineCss} />
               {paySource === "aba" && shortfall > 0 ? (
                 <PriceRow label='Charged now' sub='USD · only the shortfall — no service fees' value={fmtUsd(shortfall)} strong />
               ) : (
                 <PriceRow label='Total' sub='USD · charged once · no service fees' value={fmtUsd(total)} strong />
               )}
-            </Box>
+            </div>
 
-            <Box sx={{ display: "flex", gap: 1, mt: 2.25, p: "12px 14px", bgcolor: tokens.pendingTint, borderRadius: `${tokens.radius.tile}px` }}>
-              <ShieldIcon sx={{ fontSize: 16, color: tokens.pendingText, flex: "none" }} />
-              <Typography sx={{ fontSize: 12.5, color: tokens.pendingText, lineHeight: 1.4 }}>
+            <div className={escrowCss}>
+              <ShieldCheck size={16} className={escrowIconCss} />
+              <p className={escrowTextCss}>
                 Funds are held in escrow and released to {freelancerName.split(" ")[0]} only when you mark the order complete.
-              </Typography>
-            </Box>
-          </Card>
+              </p>
+            </div>
+          </div>
 
           {/* ---- How to pay ---- */}
-          <Card>
-            <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em", mb: 2.25 }}>How would you like to pay?</Typography>
+          <div className={cardCss}>
+            <p className={payHeadingCss}>How would you like to pay?</p>
 
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+            <div className={optionsColCss}>
               <PaymentOption selected={paySource === "wallet"} onClick={() => setPaySource("wallet")}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <IconTile>
-                      <WalletIcon sx={{ fontSize: 20, color: tokens.text }} />
-                    </IconTile>
-                    <Box>
-                      <Typography sx={{ fontWeight: 600, fontSize: 15 }}>Wallet balance</Typography>
-                      <Typography sx={{ fontSize: 13, color: tokens.text2 }}>{fmtUsd(balance)} available</Typography>
-                    </Box>
-                  </Box>
+                <div className={optionRowCss}>
+                  <div className={optionLeftCss}>
+                    <span className={iconTileCss}>
+                      <Wallet size={20} />
+                    </span>
+                    <div>
+                      <p className={optionTitleCss}>Wallet balance</p>
+                      <p className={optionSubCss}>{fmtUsd(balance)} available</p>
+                    </div>
+                  </div>
                   {insufficient && <StatusChip status='error' dot={false}>Low</StatusChip>}
-                </Box>
+                </div>
               </PaymentOption>
 
               <PaymentOption selected={paySource === "aba"} onClick={() => setPaySource("aba")}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                    <IconTile>
-                      <CardIcon sx={{ fontSize: 20, color: tokens.text }} />
-                    </IconTile>
-                    <Box>
-                      <Typography sx={{ fontWeight: 600, fontSize: 15 }}>Bank Transfer</Typography>
-                      <Typography sx={{ fontSize: 13, color: tokens.text2 }}>
+                <div className={optionRowCss}>
+                  <div className={optionLeftCss}>
+                    <span className={iconTileCss}>
+                      <CreditCard size={20} />
+                    </span>
+                    <div>
+                      <p className={optionTitleCss}>Bank Transfer</p>
+                      <p className={optionSubCss}>
                         {shortfall > 0 && shortfall < total
                           ? `Tops up the ${fmtUsd(shortfall)} shortfall — wallet covers the rest`
                           : "KHQR, card, Alipay or WeChat"}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  <Box sx={{ display: "flex", gap: 0.75, flexShrink: 0 }}>
+                      </p>
+                    </div>
+                  </div>
+                  <div className={payLogosCss}>
                     {(["visa", "mc"] as const).map(l => (
                       <PayLogo key={l} id={l} size='sm' />
                     ))}
-                  </Box>
-                </Box>
+                  </div>
+                </div>
               </PaymentOption>
-            </Box>
+            </div>
 
             {/* Insufficient balance inline path */}
             {paySource === "wallet" && insufficient && (
-              <Box sx={{ mt: 2, p: 2, border: `1px solid ${tokens.errorTint}`, bgcolor: tokens.errorTint, borderRadius: `${tokens.radius.cardSm}px` }}>
-                <Box sx={{ display: "flex", gap: 1, mb: 1.25, alignItems: "center" }}>
-                  <InfoIcon sx={{ fontSize: 16, color: tokens.errorText }} />
-                  <Typography sx={{ fontSize: 13.5, fontWeight: 600, color: tokens.errorText }}>Insufficient balance</Typography>
-                </Box>
-                <Typography sx={{ fontSize: 13, color: tokens.errorText, mb: 1.5 }}>
+              <div className={lowBalanceCss}>
+                <div className={lowBalanceHeadCss}>
+                  <Info size={16} />
+                  <p className={lowBalanceTitleCss}>Insufficient balance</p>
+                </div>
+                <p className={lowBalanceTextCss}>
                   You need {fmtUsd(total - balance)} more to cover this order. Top up your wallet to continue.
-                </Typography>
-                <Button
+                </p>
+                <button
+                  type='button'
                   onClick={() => setTopUpOpen(true)}
-                  startIcon={<AddIcon sx={{ fontSize: 15 }} />}
-                  sx={{ height: 36, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, fontWeight: 500, px: 2, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
+                  className={cx(pillButton({ tone: "grey", size: "sm" }), topUpBtnCss)}>
+                  <Plus size={15} />
                   Top up {fmtUsd(topUpSuggested)}
-                </Button>
-              </Box>
+                </button>
+              </div>
             )}
 
             {/* ABA method selector (step 6) */}
             {paySource === "aba" && (
-              <Box sx={{ mt: 2.25 }}>
+              <div className={abaWrapCss}>
                 <AbaMethodSelector value={abaMethod} onChange={setAbaMethod} />
-              </Box>
+              </div>
             )}
 
-            <Box sx={{ mt: 2.75 }}>
-              <Button
-                fullWidth
+            <div className={ctaWrapCss}>
+              <button
+                type='button'
                 disabled={!canPay}
                 onClick={handleConfirm}
-                startIcon={paySource === "wallet" ? <CheckIcon sx={{ fontSize: 16 }} /> : <LockIcon sx={{ fontSize: 16 }} />}
-                sx={{
-                  height: 52,
-                  borderRadius: "999px",
-                  bgcolor: "#000",
-                  color: "#fff",
-                  textTransform: "none",
-                  fontSize: 16,
-                  fontWeight: 500,
-                  "&:hover": { bgcolor: "rgba(0,0,0,0.8)" },
-                  "&.Mui-disabled": { bgcolor: "rgba(0,0,0,0.18)", color: "#fff" },
-                }}>
+                className={pillButton({ tone: "black", size: "lg", full: true })}>
+                {paySource === "wallet" ? <Check size={16} /> : <Lock size={16} />}
                 {paySource === "wallet"
                   ? `Pay ${fmtUsd(total)} from wallet`
                   : shortfall > 0
                     ? `Confirm & Pay ${fmtUsd(shortfall)} via ABA`
                     : `Confirm & Pay ${fmtUsd(total)}`}
-              </Button>
-              <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75, mt: 1.5, color: tokens.text3 }}>
-                <LockIcon sx={{ fontSize: 12 }} />
-                <Typography sx={{ fontSize: 12 }}>Secured bank transfer · you can review before paying</Typography>
-              </Box>
-            </Box>
-          </Card>
-        </Box>
+              </button>
+              <div className={secureNoteCss}>
+                <Lock size={12} />
+                <p className={secureNoteTextCss}>Secured bank transfer · you can review before paying</p>
+              </div>
+            </div>
+          </div>
+        </div>
 
-        <Box sx={{ borderTop: `1px solid ${tokens.border}`, mt: 3, pt: 3 }}>
+        <div className={footerCss}>
           <PaymentFooterLogos variant='light' />
-        </Box>
-      </Container>
+        </div>
+      </div>
 
       {/* Overlays */}
       <TopUpDialog
@@ -374,46 +499,31 @@ function CheckoutContent() {
       />
       {flow.overlay}
       {gateDialog}
-    </Box>
+    </div>
   );
 }
 
 /* ---- local presentational helpers ---- */
 function HeaderBar({ onBack, label }: { onBack: () => void; label: string }) {
   return (
-    <Box sx={{ bgcolor: "#fff", borderBottom: `1px solid ${tokens.border}` }}>
-      <Container maxWidth='lg' sx={{ px: 3, py: 2 }}>
-        <Button onClick={onBack} startIcon={<ChevronLeft />} sx={{ fontSize: 12, color: tokens.text2, textTransform: "none", "&:hover": { color: "#000", bgcolor: "transparent" } }}>
+    <div className={headerBarCss}>
+      <div className={cx(containerCss, headerInnerCss)}>
+        <button type='button' onClick={onBack} className={backBtnCss}>
+          <ArrowLeft size={20} />
           {label}
-        </Button>
-      </Container>
-    </Box>
+        </button>
+      </div>
+    </div>
   );
-}
-function Card({ children }: { children: React.ReactNode }) {
-  return <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.75, md: 3.5 } }}>{children}</Box>;
-}
-function Label({ children }: { children: React.ReactNode }) {
-  return <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>{children}</Typography>;
-}
-function Meta({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: 12, fontWeight: 500, color: tokens.text2 }}>
-      {icon} {children}
-    </Box>
-  );
-}
-function IconTile({ children }: { children: React.ReactNode }) {
-  return <Box sx={{ width: 38, height: 38, borderRadius: "10px", bgcolor: "rgba(0,0,0,0.05)", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>{children}</Box>;
 }
 
 export default function CheckoutPage() {
   return (
     <Suspense
       fallback={
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: "100vh" }}>
-          <CircularProgress sx={{ color: tokens.accent }} />
-        </Box>
+        <div className={css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "100vh", color: "accent" })}>
+          <Spinner size={40} />
+        </div>
       }>
       <CheckoutContent />
     </Suspense>

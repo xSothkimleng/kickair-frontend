@@ -1,37 +1,37 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { css } from "styled-system/css";
 import {
-  Dialog,
-  DialogContent,
-  IconButton,
-  Box,
-  Typography,
-  Avatar,
-  Stack,
-  Chip,
-  Button,
-  Card,
-  CircularProgress,
-  Alert,
-} from "@mui/material";
-import {
-  Close as CloseIcon,
-  AccessTime as DeliveryIcon,
-  Refresh as RevisionIcon,
-  LocationOn as LocationIcon,
-  Email as EmailIcon,
+  X as CloseIcon,
+  Clock as DeliveryIcon,
+  RefreshCw as RevisionIcon,
+  MapPin as LocationIcon,
+  Mail as EmailIcon,
   Phone as PhoneIcon,
-  CheckCircle as CheckIcon,
-  Done as CompleteIcon,
-  Cancel as CancelIcon,
+  CheckCircle2 as CheckIcon,
+  Check as CompleteIcon,
+  XCircle as CancelIcon,
   Send as SendIcon,
   Gavel as DisputeIcon,
-  HourglassEmpty as AwaitingIcon,
-  AttachFile as AttachFileIcon,
-  InsertDriveFile as FileIcon,
+  Hourglass as AwaitingIcon,
+  Paperclip as AttachFileIcon,
+  FileText as FileIcon,
   Image as ImageIcon,
-} from "@mui/icons-material";
+  AlertCircle as ErrorIcon,
+  AlertTriangle as WarningIcon,
+} from "lucide-react";
+import { Spinner } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
+import {
+  alertActionCss, alertCloseCss, alertCss, alertFileRowCss, alertIconCss, alertMsgCss,
+  ModalAvatar, chipIconCss, chipWrapCss, descClampCss, dlgBodyCss, dlgBtn,
+  dlgCloseCss, dlgEyebrowCss, dlgHeaderCss, dlgStackCss, dlgTitleCss, eyebrowCss,
+  fileChipCss, fileChipDeleteCss, fileChipIconCss, fileChipLabelCss, iconTextRowCss,
+  lineCardCss, pillStatCss, row1Css, row15Css, stack05Css, stack075Css, stack15Css,
+  statusChipCss, startIconCss, startIconSmCss, t11body, t11muted, t12, t12body, t12muted,
+  t13b, t13m, t14b, t15b, tintCardCss, truncate,
+} from "@/components/dashboard/orderModalKit";
 import { Order, OrderStatus } from "@/types/order";
 import { api } from "@/lib/api";
 import { TextArea } from "@/components/ui/inputs";
@@ -46,6 +46,43 @@ interface FreelancerOrderDetailModalProps {
   onOrderUpdate: () => void;
   actionLoading: number | null;
 }
+
+const mb05 = css({ mb: "4px" });
+const mb1 = css({ mb: "8px" });
+const mb15 = css({ mb: "12px" });
+const mb2 = css({ mb: "16px" });
+const mt05 = css({ mt: "4px" });
+const mt1 = css({ mt: "8px" });
+const flex1 = css({ flex: 1 });
+const splitRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: "16px" });
+const statRow = css({ display: "flex", gap: "16px" });
+const fileRowCss = css({
+  display: "flex",
+  alignItems: "center",
+  px: "12px",
+  py: "6px",
+  bg: "#F5F5F7",
+  borderRadius: "8px",
+  "& > :not(style) ~ :not(style)": { marginLeft: "8px" },
+});
+const fileRemoveCss = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  flex: "0 0 auto",
+  m: 0,
+  p: "2px",
+  border: "none",
+  borderRadius: "50%",
+  bg: "transparent",
+  color: "rgba(0,0,0,0.4)",
+  cursor: "pointer",
+  appearance: "none",
+  fontFamily: "inherit",
+  _hover: { color: "#dc2626" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { display: "block" },
+});
 
 export default function FreelancerOrderDetailModal({
   open,
@@ -240,370 +277,266 @@ export default function FreelancerOrderDetailModal({
   const statusConfig = getStatusConfig(order.status);
 
   return (
-    <Dialog
+    <BareModal
       open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 4,
-          maxHeight: "90vh",
-          border: "1px solid rgba(0, 0, 0, 0.08)",
-        },
-      }}>
+      onOpenChange={(next) => { if (!next) onClose(); }}
+      maxW="600px">
       {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "space-between",
-          px: 3,
-          py: 2,
-          borderBottom: "1px solid rgba(0, 0, 0, 0.08)",
-        }}>
-        <Box>
-          <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)", textTransform: "uppercase", letterSpacing: 0.5 }}>
+      <div className={dlgHeaderCss}>
+        <div>
+          <p className={dlgEyebrowCss}>
             Order #{order.id}
-          </Typography>
-          <Typography sx={{ fontSize: 17, fontWeight: 600 }}>Order Details</Typography>
-        </Box>
-        <IconButton
-          onClick={onClose}
-          size="small"
-          sx={{
-            color: "rgba(0, 0, 0, 0.5)",
-            "&:hover": { bgcolor: "rgba(0, 0, 0, 0.04)" },
-          }}>
-          <CloseIcon sx={{ fontSize: 20 }} />
-        </IconButton>
-      </Box>
+          </p>
+          <p className={dlgTitleCss}>Order Details</p>
+        </div>
+        <button type="button" onClick={onClose} aria-label="Close" className={dlgCloseCss}>
+          <CloseIcon size={20} />
+        </button>
+      </div>
 
-      <DialogContent sx={{ p: 3 }}>
-        <Stack spacing={2.5}>
+      <div className={dlgBodyCss}>
+        <div className={dlgStackCss}>
           {/* Status Badge */}
-          <Chip
-            label={getStatusLabel(order.status)}
-            icon={order.status === "completed" ? <CheckIcon sx={{ fontSize: 14 }} /> : undefined}
-            size="small"
-            sx={{
-              alignSelf: "flex-start",
-              fontSize: 11,
-              fontWeight: 500,
-              height: 24,
-              ...statusConfig,
-              "& .MuiChip-icon": { color: statusConfig.color },
-            }}
-          />
+          <span className={statusChipCss} style={{ backgroundColor: statusConfig.bgcolor, color: statusConfig.color }}>
+            {order.status === "completed" ? <span className={chipIconCss}><CheckIcon size={18} /></span> : null}
+            {getStatusLabel(order.status)}
+          </span>
 
           {/* Delivered: Awaiting client banner */}
           {order.status === "delivered" && (
-            <Alert
-              icon={<AwaitingIcon />}
-              severity="info"
-              sx={{ borderRadius: 2 }}>
-              Your delivery is awaiting client approval. You will be notified when they respond.
-              {order.delivery_note && (
-                <Box sx={{ mt: 1 }}>
-                  <Typography sx={{ fontSize: 12, fontWeight: 600 }}>Your delivery note:</Typography>
-                  <Typography sx={{ fontSize: 12, mt: 0.5 }}>{order.delivery_note}</Typography>
-                </Box>
-              )}
-              {order.delivery_attachments?.length > 0 && (
-                <Stack spacing={0.5} sx={{ mt: 1 }}>
-                  <Typography sx={{ fontSize: 11, fontWeight: 600, color: "rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: 0.4 }}>
-                    Attachments sent
-                  </Typography>
-                  {order.delivery_attachments.map((f, i) => (
-                    <Stack
-                      key={i}
-                      component="a"
-                      href={f.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      direction="row"
-                      alignItems="center"
-                      spacing={0.75}
-                      sx={{
-                        px: 1.25, py: 0.75,
-                        bgcolor: "rgba(255,255,255,0.6)",
-                        borderRadius: 1.5,
-                        textDecoration: "none",
-                        color: "inherit",
-                        "&:hover": { bgcolor: "rgba(255,255,255,0.9)" },
-                        cursor: "pointer",
-                      }}
-                    >
-                      {f.file_type.startsWith("image/")
-                        ? <ImageIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.5)", flexShrink: 0 }} />
-                        : <FileIcon sx={{ fontSize: 14, color: "rgba(0,0,0,0.5)", flexShrink: 0 }} />}
-                      <Typography sx={{ fontSize: 12, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {f.file_name}
-                      </Typography>
-                    </Stack>
-                  ))}
-                </Stack>
-              )}
-            </Alert>
+            <div className={alertCss({ tone: "info" })}>
+              <span className={alertIconCss({ tone: "info" })}><AwaitingIcon size={24} /></span>
+              <div className={alertMsgCss}>
+                Your delivery is awaiting client approval. You will be notified when they respond.
+                {order.delivery_note && (
+                  <div className={mt1}>
+                    <p className={css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5 })}>Your delivery note:</p>
+                    <p className={`${t12} ${mt05}`}>{order.delivery_note}</p>
+                  </div>
+                )}
+                {order.delivery_attachments?.length > 0 && (
+                  <div className={`${stack05Css} ${mt1}`}>
+                    <p className={css({ fontSize: "11px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.5)", textTransform: "uppercase", letterSpacing: "0.4px" })}>
+                      Attachments sent
+                    </p>
+                    {order.delivery_attachments.map((f, i) => (
+                      <a
+                        key={i}
+                        href={f.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className={alertFileRowCss}
+                      >
+                        {f.file_type.startsWith("image/")
+                          ? <ImageIcon size={14} style={{ color: "rgba(0,0,0,0.5)", flexShrink: 0 }} />
+                          : <FileIcon size={14} style={{ color: "rgba(0,0,0,0.5)", flexShrink: 0 }} />}
+                        <span className={`${t12} ${truncate}`}>
+                          {f.file_name}
+                        </span>
+                      </a>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
           )}
 
           {/* Revision Requested: Show client feedback */}
           {order.status === "revision_requested" && order.revision_note && (
-            <Alert
-              severity="warning"
-              sx={{ borderRadius: 2 }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Revision Requested</Typography>
-              <Typography sx={{ fontSize: 12 }}>{order.revision_note}</Typography>
-            </Alert>
+            <div className={alertCss({ tone: "warning" })}>
+              <span className={alertIconCss({ tone: "warning" })}><WarningIcon size={22} /></span>
+              <div className={alertMsgCss}>
+                <p className={`${t13b} ${mb05}`}>Revision Requested</p>
+                <p className={t12}>{order.revision_note}</p>
+              </div>
+            </div>
           )}
 
           {/* Disputed: Show dispute info + evidence form */}
           {order.status === "disputed" && order.dispute && (
-            <Alert
-              icon={<DisputeIcon />}
-              severity="error"
-              sx={{ borderRadius: 2 }}>
-              <Typography sx={{ fontSize: 13, fontWeight: 600, mb: 0.5 }}>Dispute Opened</Typography>
-              <Typography sx={{ fontSize: 12, mb: 1 }}>{order.dispute.reason}</Typography>
-              {order.dispute.freelancer_evidence?.length ? (
-                <Typography sx={{ fontSize: 12, color: "rgba(0,0,0,0.6)" }}>
-                  Your evidence ({order.dispute.freelancer_evidence.length} file{order.dispute.freelancer_evidence.length !== 1 ? "s" : ""}) has been submitted.
-                </Typography>
-              ) : null}
-            </Alert>
+            <div className={alertCss({ tone: "error" })}>
+              <span className={alertIconCss({ tone: "error" })}><DisputeIcon size={24} /></span>
+              <div className={alertMsgCss}>
+                <p className={`${t13b} ${mb05}`}>Dispute Opened</p>
+                <p className={`${t12} ${mb1}`}>{order.dispute.reason}</p>
+                {order.dispute.freelancer_evidence?.length ? (
+                  <p className={t12body}>
+                    Your evidence ({order.dispute.freelancer_evidence.length} file{order.dispute.freelancer_evidence.length !== 1 ? "s" : ""}) has been submitted.
+                  </p>
+                ) : null}
+              </div>
+            </div>
           )}
 
           {/* Service Info */}
-          <Card
-            elevation={0}
-            sx={{
-              p: 2.5,
-              bgcolor: "#F5F5F7",
-              borderRadius: 3,
-            }}>
-            <Typography sx={{ fontSize: 15, fontWeight: 600, mb: 0.5 }}>{service?.title || "Service"}</Typography>
+          <div className={tintCardCss}>
+            <p className={`${t15b} ${mb05}`}>{service?.title || "Service"}</p>
             {service?.category && (
-              <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.5)", mb: 1.5 }}>
+              <p className={`${t12muted} ${mb15}`}>
                 {service.category.category_name}
-              </Typography>
+              </p>
             )}
             {service?.description && (
-              <Box
-                sx={{ fontSize: 13, color: "rgba(0,0,0,0.7)", lineHeight: 1.6, mb: 1.5, overflow: "hidden", display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", "& p": { m: 0 }, "& *": { fontSize: "inherit" } }}
+              <div
+                className={`${descClampCss} ${mb15}`}
                 dangerouslySetInnerHTML={{ __html: service.description }}
               />
             )}
             {service?.location && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                <LocationIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.4)" }} />
-                <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)" }}>{service.location}</Typography>
-              </Box>
+              <div className={iconTextRowCss}>
+                <LocationIcon size={14} style={{ color: "rgba(0, 0, 0, 0.4)", flexShrink: 0 }} />
+                <p className={t12body}>{service.location}</p>
+              </div>
             )}
-          </Card>
+          </div>
 
           {/* Client Info */}
-          <Card
-            elevation={0}
-            sx={{
-              p: 2.5,
-              border: "1px solid rgba(0, 0, 0, 0.08)",
-              borderRadius: 3,
-            }}>
-            <Typography
-              sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)", textTransform: "uppercase", letterSpacing: 0.5, mb: 1.5 }}>
+          <div className={lineCardCss}>
+            <p className={`${eyebrowCss} ${mb15}`}>
               Client
-            </Typography>
-            <Stack direction="row" spacing={2} alignItems="center">
-              <Avatar
-                src={client?.user?.avatar_url || undefined}
-                alt={client?.user?.name || "Client"}
-                sx={{ width: 48, height: 48 }}>
-                {client?.user?.name?.charAt(0) || "?"}
-              </Avatar>
-              <Box flex={1}>
-                <Typography sx={{ fontSize: 14, fontWeight: 600, mb: 0.5 }}>{client?.user?.name || "Unknown"}</Typography>
-                <Stack spacing={0.5}>
+            </p>
+            <div className={css({ display: "flex", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "16px" } })}>
+              <ModalAvatar src={client?.user?.avatar_url} alt={client?.user?.name || "Client"} fallback={client?.user?.name?.charAt(0) || "?"} />
+              <div className={flex1}>
+                <p className={`${t14b} ${mb05}`}>{client?.user?.name || "Unknown"}</p>
+                <div className={stack05Css}>
                   {client?.user?.email && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <EmailIcon sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.4)" }} />
-                      <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{client.user.email}</Typography>
-                    </Box>
+                    <div className={iconTextRowCss}>
+                      <EmailIcon size={12} style={{ color: "rgba(0, 0, 0, 0.4)", flexShrink: 0 }} />
+                      <p className={t11body}>{client.user.email}</p>
+                    </div>
                   )}
                   {client?.user?.telephone && (
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                      <PhoneIcon sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.4)" }} />
-                      <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.6)" }}>{client.user.telephone}</Typography>
-                    </Box>
+                    <div className={iconTextRowCss}>
+                      <PhoneIcon size={12} style={{ color: "rgba(0, 0, 0, 0.4)", flexShrink: 0 }} />
+                      <p className={t11body}>{client.user.telephone}</p>
+                    </div>
                   )}
-                </Stack>
-              </Box>
-            </Stack>
-          </Card>
+                </div>
+              </div>
+            </div>
+          </div>
 
           {/* Package & Price */}
-          <Card
-            elevation={0}
-            sx={{
-              p: 2.5,
-              border: "1px solid rgba(0, 0, 0, 0.08)",
-              borderRadius: 3,
-            }}>
-            <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", mb: 2 }}>
-              <Box>
-                <Typography
-                  sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)", textTransform: "uppercase", letterSpacing: 0.5, mb: 0.5 }}>
+          <div className={lineCardCss}>
+            <div className={splitRow}>
+              <div>
+                <p className={`${eyebrowCss} ${mb05}`}>
                   {isJobBased ? "Contract" : "Package"}
-                </Typography>
-                <Typography sx={{ fontSize: 14, fontWeight: 600 }}>
+                </p>
+                <p className={t14b}>
                   {pricingOption?.title ?? (isJobBased ? "Job Contract" : "Standard")}
-                </Typography>
-              </Box>
-              <Box sx={{ textAlign: "right" }}>
-                <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)", mb: 0.5 }}>Earnings</Typography>
-                <Typography sx={{ fontSize: 20, fontWeight: 600, color: "#16a34a" }}>
+                </p>
+              </div>
+              <div className={css({ textAlign: "right" })}>
+                <p className={`${t11muted} ${mb05}`}>Earnings</p>
+                <p className={css({ fontSize: "20px", fontWeight: 600, lineHeight: 1.5, color: "#16a34a" })}>
                   ${pricingOption?.price ?? order.price ?? "0"}
-                </Typography>
-              </Box>
-            </Box>
+                </p>
+              </div>
+            </div>
 
             {pricingOption?.description && (
-              <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.6)", mb: 2, lineHeight: 1.5 }}>
+              <p className={`${t12body} ${mb2}`}>
                 {pricingOption.description}
-              </Typography>
+              </p>
             )}
 
-            <Box sx={{ display: "flex", gap: 2 }}>
-              <Box
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1,
-                  px: 1.5,
-                  py: 1,
-                  bgcolor: "rgba(0, 0, 0, 0.03)",
-                  borderRadius: 2,
-                }}>
-                <DeliveryIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.5)" }} />
-                <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
+            <div className={statRow}>
+              <div className={pillStatCss}>
+                <DeliveryIcon size={14} style={{ color: "rgba(0, 0, 0, 0.5)", flexShrink: 0 }} />
+                <p className={css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.7)" })}>
                   {isJobBased
                     ? `${order.proposal?.timeline_days ?? "N/A"} day${order.proposal?.timeline_days !== 1 ? "s" : ""} (timeline)`
                     : (() => { const d = parseInt(String(pricingOption?.delivery_time ?? "")); return isNaN(d) ? "N/A" : `${d} day${d !== 1 ? "s" : ""}`; })()}
-                </Typography>
-              </Box>
+                </p>
+              </div>
               {!isJobBased && (
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 1,
-                    px: 1.5,
-                    py: 1,
-                    bgcolor: "rgba(0, 0, 0, 0.03)",
-                    borderRadius: 2,
-                  }}>
-                  <RevisionIcon sx={{ fontSize: 14, color: "rgba(0, 0, 0, 0.5)" }} />
-                  <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.7)" }}>
+                <div className={pillStatCss}>
+                  <RevisionIcon size={14} style={{ color: "rgba(0, 0, 0, 0.5)", flexShrink: 0 }} />
+                  <p className={css({ fontSize: "12px", lineHeight: 1.5, color: "rgba(0, 0, 0, 0.7)" })}>
                     {Number(pricingOption?.revisions) === -1 ? "Unlimited" : pricingOption?.revisions || "N/A"} revision
                     {Number(pricingOption?.revisions) !== 1 ? "s" : ""}
-                  </Typography>
-                </Box>
+                  </p>
+                </div>
               )}
-            </Box>
-          </Card>
+            </div>
+          </div>
 
           {/* Timeline */}
-          <Card
-            elevation={0}
-            sx={{
-              p: 2.5,
-              bgcolor: "#F5F5F7",
-              borderRadius: 3,
-            }}>
-            <Typography
-              sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)", textTransform: "uppercase", letterSpacing: 0.5, mb: 1.5 }}>
+          <div className={tintCardCss}>
+            <p className={`${eyebrowCss} ${mb15}`}>
               Timeline
-            </Typography>
-            <Stack spacing={1.5}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "#0071e3" }} />
-                <Box sx={{ flex: 1 }}>
-                  <Typography sx={{ fontSize: 13, fontWeight: 500 }}>Order Received</Typography>
-                  <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)" }}>{formatDateTime(order.created_at)}</Typography>
-                </Box>
-              </Box>
+            </p>
+            <div className={stack15Css}>
+              <div className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
+                <span className={css({ width: "6px", height: "6px", borderRadius: "50%", bg: "#0071e3", flexShrink: 0 })} />
+                <div className={flex1}>
+                  <p className={t13m}>Order Received</p>
+                  <p className={t11muted}>{formatDateTime(order.created_at)}</p>
+                </div>
+              </div>
               {order.updated_at !== order.created_at && (
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "rgba(0, 0, 0, 0.3)" }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography sx={{ fontSize: 13, fontWeight: 500 }}>Last Updated</Typography>
-                    <Typography sx={{ fontSize: 11, color: "rgba(0, 0, 0, 0.5)" }}>{formatDateTime(order.updated_at)}</Typography>
-                  </Box>
-                </Box>
+                <div className={css({ display: "flex", alignItems: "center", gap: "12px" })}>
+                  <span className={css({ width: "6px", height: "6px", borderRadius: "50%", bg: "rgba(0, 0, 0, 0.3)", flexShrink: 0 })} />
+                  <div className={flex1}>
+                    <p className={t13m}>Last Updated</p>
+                    <p className={t11muted}>{formatDateTime(order.updated_at)}</p>
+                  </div>
+                </div>
               )}
-            </Stack>
-          </Card>
+            </div>
+          </div>
 
           {actionError && (
-            <Alert severity="error" sx={{ borderRadius: 2 }} onClose={() => setActionError(null)}>
-              {actionError}
-            </Alert>
+            <div className={alertCss({ tone: "error" })}>
+              <span className={alertIconCss({ tone: "error" })}><ErrorIcon size={22} /></span>
+              <div className={alertMsgCss}>{actionError}</div>
+              <div className={alertActionCss}>
+                <button type="button" aria-label="Close" onClick={() => setActionError(null)} className={alertCloseCss}>
+                  <CloseIcon size={20} />
+                </button>
+              </div>
+            </div>
           )}
 
           {/* Action Buttons */}
-          <Stack spacing={1.5}>
+          <div className={stack15Css}>
             {/* Pending: Accept & Decline */}
             {order.status === "pending" && (
-              <Stack direction="row" spacing={1.5}>
-                <Button
-                  fullWidth
-                  variant="contained"
+              <div className={row15Css}>
+                <button
+                  type="button"
                   disabled={isLoading}
-                  startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : <CheckIcon sx={{ fontSize: 16 }} />}
                   onClick={() => onAccept(order.id)}
-                  sx={{
-                    height: 44,
-                    bgcolor: "#16a34a",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    borderRadius: 28,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: "#15803d", boxShadow: "none" },
-                  }}>
+                  className={dlgBtn({ look: "cta", full: true })}
+                  style={{ backgroundColor: isLoading ? undefined : "#16a34a" }}>
+                  <span className={startIconCss}>{isLoading ? <Spinner size={16} /> : <CheckIcon size={20} />}</span>
                   Accept Order
-                </Button>
-                <Button
-                  fullWidth
-                  variant="contained"
+                </button>
+                <button
+                  type="button"
                   disabled={isLoading}
-                  startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : <CancelIcon sx={{ fontSize: 16 }} />}
                   onClick={() => onCancel(order.id)}
-                  sx={{
-                    height: 44,
-                    bgcolor: "#ef4444",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    borderRadius: 28,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: "#dc2626", boxShadow: "none" },
-                  }}>
+                  className={dlgBtn({ look: "cta", full: true })}
+                  style={{ backgroundColor: isLoading ? undefined : "#ef4444" }}>
+                  <span className={startIconCss}>{isLoading ? <Spinner size={16} /> : <CancelIcon size={20} />}</span>
                   Decline
-                </Button>
-              </Stack>
+                </button>
+              </div>
             )}
 
             {/* Active: Submit Delivery */}
             {order.status === "active" && !showDisputeForm && (
-              <Box>
-                <Box sx={{ mb: 1.5 }}>
+              <div>
+                <div className={mb15}>
                   <TextArea
                     minRows={2}
                     placeholder="Add a delivery note for the client (optional)..."
                     value={deliveryNote}
                     onChange={setDeliveryNote}
                   />
-                </Box>
+                </div>
                 {/* Delivery file attachments */}
                 <input
                   ref={deliveryFileInputRef}
@@ -614,67 +547,55 @@ export default function FreelancerOrderDetailModal({
                   onChange={e => handleDeliveryFileUpload(e.target.files)}
                 />
                 {deliveryFiles.length > 0 && (
-                  <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+                  <div className={`${stack075Css} ${mb15}`}>
                     {deliveryFiles.map((f, i) => (
-                      <Stack key={i} direction="row" alignItems="center" spacing={1}
-                        sx={{ px: 1.5, py: 0.75, bgcolor: "#F5F5F7", borderRadius: 2 }}>
+                      <div key={i} className={fileRowCss}>
                         {f.file_type.startsWith("image/")
-                          ? <ImageIcon sx={{ fontSize: 16, color: "rgba(0,0,0,0.4)" }} />
-                          : <FileIcon sx={{ fontSize: 16, color: "rgba(0,0,0,0.4)" }} />}
-                        <Typography sx={{ fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          ? <ImageIcon size={16} style={{ color: "rgba(0,0,0,0.4)", flexShrink: 0 }} />
+                          : <FileIcon size={16} style={{ color: "rgba(0,0,0,0.4)", flexShrink: 0 }} />}
+                        <span className={`${t12} ${flex1} ${truncate}`}>
                           {f.file_name}
-                        </Typography>
-                        <IconButton size="small" onClick={() => setDeliveryFiles(prev => prev.filter((_, idx) => idx !== i))}
-                          sx={{ p: 0.25, color: "rgba(0,0,0,0.4)", "&:hover": { color: "#dc2626" } }}>
-                          <CloseIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Stack>
+                        </span>
+                        <button type="button" aria-label="Remove file" className={fileRemoveCss} onClick={() => setDeliveryFiles(prev => prev.filter((_, idx) => idx !== i))}>
+                          <CloseIcon size={14} />
+                        </button>
+                      </div>
                     ))}
-                  </Stack>
+                  </div>
                 )}
-                <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
+                <div className={`${row1Css} ${mb15}`}>
+                  <button
+                    type="button"
                     disabled={uploading || deliveryFiles.length >= 5}
-                    startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <AttachFileIcon sx={{ fontSize: 14 }} />}
                     onClick={() => deliveryFileInputRef.current?.click()}
-                    sx={{ textTransform: "none", fontSize: 12, borderRadius: 28, borderColor: "rgba(0,0,0,0.2)", color: "rgba(0,0,0,0.6)" }}>
+                    className={dlgBtn({ look: "attachOutline" })}>
+                    <span className={startIconSmCss}>{uploading ? <Spinner size={14} /> : <AttachFileIcon size={18} />}</span>
                     {uploading ? "Uploading..." : `Attach files (${deliveryFiles.length}/5)`}
-                  </Button>
-                </Stack>
-                <Button
-                  fullWidth
-                  variant="contained"
+                  </button>
+                </div>
+                <button
+                  type="button"
                   disabled={submitting || uploading}
-                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
                   onClick={handleDeliver}
-                  sx={{
-                    height: 44,
-                    bgcolor: "#16a34a",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    borderRadius: 28,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: "#15803d", boxShadow: "none" },
-                  }}>
+                  className={dlgBtn({ look: "cta", full: true })}
+                  style={{ backgroundColor: (submitting || uploading) ? undefined : "#16a34a" }}>
+                  <span className={startIconCss}>{submitting ? <Spinner size={16} /> : <SendIcon size={20} />}</span>
                   Submit Delivery
-                </Button>
-              </Box>
+                </button>
+              </div>
             )}
 
             {/* Revision Requested: Resubmit */}
             {order.status === "revision_requested" && !showDisputeForm && (
-              <Box>
-                <Box sx={{ mb: 1.5 }}>
+              <div>
+                <div className={mb15}>
                   <TextArea
                     minRows={2}
                     placeholder="Describe what you changed in this revision..."
                     value={deliveryNote}
                     onChange={setDeliveryNote}
                   />
-                </Box>
+                </div>
                 {/* Delivery file attachments */}
                 <input
                   ref={deliveryFileInputRef}
@@ -685,62 +606,50 @@ export default function FreelancerOrderDetailModal({
                   onChange={e => handleDeliveryFileUpload(e.target.files)}
                 />
                 {deliveryFiles.length > 0 && (
-                  <Stack spacing={0.75} sx={{ mb: 1.5 }}>
+                  <div className={`${stack075Css} ${mb15}`}>
                     {deliveryFiles.map((f, i) => (
-                      <Stack key={i} direction="row" alignItems="center" spacing={1}
-                        sx={{ px: 1.5, py: 0.75, bgcolor: "#F5F5F7", borderRadius: 2 }}>
+                      <div key={i} className={fileRowCss}>
                         {f.file_type.startsWith("image/")
-                          ? <ImageIcon sx={{ fontSize: 16, color: "rgba(0,0,0,0.4)" }} />
-                          : <FileIcon sx={{ fontSize: 16, color: "rgba(0,0,0,0.4)" }} />}
-                        <Typography sx={{ fontSize: 12, flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                          ? <ImageIcon size={16} style={{ color: "rgba(0,0,0,0.4)", flexShrink: 0 }} />
+                          : <FileIcon size={16} style={{ color: "rgba(0,0,0,0.4)", flexShrink: 0 }} />}
+                        <span className={`${t12} ${flex1} ${truncate}`}>
                           {f.file_name}
-                        </Typography>
-                        <IconButton size="small" onClick={() => setDeliveryFiles(prev => prev.filter((_, idx) => idx !== i))}
-                          sx={{ p: 0.25, color: "rgba(0,0,0,0.4)", "&:hover": { color: "#dc2626" } }}>
-                          <CloseIcon sx={{ fontSize: 14 }} />
-                        </IconButton>
-                      </Stack>
+                        </span>
+                        <button type="button" aria-label="Remove file" className={fileRemoveCss} onClick={() => setDeliveryFiles(prev => prev.filter((_, idx) => idx !== i))}>
+                          <CloseIcon size={14} />
+                        </button>
+                      </div>
                     ))}
-                  </Stack>
+                  </div>
                 )}
-                <Stack direction="row" spacing={1} sx={{ mb: 1.5 }}>
-                  <Button
-                    variant="outlined"
-                    size="small"
+                <div className={`${row1Css} ${mb15}`}>
+                  <button
+                    type="button"
                     disabled={uploading || deliveryFiles.length >= 5}
-                    startIcon={uploading ? <CircularProgress size={14} color="inherit" /> : <AttachFileIcon sx={{ fontSize: 14 }} />}
                     onClick={() => deliveryFileInputRef.current?.click()}
-                    sx={{ textTransform: "none", fontSize: 12, borderRadius: 28, borderColor: "rgba(0,0,0,0.2)", color: "rgba(0,0,0,0.6)" }}>
+                    className={dlgBtn({ look: "attachOutline" })}>
+                    <span className={startIconSmCss}>{uploading ? <Spinner size={14} /> : <AttachFileIcon size={18} />}</span>
                     {uploading ? "Uploading..." : `Attach files (${deliveryFiles.length}/5)`}
-                  </Button>
-                </Stack>
-                <Button
-                  fullWidth
-                  variant="contained"
+                  </button>
+                </div>
+                <button
+                  type="button"
                   disabled={submitting || uploading}
-                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <CompleteIcon sx={{ fontSize: 16 }} />}
                   onClick={handleResubmit}
-                  sx={{
-                    height: 44,
-                    bgcolor: "#0071e3",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    borderRadius: 28,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: "#0077ED", boxShadow: "none" },
-                  }}>
+                  className={dlgBtn({ look: "cta", full: true })}
+                  style={{ backgroundColor: (submitting || uploading) ? undefined : "#0071e3" }}>
+                  <span className={startIconCss}>{submitting ? <Spinner size={16} /> : <CompleteIcon size={20} />}</span>
                   Resubmit Work
-                </Button>
-              </Box>
+                </button>
+              </div>
             )}
 
             {/* Disputed: Submit evidence (files) */}
             {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && (
-              <Box>
-                <Typography sx={{ fontSize: 12, fontWeight: 600, mb: 1, color: "rgba(0,0,0,0.6)" }}>
+              <div>
+                <p className={`${css({ fontSize: "12px", fontWeight: 600, lineHeight: 1.5, color: "rgba(0,0,0,0.6)" })} ${mb1}`}>
                   Submit your evidence
-                </Typography>
+                </p>
                 <input
                   ref={evidenceFileInputRef}
                   type="file"
@@ -749,52 +658,42 @@ export default function FreelancerOrderDetailModal({
                   style={{ display: "none" }}
                   onChange={e => handleFileUpload(e.target.files, setSeparateEvidenceFiles, separateEvidenceFiles)}
                 />
-                <Button
-                  size="small"
-                  startIcon={uploading ? <CircularProgress size={12} /> : <AttachFileIcon sx={{ fontSize: 14 }} />}
+                <button
+                  type="button"
                   disabled={uploading || separateEvidenceFiles.length >= 5}
                   onClick={() => evidenceFileInputRef.current?.click()}
-                  sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.5)", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 2, px: 1.5, py: 0.5, mb: 1, "&:hover": { borderColor: "rgba(0,0,0,0.4)", bgcolor: "rgba(0,0,0,0.02)" } }}>
+                  className={`${dlgBtn({ look: "attach" })} ${mb1}`}>
+                  <span className={startIconSmCss}>{uploading ? <Spinner size={12} /> : <AttachFileIcon size={18} />}</span>
                   {uploading ? "Uploading..." : "Attach files (images or PDF, max 5)"}
-                </Button>
+                </button>
                 {separateEvidenceFiles.length > 0 && (
-                  <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1}>
+                  <div className={`${chipWrapCss} ${mb1}`}>
                     {separateEvidenceFiles.map((f, i) => (
-                      <Chip
-                        key={i}
-                        label={f.file_name.length > 22 ? f.file_name.slice(0, 20) + "…" : f.file_name}
-                        size="small"
-                        icon={f.file_type === "image" ? <ImageIcon sx={{ fontSize: 12 }} /> : <FileIcon sx={{ fontSize: 12 }} />}
-                        onDelete={() => setSeparateEvidenceFiles(prev => prev.filter((_, j) => j !== i))}
-                        sx={{ fontSize: 11, height: 24 }}
-                      />
+                      <span key={i} className={fileChipCss}>
+                        <span className={fileChipIconCss}>{f.file_type === "image" ? <ImageIcon size={18} /> : <FileIcon size={18} />}</span>
+                        <span className={fileChipLabelCss}>{f.file_name.length > 22 ? f.file_name.slice(0, 20) + "…" : f.file_name}</span>
+                        <button type="button" aria-label="Remove" className={fileChipDeleteCss} onClick={() => setSeparateEvidenceFiles(prev => prev.filter((_, j) => j !== i))}>
+                          <CloseIcon size={16} />
+                        </button>
+                      </span>
                     ))}
-                  </Stack>
+                  </div>
                 )}
-                <Button
-                  fullWidth
-                  variant="contained"
+                <button
+                  type="button"
                   disabled={submitting || uploading || !separateEvidenceFiles.length}
-                  startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : <SendIcon sx={{ fontSize: 16 }} />}
                   onClick={handleSubmitEvidence}
-                  sx={{
-                    height: 44,
-                    bgcolor: "#7c3aed",
-                    fontSize: 13,
-                    fontWeight: 500,
-                    borderRadius: 28,
-                    textTransform: "none",
-                    boxShadow: "none",
-                    "&:hover": { bgcolor: "#6d28d9", boxShadow: "none" },
-                  }}>
+                  className={dlgBtn({ look: "cta", full: true })}
+                  style={{ backgroundColor: (submitting || uploading || !separateEvidenceFiles.length) ? undefined : "#7c3aed" }}>
+                  <span className={startIconCss}>{submitting ? <Spinner size={16} /> : <SendIcon size={20} />}</span>
                   Submit Evidence
-                </Button>
-              </Box>
+                </button>
+              </div>
             )}
 
             {/* Open Dispute — low prominence link for active/delivered */}
             {(order.status === "active" || order.status === "delivered") && (
-              <Box>
+              <div>
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -804,74 +703,66 @@ export default function FreelancerOrderDetailModal({
                   onChange={e => handleFileUpload(e.target.files, setEvidenceFiles, evidenceFiles)}
                 />
                 {!showDisputeForm ? (
-                  <Button
-                    size="small"
-                    startIcon={<DisputeIcon sx={{ fontSize: 14 }} />}
+                  <button
+                    type="button"
                     onClick={() => setShowDisputeForm(true)}
-                    sx={{
-                      fontSize: 12,
-                      color: "rgba(0,0,0,0.4)",
-                      textTransform: "none",
-                      "&:hover": { color: "#ef4444", bgcolor: "transparent" },
-                    }}>
+                    className={dlgBtn({ look: "quiet" })}>
+                    <span className={startIconSmCss}><DisputeIcon size={18} /></span>
                     Open a dispute
-                  </Button>
+                  </button>
                 ) : (
-                  <Box>
-                    <Box sx={{ mb: 1.5 }}>
+                  <div>
+                    <div className={mb15}>
                       <TextArea
                         minRows={2}
                         placeholder="Describe the reason for the dispute..."
                         value={disputeReason}
                         onChange={setDisputeReason}
                       />
-                    </Box>
-                    <Button
-                      size="small"
-                      startIcon={uploading ? <CircularProgress size={12} /> : <AttachFileIcon sx={{ fontSize: 14 }} />}
+                    </div>
+                    <button
+                      type="button"
                       disabled={uploading || evidenceFiles.length >= 5}
                       onClick={() => fileInputRef.current?.click()}
-                      sx={{ fontSize: 12, textTransform: "none", color: "rgba(0,0,0,0.5)", border: "1px dashed rgba(0,0,0,0.2)", borderRadius: 2, px: 1.5, py: 0.5, mb: 1, "&:hover": { borderColor: "rgba(0,0,0,0.4)", bgcolor: "rgba(0,0,0,0.02)" } }}>
+                      className={`${dlgBtn({ look: "attach" })} ${mb1}`}>
+                      <span className={startIconSmCss}>{uploading ? <Spinner size={12} /> : <AttachFileIcon size={18} />}</span>
                       {uploading ? "Uploading..." : "Attach evidence (optional)"}
-                    </Button>
+                    </button>
                     {evidenceFiles.length > 0 && (
-                      <Stack direction="row" flexWrap="wrap" gap={0.5} mb={1}>
+                      <div className={`${chipWrapCss} ${mb1}`}>
                         {evidenceFiles.map((f, i) => (
-                          <Chip
-                            key={i}
-                            label={f.file_name.length > 22 ? f.file_name.slice(0, 20) + "…" : f.file_name}
-                            size="small"
-                            icon={f.file_type === "image" ? <ImageIcon sx={{ fontSize: 12 }} /> : <FileIcon sx={{ fontSize: 12 }} />}
-                            onDelete={() => setEvidenceFiles(prev => prev.filter((_, j) => j !== i))}
-                            sx={{ fontSize: 11, height: 24 }}
-                          />
+                          <span key={i} className={fileChipCss}>
+                            <span className={fileChipIconCss}>{f.file_type === "image" ? <ImageIcon size={18} /> : <FileIcon size={18} />}</span>
+                            <span className={fileChipLabelCss}>{f.file_name.length > 22 ? f.file_name.slice(0, 20) + "…" : f.file_name}</span>
+                            <button type="button" aria-label="Remove" className={fileChipDeleteCss} onClick={() => setEvidenceFiles(prev => prev.filter((_, j) => j !== i))}>
+                              <CloseIcon size={16} />
+                            </button>
+                          </span>
                         ))}
-                      </Stack>
+                      </div>
                     )}
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        color="error"
+                    <div className={row1Css}>
+                      <button
+                        type="button"
                         disabled={submitting || uploading || !disputeReason.trim()}
                         onClick={handleOpenDispute}
-                        sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
-                        {submitting ? <CircularProgress size={14} /> : "Open Dispute"}
-                      </Button>
-                      <Button
-                        size="small"
+                        className={dlgBtn({ look: "outlineSmError" })}>
+                        {submitting ? <Spinner size={14} /> : "Open Dispute"}
+                      </button>
+                      <button
+                        type="button"
                         onClick={() => { setShowDisputeForm(false); setDisputeReason(""); setEvidenceFiles([]); }}
-                        sx={{ borderRadius: 28, textTransform: "none", fontSize: 12 }}>
+                        className={dlgBtn({ look: "textSm" })}>
                         Cancel
-                      </Button>
-                    </Stack>
-                  </Box>
+                      </button>
+                    </div>
+                  </div>
                 )}
-              </Box>
+              </div>
             )}
-          </Stack>
-        </Stack>
-      </DialogContent>
-    </Dialog>
+          </div>
+        </div>
+      </div>
+    </BareModal>
   );
 }

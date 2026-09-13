@@ -1,5 +1,11 @@
 # MUI → Panda migration guide (kickair-frontend)
 
+> **Status (2026-09-13): the migration is complete.** `@mui/*` and `@emotion/*` are uninstalled and
+> `src/theme.ts` is gone. Panda `preflight` stays **off** (see the note in `panda.config.ts`: flipping
+> it re-flows the pre-rulebook pages), so the preflight-off gotchas below still apply to new code. This
+> file stays as the Panda styling rulebook: the component mapping, `sx` → Panda tables, token tables and
+> typography table remain the reference for MUI-era code in git history or design hand-offs.
+
 Goal: remove `@mui/*` and `@emotion/*` from the user-facing site while keeping every page
 looking and behaving exactly as it does today. Restyling comes later; this pass is a faithful port.
 Read this whole file before touching a page. HANDOFF.md → "Next: remove MUI from the user-facing
@@ -101,8 +107,11 @@ Values: **write px strings** (`p: "16px"`), not MUI spacing numbers — MUI `p: 
 - `display: { xs: "none", md: "block" }` etc. port directly.
 - `theme.palette.*`, `primary.main` → tokens below. `"text.secondary"` → `muted`/`ink2` depending on the page palette (see tokens).
 - `component="span"` → just render that element. `noWrap` → `truncate` on `Text` / `whiteSpace:"nowrap", overflow:"hidden", textOverflow:"ellipsis"`.
-- With Panda `preflight` still off: buttons/inputs you hand-roll need `fontFamily: "inherit"`, `border: "none"`/explicit borders, `bg`, `cursor`, `p: 0`; `box-sizing` is global. `globals.css` zeroes margins on `p, h1–h6, ul` and sets `a { color: inherit }` **outside any layer**, so those beat utilities: put padding/margins on a wrapping `div`, and use `!important` for link colours (`color: "var(--colors-accent) !important"`) or the ds `Link`.
+- With Panda `preflight` off (still the case): buttons/inputs you hand-roll need `fontFamily: "inherit"`, `border: "none"`/explicit borders, `bg`, `cursor`, `p: 0`; elements are **`content-box`**, so anything with `w: "100%"` plus horizontal padding needs `boxSizing: "border-box"` or it overflows the viewport. `globals.css` zeroes margins on `p, h1–h6, ul` and sets `a { color: inherit }` **outside any layer**, so those beat utilities: put padding/margins on a wrapping `div`, and use `!important` for link colours (`color: "var(--colors-accent) !important"`) or the ds `Link`. Turning preflight on later means auditing the pre-rulebook files for exactly these two things (dead margins that would come alive, containers that shrink under border-box).
 - Ark parts that hide via the `hidden` attribute need `"&[hidden]": { display: "none" }` if your class sets `display`.
+- **Panda only extracts what it can read statically.** A value pulled from an imported constant (`color: tokens.accent`, `` border: `1px solid ${C.border}` ``) still produces a class name at runtime, but **no CSS is emitted** and the element silently falls back to browser defaults. Inside `css()`/`cva()` use Panda token names or inline literals only; write template-literal borders as `borderWidth`/`borderStyle`/`borderColor`. Colours that really are dynamic go through a `style={{ color: "var(--colors-accent)" }}` prop, not through `css()`. Check with `grep -n 'tokens\.\|\${' <file>` and, if in doubt, dump `document.styleSheets` for one of your class names.
+- Two atomic classes for the same property (`cx(mgCard, css({ bg: … }))`) are resolved by stylesheet order, not by `cx` order. To override a shared class's property from a variant, hook it on an attribute: `css({ "&[data-muted]": { bg: "#FBFBFD" } })` + `data-muted={muted ? "" : undefined}` — the attribute selector outranks the base class.
+- MUI `Typography` margins (`sx={{ mt, mb }}`) on `p`/`h*` never applied (the unlayered `globals.css` rule beat Emotion too), so drop them instead of porting — porting them *adds* spacing that was not there.
 
 ## Tokens (panda.config.ts) — map 1:1, don't invent colours
 

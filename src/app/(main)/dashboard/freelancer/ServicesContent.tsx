@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Box, Paper, Typography, Button, CircularProgress, Dialog, DialogContent, DialogContentText, DialogActions } from "@mui/material";
-import { AddOutlined, WorkOutlined } from "@mui/icons-material";
+import { Briefcase, Plus } from "lucide-react";
+import { css, cx } from "styled-system/css";
+import { Spinner } from "@/components/ds";
+import { BareModal } from "@/components/ds/BareModal";
 import { Service } from "@/types/service";
 import ServiceCard from "@/components/dashboard/freelancer/ServiceCard";
 import DraftCard from "@/components/dashboard/freelancer/DraftCard";
@@ -11,6 +13,113 @@ import ServiceForm from "@/components/dashboard/freelancer/ServiceForm";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { useRouter } from "next/navigation";
+
+const page = css({ display: "flex", flexDirection: "column", gap: "24px" });
+const loadingBlock = css({ display: "flex", justifyContent: "center", alignItems: "center", minH: "300px" });
+const header = css({ display: "flex", alignItems: "center", justifyContent: "space-between" });
+const pageTitle = css({ lineHeight: 1.5, fontSize: "28px", fontWeight: 600, color: "ink" });
+const pageSub = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const createBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  gap: "8px",
+  boxSizing: "border-box",
+  m: 0,
+  px: "24px",
+  h: "44px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "40px",
+  bg: "ink",
+  color: "white",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.8)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const sectionCard = css({
+  bg: "surface",
+  borderRadius: "card",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  p: "24px",
+});
+/* globals.css zeroes p margins outside any layer, so the old Typography `mb` never applied — dropped. */
+const sectionTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const centreBlock = css({ textAlign: "center", py: "48px" });
+const errorText = css({ lineHeight: 1.5, fontSize: "13px", color: "rgba(239, 68, 68, 0.8)" });
+const retryBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  m: 0,
+  p: "6px 8px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  color: "ink",
+  fontFamily: "inherit",
+  fontSize: "12px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.04)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+const cardList = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const emptyIcon = css({ display: "inline-block", color: "rgba(0, 0, 0, 0.2)", mb: "16px" });
+const emptyText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const draftsHeader = css({ display: "flex", alignItems: "center", gap: "8px", mb: "4px" });
+const draftsTitle = css({ lineHeight: 1.5, fontSize: "17px", fontWeight: 600, color: "ink" });
+const draftsCount = css({
+  px: "8px",
+  py: "2px",
+  bg: "rgba(0,0,0,0.05)",
+  color: "ink2",
+  fontSize: "11px",
+  fontWeight: 600,
+  borderRadius: "4px",
+});
+const draftsSub = css({ lineHeight: 1.5, fontSize: "12px", color: "rgba(0, 0, 0, 0.5)" });
+
+/* Delete confirmation — MUI `Dialog` (default `sm`) with DialogContent/DialogActions padding. */
+const dialogBody = css({ p: "20px 24px", overflowY: "auto", flex: 1 });
+const dialogTitle = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 600, color: "ink" });
+const dialogText = css({ lineHeight: 1.5, fontSize: "13px", color: "ink2" });
+const dialogActions = css({ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "8px", p: "8px", flex: "0 0 auto" });
+const dialogBtn = css({
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  boxSizing: "border-box",
+  m: 0,
+  p: "6px 8px",
+  minW: "64px",
+  border: "none",
+  borderRadius: "4px",
+  bg: "transparent",
+  fontFamily: "inherit",
+  fontSize: "13px",
+  fontWeight: 500,
+  lineHeight: 1.75,
+  cursor: "pointer",
+  transition: "background-color .25s",
+  _hover: { bg: "rgba(0, 0, 0, 0.04)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  _disabled: { pointerEvents: "none", opacity: 0.5 },
+});
+const dialogCancel = css({ color: "ink2" });
+const dialogDelete = css({ color: "#ef4444" });
 
 export default function ServicesContent() {
   const router = useRouter();
@@ -73,9 +182,9 @@ export default function ServicesContent() {
 
   if (editLoading) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 }}>
-        <CircularProgress />
-      </Box>
+      <div className={loadingBlock}>
+        <Spinner size={40} className={css({ color: "accent" })} />
+      </div>
     );
   }
 
@@ -87,49 +196,36 @@ export default function ServicesContent() {
   const liveServices = services.filter(s => s.status !== "draft");
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className={page}>
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Box>
-          <Typography sx={{ fontSize: 28, fontWeight: 600, color: "black", mb: 0.5 }}>My Services</Typography>
-          <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>Create and manage your service offerings</Typography>
-        </Box>
-        <Button
-          onClick={() => setView("create")}
-          startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
-          sx={{
-            px: 3,
-            height: 44,
-            fontSize: 13,
-            color: "white",
-            bgcolor: "black",
-            borderRadius: 10,
-            textTransform: "none",
-            "&:hover": {
-              bgcolor: "rgba(0, 0, 0, 0.8)",
-            },
-          }}>
+      <div className={header}>
+        <div>
+          <p className={pageTitle}>My Services</p>
+          <p className={pageSub}>Create and manage your service offerings</p>
+        </div>
+        <button type="button" onClick={() => setView("create")} className={createBtn}>
+          <Plus size={16} />
           Create Service
-        </Button>
-      </Box>
+        </button>
+      </div>
 
       {/* Active Services */}
-      <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 3 }}>
-        <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black", mb: 2 }}>Your Services</Typography>
+      <div className={sectionCard}>
+        <p className={sectionTitle}>Your Services</p>
 
         {loading ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <CircularProgress size={32} sx={{ color: "rgba(0, 0, 0, 0.4)" }} />
-          </Box>
+          <div className={centreBlock}>
+            <Spinner size={32} className={css({ color: "rgba(0, 0, 0, 0.4)" })} />
+          </div>
         ) : error ? (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <Typography sx={{ fontSize: 13, color: "rgba(239, 68, 68, 0.8)", mb: 2 }}>{error}</Typography>
-            <Button onClick={fetchServices} sx={{ fontSize: 12, textTransform: "none" }}>
+          <div className={centreBlock}>
+            <p className={errorText}>{error}</p>
+            <button type="button" onClick={fetchServices} className={retryBtn}>
               Try again
-            </Button>
-          </Box>
+            </button>
+          </div>
         ) : liveServices.length > 0 ? (
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          <div className={cardList}>
             {liveServices.map(service => (
               <ServiceCard
                 key={service.id}
@@ -139,46 +235,50 @@ export default function ServicesContent() {
                 onDelete={() => setDeleteTarget(service)}
               />
             ))}
-          </Box>
+          </div>
         ) : (
-          <Box sx={{ textAlign: "center", py: 6 }}>
-            <WorkOutlined sx={{ fontSize: 48, color: "rgba(0, 0, 0, 0.2)", mb: 2 }} />
-            <Typography sx={{ fontSize: 13, color: "rgba(0, 0, 0, 0.6)" }}>No active services yet</Typography>
-          </Box>
+          <div className={centreBlock}>
+            <Briefcase size={48} className={emptyIcon} />
+            <p className={emptyText}>No active services yet</p>
+          </div>
         )}
-      </Paper>
+      </div>
 
       {/* Delete confirmation dialog */}
-      <Dialog open={!!deleteTarget} onClose={() => !deleting && setDeleteTarget(null)}>
-        <DialogContent>
-          <Typography sx={{ fontSize: 16, fontWeight: 600, mb: 1 }}>Delete Service</Typography>
-          <DialogContentText sx={{ fontSize: 13 }}>
+      <BareModal
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open && !deleting) setDeleteTarget(null); }}
+        maxW="600px"
+        backdropClassName={css({ bg: "rgba(0, 0, 0, 0.5)" })}>
+        <div className={dialogBody}>
+          <p className={dialogTitle}>Delete Service</p>
+          <p className={dialogText}>
             Are you sure you want to delete <strong>{deleteTarget?.title}</strong>? This cannot be undone.
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDeleteTarget(null)} disabled={deleting} sx={{ fontSize: 13, textTransform: "none", color: "rgba(0,0,0,0.6)" }}>
+          </p>
+        </div>
+        <div className={dialogActions}>
+          <button type="button" onClick={() => setDeleteTarget(null)} disabled={deleting} className={cx(dialogBtn, dialogCancel)}>
             Cancel
-          </Button>
-          <Button onClick={handleDeleteConfirm} disabled={deleting} sx={{ fontSize: 13, textTransform: "none", color: "#ef4444" }}>
-            {deleting ? <CircularProgress size={16} sx={{ color: "#ef4444" }} /> : "Delete"}
-          </Button>
-        </DialogActions>
-      </Dialog>
+          </button>
+          <button type="button" onClick={handleDeleteConfirm} disabled={deleting} className={cx(dialogBtn, dialogDelete)}>
+            {deleting ? <Spinner size={16} className={css({ color: "#ef4444" })} /> : "Delete"}
+          </button>
+        </div>
+      </BareModal>
 
       {/* Drafts — private, never reviewed or public until published */}
       {drafts.length > 0 && (
-        <Paper elevation={0} sx={{ borderRadius: 4, border: "1px solid rgba(0, 0, 0, 0.08)", p: 3 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}>
-            <Typography sx={{ fontSize: 17, fontWeight: 600, color: "black" }}>Drafts</Typography>
-            <Box sx={{ px: 1, py: 0.25, bgcolor: "rgba(0,0,0,0.05)", color: "rgba(0,0,0,0.6)", fontSize: 11, fontWeight: 600, borderRadius: 1 }}>
+        <div className={sectionCard}>
+          <div className={draftsHeader}>
+            <p className={draftsTitle}>Drafts</p>
+            <div className={draftsCount}>
               {drafts.length}
-            </Box>
-          </Box>
-          <Typography sx={{ fontSize: 12, color: "rgba(0, 0, 0, 0.5)", mb: 2 }}>
+            </div>
+          </div>
+          <p className={draftsSub}>
             Only you can see these. Continue editing and publish when you&apos;re ready for admin review.
-          </Typography>
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
+          </p>
+          <div className={cardList}>
             {drafts.map(draft => (
               <DraftCard
                 key={draft.id}
@@ -187,9 +287,9 @@ export default function ServicesContent() {
                 onDelete={() => setDeleteTarget(draft)}
               />
             ))}
-          </Box>
-        </Paper>
+          </div>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }

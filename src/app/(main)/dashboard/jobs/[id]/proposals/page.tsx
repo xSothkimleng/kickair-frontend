@@ -2,21 +2,11 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { Box, Container, Typography, Button, CircularProgress, Alert, Avatar, Skeleton, Pagination } from "@mui/material";
-import {
-  ChevronLeftOutlined,
-  Check as CheckIcon,
-  Close as CloseIcon,
-  EditOutlined,
-  RefreshOutlined,
-  InfoOutlined,
-  InsertDriveFileOutlined,
-  ArrowForwardOutlined,
-  MoveToInboxOutlined,
-} from "@mui/icons-material";
+import { ChevronLeft, Check, X, Pencil, RotateCcw, Info, FileText, Inbox } from "lucide-react";
+import { css, cva, cx } from "styled-system/css";
+import { Alert, Avatar, Pager, Skeleton, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { JobPost, Proposal, ProposalStatus, JobPostStatus } from "@/types/job";
-import { tokens } from "@/theme";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 
 type Filter = "all" | ProposalStatus;
@@ -38,12 +28,12 @@ function deadlineInfo(s: string) {
 
 /* ── status chips ── */
 type Tone = "success" | "pending" | "error" | "info" | "neutral";
-const TONE: Record<Tone, { bg: string; color: string }> = {
-  success: { bg: tokens.successTint, color: tokens.successText },
-  pending: { bg: tokens.pendingTint, color: tokens.pendingText },
-  error: { bg: tokens.errorTint, color: tokens.errorText },
-  info: { bg: "rgba(37,99,235,0.10)", color: "#1d4ed8" },
-  neutral: { bg: "rgba(0,0,0,0.05)", color: tokens.text2 },
+const TONE_CLASS: Record<Tone, string> = {
+  success: css({ bg: "successTint", color: "successText" }),
+  pending: css({ bg: "pendingTint", color: "pendingText" }),
+  error: css({ bg: "errorTint", color: "errorText" }),
+  info: css({ bg: "rgba(37,99,235,0.10)", color: "#1d4ed8" }),
+  neutral: css({ bg: "rgba(0,0,0,0.05)", color: "ink2" }),
 };
 const JOB_STATUS: Record<string, { tone: Tone; label: string }> = {
   open: { tone: "success", label: "Open" },
@@ -59,26 +49,247 @@ const PROP_STATUS: Record<ProposalStatus, { tone: Tone; label: string }> = {
   rejected: { tone: "error", label: "Not selected" },
   withdrawn: { tone: "neutral", label: "Withdrawn" },
 };
+
+/* ── static styles ── */
+const chipBase = cva({
+  base: { display: "inline-flex", alignItems: "center", gap: "6px", borderRadius: "pill", fontWeight: 600 },
+  variants: { size: { md: { h: "26px", px: "10px", fontSize: "12px" }, lg: { h: "34px", px: "14px", fontSize: "13px" } } },
+  defaultVariants: { size: "md" },
+});
+const chipDot = css({ w: "6px", h: "6px", borderRadius: "50%", bg: "currentColor" });
+
+const pageRoot = css({ minH: "100vh", bg: "canvas" });
+const container = css({
+  w: "100%", boxSizing: "border-box", maxW: "1080px", mx: "auto",
+  px: { base: "16px", sm: "24px" }, py: { base: "24px", md: "40px" },
+});
+const column = css({ display: "flex", flexDirection: "column", gap: { base: "18px", md: "24px" } });
+const backBtn = css({
+  alignSelf: "flex-start",
+  display: "inline-flex", alignItems: "center", gap: "8px",
+  m: 0, p: "2px 4px", border: "none", bg: "transparent",
+  color: "ink2", fontFamily: "inherit", fontSize: "14px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "color .25s",
+  _hover: { color: "#000", bg: "transparent" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  "& svg": { flexShrink: 0 },
+});
+const alertRounded = css({ borderRadius: "8px" });
+const retryBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  boxSizing: "border-box", m: 0, p: "4px 5px", minW: "64px", border: "none", borderRadius: "4px",
+  bg: "transparent", color: "inherit", fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s",
+  _hover: { bg: "rgba(0,0,0,0.06)" },
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+});
+
+const rejectBanner = css({
+  borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(220,38,38,0.25)",
+  bg: "errorTint", borderRadius: "cardSm", p: "20px",
+  display: "flex", gap: "14px", alignItems: "flex-start",
+});
+const rejectIcon = css({
+  w: "36px", h: "36px", borderRadius: "50%", bg: "rgba(220,38,38,0.14)", color: "error",
+  display: "flex", alignItems: "center", justifyContent: "center", flex: "none",
+});
+const rejectTitle = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600, color: "errorText" });
+const rejectBody = css({ fontSize: "13.5px", lineHeight: 1.55, color: "ink2" });
+
+const pillBtnBase = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center", gap: "8px",
+  boxSizing: "border-box", m: 0, h: "36px", minW: "64px", border: "none", borderRadius: "pill",
+  fontFamily: "inherit", fontSize: "13px", fontWeight: 500, lineHeight: 1.75,
+  cursor: "pointer", transition: "background-color .25s, color .25s",
+  _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  _disabled: { pointerEvents: "none", color: "rgba(0, 0, 0, 0.26)" },
+  "& svg": { flexShrink: 0 },
+});
+const darkBtn = css({ bg: "#000", color: "#fff", _hover: { bg: "rgba(0,0,0,0.8)" } });
+const softBtn = css({ bg: "rgba(0,0,0,0.05)", color: "#000", _hover: { bg: "rgba(0,0,0,0.1)" } });
+const dangerGhostBtn = css({ bg: "transparent", color: "errorText", _hover: { bg: "errorTint" } });
+/* `px` lives only on these leaves — two atomic classes for one property are resolved by
+   stylesheet order, not by `cx` order. */
+const px14 = css({ px: "14px" });
+const px16 = css({ px: "16px" });
+const resubmitBtn = css({ mt: "10px" });
+
+const headerCard = css({
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card",
+  p: { base: "22px", md: "28px" },
+});
+const headRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "16px", flexDirection: { base: "column", md: "row" } });
+const headMain = css({ display: "flex", flexDirection: "column", gap: "12px", minW: 0 });
+const jobTitle = css({ fontSize: { base: "22px", md: "28px" }, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15 });
+const hiredRow = css({ display: "flex", alignItems: "center", gap: "9px" });
+const hiredIcon = css({ w: "22px", h: "22px", borderRadius: "50%", bg: "successTint", color: "success", display: "flex", alignItems: "center", justifyContent: "center" });
+const hiredName = css({ lineHeight: 1.5, fontSize: "18px", fontWeight: 600 });
+const dotSep = css({ color: "ink3" });
+const hiredCount = css({ lineHeight: 1.5, fontSize: "15px", color: "ink2" });
+const noProposalsYet = css({ lineHeight: 1.5, fontSize: "16px", fontWeight: 500, color: "ink2" });
+const proposalTally = css({ display: "flex", alignItems: "baseline", gap: "9px" });
+const tallyMain = css({ lineHeight: 1.5, fontSize: "19px", fontWeight: 600, letterSpacing: "-0.015em" });
+const tallyFresh = css({ lineHeight: 1.5, fontSize: "15px", fontWeight: 600, color: "accent" });
+const ownerActions = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
+
+const factsRow = css({ display: "flex", flexWrap: "wrap", rowGap: "18px", my: { base: "20px", md: "22px" } });
+const factCell = css({ display: "flex", flex: { base: "0 0 50%", md: "none" } });
+const factSep = css({ w: "1px", h: "30px", bg: "hairline", mx: "24px", display: { base: "none", md: "block" } });
+const factWrap = css({ display: "flex", flexDirection: "column", gap: "3px", minW: 0 });
+const factLabel = css({ lineHeight: 1.5, fontSize: "10.5px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const factValue = cva({
+  base: { lineHeight: 1.5, fontSize: "15px", fontWeight: 600, letterSpacing: "-0.01em", whiteSpace: "nowrap" },
+  variants: { urgent: { true: { color: "errorText" }, false: { color: "ink" } } },
+});
+const factSub = css({ fontWeight: 400, color: "ink3", ml: "6px", fontSize: "13px" });
+
+const skillWrap = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
+const skillChip = css({ display: "inline-flex", alignItems: "center", h: "30px", px: "13px", borderRadius: "pill", fontSize: "12.5px", fontWeight: 500, bg: "rgba(0,0,0,0.05)", color: "ink2" });
+const rule = css({ h: "1px", bg: "hairline", my: { base: "20px", md: "24px" } });
+const capLabel = css({ lineHeight: 1.5, fontSize: "11px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+
+const proposalsRegion = css({ display: "flex", flexDirection: "column", gap: "16px" });
+const regionHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "14px" });
+const regionTitle = css({ lineHeight: 1.5, fontSize: "22px", fontWeight: 600, letterSpacing: "-0.015em" });
+const filterRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
+const filterPill = cva({
+  base: {
+    h: "34px", px: "16px", m: 0, borderRadius: "pill", border: "none",
+    cursor: "pointer", fontFamily: "inherit", fontSize: "13px", fontWeight: 500,
+    _focusVisible: { outline: "none", boxShadow: "focusRing" },
+  },
+  variants: {
+    active: {
+      true: { bg: "#000", color: "#fff", _hover: { bg: "#000" } },
+      false: { bg: "rgba(0,0,0,0.05)", color: "ink2", _hover: { bg: "rgba(0,0,0,0.09)" } },
+    },
+  },
+});
+const filterCount = cva({
+  base: { ml: "7px", fontVariantNumeric: "tabular-nums" },
+  variants: { active: { true: { opacity: 0.7 }, false: { opacity: 0.55 } } },
+});
+const list = css({ display: "flex", flexDirection: "column", gap: "12px" });
+const emptyFilter = css({
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card",
+  p: "40px", textAlign: "center", color: "ink2", fontSize: "14px",
+});
+const pagerRow = css({ display: "flex", justifyContent: "center", pt: "8px" });
+
+/* ── proposal card ── */
+const propCard = cva({
+  base: {
+    borderWidth: "1px", borderStyle: "solid", borderRadius: "cardSm",
+    cursor: "pointer", transition: "border-color .15s, background .15s",
+    _hover: { borderColor: "hairlineStrong", bg: "surface2" },
+  },
+  variants: {
+    unread: {
+      true: { bg: "rgba(0,113,227,0.035)", borderColor: "rgba(0,113,227,0.28)" },
+      false: { bg: "surface", borderColor: "hairline" },
+    },
+    dim: { true: { opacity: 0.66 }, false: { opacity: 1 } },
+  },
+});
+const propBody = css({
+  p: { base: "18px", sm: "20px" },
+  display: "flex", gap: { base: "14px", sm: "18px" },
+  flexDirection: { base: "column", sm: "row" }, alignItems: { sm: "stretch" },
+});
+const propMain = css({ display: "flex", gap: "12px", minW: 0, flex: 1 });
+const propText = css({ display: "flex", flexDirection: "column", gap: "7px", minW: 0, justifyContent: "center" });
+const propDivider = css({ w: "1px", bg: "hairline", flex: "none", display: { base: "none", sm: "block" } });
+const propAside = css({
+  display: "flex", flexDirection: { base: "row", sm: "column" }, justifyContent: "space-between",
+  alignItems: "flex-end", gap: "12px", flex: "none", minW: { sm: "170px" },
+});
+const propChipDesktop = css({ display: { base: "none", sm: "flex" }, justifyContent: "flex-end" });
+const propChipMobile = css({ display: { base: "flex", sm: "none" }, px: "18px", pb: "18px", mt: "-8px" });
+const nameRowCss = css({ display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" });
+const nameText = css({ lineHeight: 1.5, fontSize: "15.5px", fontWeight: 600, letterSpacing: "-0.01em" });
+const newFlag = css({ display: "inline-flex", alignItems: "center", gap: "5px", fontSize: "11px", fontWeight: 600, color: "accent" });
+const newDot = css({ w: "7px", h: "7px", borderRadius: "50%", bg: "accent" });
+const updatedFlag = css({ display: "inline-flex", alignItems: "center", h: "22px", px: "9px", borderRadius: "pill", fontSize: "11px", fontWeight: 600, bg: "rgba(37,99,235,0.1)", color: "#1d4ed8" });
+const submittedText = css({ lineHeight: 1.5, fontSize: "12px", fontWeight: 500, color: "ink2" });
+const snippetText = css({ fontSize: "13.5px", lineHeight: 1.5, color: "ink2", lineClamp: 2 });
+const priceWrap = css({ display: "flex", flexDirection: "column", gap: "2px", alignItems: { base: "flex-start", sm: "flex-end" } });
+const priceLabel = css({ lineHeight: 1.5, fontSize: "10px", fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "ink3" });
+const priceValue = cva({
+  base: { fontFamily: "mono", fontSize: { base: "27px", sm: "30px" }, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1 },
+  variants: { dim: { true: { color: "ink2" }, false: { color: "ink" } } },
+});
+const priceDays = css({ lineHeight: 1.5, fontSize: "11.5px", fontWeight: 500, color: "ink2" });
+const propActions = css({ display: "flex", gap: "8px", w: { base: "100%", sm: "auto" } });
+const propActionBtn = css({ flex: { base: 1, sm: "none" } });
+
+/* ── attachments ── */
+const attachWrap = css({ display: "flex", flexDirection: "column", gap: "12px", mt: "24px" });
+const imageGrid = css({ display: "grid", gridTemplateColumns: { base: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: "10px" });
+const imageTile = css({
+  position: "relative", aspectRatio: "4 / 3", borderRadius: "tile",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  overflow: "hidden", display: "block",
+  _hover: { borderColor: "hairlineStrong" },
+});
+const pdfRow = css({ display: "flex", gap: "10px", flexWrap: "wrap" });
+const pdfTile = css({
+  display: "flex", alignItems: "center", gap: "11px", p: "10px 14px 10px 11px", borderRadius: "tile",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", bg: "surface",
+  maxW: { base: "100%", sm: "260px" }, minW: 0, textDecoration: "none",
+  _hover: { bg: "surface2", borderColor: "hairlineStrong" },
+});
+const pdfIcon = css({ w: "38px", h: "38px", borderRadius: "9px", bg: "errorTint", color: "errorText", display: "flex", alignItems: "center", justifyContent: "center", flex: "none" });
+const pdfName = css({ lineHeight: 1.5, fontSize: "13.5px", fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: "ink" });
+const pdfMeta = css({ lineHeight: 1.5, fontSize: "11px", fontWeight: 500, color: "ink2" });
+
+/* ── empty state ── */
+const emptyCard = css({
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card",
+  p: { base: "44px", md: "64px" },
+  display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: "14px",
+});
+const emptyIcon = css({
+  w: "72px", h: "72px", borderRadius: "50%", bg: "canvas",
+  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
+  display: "flex", alignItems: "center", justifyContent: "center", color: "ink3",
+});
+const emptyTextWrap = css({ maxW: "420px" });
+const emptyTitle = css({ lineHeight: 1.5, fontSize: "18px", fontWeight: 600, letterSpacing: "-0.01em" });
+const emptyBody = css({ fontSize: "14px", lineHeight: 1.55, color: "ink2" });
+const emptyActions = css({ display: "flex", gap: "10px", flexWrap: "wrap", justifyContent: "center" });
+
+/* ── loading skeleton ── */
+const skelCard = css({ bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "card", p: "28px" });
+const skelPill = css({ borderRadius: "pill" });
+const skelTitle = css({ mt: "16px" });
+const skelFacts = css({ display: "flex", gap: "28px", my: "24px", flexWrap: "wrap" });
+const skelRow = css({
+  bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm",
+  p: "20px", display: "flex", gap: "18px", alignItems: "center",
+});
+const skelRowMain = css({ flex: 1 });
+const skelRowAside = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" });
+const skelStack = css({ display: "flex", flexDirection: "column", gap: "24px" });
+
 function Chip({ tone, label, size }: { tone: Tone; label: string; size?: "lg" }) {
-  const c = TONE[tone];
   return (
-    <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.75, height: size === "lg" ? 34 : 26, px: size === "lg" ? 1.75 : 1.25, borderRadius: "999px", fontSize: size === "lg" ? 13 : 12, fontWeight: 600, bgcolor: c.bg, color: c.color }}>
-      <Box component="span" sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: "currentColor" }} />
+    <span className={cx(chipBase({ size: size === "lg" ? "lg" : "md" }), TONE_CLASS[tone])}>
+      <span className={chipDot} />
       {label}
-    </Box>
+    </span>
   );
 }
 
 /* ── meta fact cell ── */
 function MetaFact({ label, value, sub, urgent }: { label: string; value: string; sub?: string; urgent?: boolean }) {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.4, minWidth: 0 }}>
-      <Typography sx={{ fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>{label}</Typography>
-      <Typography sx={{ fontSize: 15, fontWeight: 600, letterSpacing: "-0.01em", color: urgent ? tokens.errorText : tokens.text, whiteSpace: "nowrap" }}>
+    <div className={factWrap}>
+      <p className={factLabel}>{label}</p>
+      <p className={factValue({ urgent: !!urgent })}>
         {value}
-        {sub && <Box component="span" sx={{ fontWeight: 400, color: tokens.text3, ml: 0.75, fontSize: 13 }}>{sub}</Box>}
-      </Typography>
-    </Box>
+        {sub && <span className={factSub}>{sub}</span>}
+      </p>
+    </div>
   );
 }
 
@@ -92,73 +303,64 @@ function ProposalCard({ p, locked, onAccept, onReject, busy, onOpen }: {
   const dim = locked && p.status !== "accepted";
 
   const priceBlock = (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25, alignItems: { xs: "flex-start", sm: "flex-end" } }}>
-      <Typography sx={{ fontSize: 10, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>Quoted price</Typography>
-      <Typography sx={{ fontFamily: tokens.mono, fontSize: { xs: 27, sm: 30 }, fontWeight: 600, letterSpacing: "-0.025em", lineHeight: 1, color: dim ? tokens.text2 : tokens.text }}>{money(p.price)}</Typography>
-      <Typography sx={{ fontSize: 11.5, fontWeight: 500, color: tokens.text2 }}>{p.timeline_days} days delivery</Typography>
-    </Box>
+    <div className={priceWrap}>
+      <p className={priceLabel}>Quoted price</p>
+      <p className={priceValue({ dim })}>{money(p.price)}</p>
+      <p className={priceDays}>{p.timeline_days} days delivery</p>
+    </div>
   );
 
   const actions = showActions ? (
-    <Box sx={{ display: "flex", gap: 1, width: { xs: "100%", sm: "auto" } }} onClick={e => e.stopPropagation()}>
-      <Button onClick={onReject} disabled={busy} startIcon={<CloseIcon sx={{ fontSize: 15 }} />}
-        sx={{ flex: { xs: 1, sm: "none" }, height: 36, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>Reject</Button>
-      <Button onClick={onAccept} disabled={busy} startIcon={busy ? <CircularProgress size={13} color="inherit" /> : <CheckIcon sx={{ fontSize: 15 }} />}
-        sx={{ flex: { xs: 1, sm: "none" }, height: 36, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 13, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>Accept</Button>
-    </Box>
+    <div className={propActions} onClick={e => e.stopPropagation()}>
+      <button type="button" onClick={onReject} disabled={busy} className={cx(pillBtnBase, softBtn, px16, propActionBtn)}>
+        <X size={15} />Reject
+      </button>
+      <button type="button" onClick={onAccept} disabled={busy} className={cx(pillBtnBase, darkBtn, px16, propActionBtn)}>
+        {busy ? <Spinner size={13} /> : <Check size={15} />}Accept
+      </button>
+    </div>
   ) : p.status === "accepted" ? <Chip tone="success" label="Hired" /> : null;
 
   const name = p.freelancer_profile?.user?.name ?? "Freelancer";
   const nameRow = (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-      <Typography sx={{ fontSize: 15.5, fontWeight: 600, letterSpacing: "-0.01em" }}>{name}</Typography>
+    <div className={nameRowCss}>
+      <p className={nameText}>{name}</p>
       {unread && (
-        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", gap: 0.625, fontSize: 11, fontWeight: 600, color: tokens.accent }}>
-          <Box component="span" sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: tokens.accent }} /> New
-        </Box>
+        <span className={newFlag}>
+          <span className={newDot} /> New
+        </span>
       )}
       {p.is_updated && (
-        <Box component="span" sx={{ display: "inline-flex", alignItems: "center", height: 22, px: 1.125, borderRadius: "999px", fontSize: 11, fontWeight: 600, bgcolor: "rgba(37,99,235,0.1)", color: "#1d4ed8" }}>Updated</Box>
+        <span className={updatedFlag}>Updated</span>
       )}
-    </Box>
+    </div>
   );
-  const metaRow = <Typography sx={{ fontSize: 12, fontWeight: 500, color: tokens.text2 }}>Submitted {fmtDate(p.created_at)}</Typography>;
+  const metaRow = <p className={submittedText}>Submitted {fmtDate(p.created_at)}</p>;
   const snippet = (
-    <Typography sx={{ fontSize: 13.5, lineHeight: 1.5, color: tokens.text2, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>{p.cover_letter}</Typography>
+    <p className={snippetText}>{p.cover_letter}</p>
   );
-
-  const cardSx = {
-    bgcolor: unread ? `rgba(${tokens.accentRgb},0.035)` : tokens.surface,
-    border: "1px solid",
-    borderColor: unread ? `rgba(${tokens.accentRgb},0.28)` : tokens.border,
-    borderRadius: `${tokens.radius.cardSm}px`,
-    opacity: dim ? 0.66 : 1,
-    cursor: "pointer",
-    transition: "border-color .15s, background .15s",
-    "&:hover": { borderColor: tokens.borderStrong, bgcolor: tokens.surface2 },
-  } as const;
 
   return (
-    <Box role="button" tabIndex={0} onClick={onOpen} sx={cardSx}>
-      <Box sx={{ p: { xs: 2.25, sm: 2.5 }, display: "flex", gap: { xs: 1.75, sm: 2.25 }, flexDirection: { xs: "column", sm: "row" }, alignItems: { sm: "stretch" } }}>
-        <Box sx={{ display: "flex", gap: 1.5, minWidth: 0, flex: 1 }}>
-          <Avatar src={p.freelancer_profile?.user?.avatar_url ?? undefined} alt={name} sx={{ width: 52, height: 52, flex: "none" }} />
-          <Box sx={{ display: "flex", flexDirection: "column", gap: 0.875, minWidth: 0, justifyContent: "center" }}>
+    <div role="button" tabIndex={0} onClick={onOpen} className={propCard({ unread, dim })}>
+      <div className={propBody}>
+        <div className={propMain}>
+          <Avatar src={p.freelancer_profile?.user?.avatar_url ?? undefined} name={name} px={52} className={css({ flex: "none" })} />
+          <div className={propText}>
             {nameRow}{metaRow}{snippet}
-          </Box>
-        </Box>
-        <Box sx={{ width: "1px", bgcolor: tokens.border, flex: "none", display: { xs: "none", sm: "block" } }} />
-        <Box sx={{ display: "flex", flexDirection: { xs: "row", sm: "column" }, justifyContent: "space-between", alignItems: { xs: "flex-end", sm: "flex-end" }, gap: 1.5, flex: "none", minWidth: { sm: 170 } }}>
-          <Box sx={{ display: { xs: "none", sm: "flex" }, justifyContent: "flex-end" }}><Chip tone={PROP_STATUS[p.status].tone} label={PROP_STATUS[p.status].label} /></Box>
+          </div>
+        </div>
+        <div className={propDivider} />
+        <div className={propAside}>
+          <div className={propChipDesktop}><Chip tone={PROP_STATUS[p.status].tone} label={PROP_STATUS[p.status].label} /></div>
           {priceBlock}
           {actions}
-        </Box>
-      </Box>
+        </div>
+      </div>
       {/* mobile status chip row */}
-      <Box sx={{ display: { xs: "flex", sm: "none" }, px: 2.25, pb: 2.25, mt: -1 }}>
+      <div className={propChipMobile}>
         <Chip tone={PROP_STATUS[p.status].tone} label={PROP_STATUS[p.status].label} />
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 }
 
@@ -252,150 +454,152 @@ export default function JobOverviewPage() {
     accepted: proposals.filter(p => p.status === "accepted").length,
     rejected: proposals.filter(p => p.status === "rejected").length,
   };
-  const list = proposals.filter(p => filter === "all" || p.status === filter);
+  const listed = proposals.filter(p => filter === "all" || p.status === filter);
 
   return (
-    <Box sx={{ minHeight: "100vh", bgcolor: tokens.canvas }}>
-      <Container maxWidth="md" sx={{ py: { xs: 3, md: 5 }, maxWidth: "1080px !important" }}>
-        <Box sx={{ display: "flex", flexDirection: "column", gap: { xs: 2.25, md: 3 } }}>
+    <div className={pageRoot}>
+      <div className={container}>
+        <div className={column}>
           {/* Back */}
-          <Button onClick={backToJobs} startIcon={<ChevronLeftOutlined sx={{ fontSize: 18 }} />}
-            sx={{ alignSelf: "flex-start", p: "2px 4px", color: tokens.text2, textTransform: "none", fontSize: 14, fontWeight: 500, "&:hover": { color: "#000", bgcolor: "transparent" } }}>
+          <button type="button" onClick={backToJobs} className={backBtn}>
+            <ChevronLeft size={18} />
             Back to My Jobs
-          </Button>
+          </button>
 
           {loading ? (
             <LoadingState />
           ) : error ? (
-            <Alert severity="error" sx={{ borderRadius: 2 }} action={<Button color="inherit" size="small" onClick={() => location.reload()}>Retry</Button>}>{error}</Alert>
+            <Alert tone="error" className={alertRounded} action={<button type="button" className={retryBtn} onClick={() => location.reload()}>Retry</button>}>{error}</Alert>
           ) : job ? (
             <>
               {/* Rejection banner */}
               {status === "rejected" && (
-                <Box sx={{ border: `1px solid rgba(220,38,38,0.25)`, bgcolor: tokens.errorTint, borderRadius: `${tokens.radius.cardSm}px`, p: 2.5, display: "flex", gap: 1.75, alignItems: "flex-start" }}>
-                  <Box sx={{ width: 36, height: 36, borderRadius: "50%", bgcolor: "rgba(220,38,38,0.14)", color: tokens.error, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}>
-                    <InfoOutlined sx={{ fontSize: 20 }} />
-                  </Box>
-                  <Box sx={{ flex: 1, minWidth: 0 }}>
-                    <Typography sx={{ fontSize: 15, fontWeight: 600, color: tokens.errorText, mb: 0.75 }}>This job was rejected by an admin</Typography>
-                    <Typography sx={{ fontSize: 13.5, lineHeight: 1.55, color: tokens.text2 }}>{job.rejection_reason || "No reason was provided. Edit the job and resubmit it for review."}</Typography>
-                    <Button onClick={editJob} startIcon={<RefreshOutlined sx={{ fontSize: 15 }} />}
-                      sx={{ mt: 1.25, height: 36, borderRadius: "999px", bgcolor: "#000", color: "#fff", textTransform: "none", fontSize: 13, px: 2, "&:hover": { bgcolor: "rgba(0,0,0,0.8)" } }}>Edit &amp; resubmit</Button>
-                  </Box>
-                </Box>
+                <div className={rejectBanner}>
+                  <div className={rejectIcon}>
+                    <Info size={20} />
+                  </div>
+                  <div className={css({ flex: 1, minW: 0 })}>
+                    <p className={rejectTitle}>This job was rejected by an admin</p>
+                    <p className={rejectBody}>{job.rejection_reason || "No reason was provided. Edit the job and resubmit it for review."}</p>
+                    <button type="button" onClick={editJob} className={cx(pillBtnBase, darkBtn, px16, resubmitBtn)}>
+                      <RotateCcw size={15} />Edit &amp; resubmit
+                    </button>
+                  </div>
+                </div>
               )}
 
               {/* Job header card */}
-              <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 2.75, md: 3.5 } }}>
-                <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 2, flexDirection: { xs: "column", md: "row" } }}>
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, minWidth: 0 }}>
+              <div className={headerCard}>
+                <div className={headRow}>
+                  <div className={headMain}>
                     <Chip tone={jobCfg.tone} label={jobCfg.label} size="lg" />
-                    <Typography sx={{ fontSize: { xs: 22, md: 28 }, fontWeight: 600, letterSpacing: "-0.02em", lineHeight: 1.15 }}>{job.title}</Typography>
+                    <p className={jobTitle}>{job.title}</p>
                     {/* hero metric */}
                     {status === "in_progress" && hired ? (
-                      <Box sx={{ display: "flex", alignItems: "center", gap: 1.125 }}>
-                        <Box sx={{ width: 22, height: 22, borderRadius: "50%", bgcolor: tokens.successTint, color: tokens.success, display: "flex", alignItems: "center", justifyContent: "center" }}><CheckIcon sx={{ fontSize: 14 }} /></Box>
-                        <Typography sx={{ fontSize: 18, fontWeight: 600 }}>Hired {hired.freelancer_profile?.user?.name ?? "a freelancer"}</Typography>
-                        <Box component="span" sx={{ color: tokens.text3 }}>·</Box>
-                        <Typography sx={{ fontSize: 15, color: tokens.text2 }}>{proposals.length} proposals reviewed</Typography>
-                      </Box>
+                      <div className={hiredRow}>
+                        <div className={hiredIcon}><Check size={14} /></div>
+                        <p className={hiredName}>Hired {hired.freelancer_profile?.user?.name ?? "a freelancer"}</p>
+                        <span className={dotSep}>·</span>
+                        <p className={hiredCount}>{proposals.length} proposals reviewed</p>
+                      </div>
                     ) : proposals.length === 0 ? (
-                      <Typography sx={{ fontSize: 16, fontWeight: 500, color: tokens.text2 }}>No proposals yet</Typography>
+                      <p className={noProposalsYet}>No proposals yet</p>
                     ) : (
-                      <Box sx={{ display: "flex", alignItems: "baseline", gap: 1.125 }}>
-                        <Typography sx={{ fontSize: 19, fontWeight: 600, letterSpacing: "-0.015em" }}>{proposals.length} proposals</Typography>
-                        {fresh > 0 && <><Box component="span" sx={{ color: tokens.text3 }}>·</Box><Typography sx={{ fontSize: 15, fontWeight: 600, color: tokens.accent }}>{fresh} new</Typography></>}
-                      </Box>
+                      <div className={proposalTally}>
+                        <p className={tallyMain}>{proposals.length} proposals</p>
+                        {fresh > 0 && <><span className={dotSep}>·</span><p className={tallyFresh}>{fresh} new</p></>}
+                      </div>
                     )}
-                  </Box>
+                  </div>
                   {/* owner actions */}
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                    <Button onClick={editJob} startIcon={<EditOutlined sx={{ fontSize: 15 }} />}
-                      sx={{ height: 36, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, px: 1.75, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>Edit job</Button>
+                  <div className={ownerActions}>
+                    <button type="button" onClick={editJob} className={cx(pillBtnBase, softBtn, px14)}>
+                      <Pencil size={15} />Edit job
+                    </button>
                     {(live || status === "in_progress") && (
-                      <Button onClick={handleClose} startIcon={<CloseIcon sx={{ fontSize: 15 }} />}
-                        sx={{ height: 36, borderRadius: "999px", color: tokens.errorText, textTransform: "none", fontSize: 13, px: 1.75, "&:hover": { bgcolor: tokens.errorTint } }}>{status === "in_progress" ? "Cancel" : "Close"} job</Button>
+                      <button type="button" onClick={handleClose} className={cx(pillBtnBase, dangerGhostBtn, px14)}>
+                        <X size={15} />{status === "in_progress" ? "Cancel" : "Close"} job
+                      </button>
                     )}
-                  </Box>
-                </Box>
+                  </div>
+                </div>
 
                 {/* meta facts */}
-                <Box sx={{ display: "flex", flexWrap: "wrap", rowGap: 2.25, my: { xs: 2.5, md: 2.75 } }}>
+                <div className={factsRow}>
                   {([
                     { label: "Budget", value: `${money(job.budget_min)} – ${money(job.budget_max)}` },
                     ...(job.deadline ? [{ label: "Deadline", value: deadlineInfo(job.deadline).label, sub: fmtDate(job.deadline), urgent: deadlineInfo(job.deadline).urgent }] : []),
                     ...(job.category ? [{ label: "Category", value: job.category.category_name }] : []),
                     { label: "Posted", value: fmtDate(job.created_at) },
                   ] as { label: string; value: string; sub?: string; urgent?: boolean }[]).map((f, i, arr) => (
-                    <Box key={f.label} sx={{ display: "flex", flex: { xs: "0 0 50%", md: "none" } }}>
+                    <div key={f.label} className={factCell}>
                       <MetaFact label={f.label} value={f.value} sub={f.sub} urgent={f.urgent} />
-                      {i < arr.length - 1 && <Box sx={{ width: "1px", height: 30, bgcolor: tokens.border, mx: 3, display: { xs: "none", md: "block" } }} />}
-                    </Box>
+                      {i < arr.length - 1 && <div className={factSep} />}
+                    </div>
                   ))}
-                </Box>
+                </div>
 
                 {/* skills */}
                 {job.skills?.length > 0 && (
-                  <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                  <div className={skillWrap}>
                     {job.skills.map(s => (
-                      <Box key={s.id} component="span" sx={{ display: "inline-flex", alignItems: "center", height: 30, px: 1.625, borderRadius: "999px", fontSize: 12.5, fontWeight: 500, bgcolor: "rgba(0,0,0,0.05)", color: tokens.text2 }}>{s.expertise_name}</Box>
+                      <span key={s.id} className={skillChip}>{s.expertise_name}</span>
                     ))}
-                  </Box>
+                  </div>
                 )}
 
-                <Box sx={{ height: "1px", bgcolor: tokens.border, my: { xs: 2.5, md: 3 } }} />
+                <div className={rule} />
 
                 {/* description */}
-                <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3, mb: 1 }}>Description</Typography>
+                <p className={capLabel}>Description</p>
                 <RichTextDisplay value={job.description} />
 
                 {/* attachments */}
                 {job.media?.length > 0 && <Attachments media={job.media} />}
-              </Box>
+              </div>
 
               {/* Proposals region */}
               {status === "rejected" ? null : proposals.length === 0 ? (
                 <EmptyProposals onEdit={editJob} />
               ) : (
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: 1.75 }}>
-                    <Typography sx={{ fontSize: 22, fontWeight: 600, letterSpacing: "-0.015em" }}>Proposals</Typography>
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                <div className={proposalsRegion}>
+                  <div className={regionHead}>
+                    <p className={regionTitle}>Proposals</p>
+                    <div className={filterRow}>
                       {FILTERS.map(([k, l]) => {
                         const active = filter === k;
                         return (
-                          <Box key={k} component="button" onClick={() => setFilter(k)}
-                            sx={{ height: 34, px: 2, borderRadius: "999px", cursor: "pointer", font: "inherit", fontSize: 13, fontWeight: 500, border: "none", bgcolor: active ? "#000" : "rgba(0,0,0,0.05)", color: active ? "#fff" : tokens.text2, "&:hover": { bgcolor: active ? "#000" : "rgba(0,0,0,0.09)" } }}>
-                            {l}<Box component="span" sx={{ ml: 0.875, fontVariantNumeric: "tabular-nums", opacity: active ? 0.7 : 0.55 }}>{counts[k]}</Box>
-                          </Box>
+                          <button key={k} type="button" onClick={() => setFilter(k)} className={filterPill({ active })}>
+                            {l}<span className={filterCount({ active })}>{counts[k]}</span>
+                          </button>
                         );
                       })}
-                    </Box>
-                  </Box>
+                    </div>
+                  </div>
 
-                  {actionError && <Alert severity="error" sx={{ borderRadius: 2 }} onClose={() => setActionError(null)}>{actionError}</Alert>}
+                  {actionError && <Alert tone="error" className={alertRounded} onClose={() => setActionError(null)}>{actionError}</Alert>}
 
-                  <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-                    {list.length === 0 ? (
-                      <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 5, textAlign: "center", color: tokens.text2, fontSize: 14 }}>No {filter === "all" ? "" : filter} proposals.</Box>
-                    ) : list.map(p => (
+                  <div className={list}>
+                    {listed.length === 0 ? (
+                      <div className={emptyFilter}>No {filter === "all" ? "" : filter} proposals.</div>
+                    ) : listed.map(p => (
                       <ProposalCard key={p.id} p={p} locked={locked} busy={actionId === p.id}
                         onAccept={() => handleAccept(p)} onReject={() => handleReject(p)} onOpen={() => router.push(`/proposals/${p.id}`)} />
                     ))}
-                  </Box>
+                  </div>
 
                   {lastPage > 1 && (
-                    <Box sx={{ display: "flex", justifyContent: "center", pt: 1 }}>
-                      <Pagination count={lastPage} page={page} onChange={(_, p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} shape="rounded" />
-                    </Box>
+                    <div className={pagerRow}>
+                      <Pager count={lastPage} page={page} onChange={(p) => { setPage(p); window.scrollTo({ top: 0, behavior: "smooth" }); }} />
+                    </div>
                   )}
-                </Box>
+                </div>
               )}
             </>
           ) : null}
-        </Box>
-      </Container>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -404,76 +608,75 @@ function Attachments({ media }: { media: JobPost["media"] }) {
   const images = media.filter(m => m.file_type === "image");
   const pdfs = media.filter(m => m.file_type !== "image");
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 1.5, mt: 3 }}>
-      <Typography sx={{ fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: tokens.text3 }}>Attachments · {media.length}</Typography>
+    <div className={attachWrap}>
+      <p className={capLabel}>Attachments · {media.length}</p>
       {images.length > 0 && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "repeat(2,1fr)", sm: "repeat(4,1fr)" }, gap: 1.25 }}>
+        <div className={imageGrid}>
           {images.map(m => (
-            <Box key={m.id} component="a" href={m.file_url} target="_blank" rel="noopener noreferrer" title={m.file_name}
-              sx={{ position: "relative", aspectRatio: "4 / 3", borderRadius: `${tokens.radius.tile}px`, border: `1px solid ${tokens.border}`, overflow: "hidden", display: "block", "&:hover": { borderColor: tokens.borderStrong } }}>
+            <a key={m.id} href={m.file_url} target="_blank" rel="noopener noreferrer" title={m.file_name} className={imageTile}>
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src={m.file_url} alt={m.file_name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-            </Box>
+            </a>
           ))}
-        </Box>
+        </div>
       )}
       {pdfs.length > 0 && (
-        <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap" }}>
+        <div className={pdfRow}>
           {pdfs.map(m => (
-            <Box key={m.id} component="a" href={m.file_url} target="_blank" rel="noopener noreferrer" title={m.file_name}
-              sx={{ display: "flex", alignItems: "center", gap: 1.375, p: "10px 14px 10px 11px", borderRadius: `${tokens.radius.tile}px`, border: `1px solid ${tokens.border}`, bgcolor: tokens.surface, maxWidth: { xs: "100%", sm: 260 }, minWidth: 0, textDecoration: "none", "&:hover": { bgcolor: tokens.surface2, borderColor: tokens.borderStrong } }}>
-              <Box sx={{ width: 38, height: 38, borderRadius: "9px", bgcolor: tokens.errorTint, color: tokens.errorText, display: "flex", alignItems: "center", justifyContent: "center", flex: "none" }}><InsertDriveFileOutlined sx={{ fontSize: 19 }} /></Box>
-              <Box sx={{ minWidth: 0 }}>
-                <Typography sx={{ fontSize: 13.5, fontWeight: 600, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", color: tokens.text }}>{m.file_name}</Typography>
-                <Typography sx={{ fontSize: 11, fontWeight: 500, color: tokens.text2 }}>PDF{m.file_size ? ` · ${fileSize(m.file_size)}` : ""}</Typography>
-              </Box>
-            </Box>
+            <a key={m.id} href={m.file_url} target="_blank" rel="noopener noreferrer" title={m.file_name} className={pdfTile}>
+              <span className={pdfIcon}><FileText size={19} /></span>
+              <span className={css({ minW: 0 })}>
+                <p className={pdfName}>{m.file_name}</p>
+                <p className={pdfMeta}>PDF{m.file_size ? ` · ${fileSize(m.file_size)}` : ""}</p>
+              </span>
+            </a>
           ))}
-        </Box>
+        </div>
       )}
-    </Box>
+    </div>
   );
 }
 
 /* ── empty proposals ── */
 function EmptyProposals({ onEdit }: { onEdit: () => void }) {
   return (
-    <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: { xs: 5.5, md: 8 }, display: "flex", flexDirection: "column", alignItems: "center", textAlign: "center", gap: 1.75 }}>
-      <Box sx={{ width: 72, height: 72, borderRadius: "50%", bgcolor: tokens.canvas, border: `1px solid ${tokens.border}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <MoveToInboxOutlined sx={{ fontSize: 30, color: tokens.text3 }} />
-      </Box>
-      <Box sx={{ maxWidth: 420 }}>
-        <Typography sx={{ fontSize: 18, fontWeight: 600, letterSpacing: "-0.01em" }}>No proposals yet</Typography>
-        <Typography sx={{ fontSize: 14, lineHeight: 1.55, color: tokens.text2, mt: 0.75 }}>Your job is live and visible to freelancers. We&rsquo;ll notify you the moment a proposal arrives.</Typography>
-      </Box>
-      <Box sx={{ display: "flex", gap: 1.25, flexWrap: "wrap", justifyContent: "center" }}>
-        <Button onClick={onEdit} startIcon={<EditOutlined sx={{ fontSize: 15 }} />}
-          sx={{ height: 36, borderRadius: "999px", bgcolor: "rgba(0,0,0,0.05)", color: "#000", textTransform: "none", fontSize: 13, px: 1.75, "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>Edit job</Button>
-      </Box>
-    </Box>
+    <div className={emptyCard}>
+      <div className={emptyIcon}>
+        <Inbox size={30} />
+      </div>
+      <div className={emptyTextWrap}>
+        <p className={emptyTitle}>No proposals yet</p>
+        <p className={emptyBody}>Your job is live and visible to freelancers. We&rsquo;ll notify you the moment a proposal arrives.</p>
+      </div>
+      <div className={emptyActions}>
+        <button type="button" onClick={onEdit} className={cx(pillBtnBase, softBtn, px14)}>
+          <Pencil size={15} />Edit job
+        </button>
+      </div>
+    </div>
   );
 }
 
 /* ── loading skeleton ── */
 function LoadingState() {
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-      <Box sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.card}px`, p: 3.5 }}>
-        <Skeleton variant="rounded" width={92} height={28} sx={{ borderRadius: "999px" }} />
-        <Skeleton variant="text" width="65%" height={36} sx={{ mt: 2 }} />
+    <div className={skelStack}>
+      <div className={skelCard}>
+        <Skeleton variant="rect" width={92} height={28} className={skelPill} />
+        <Skeleton variant="text" width="65%" height={36} className={skelTitle} />
         <Skeleton variant="text" width={180} height={22} />
-        <Box sx={{ display: "flex", gap: 3.5, my: 3, flexWrap: "wrap" }}>
-          {[0, 1, 2, 3].map(i => <Box key={i}><Skeleton variant="text" width={54} height={12} /><Skeleton variant="text" width={90} height={20} /></Box>)}
-        </Box>
+        <div className={skelFacts}>
+          {[0, 1, 2, 3].map(i => <div key={i}><Skeleton variant="text" width={54} height={12} /><Skeleton variant="text" width={90} height={20} /></div>)}
+        </div>
         <Skeleton variant="text" width="100%" /><Skeleton variant="text" width="90%" /><Skeleton variant="text" width="75%" />
-      </Box>
+      </div>
       {[0, 1, 2].map(i => (
-        <Box key={i} sx={{ bgcolor: tokens.surface, border: `1px solid ${tokens.border}`, borderRadius: `${tokens.radius.cardSm}px`, p: 2.5, display: "flex", gap: 2.25, alignItems: "center" }}>
-          <Skeleton variant="circular" width={52} height={52} />
-          <Box sx={{ flex: 1 }}><Skeleton variant="text" width={160} /><Skeleton variant="text" width={220} /><Skeleton variant="text" width="80%" /></Box>
-          <Box sx={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: 1 }}><Skeleton variant="text" width={90} height={30} /><Skeleton variant="rounded" width={120} height={36} sx={{ borderRadius: "999px" }} /></Box>
-        </Box>
+        <div key={i} className={skelRow}>
+          <Skeleton variant="circle" width={52} height={52} />
+          <div className={skelRowMain}><Skeleton variant="text" width={160} /><Skeleton variant="text" width={220} /><Skeleton variant="text" width="80%" /></div>
+          <div className={skelRowAside}><Skeleton variant="text" width={90} height={30} /><Skeleton variant="rect" width={120} height={36} className={skelPill} /></div>
+        </div>
       ))}
-    </Box>
+    </div>
   );
 }
