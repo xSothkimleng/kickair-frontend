@@ -3,6 +3,7 @@ import {
   RegisterData,
   EmailRegisterData,
   PhoneRegisterData,
+  PhoneOtpDelivery,
   Language,
   Expertise,
   Industry,
@@ -217,11 +218,13 @@ class ApiClient {
     return response.data.user;
   }
 
-  async sendPhoneOtp(phone: string): Promise<void> {
-    await this.request("/api/auth/phone/send-otp", {
+  // Ask for a phone code. See PhoneOtpDelivery for what `delivered: false` means.
+  async sendPhoneOtp(phone: string): Promise<PhoneOtpDelivery> {
+    const response = await this.request("/api/auth/phone/send-otp", {
       method: "POST",
       body: JSON.stringify({ phone }),
     });
+    return response.data;
   }
 
   // Enable the second account role (Start selling / Start hiring). No KYC gate.

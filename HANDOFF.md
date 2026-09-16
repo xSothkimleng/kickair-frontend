@@ -68,7 +68,7 @@ Frontend `4be37d8`, API `a47c431`. Both trees clean.
 ## Status after the 2026-09-07 session (Telegram Gateway hardening) — committed & pushed
 API commit only; frontend untouched apart from this note.
 
-### Decision: keep Telegram Gateway for phone OTP
+### Decision: keep Telegram Gateway for phone OTP — SUPERSEDED 2026-09-15, see the Telegram bot section below
 - A free **bot + `request_contact`** flow was designed (user opens a bot, shares contact, Telegram vouches for the number via `contact.user_id === from.id`). Kimleng chose to stay on Gateway: codes come from the official verified **Telegram** account, the user never leaves the app, zero webhook infra. Revisit the bot plan only if Gateway pricing changes.
 - Gateway is $0.01 per **delivered** code with a **$100 minimum top-up via Fragment/TON**, non-refundable. **Codes to your own number are free** — that is how dev/testing works today. Kimleng will fund at launch and **rotate the token afterwards** (only `.env` / prod env hold it; nothing else references the value).
 - Dashboard: https://gateway.telegram.org — not my.telegram.org, not BotFather. The `gatewayapi.telegram.org` host in `TelegramGatewayService` is the machine endpoint only.
@@ -139,6 +139,44 @@ Kimleng wants MUI gone. The admin console is already Panda; the **site** is the 
 - Panda scans `./src/**` via the PostCSS plugin; no codegen step is needed for new `css()` calls, but new **tokens/recipes** in `panda.config.ts` need `npm run panda`.
 - The React Compiler lint rules are on: no `Date.now()`/`new Date()` in render (use a client-only `useSyncExternalStore` like `OverviewPage`), no `setState` inside `useEffect` bodies.
 - Keep `OrderRecord` as the single order history while porting it — same rule as before.
+
+## Status after the 2026-09-15 session (phone OTP moved to the free Telegram bot) — NOT yet committed
+Kimleng's team reversed the 09-07 Gateway decision: Gateway is funded only in TON through Fragment with a **$100 minimum**, and the team has no crypto wallet and no wish to get one. Nothing had been funded, so nothing was lost. Phone OTP now goes through a **free Telegram bot**; Gateway stays in the code behind a config switch.
+
+### How it works
+- A bot cannot message someone who never opened it, so the **first** code request for a number cannot be delivered. `POST /api/auth/phone/send-otp` then answers `data.delivered=false` + `data.bot_url` (`https://t.me/<bot>?start=<token>`), the page shows "Open Telegram" + three steps, the user presses Start and **Share my phone number**, Telegram hands the bot a contact whose `user_id` equals the sender's (that equality is the proof of ownership), the bot stores phone→chat in `telegram_contacts` and **delivers the pending code by itself**. The user types it on the site as before. Every later code for that number lands in the chat straight away (`delivered=true`, same UX as Gateway had).
+- The user still types a 6-digit code — deliberate. "Share contact = verified" would let an attacker send a victim the bot link and get the victim's number verified on the attacker's browser; with a code, the code stays in the victim's chat.
+- Codes: `random_int`, only the HMAC (APP_KEY) is cached, 15-min TTL, burnt after 5 wrong guesses, single use, a resend replaces the previous one. Nothing is guessable while `delivered=false` (no code exists yet).
+- If the number shared in Telegram differs from the one typed on the site (the `?start=` token carries the typed number), the bot says so and names the right number; the shared number is linked anyway so the retry is instant.
+- Blocking the bot (`my_chat_member` kicked, or a 403 on send) drops the link, so the next request sends the user back to the bot instead of failing silently. A Telegram account that shares a new number loses its link to the old one.
+
+### Where things live (API)
+- `config/otp.php` — `PHONE_OTP_CHANNEL` (`bot` default | `gateway`), ttl 900, max_attempts 5, code_length 6. Change knobs here.
+- `config/services.php` → `telegram.bot_token / bot_username / webhook_secret` (+ the old `gateway_token`).
+- `app/Services/Telegram/BotApi.php` (thin Bot API client), `BotOtpChannel.php` (generate + deliver + check), `UpdateHandler.php` (the bot's behaviour: /start, contact, my_chat_member; dedupes by `update_id` for a day), `BotApiException.php`.
+- `app/Services/PhoneVerificationManager.php` — TTL / attempts / single use, channel-agnostic. `app/Services/CodeDelivery.php` is the send result. Contracts `PhoneVerificationContract` (`sendCode` now returns `CodeDelivery`, new `hasPendingCode`) and `PhoneVerificationChannel` (`send(phone, ttl): CodeDelivery`, `check(phone, code, state)`).
+- `app/Services/TelegramGatewayService.php` — adapted to the new contract, still tested (`tests/Feature/Auth/TelegramGatewayChannelTest.php`, renamed from `PhoneVerificationChannelTest`).
+- `POST /api/telegram/webhook` → `TelegramWebhookController` (requires the `X-Telegram-Bot-Api-Secret-Token` header to equal `TELEGRAM_WEBHOOK_SECRET`; 403 otherwise, and 403 for everything if the secret is empty; always 204 once authenticated so Telegram never retries).
+- `php artisan telegram:poll` (dev: long polling, refuses to run if a webhook is set unless `--force`; `--once` for tests) and `php artisan telegram:webhook set|delete|info` (prod; needs HTTPS `APP_URL` + secret).
+- `telegram_contacts` table + `TelegramContact` model + factory; migration `2026_09_15_000000`.
+- `lang/en/telegram.php` — every message the bot sends. A Khmer version = `lang/km/telegram.php`.
+- Tests: `TelegramBotOtpTest` (12), `Telegram/WebhookTest` (16), `Telegram/CommandsTest` (10), Gateway (6). Suite: **438 passing**.
+
+### Where things live (frontend)
+- `src/components/auth/TelegramLinkSteps.tsx` — the three steps + "Open Telegram" button (Telegram blue), shared by both screens.
+- Sign-up OTP step and the Settings phone dialog show it when `delivered=false`; `api.sendPhoneOtp` now returns `PhoneOtpDelivery` (`src/types/user.ts`). Sign-up hint no longer says "we'll text you a code".
+
+### Environments
+- **Dev:** bot `@kickair_dev_bot` (token in `kickair-api/.env`, gitignored). Run `php artisan telegram:poll` in a terminal next to `php artisan serve`. The token was pasted into a chat on 2026-09-15 — revoke it in BotFather (Revoke) and paste the new one into `.env` when done testing.
+- **Prod (to do):** create a second bot in BotFather (production name + avatar + description; the dev bot must not be reused — Telegram allows either polling or a webhook per bot, not both). Set `TELEGRAM_BOT_TOKEN`, `TELEGRAM_BOT_USERNAME`, `TELEGRAM_WEBHOOK_SECRET` (`openssl rand -hex 32`), `PHONE_OTP_CHANNEL=bot` on Railway, deploy, then `php artisan telegram:webhook set` once (APP_URL must be the public HTTPS origin) and check with `telegram:webhook info`. Revoke the old Gateway token at gateway.telegram.org.
+- BotFather polish for whichever bot is live: `/setdescription` ("Verifies your phone number for KickAir…"), `/setabouttext`, `/setuserpic` with the logo, `/setcommands` → `start - Link your phone number`.
+
+### Follow-ups / deferred
+- Telegram order notifications are now one step away (the linked chat ids are in `telegram_contacts`) — not built.
+- The `phone-code` rate limiter (5/min per phone, 30/min per IP) is unchanged; the throttled 429 copy is still Laravel's default (already on the security-pass list).
+- Railway runs the API with `artisan serve` (single process); fine for now, the DigitalOcean move replaces it.
+- Pre-existing, noticed while screenshotting: in the Settings phone dialog at phone width (~400px) the sixth OTP box clips at the dialog's right edge (`OtpInput` boxes don't shrink). Sign-up is fine. Not touched.
+- Verified this session with headless Chrome (real sign-up and settings flows against the local API): the unlinked state renders on both screens at 1280px and 400px. **Live end-to-end passed 2026-09-16** with Kimleng's real number: site → Open Telegram → Start → Share → code delivered → account created 20 s after the share. The only hiccup was that the poller had died with the previous Claude session, so `/start` went unanswered until it was restarted — `php artisan telegram:poll` must be running in Kimleng's own terminal during local testing.
 
 ## Status after the 2026-09-13 typography session — committed & pushed
 

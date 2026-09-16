@@ -18,6 +18,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { TextInput, PasswordInput, PhoneInput, OtpInput } from "@/components/ui/inputs";
+import { TelegramLinkSteps } from "@/components/auth/TelegramLinkSteps";
 
 // ─── Style tokens ──────────────────────────────────────────────────────────────
 
@@ -534,6 +535,8 @@ export default function SettingsPage() {
   const [phoneDialogOpen, setPhoneDialogOpen] = React.useState(false);
   const [newPhone, setNewPhone] = React.useState(""); // local digits — +855 prefix comes from PhoneInput
   const [phoneOtpSent, setPhoneOtpSent] = React.useState(false);
+  // Set when the number is not linked to the Telegram bot yet (see PhoneOtpDelivery).
+  const [phoneBotUrl, setPhoneBotUrl] = React.useState<string | null>(null);
   const [phoneCode, setPhoneCode] = React.useState("");
   const [sendingPhoneOtp, setSendingPhoneOtp] = React.useState(false);
   const [savingPhone, setSavingPhone] = React.useState(false);
@@ -594,7 +597,8 @@ export default function SettingsPage() {
     setSendingPhoneOtp(true);
     setPhoneMsg(null);
     try {
-      await api.sendPhoneOtp(e164NewPhone());
+      const delivery = await api.sendPhoneOtp(e164NewPhone());
+      setPhoneBotUrl(delivery.delivered ? null : delivery.bot_url);
       setPhoneOtpSent(true);
     } catch (err) {
       setPhoneMsg({ type: "error", text: err instanceof Error ? err.message : "Failed to send code." });
@@ -613,6 +617,7 @@ export default function SettingsPage() {
       setNewPhone("");
       setPhoneCode("");
       setPhoneOtpSent(false);
+      setPhoneBotUrl(null);
       setPhoneMsg({ type: "success", text: "Phone number updated successfully." });
     } catch (err) {
       setPhoneMsg({ type: "error", text: err instanceof Error ? err.message : "Failed to update phone." });
@@ -992,7 +997,7 @@ export default function SettingsPage() {
                   <PhoneInput
                     placeholder="12 345 678"
                     value={newPhone}
-                    onChange={(v) => { setNewPhone(v); setPhoneOtpSent(false); setPhoneCode(""); }}
+                    onChange={(v) => { setNewPhone(v); setPhoneOtpSent(false); setPhoneBotUrl(null); setPhoneCode(""); }}
                     disabled={savingPhone}
                     size="sm"
                     helper="Cambodian number — digits only, we add the +855 for you."
@@ -1010,14 +1015,25 @@ export default function SettingsPage() {
                 </button>
               </div>
 
-              {/* Code input — shown after OTP sent */}
+              {/* Code input — shown after OTP sent. If the number is not linked to the
+                  bot yet, the user links it first; the code then arrives on its own. */}
               {phoneOtpSent && (
                 <>
-                  <p className={otpHint}>
-                    We sent a 6-digit code to <strong>{e164NewPhone()}</strong> via{" "}
-                    <strong>Telegram</strong>. Check your Telegram app.
-                  </p>
-                  <OtpInput value={phoneCode} onChange={setPhoneCode} disabled={savingPhone} autoFocus />
+                  {phoneBotUrl ? (
+                    <>
+                      <p className={otpHint}>
+                        <strong>{e164NewPhone()}</strong> isn&rsquo;t linked to our Telegram bot yet.
+                        Link it once and your code arrives there right away.
+                      </p>
+                      <TelegramLinkSteps botUrl={phoneBotUrl} />
+                    </>
+                  ) : (
+                    <p className={otpHint}>
+                      We sent a 6-digit code to <strong>{e164NewPhone()}</strong> via{" "}
+                      <strong>Telegram</strong>. Check your Telegram app.
+                    </p>
+                  )}
+                  <OtpInput value={phoneCode} onChange={setPhoneCode} disabled={savingPhone} autoFocus={!phoneBotUrl} />
                 </>
               )}
             </div>

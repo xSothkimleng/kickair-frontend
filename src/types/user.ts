@@ -199,6 +199,14 @@ export interface PhoneRegisterData {
   is_freelancer: boolean;
 }
 
+// Answer to a phone-code request. `delivered: false` means the number is not linked
+// to the KickAir Telegram bot yet: show `bot_url`; the code arrives in Telegram as
+// soon as the user shares their contact there, with no second request needed.
+export interface PhoneOtpDelivery {
+  delivered: boolean;
+  bot_url: string | null;
+}
+
 // Request types for profile updates
 export interface FreelancerProfileRequest {
   tagline?: string;

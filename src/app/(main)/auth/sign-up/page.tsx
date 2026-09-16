@@ -8,6 +8,7 @@ import { Alert, Divider, Link, Text } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import GoogleButton from "@/components/auth/GoogleButton";
+import { TelegramLinkSteps } from "@/components/auth/TelegramLinkSteps";
 import { AuthFallback, AuthPage, AuthPrimaryButton, authBackButton, authFooterText, authForm, authMutedButton, authSubtitle, authTitle } from "@/components/auth/authKit";
 import { safeRedirect } from "@/lib/redirect";
 import {
@@ -29,6 +30,7 @@ const footer = css({ mt: "32px", display: "flex", flexDirection: "column", gap: 
 const signInLink = css({ fontWeight: 500 });
 const backIcon = css({ ml: "-4px" });
 const resendRow = css({ display: "flex", justifyContent: "center", mt: "16px" });
+const linkSteps = css({ mt: "16px", mb: "20px" });
 
 function SignUpContent() {
   const router = useRouter();
@@ -44,6 +46,8 @@ function SignUpContent() {
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [code, setCode] = useState("");
+  // Set when the number is not linked to the Telegram bot yet (see PhoneOtpDelivery).
+  const [botUrl, setBotUrl] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -79,7 +83,8 @@ function SignUpContent() {
         await registerEmail({ name: name.trim(), email: email.trim(), password, password_confirmation: confirm, ...roleFlags() });
         router.push(destination());
       } else {
-        await api.sendPhoneOtp(e164Phone());
+        const delivery = await api.sendPhoneOtp(e164Phone());
+        setBotUrl(delivery.delivered ? null : delivery.bot_url);
         setStep("otp");
       }
     } catch (err) {
@@ -93,7 +98,8 @@ function SignUpContent() {
     setError("");
     setIsLoading(true);
     try {
-      await api.sendPhoneOtp(e164Phone());
+      const delivery = await api.sendPhoneOtp(e164Phone());
+      setBotUrl(delivery.delivered ? null : delivery.bot_url);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not resend the code.");
     } finally {
@@ -171,7 +177,7 @@ function SignUpContent() {
                 </div>
               </div>
               <FieldHelper>
-                {method === "email" ? "We'll send a verification link here." : "Cambodian number — we'll text you a code to verify."}
+                {method === "email" ? "We'll send a verification link here." : "Cambodian number — we'll send your code on Telegram."}
               </FieldHelper>
             </div>
 
@@ -197,16 +203,20 @@ function SignUpContent() {
         </>
       ) : (
         <>
-          <button type="button" onClick={() => { setStep("form"); setCode(""); setError(""); }} className={authBackButton}>
+          <button type="button" onClick={() => { setStep("form"); setCode(""); setBotUrl(null); setError(""); }} className={authBackButton}>
             <ArrowLeft size={20} className={backIcon} />
             Back
           </button>
           <h1 className={authTitle}>Verify your phone</h1>
           <p className={authSubtitle}>
-            We sent a 6-digit code to {e164Phone()} via Telegram. Check your Telegram app.
+            {botUrl
+              ? `${e164Phone()} isn't linked to our Telegram bot yet. Link it once and your code arrives there right away.`
+              : `We sent a 6-digit code to ${e164Phone()} via Telegram. Check your Telegram app.`}
           </p>
 
           {error && <Alert tone="error" onClose={() => setError("")} className={alertGap}>{error}</Alert>}
+
+          {botUrl && <TelegramLinkSteps botUrl={botUrl} className={linkSteps} />}
 
           <form onSubmit={handleVerify} className={authForm}>
             <OtpInput value={code} onChange={setCode} autoFocus disabled={isLoading} />
