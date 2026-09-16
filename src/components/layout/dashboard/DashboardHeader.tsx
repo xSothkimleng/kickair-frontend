@@ -24,7 +24,10 @@ const descriptionCss = css({ textStyle: "body", color: "ink2" });
 export default function DashboardHeader({ title, description }: DashboardHeaderProps) {
   return (
     <div className={wrapCss}>
-      <Container maxW="1200px" px="24px" py="24px">
+      {/* border-box, like the tab strip and page content: the 24px padding
+          must sit inside the 1200px width or the title lands 24px left of
+          the logo. */}
+      <Container maxW="1200px" px="24px" py="24px" boxSizing="border-box">
         <div>
           <h4 className={titleCss}>{title}</h4>
           <p className={descriptionCss}>{description}</p>

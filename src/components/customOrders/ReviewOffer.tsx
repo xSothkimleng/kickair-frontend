@@ -6,7 +6,7 @@ import { css, cx } from "styled-system/css";
 import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { CustomOrder } from "@/types/customOrder";
-import { Chip, Money, coAvatar, coBtn, coBtnStart, coCard, coLabel, coLabelPending, initials } from "./kit";
+import { Chip, Money, coAvatar, coBtn, coBtnStart, coCard, coLabel, initials } from "./kit";
 import { useCoInvalidate } from "./hooks";
 import FundMilestoneDialog from "./FundMilestoneDialog";
 
@@ -38,19 +38,21 @@ const shieldTitle = css({ fontWeight: 600, textStyle: "body", color: "ink" });
 const shieldBody = css({ textStyle: "ui", color: "ink2" });
 
 const aside = cx(coCard, css({ p: { base: "20px", md: "24px" }, position: { md: "sticky" }, top: "24px" }));
+// Neutral surface, same as the escrow explainer card — the amount is a fact,
+// not a warning, so it doesn't get the orange escrow tint.
 const payBox = css({
   p: "16px",
   mt: "12px",
   mb: "12px",
   borderRadius: "12px",
-  bg: "pendingTint",
+  bg: "surface2",
   borderWidth: "1px",
   borderStyle: "solid",
-  borderColor: "rgba(234,88,12,0.18)",
+  borderColor: "hairline",
 });
 
 const payValue = css({ mt: "6px" });
-const payNote = css({ textStyle: "micro", color: "pendingText", opacity: 0.85 });
+const payNote = css({ textStyle: "micro", color: "ink2" });
 
 const laterList = css({ display: "flex", flexDirection: "column", gap: "10px", mb: "16px" });
 const betweenRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
@@ -148,8 +150,8 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
     <div className={aside}>
       <p className={coLabel}>To start the project</p>
       <div className={payBox}>
-        <p className={coLabelPending}>You pay now</p>
-        <div className={payValue}><Money value={payNow} size="stat" weight={600} color="var(--colors-pending-text)" cents /></div>
+        <p className={coLabel}>You pay now</p>
+        <div className={payValue}><Money value={payNow} size="stat" weight={600} color="var(--colors-ink)" cents /></div>
         <p className={payNote}>One-time payment → held in escrow</p>
       </div>
       {fundedLater > 0 && (

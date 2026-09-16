@@ -140,7 +140,7 @@ Kimleng wants MUI gone. The admin console is already Panda; the **site** is the 
 - The React Compiler lint rules are on: no `Date.now()`/`new Date()` in render (use a client-only `useSyncExternalStore` like `OverviewPage`), no `setState` inside `useEffect` bodies.
 - Keep `OrderRecord` as the single order history while porting it — same rule as before.
 
-## Status after the 2026-09-15 session (phone OTP moved to the free Telegram bot) — NOT yet committed
+## Status after the 2026-09-15 session (phone OTP moved to the free Telegram bot) — committed & pushed 2026-09-16 (API 257f629, FE 10b64e6)
 Kimleng's team reversed the 09-07 Gateway decision: Gateway is funded only in TON through Fragment with a **$100 minimum**, and the team has no crypto wallet and no wish to get one. Nothing had been funded, so nothing was lost. Phone OTP now goes through a **free Telegram bot**; Gateway stays in the code behind a config switch.
 
 ### How it works
@@ -207,3 +207,11 @@ Some pages were built from **Claude Design** handoff bundles. **Find Freelancers
 
 ---
 At handoff: both repos are committed and pushed to `main` (Telegram Gateway hardening, the admin console replacement and its API changes); this handoff note's MUI-removal section was written afterwards and may still be uncommitted. Confirm git state before starting.
+
+## Status after the 2026-09-16 session (four UI notes from Kimleng's screenshots) — committed & pushed
+- **Freelancer can accept a custom request as-is** — `dashboard/custom-orders/[id]/page.tsx`: the pending-request card now ends in a footer row under a hairline: Decline (quiet, left) · Make an offer (outline) · **Accept request** (black). Accept calls the existing `POST /custom-orders/{id}/offer` with the client's own brief, budget and timeline plus the composer defaults (`OFFER_DEFAULTS` exported from `OfferComposer.tsx`: 3 revisions, 3-day expiry; the 30-day delivery default is only used by the composer), so the client still reviews and pays it like any other offer. No API change. Accept is hidden when the request has no timeline or no brief (nothing to accept as-is); errors show in an inline Alert.
+- **"You pay now" box** (`customOrders/ReviewOffer.tsx`) — neutral `surface2` + hairline, amount in ink. `coLabelPending` removed from `customOrders/kit.tsx` (no other consumer). The orange escrow tint stays on the small shield tile and the "New offer" chip.
+- **Freelancer order page** (`freelancer/orders/[id]/page.tsx`) — the "Original Request & Offer" card is gone (the brief already shows under Service; price/delivery/revisions under Package); its four tile styles were removed from `dashboard/orderPageKit.tsx`.
+- **Space headers aligned** — `DashboardHeader`'s Panda `Container` was content-box, so its 24px padding sat outside the 1200px width and the title started 24px left of the logo; `boxSizing="border-box"` fixes it (also on /dashboard/kyc). `DashboardTabs` gives the first trigger `pl: 0, minW: 0` so the first label starts on the container edge. Measured with headless Chrome at 1462px: logo, title, first tab and content cards all start at x=155.
+- Verified: `tsc` clean, `eslint` clean on the touched files. The `🐼 error [sheet:process]` line printed by `panda cssgen` / `next dev` is pre-existing (identical on the baseline) — not investigated.
+- Not touched: the composer's default delivery is still 30 days rather than the requested timeline — that's why the offer in Kimleng's screenshot said 30 days against a 2-day request. Small follow-up if wanted.

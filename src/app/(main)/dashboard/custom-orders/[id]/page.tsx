@@ -2,16 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight, ChevronLeft, Clock } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, Clock } from "lucide-react";
 import { css, cx } from "styled-system/css";
-import { Spinner } from "@/components/ds";
+import { Alert, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { useCustomOrder, useCoInvalidate } from "@/components/customOrders/hooks";
 import {
   AttachChip, Money, coAvatar, coBtn, coBtnEnd, coBtnStart, coCard, coLabel, initials,
 } from "@/components/customOrders/kit";
 import ReviewOffer from "@/components/customOrders/ReviewOffer";
-import OfferComposer from "@/components/customOrders/OfferComposer";
+import OfferComposer, { OFFER_DEFAULTS } from "@/components/customOrders/OfferComposer";
 import Workspace from "@/components/customOrders/Workspace";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -26,6 +26,7 @@ const centered = css({ minHeight: "100vh", bg: "canvas", display: "grid", placeI
 const missing = css({ minHeight: "100vh", bg: "canvas", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: "16px" });
 const missingText = css({ textStyle: "lead", color: "ink2" });
 const spinner = css({ color: "ink" });
+const spinnerOnBlack = css({ color: "#fff" });
 
 const container = css({
   w: "100%",
@@ -52,7 +53,22 @@ const statDays = css({ fontVariantNumeric: "tabular-nums", textStyle: "title", f
 const briefText = css({ textStyle: "body", color: "ink" });
 const attachBlock = css({ mb: "20px" });
 const attachRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
-const detailActions = css({ display: "flex", justifyContent: "space-between", gap: "12px" });
+const actionAlert = css({ mt: "20px" });
+// Footer row under a hairline: Decline (quiet) on the left, the two ways to
+// respond on the right — counter with an offer, or accept the request as-is.
+const detailActions = css({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "space-between",
+  flexWrap: "wrap",
+  gap: "12px",
+  mt: "24px",
+  pt: "20px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+});
+const detailActionsMain = css({ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "10px", ml: "auto" });
 
 const summaryCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
 const awaitBanner = css({ display: "flex", alignItems: "center", gap: "8px", p: "12px 14px", borderRadius: "10px", bg: "pendingTint", color: "pendingText", mb: "16px" });
@@ -83,6 +99,8 @@ export default function CustomOrderDetailPage() {
   const invalidate = useCoInvalidate();
   const [composing, setComposing] = useState(false);
   const [declining, setDeclining] = useState(false);
+  const [accepting, setAccepting] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   // "Make an offer" in the orders list deep-links straight into the composer.
   useEffect(() => {
@@ -122,16 +140,51 @@ export default function CustomOrderDetailPage() {
   }
 
   // Pending + freelancer → the full request detail: brief, budget/timeline,
-  // attachments, and the Decline / Make an offer actions (composer inline).
+  // attachments, and the Decline / Make an offer / Accept actions (composer inline).
   if (order.status === "pending" && role === "freelancer") {
+    const busy = declining || accepting;
+
     const handleDecline = async () => {
       setDeclining(true);
+      setActionError(null);
       try {
         await api.declineCustomOrder(order.id);
         await invalidate();
         await refetch();
+      } catch (e) {
+        setActionError(e instanceof Error ? e.message : "Failed to decline the request.");
       } finally {
         setDeclining(false);
+      }
+    };
+
+    // Accept the request as-is: an offer at exactly the client's budget and
+    // timeline, with the composer's defaults for everything else. The client
+    // still reviews and pays it like any other offer — nothing is self-approved.
+    const requestScope = order.description?.trim() ?? "";
+    const requestDays = order.desired_timeline_days ?? null;
+    const canAccept = requestScope.length > 0 && requestDays != null && requestDays > 0 && order.budget > 0;
+
+    const handleAccept = async () => {
+      if (!canAccept || requestDays == null) return;
+      setAccepting(true);
+      setActionError(null);
+      try {
+        await api.sendCustomOffer(order.id, {
+          offer_scope: requestScope,
+          offer_delivery_days: requestDays,
+          offer_revisions: OFFER_DEFAULTS.revisions,
+          offer_note: null,
+          offer_expires_in_days: OFFER_DEFAULTS.expiresInDays,
+          is_split: false,
+          milestones: [{ title: "Complete project", amount: order.budget, due_days: requestDays }],
+        });
+        await invalidate();
+        await refetch();
+      } catch (e) {
+        setActionError(e instanceof Error ? e.message : "Failed to accept the request.");
+      } finally {
+        setAccepting(false);
       }
     };
 
@@ -169,14 +222,28 @@ export default function CustomOrderDetailPage() {
                 </div>
               )}
 
+              {actionError && <Alert tone="error" className={actionAlert}>{actionError}</Alert>}
+
               <div className={detailActions}>
-                <button type="button" onClick={handleDecline} disabled={declining} className={coBtn({ tone: "quiet", strong: true })}>
+                <button type="button" onClick={handleDecline} disabled={busy} className={coBtn({ tone: "quiet", strong: true })}>
                   {declining ? <Spinner size={16} /> : "Decline"}
                 </button>
-                <button type="button" onClick={() => setComposing(true)} className={coBtn({ tone: "black", size: "sm", strong: true })}>
-                  Make an offer
-                  <ArrowRight size={20} className={coBtnEnd} />
-                </button>
+                <div className={detailActionsMain}>
+                  <button type="button" onClick={() => setComposing(true)} disabled={busy} className={coBtn({ tone: canAccept ? "outline" : "black", size: "sm", strong: true })}>
+                    Make an offer
+                    <ArrowRight size={18} className={coBtnEnd} />
+                  </button>
+                  {canAccept && (
+                    <button type="button" onClick={handleAccept} disabled={busy} className={coBtn({ tone: "black", size: "sm", strong: true })}>
+                      {accepting ? <Spinner size={16} className={spinnerOnBlack} /> : (
+                        <>
+                          <Check size={18} className={coBtnStart} />
+                          Accept request
+                        </>
+                      )}
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}

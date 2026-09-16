@@ -176,13 +176,9 @@ export const partyMetaCss = css({ textStyle: "meta", color: "#64748B" });
 /* ── Package stats ────────────────────────────────────────────────────────── */
 
 export const statGridCss = css({ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "12px", mb: "12px" });
-export const statGrid2Css = css({ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "12px" });
 export const tileCss = css({ bg: "#F1F5F9", borderRadius: "10px", p: "14px 16px" });
-export const tileSmCss = css({ bg: "#F1F5F9", borderRadius: "10px", p: "12px 14px" });
 export const tileLabelCss = css({ textStyle: "micro", fontWeight: 600, color: "#64748B" });
-export const tileLabelPlainCss = css({ textStyle: "micro", fontWeight: 600, color: "#64748B" });
 export const tileValCss = css({ textStyle: "title", fontWeight: 700 });
-export const tileValSmCss = css({ textStyle: "body", fontWeight: 700 });
 export const totalRowCss = css({ bg: "#F1F5F9", borderRadius: "10px", p: "14px 16px", display: "flex", alignItems: "center", justifyContent: "space-between" });
 
 /* ── Status banners ───────────────────────────────────────────────────────── */

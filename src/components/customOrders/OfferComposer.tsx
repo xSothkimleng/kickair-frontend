@@ -69,16 +69,19 @@ const alertGap = css({ mt: "14px" });
 const sendBtn = css({ mt: "18px" });
 const cancelBtn = css({ mt: "8px" });
 
+/** Composer defaults — also what "Accept request" sends alongside the client's own budget and timeline. */
+export const OFFER_DEFAULTS = { deliveryDays: 30, revisions: 3, expiresInDays: 3 } as const;
+
 export default function OfferComposer({ order, onSent, onCancel }: { order: CustomOrder; onSent: () => void; onCancel: () => void }) {
   const invalidate = useCoInvalidate();
   const rate = useCommissionRate();
   const clientLabel = order.client.name ?? "the client";
 
   const [scope, setScope] = useState(order.description ?? "");
-  const [deliveryDays, setDeliveryDays] = useState("30");
-  const [revisions, setRevisions] = useState("3");
+  const [deliveryDays, setDeliveryDays] = useState(String(OFFER_DEFAULTS.deliveryDays));
+  const [revisions, setRevisions] = useState(String(OFFER_DEFAULTS.revisions));
   const [note, setNote] = useState("");
-  const [expiresIn, setExpiresIn] = useState("3");
+  const [expiresIn, setExpiresIn] = useState(String(OFFER_DEFAULTS.expiresInDays));
   const [amount, setAmount] = useState(String(order.budget || ""));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -99,7 +102,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
       // One-time payment: the offer is a single "Complete project" payment.
       await api.sendCustomOffer(order.id, {
         offer_scope: scope.trim(),
-        offer_delivery_days: Number(deliveryDays) || 30,
+        offer_delivery_days: Number(deliveryDays) || OFFER_DEFAULTS.deliveryDays,
         offer_revisions: revisions ? Number(revisions) : null,
         offer_note: note.trim() || null,
         offer_expires_in_days: expiresIn ? Number(expiresIn) : null,

@@ -29,8 +29,8 @@ import {
   notFoundTextCss, outcomeBoxCss, pageBtn, pageCss, pageTitleCss, partyAvatarCss,
   partyAvatarImgCss, partyMeta16Css, partyMetaCss, partyNameCss, partyRowCss, placedCss,
   reviewBoxCss, reviewHeadCss, reviewerCss, secLabelCss, stack1Css, starRowCss, startIconCss,
-  statGrid2Css, statGridCss, statusBadgeCss, statusDotCss, tileCss, tileLabelCss,
-  tileLabelPlainCss, tileSmCss, tileValCss, tileValSmCss, titleRowCss, topAlertActionCss,
+  statGridCss, statusBadgeCss, statusDotCss, tileCss, tileLabelCss,
+  tileValCss, titleRowCss, topAlertActionCss,
   topAlertCloseCss, topAlertCss, topAlertIconCss, topAlertMsgCss, totalRowCss,
 } from "@/components/dashboard/orderPageKit";
 import { api } from "@/lib/api";
@@ -443,48 +443,6 @@ export default function FreelancerOrderDetailPage() {
               </p>
             </div>
           </div>
-
-          {/* ── Section 3b: Custom-origin orders keep the original request & offer story ── */}
-          {isCustom && order.custom_order && (
-            <div className={cardCss}>
-              <p className={secLabelCss}>Original Request &amp; Offer</p>
-
-              {order.custom_order.description && (
-                <>
-                  <p className={fieldLabelCss}>Client&apos;s brief</p>
-                  <p className={bodyTextCss}>{order.custom_order.description}</p>
-                </>
-              )}
-
-              <div className={statGrid2Css} style={{ marginBottom: order.custom_order.scope || order.custom_order.offer_note ? 16 : 0 }}>
-                <div className={tileSmCss}>
-                  <p className={tileLabelPlainCss}>Requested budget</p>
-                  <p className={tileValSmCss}>
-                    {order.custom_order.budget != null ? `$${Number(order.custom_order.budget).toLocaleString()}` : "—"}
-                  </p>
-                </div>
-                <div className={tileSmCss}>
-                  <p className={tileLabelPlainCss}>Requested timeline</p>
-                  <p className={tileValSmCss}>
-                    {order.custom_order.desired_timeline_days ? `${order.custom_order.desired_timeline_days} days` : "—"}
-                  </p>
-                </div>
-              </div>
-
-              {order.custom_order.scope && (
-                <>
-                  <p className={fieldLabelCss}>Your offer scope</p>
-                  <p className={bodyTextCss}>{order.custom_order.scope}</p>
-                </>
-              )}
-              {order.custom_order.offer_note && (
-                <>
-                  <p className={fieldLabelCss}>Offer note</p>
-                  <p className={bodyTextCss}>{order.custom_order.offer_note}</p>
-                </>
-              )}
-            </div>
-          )}
 
           {/* ── Section 4: Order record — events, deliveries & revisions in one timeline ── */}
           <OrderRecord

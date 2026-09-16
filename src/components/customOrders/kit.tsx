@@ -38,13 +38,6 @@ export const coLabelAccent = css({
   fontVariantNumeric: "tabular-nums",
 });
 
-/** `coLabel` in the escrow (pending) colour. */
-export const coLabelPending = css({
-  textStyle: "eyebrow",
-  fontWeight: 600,
-  color: "pendingText",
-});
-
 /**
  * Action button. Reproduces the button base these surfaces styled through
  * `sx` (500 weight, 14px, 6px/8px padding, 64px min-width,

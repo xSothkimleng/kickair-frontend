@@ -32,6 +32,9 @@ const trigger = css({
   _hover: { color: "ink" },
   _focusVisible: { outline: "none", boxShadow: "inset 0 0 0 2px token(colors.accentFill)" },
   "&[data-selected]": { color: "ink", fontWeight: 500 },
+  // The first label starts on the container edge, in line with the logo,
+  // the page title and the content cards.
+  _first: { pl: 0, minW: 0 },
 });
 const indicator = css({ h: "2px", bg: "ink", bottom: 0 });
 const badge = css({
