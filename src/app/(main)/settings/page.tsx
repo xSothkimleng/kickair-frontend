@@ -16,6 +16,7 @@ import { Alert, Avatar, Spinner, alert } from "@/components/ds";
 import { BareModal } from "@/components/ds/BareModal";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
+import { toE164Kh } from "@/lib/phone";
 import { useRouter } from "next/navigation";
 import { TextInput, PasswordInput, PhoneInput, OtpInput } from "@/components/ui/inputs";
 import { TelegramLinkSteps } from "@/components/auth/TelegramLinkSteps";
@@ -590,7 +591,7 @@ export default function SettingsPage() {
   // ── Handlers ──
 
   // PhoneInput collects the local part only — convert to E.164 the same way sign-up does.
-  const e164NewPhone = () => `+855${newPhone.replace(/\D/g, "").replace(/^0+/, "")}`;
+  const e164NewPhone = () => toE164Kh(newPhone);
 
   const handleSendPhoneOtp = async () => {
     if (!newPhone.replace(/\D/g, "")) return;

@@ -11,6 +11,7 @@ import GoogleButton from "@/components/auth/GoogleButton";
 import { TelegramLinkSteps } from "@/components/auth/TelegramLinkSteps";
 import { AuthFallback, AuthPage, AuthPrimaryButton, authBackButton, authFooterText, authForm, authMutedButton, authSubtitle, authTitle } from "@/components/auth/authKit";
 import { safeRedirect } from "@/lib/redirect";
+import { toE164Kh } from "@/lib/phone";
 import {
   TextInput, PasswordInput, PhoneInput, OtpInput, SegmentedControl, SelectInput,
   FieldLabel, FieldHelper,
@@ -51,7 +52,7 @@ function SignUpContent() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const e164Phone = () => `+855${phone.replace(/\D/g, "").replace(/^0+/, "")}`;
+  const e164Phone = () => toE164Kh(phone);
   // A return path (e.g. from the purchase gate) wins over the role-based default.
   const destination = () => redirectTo ?? (role === "freelancer" ? "/dashboard/freelancer" : "/explore-services");
   const roleFlags = () => ({ is_client: role === "client", is_freelancer: role === "freelancer" });

@@ -89,7 +89,7 @@ function SignInContent() {
           id="identifier"
           value={identifier}
           onChange={setIdentifier}
-          placeholder="you@example.com or +855…"
+          placeholder="you@example.com or 012 345 678"
           autoComplete="username"
           disabled={isLoading}
         />

@@ -227,6 +227,24 @@ class ApiClient {
     return response.data;
   }
 
+  // Phone accounts reset their password with a Telegram code instead of an emailed
+  // link: request the code (same delivery answer as sendPhoneOtp), then submit it
+  // together with the new password.
+  async forgotPasswordPhone(phone: string): Promise<PhoneOtpDelivery> {
+    const response = await this.request("/api/auth/forgot-password/phone", {
+      method: "POST",
+      body: JSON.stringify({ phone }),
+    });
+    return response.data;
+  }
+
+  async resetPasswordPhone(data: { phone: string; code: string; password: string; password_confirmation: string }): Promise<void> {
+    await this.request("/api/auth/reset-password/phone", {
+      method: "POST",
+      body: JSON.stringify(data),
+    });
+  }
+
   // Enable the second account role (Start selling / Start hiring). No KYC gate.
   async enableRole(role: "client" | "freelancer"): Promise<User> {
     const response = await this.request("/api/account/enable-role", {
