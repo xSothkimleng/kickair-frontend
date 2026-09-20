@@ -13,7 +13,7 @@ import { Notification } from "@/types/notification";
 import { useAuth } from "@/components/context/AuthContext";
 import { TypeTile, RoleChip, UnreadDot, getNotificationRoute, notifTimeAgo } from "@/components/notifications/shared";
 import { invalidateForNotification } from "@/lib/realtimeInvalidation";
-import { bellBtnCss } from "./styles";
+import { bellBtnCss, BELL_BADGE_OFFSET } from "./styles";
 
 const POPUP_W = 380;
 
@@ -186,7 +186,7 @@ export function NotificationBell() {
       portalled
       lazyMount
       unmountOnExit>
-      <Indicator count={unreadCount} max={99}>
+      <Indicator count={unreadCount} max={99} offset={BELL_BADGE_OFFSET}>
         <PopoverPrimitive.Trigger asChild>
           <button type="button" className={bellBtnCss} aria-label="Notifications">
             <Bell size={20} />

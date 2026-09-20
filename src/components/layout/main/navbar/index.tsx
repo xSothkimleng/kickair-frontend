@@ -8,8 +8,8 @@ import { css, cx } from "styled-system/css";
 import { tapTarget } from "@/components/ds/tap";
 import { Avatar, Dialog, Portal, Spinner, iconButton } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
-import { type DropdownType, type UserMode, type Language, LANGUAGES } from "./types";
-import { dropdownPanelRaw, navBtnRaw, navBtnCss, modeBtnOnCss, modeBtnOffCss } from "./styles";
+import { type DropdownType, type UserMode, type Language, LANGUAGES, SHOW_LANGUAGE_SWITCH } from "./types";
+import { dropdownPanelRaw, navBtnRaw, navBtnCss, modeBtnOnCss, modeBtnOffCss, bellGroupCss, accountPillCss, profileBtnCss, profileNameCss, profileChevronCss } from "./styles";
 import { DropdownItem } from "./DropdownItem";
 import { MobileDrawer } from "./MobileDrawer";
 import { NotificationBell } from "./NotificationBell";
@@ -18,12 +18,20 @@ import { WalletChip } from "./WalletChip";
 
 // The desktop/hamburger switch keeps the `lg` breakpoint (1200px) via a
 // literal media query — Panda's `lg` token is 1024px.
+const DESKTOP = "@media (min-width: 1200px)";
 const navCss = css({ position: "sticky", top: 0, zIndex: 1100, bg: "white", boxShadow: "0 2px 4px rgba(0,0,0,0.1)" });
-const containerCss = css({ w: "100%", maxW: "1200px", mx: "auto", boxSizing: "border-box", px: { base: "16px", sm: "24px" }, display: "flex", alignItems: "center", justifyContent: "space-between" });
-const logoWrapCss = css({ display: "block", h: "48px" });
+// Mobile: logo + hamburger, space-between. Desktop: three zones — logo left, page links on the
+// bar's true centre, account controls right. The two side columns are equal (1fr each), so the
+// links don't move when the right side changes width (signed in/out, a longer balance); each side
+// can still grow to its content, in which case the links give way instead of being overlapped.
+const containerCss = css({
+  w: "100%", maxW: "1200px", mx: "auto", boxSizing: "border-box", px: { base: "16px", sm: "24px" },
+  display: "flex", alignItems: "center", justifyContent: "space-between",
+  [DESKTOP]: { display: "grid", gridTemplateColumns: "minmax(max-content, 1fr) auto minmax(max-content, 1fr)", columnGap: "12px" },
+});
+const logoWrapCss = css({ display: "block", h: "48px", [DESKTOP]: { justifySelf: "start" } });
 const logoCss = css({ objectFit: "contain", mt: "5px" });
-const desktopCss = css({ display: "none", alignItems: "center", gap: "20px", "@media (min-width: 1200px)": { display: "flex" } });
-const navGroupCss = css({ display: "flex", gap: "10px", alignItems: "center" });
+const navGroupCss = css({ display: "none", gap: "10px", alignItems: "center", [DESKTOP]: { display: "flex" } });
 const relCss = css({ position: "relative" });
 const navChevronCss = css({ ml: "8px", mr: "-4px", flexShrink: 0, transition: "transform 0.2s" });
 const openCss = css({ transform: "rotate(180deg)" });
@@ -32,7 +40,7 @@ const megaInnerCss = css({ p: "24px" });
 const megaLeadCss = css({ textStyle: "micro", color: "ink2", mb: "16px" });
 const megaListCss = css({ display: "flex", flexDirection: "column", gap: "4px" });
 const ddIconCss = css({ color: "ink2", display: "block" });
-const rightGroupCss = css({ display: "flex", alignItems: "center", gap: "10px" });
+const rightGroupCss = css({ display: "none", alignItems: "center", gap: "8px", [DESKTOP]: { display: "flex", justifySelf: "end" } });
 const langBtnCss = css(navBtnRaw, { textStyle: "meta", gap: "4px", color: "ink2", _hover: { bg: "rgba(0,0,0,0.04)" } });
 const langPanelCss = css(dropdownPanelRaw, { right: 0, mt: "8px", borderRadius: "12px", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" });
 const langListCss = css({ py: "8px" });
@@ -40,8 +48,6 @@ const langOptRaw = css.raw({ w: "100%", justifyContent: "flex-start", px: "16px"
 const langOptOnCss = css(navBtnRaw, langOptRaw, { color: "black", fontWeight: 600 });
 const langOptOffCss = css(navBtnRaw, langOptRaw, { color: "ink2", fontWeight: 400 });
 const spinnerCss = css({ color: "ink2" });
-const profileBtnCss = css(navBtnRaw, { display: "flex", alignItems: "center", gap: "8px", px: "12px", h: "44px", textStyle: "meta", color: "ink", _hover: { color: "black", bg: "transparent" } });
-const profileChevronCss = css({ opacity: 0.6, flexShrink: 0, transition: "transform 0.2s" });
 const menuPanelCss = css(dropdownPanelRaw, { width: "360px", right: 0, mt: "8px", borderRadius: "6px", boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)" });
 const menuHeaderCss = css({ p: "12px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "rgba(0,0,0,0.08)" });
 const menuHeaderRowCss = css({ display: "flex", alignItems: "center", gap: "12px", px: "8px" });
@@ -58,7 +64,7 @@ const logoutCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: 
 const logoutIconCss = css({ mr: "8px", flexShrink: 0 });
 // `<a>` colour needs !important: globals.css sets `a { color: inherit }` outside any layer.
 const signInCss = css(navBtnRaw, tapTarget, { ml: "8px", px: "16px", h: "32px", textStyle: "meta", color: "white !important", fontWeight: 700, bg: "black", borderRadius: "100px", _hover: { bg: "rgba(0,0,0,0.8)" } });
-const hamburgerCss = css(iconButton.raw({ size: "md" }), { w: "40px", h: "40px", color: "ink2", _hover: { bg: "rgba(0,0,0,0.04)", color: "ink2" }, "@media (min-width: 1200px)": { display: "none" } });
+const hamburgerCss = css(iconButton.raw({ size: "md" }), { w: "40px", h: "40px", color: "ink2", _hover: { bg: "rgba(0,0,0,0.04)", color: "ink2" }, [DESKTOP]: { display: "none" } });
 // Enable-second-role dialog — keeps the dialog geometry (600px paper, 12px radius, 8px paper padding).
 const dlgBackdropCss = css({ position: "fixed", inset: 0, bg: "rgba(0,0,0,0.5)", zIndex: 1300 });
 const dlgPositionerCss = css({ position: "fixed", inset: 0, zIndex: 1300, display: "flex", alignItems: "center", justifyContent: "center" });
@@ -340,141 +346,141 @@ export default function MainNavbar() {
           </Link>
         </span>
 
-        {/* ── Desktop Nav ──────────────────────────────────────────────────────── */}
-        <div className={desktopCss}>
-          {/* Hover state: entering any trigger opens (or switches) its menu; leaving a
-              trigger/panel region schedules a short-delay close that re-entering cancels,
-              so sliding between trigger and panel never flickers, but leaving closes. */}
-          <div className={navGroupCss} onMouseLeave={scheduleHoverClose}>
-            {/* Explore Services — no dropdown, so hovering it clears any open hover menu */}
-            <Link href='/explore-services' onMouseEnter={closeHoverMenuNow} className={navBtnCss}>
-              Explore Services
-            </Link>
+        {/* ── Desktop: page links (centre zone) ────────────────────────────────── */}
+        {/* Hover state: entering any trigger opens (or switches) its menu; leaving a
+            trigger/panel region schedules a short-delay close that re-entering cancels,
+            so sliding between trigger and panel never flickers, but leaving closes. */}
+        <div className={navGroupCss} onMouseLeave={scheduleHoverClose}>
+          {/* Explore Services — no dropdown, so hovering it clears any open hover menu */}
+          <Link href='/explore-services' onMouseEnter={closeHoverMenuNow} className={navBtnCss}>
+            Explore Services
+          </Link>
 
-            {/* Why KickAir ▾ */}
-            <div className={relCss} onMouseEnter={() => openHoverMenu("why")} onMouseLeave={scheduleHoverClose}>
-              <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "why"} className={navBtnCss}>
-                Why KickAir
-                <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "why" && openCss)} />
-              </button>
+          {/* Why KickAir ▾ */}
+          <div className={relCss} onMouseEnter={() => openHoverMenu("why")} onMouseLeave={scheduleHoverClose}>
+            <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "why"} className={navBtnCss}>
+              Why KickAir
+              <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "why" && openCss)} />
+            </button>
 
-              {activeDropdown === "why" && (
-                <div className={megaPanelCss}>
-                  <div className={megaInnerCss}>
-                    <div className={megaLeadCss}>Learn why KickAir is the best platform for freelancing</div>
-                    <div className={megaListCss}>
-                      <DropdownItem
-                        href='/why-kick-air#how-it-works'
-                        title='How It Works'
-                        description='Step-by-step guide for clients and freelancers'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                      <DropdownItem
-                        href='/why-kick-air#success-stories'
-                        title='Success Stories'
-                        description='Real results from our community'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                      <DropdownItem
-                        href='/why-kick-air#reviews'
-                        title='Reviews'
-                        description='See what people are saying about us'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                    </div>
+            {activeDropdown === "why" && (
+              <div className={megaPanelCss}>
+                <div className={megaInnerCss}>
+                  <div className={megaLeadCss}>Learn why KickAir is the best platform for freelancing</div>
+                  <div className={megaListCss}>
+                    <DropdownItem
+                      href='/why-kick-air#how-it-works'
+                      title='How It Works'
+                      description='Step-by-step guide for clients and freelancers'
+                      onClick={() => setActiveDropdown(null)}
+                    />
+                    <DropdownItem
+                      href='/why-kick-air#success-stories'
+                      title='Success Stories'
+                      description='Real results from our community'
+                      onClick={() => setActiveDropdown(null)}
+                    />
+                    <DropdownItem
+                      href='/why-kick-air#reviews'
+                      title='Reviews'
+                      description='See what people are saying about us'
+                      onClick={() => setActiveDropdown(null)}
+                    />
                   </div>
                 </div>
-              )}
-            </div>
-
-            {/* For Freelancers ▾ */}
-            <div className={relCss} onMouseEnter={() => openHoverMenu("freelancer")} onMouseLeave={scheduleHoverClose}>
-              <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "freelancer"} className={navBtnCss}>
-                For Freelancers
-                <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "freelancer" && openCss)} />
-              </button>
-
-              {activeDropdown === "freelancer" && (
-                <div className={megaPanelCss}>
-                  <div className={megaInnerCss}>
-                    <div className={megaLeadCss}>Learn, earn, and grow your freelance career</div>
-                    <div className={megaListCss}>
-                      <DropdownItem
-                        icon={<Zap size={20} className={ddIconCss} />}
-                        title='Post Your Service'
-                        description='Create your service listing with three-tier pricing'
-                        onClick={goToCreateService}
-                      />
-                      <DropdownItem
-                        icon={<Briefcase size={20} className={ddIconCss} />}
-                        title='Opportunities'
-                        description='Find gigs, part-time & full-time work'
-                        href='/jobs'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                      <DropdownItem
-                        icon={<BookOpen size={20} className={ddIconCss} />}
-                        title='KickAir University'
-                        description='Master freelancing skills, pricing strategies, and client management'
-                        href='/kick-air-university'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* For Clients ▾ */}
-            <div className={relCss} onMouseEnter={() => openHoverMenu("client")} onMouseLeave={scheduleHoverClose}>
-              <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "client"} className={navBtnCss}>
-                For Clients
-                <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "client" && openCss)} />
-              </button>
-
-              {activeDropdown === "client" && (
-                <div className={megaPanelCss}>
-                  <div className={megaInnerCss}>
-                    <div className={megaLeadCss}>Get work done with trusted freelancers</div>
-                    <div className={megaListCss}>
-                      <DropdownItem
-                        icon={<BookOpen size={20} className={ddIconCss} />}
-                        title='KickAir University'
-                        description='Learn project management and hiring best practices'
-                        href='/kick-air-university'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                      <DropdownItem
-                        icon={<Search size={20} className={ddIconCss} />}
-                        title='Explore Services'
-                        description='Browse freelancer offerings'
-                        href='/explore-services'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                      <DropdownItem
-                        icon={<Users size={20} className={ddIconCss} />}
-                        title='Find Freelancers'
-                        description='One-off jobs & projects'
-                        href='/find-freelancer'
-                        onClick={() => setActiveDropdown(null)}
-                      />
-                      <DropdownItem
-                        icon={<Briefcase size={20} className={ddIconCss} />}
-                        title='Post Your Gig'
-                        description='Create a service listing to sell'
-                        onClick={goToCreateService}
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
-          {/* ── Right Side: Language + Auth ──────────────────────────────────────── */}
-          {/* Single ref covers both click-based dropdowns */}
-          <div ref={clickDropdownRef} className={rightGroupCss}>
-            {/* Language ▾ */}
+          {/* For Freelancers ▾ */}
+          <div className={relCss} onMouseEnter={() => openHoverMenu("freelancer")} onMouseLeave={scheduleHoverClose}>
+            <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "freelancer"} className={navBtnCss}>
+              For Freelancers
+              <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "freelancer" && openCss)} />
+            </button>
+
+            {activeDropdown === "freelancer" && (
+              <div className={megaPanelCss}>
+                <div className={megaInnerCss}>
+                  <div className={megaLeadCss}>Learn, earn, and grow your freelance career</div>
+                  <div className={megaListCss}>
+                    <DropdownItem
+                      icon={<Zap size={20} className={ddIconCss} />}
+                      title='Post Your Service'
+                      description='Create your service listing with three-tier pricing'
+                      onClick={goToCreateService}
+                    />
+                    <DropdownItem
+                      icon={<Briefcase size={20} className={ddIconCss} />}
+                      title='Opportunities'
+                      description='Find gigs, part-time & full-time work'
+                      href='/jobs'
+                      onClick={() => setActiveDropdown(null)}
+                    />
+                    <DropdownItem
+                      icon={<BookOpen size={20} className={ddIconCss} />}
+                      title='KickAir University'
+                      description='Master freelancing skills, pricing strategies, and client management'
+                      href='/kick-air-university'
+                      onClick={() => setActiveDropdown(null)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* For Clients ▾ */}
+          <div className={relCss} onMouseEnter={() => openHoverMenu("client")} onMouseLeave={scheduleHoverClose}>
+            <button type='button' aria-haspopup='true' aria-expanded={activeDropdown === "client"} className={navBtnCss}>
+              For Clients
+              <ChevronDown size={20} className={cx(navChevronCss, activeDropdown === "client" && openCss)} />
+            </button>
+
+            {activeDropdown === "client" && (
+              <div className={megaPanelCss}>
+                <div className={megaInnerCss}>
+                  <div className={megaLeadCss}>Get work done with trusted freelancers</div>
+                  <div className={megaListCss}>
+                    <DropdownItem
+                      icon={<BookOpen size={20} className={ddIconCss} />}
+                      title='KickAir University'
+                      description='Learn project management and hiring best practices'
+                      href='/kick-air-university'
+                      onClick={() => setActiveDropdown(null)}
+                    />
+                    <DropdownItem
+                      icon={<Search size={20} className={ddIconCss} />}
+                      title='Explore Services'
+                      description='Browse freelancer offerings'
+                      href='/explore-services'
+                      onClick={() => setActiveDropdown(null)}
+                    />
+                    <DropdownItem
+                      icon={<Users size={20} className={ddIconCss} />}
+                      title='Find Freelancers'
+                      description='One-off jobs & projects'
+                      href='/find-freelancer'
+                      onClick={() => setActiveDropdown(null)}
+                    />
+                    <DropdownItem
+                      icon={<Briefcase size={20} className={ddIconCss} />}
+                      title='Post Your Gig'
+                      description='Create a service listing to sell'
+                      onClick={goToCreateService}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* ── Desktop: language + account controls (right zone) ─────────────────── */}
+        {/* Single ref covers both click-based dropdowns */}
+        <div ref={clickDropdownRef} className={rightGroupCss}>
+          {/* Language ▾ — hidden until translations exist (SHOW_LANGUAGE_SWITCH) */}
+          {SHOW_LANGUAGE_SWITCH && (
             <div className={relCss}>
               <button
                 type='button'
@@ -505,121 +511,125 @@ export default function MainNavbar() {
                 </div>
               )}
             </div>
+          )}
 
-            {/* Auth */}
-            {loading ? (
-              <Spinner size={24} className={spinnerCss} />
-            ) : user ? (
-              <>
-                <WalletChip />
+          {/* Auth */}
+          {loading ? (
+            <Spinner size={24} className={spinnerCss} />
+          ) : user ? (
+            <>
+              <div className={bellGroupCss}>
                 <MessageBell />
                 <NotificationBell />
-                {/* Profile dropdown */}
-                <div className={relCss}>
+              </div>
+              {/* Account pill: name half opens the profile dropdown, balance half goes to Finance */}
+              <div className={relCss}>
+                <div className={accountPillCss}>
                   <button
                     type='button'
                     onClick={() => handleDropdownToggle("profile")}
                     aria-haspopup='menu'
                     aria-expanded={activeDropdown === "profile"}
-                    aria-label='Profile menu'
+                    aria-label={`Profile menu — ${user.name}`}
                     className={profileBtnCss}>
-                    <Avatar src={profileImageSrc} name={user.name} px={24} />
-                    <span>{user.name}</span>
+                    <Avatar src={profileImageSrc} name={user.name} px={28} />
+                    <span className={profileNameCss}>{user.name.trim().split(/\s+/)[0]}</span>
                     <ChevronDown size={14} className={cx(profileChevronCss, activeDropdown === "profile" && openCss)} />
                   </button>
+                  <WalletChip inPill />
+                </div>
 
-                  {activeDropdown === "profile" && (
-                    <div role='menu' className={menuPanelCss}>
-                      {/* Profile header */}
-                      <div className={menuHeaderCss}>
-                        <div className={menuHeaderRowCss}>
-                          <Avatar src={profileImageSrc} name={user.name} px={40} />
-                          <div>
-                            <div className={menuNameCss}>{user.name}</div>
-                            <div className={menuModeTextCss}>{currentMode} mode</div>
-                          </div>
+                {activeDropdown === "profile" && (
+                  <div role='menu' className={menuPanelCss}>
+                    {/* Profile header */}
+                    <div className={menuHeaderCss}>
+                      <div className={menuHeaderRowCss}>
+                        <Avatar src={profileImageSrc} name={user.name} px={40} />
+                        <div>
+                          <div className={menuNameCss}>{user.name}</div>
+                          <div className={menuModeTextCss}>{currentMode} mode</div>
                         </div>
-                      </div>
-
-                      {/* Mode switcher */}
-                      <div className={modeBoxCss}>
-                        <div className={modeLabelCss}>Mode</div>
-                        <div className={modeRowCss}>
-                          {(["freelancer", "client"] as const).map(mode => {
-                            const hasRole = mode === "freelancer" ? isFreelancer : isClient;
-                            // For a role the user doesn't have yet, the button doubles as the
-                            // "Become a freelancer / Become a client" CTA that opens the enable-role dialog.
-                            const label = hasRole
-                              ? mode.charAt(0).toUpperCase() + mode.slice(1)
-                              : mode === "freelancer"
-                                ? "Become a freelancer"
-                                : "Become a client";
-                            return (
-                              <button
-                                key={mode}
-                                type='button'
-                                onClick={() => handleModeSwitch(mode)}
-                                className={currentMode === mode ? modeBtnOnCss : modeBtnOffCss}>
-                                {label}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-
-                      {/* Menu items */}
-                      <div role='group' className={menuGroupCss}>
-                        {[
-                          ...(user?.is_admin
-                            ? [
-                                {
-                                  href: "/admin",
-                                  icon: <Shield size={14} className={menuIconCss} />,
-                                  label: "Go to Admin Dashboard",
-                                },
-                              ]
-                            : []),
-                          {
-                            href: currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client",
-                            icon: <Briefcase size={14} className={menuIconCss} />,
-                            label: currentMode === "freelancer" ? "Freelancer Space" : "Client Space",
-                          },
-                          {
-                            href: "/settings",
-                            icon: <SettingsIcon size={14} className={menuIconCss} />,
-                            label: "Settings",
-                          },
-                          {
-                            href: "/help",
-                            icon: <CircleHelp size={14} className={menuIconCss} />,
-                            label: "Help & Support",
-                          },
-                        ].map(item => (
-                          <Link key={item.href} role='menuitem' href={item.href} onClick={() => setActiveDropdown(null)} className={menuItemCss}>
-                            {item.icon}
-                            {item.label}
-                          </Link>
-                        ))}
-                      </div>
-
-                      {/* Logout */}
-                      <div className={logoutBoxCss}>
-                        <button type='button' role='menuitem' onClick={handleLogout} className={logoutCss}>
-                          <LogOut size={14} className={logoutIconCss} />
-                          Logout
-                        </button>
                       </div>
                     </div>
-                  )}
-                </div>
-              </>
-            ) : (
-              // Not logged in
-              <Link href='/auth/sign-in' className={signInCss}>
-                Sign In
-              </Link>
-            )}
-          </div>
+
+                    {/* Mode switcher */}
+                    <div className={modeBoxCss}>
+                      <div className={modeLabelCss}>Mode</div>
+                      <div className={modeRowCss}>
+                        {(["freelancer", "client"] as const).map(mode => {
+                          const hasRole = mode === "freelancer" ? isFreelancer : isClient;
+                          // For a role the user doesn't have yet, the button doubles as the
+                          // "Become a freelancer / Become a client" CTA that opens the enable-role dialog.
+                          const label = hasRole
+                            ? mode.charAt(0).toUpperCase() + mode.slice(1)
+                            : mode === "freelancer"
+                              ? "Become a freelancer"
+                              : "Become a client";
+                          return (
+                            <button
+                              key={mode}
+                              type='button'
+                              onClick={() => handleModeSwitch(mode)}
+                              className={currentMode === mode ? modeBtnOnCss : modeBtnOffCss}>
+                              {label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Menu items */}
+                    <div role='group' className={menuGroupCss}>
+                      {[
+                        ...(user?.is_admin
+                          ? [
+                              {
+                                href: "/admin",
+                                icon: <Shield size={14} className={menuIconCss} />,
+                                label: "Go to Admin Dashboard",
+                              },
+                            ]
+                          : []),
+                        {
+                          href: currentMode === "freelancer" ? "/dashboard/freelancer" : "/dashboard/client",
+                          icon: <Briefcase size={14} className={menuIconCss} />,
+                          label: currentMode === "freelancer" ? "Freelancer Space" : "Client Space",
+                        },
+                        {
+                          href: "/settings",
+                          icon: <SettingsIcon size={14} className={menuIconCss} />,
+                          label: "Settings",
+                        },
+                        {
+                          href: "/help",
+                          icon: <CircleHelp size={14} className={menuIconCss} />,
+                          label: "Help & Support",
+                        },
+                      ].map(item => (
+                        <Link key={item.href} role='menuitem' href={item.href} onClick={() => setActiveDropdown(null)} className={menuItemCss}>
+                          {item.icon}
+                          {item.label}
+                        </Link>
+                      ))}
+                    </div>
+
+                    {/* Logout */}
+                    <div className={logoutBoxCss}>
+                      <button type='button' role='menuitem' onClick={handleLogout} className={logoutCss}>
+                        <LogOut size={14} className={logoutIconCss} />
+                        Logout
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            // Not logged in
+            <Link href='/auth/sign-in' className={signInCss}>
+              Sign In
+            </Link>
+          )}
         </div>
 
         {/* ── Mobile Hamburger (hidden on desktop) ─────────────────────────────── */}

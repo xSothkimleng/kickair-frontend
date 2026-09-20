@@ -208,6 +208,7 @@ export default function OrderRecord({
   deliveryHistory,
   revisionHistory,
   preEvents,
+  embedded = false,
 }: {
   orderId: number;
   createdAt?: string;
@@ -215,6 +216,12 @@ export default function OrderRecord({
   revisionHistory?: RevisionEntry[];
   /** Events that predate the order itself (e.g. a custom request/offer), merged into the timeline. */
   preEvents?: OrderTimelineEvent[];
+  /**
+   * The host already frames and titles the record (the admin dispute page's "Order record"
+   * panel): render just the timeline — no card, no "Order Record" heading or caption —
+   * so there is never a card inside a card with the same title twice.
+   */
+  embedded?: boolean;
 }) {
   // The event log lives in React Query under the orders prefix, so every
   // `invalidateQueries({ queryKey: qk.orders.all() })` — after a party acts on the
@@ -291,13 +298,17 @@ export default function OrderRecord({
   rows.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
   return (
-    <div className={cardCss}>
-      <p className={eyebrowCss}>
-        Order Record
-      </p>
-      <span className={captionCss}>
-        Everything that happened on this order — activity, deliveries, and revisions — in one timeline.
-      </span>
+    <div className={embedded ? undefined : cardCss}>
+      {!embedded && (
+        <>
+          <p className={eyebrowCss}>
+            Order Record
+          </p>
+          <span className={captionCss}>
+            Everything that happened on this order — activity, deliveries, and revisions — in one timeline.
+          </span>
+        </>
+      )}
 
       {loading ? (
         <div className={loadingWrapCss}>

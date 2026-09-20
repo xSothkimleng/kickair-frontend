@@ -2,38 +2,17 @@
 
 import { useRouter } from "next/navigation";
 import { Wallet } from "lucide-react";
-import { css } from "styled-system/css";
-import { tapTarget } from "@/components/ds/tap";
 import { useAuth } from "@/components/context/AuthContext";
 import { useWalletSummary } from "@/hooks/useWalletSummary";
-
-const chipCss = css(tapTarget, {
-  appearance: "none",
-  display: "flex",
-  alignItems: "center",
-  gap: "5px",
-  h: "32px",
-  m: 0,
-  px: "11px",
-  py: 0,
-  border: "1px solid rgba(0,0,0,0.12)",
-  borderRadius: "999px",
-  bg: "transparent",
-  cursor: "pointer",
-  textStyle: "ui",
-  fontWeight: 600,
-  color: "ink",
-  whiteSpace: "nowrap",
-  transition: "border-color .15s, color .15s",
-  _hover: { color: "black", borderColor: "rgba(0,0,0,0.3)" },
-  "& svg": { opacity: 0.7, flexShrink: 0 },
-});
+import { walletChipCss, pillBalanceCss, pillDividerCss } from "./styles";
 
 /**
- * Steam-style wallet balance next to the profile — money only, links to the
- * Finance tab of whichever dashboard matches the user's roles.
+ * Steam-style wallet balance — money only, links to the Finance tab of whichever
+ * dashboard matches the user's roles. Standalone it is a chip (mobile drawer);
+ * `inPill` renders it as the balance half of the navbar's account pill, with the
+ * divider that separates it from the name — nothing at all when there's no balance.
  */
-export function WalletChip() {
+export function WalletChip({ inPill = false }: { inPill?: boolean }) {
   const { user } = useAuth();
   const { balance } = useWalletSummary();
   const router = useRouter();
@@ -45,13 +24,22 @@ export function WalletChip() {
       ? "/dashboard/freelancer?tab=finance"
       : "/dashboard/client?tab=finance";
 
+  const label = `Wallet balance $${balance.toFixed(2)} — open Finance`;
+
+  if (inPill) {
+    return (
+      <>
+        <span aria-hidden className={pillDividerCss} />
+        <button type='button' onClick={() => router.push(financeHref)} aria-label={label} className={pillBalanceCss}>
+          ${balance.toFixed(2)}
+        </button>
+      </>
+    );
+  }
+
   return (
-    <button
-      type='button'
-      onClick={() => router.push(financeHref)}
-      aria-label={`Wallet balance $${balance.toFixed(2)} — open Finance`}
-      className={chipCss}>
-      <Wallet size={16} />
+    <button type='button' onClick={() => router.push(financeHref)} aria-label={label} className={walletChipCss}>
+      <Wallet size={18} />
       ${balance.toFixed(2)}
     </button>
   );

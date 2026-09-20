@@ -15,11 +15,12 @@ import {
   CheckCircle2 as CheckIcon,
   AlertCircle as ErrorIcon,
   X as CloseIcon,
+  Scale as ScaleIcon,
 } from "lucide-react";
 import { Spinner } from "@/components/ds";
 import { BareModal } from "@/components/ds/BareModal";
 import {
-  PageTextArea, backBtnCss, bannerCss, bannerGlyphCss, bodyMutedCss, bodyTextCss, cardCss,
+  PageTextArea, actionsBarCss, backBtnCss, bannerCss, bannerGlyphCss, bodyMutedCss, bodyTextCss, cardCss,
   cardTitleCss, catChipCss, centerPageCss, centerPageColCss, colStackCss, containerCss,
   descClamp2Css, dlgBodyCss, dlgFootCss, dlgFootTightCss, dlgHeadCss, dlgInlineAlertCss,
   dlgSubCss, dlgTitleCss, dropIconCss, dropItemCss, dropItemNameCss, dropListCss,
@@ -28,7 +29,7 @@ import {
   headWrapCss, infoGridCss, mb225, mutedSmallCss, notFoundTextCss, outcomeBoxCss, pageBtn,
   pageCss, pageTitleCss, partyAvatarCss, partyAvatarImgCss, partyMeta16Css, partyMetaCss,
   partyNameCss, partyRowCss, placedCss, reviewBoxCss, reviewHeadCss, reviewerCss, secLabelCss,
-  stack1Css, starBtnCss, starRowCss, startIconCss, statGridCss, statusBadgeCss, statusDotCss,
+  stack1Css, starBtnCss, starRowCss, statusNoteCss, startIconCss, statGridCss, statusBadgeCss, statusDotCss,
   tileCss, tileLabelCss, tileValCss, titleRowCss, topAlertActionCss, topAlertCloseCss,
   topAlertCss, topAlertIconCss, topAlertMsgCss, totalRowCss,
 } from "@/components/dashboard/orderPageKit";
@@ -151,10 +152,18 @@ function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number
   const resolved = dispute.status === "resolved";
   return (
     <div className={cardCss}>
-      <div className={`${bannerCss({ tone: resolved ? "success" : "danger" })} ${mb225}`}>
-        <span className={bannerGlyphCss}>{resolved ? "✓" : "⚠"}</span>
-        {resolved ? "This dispute has been resolved by an admin." : "This order is under dispute. An admin will review it."}
-      </div>
+      {resolved ? (
+        <div className={`${bannerCss({ tone: "success" })} ${mb225}`}>
+          <span className={bannerGlyphCss}>✓</span>
+          This dispute has been resolved by an admin.
+        </div>
+      ) : (
+        // An open dispute is "in review", not an error: a quiet line, not a red alert box.
+        <div className={statusNoteCss}>
+          <ScaleIcon size={16} />
+          <p><strong>Under dispute</strong> — an admin will review it.</p>
+        </div>
+      )}
 
       <p className={fieldLabelCss}>Dispute #{dispute.sequence} · reason</p>
       <p className={bodyTextCss}>{dispute.reason}</p>
@@ -355,6 +364,11 @@ export default function ClientOrderDetailPage() {
   const revisions = Number((isCustom ? order.custom_order?.revisions : pricingOption?.revisions) ?? 0);
   const canReview = user?.is_client && order.status === "completed" && !order.review;
   const hasReview = order.status === "completed" && order.review;
+  const canSubmitEvidence =
+    order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_evidence?.length && !order.dispute.client_statement;
+  // The actions card only renders when it has something in it — e.g. nothing for the client
+  // to do while a revision is pending, or once their dispute evidence is in.
+  const hasActions = ["delivered", "active", "completed", "cancelled", "pending"].includes(order.status) || canSubmitEvidence;
 
   return (
     <div className={pageCss}>
@@ -468,21 +482,8 @@ export default function ClientOrderDetailPage() {
 
           {/* ── Section 5: Status card ── */}
 
-          {/* Revision requested */}
-          {order.status === "revision_requested" && (
-            <div className={cardCss}>
-              <div className={`${bannerCss({ tone: "warning" })} ${mb225}`}>
-                <span className={bannerGlyphCss}>↺</span>
-                You requested a revision.
-              </div>
-              {order.revision_note && (
-                <>
-                  <p className={fieldLabelCss}>Feedback</p>
-                  <p className={bodyTextCss}>{order.revision_note}</p>
-                </>
-              )}
-            </div>
-          )}
+          {/* A requested revision has no card of its own: the order record above already
+              shows it, numbered, with the feedback. */}
 
           {/* Dispute (open or resolved) */}
           {/* Open dispute, or the one that ended the order. A "continue" resolution
@@ -535,56 +536,58 @@ export default function ClientOrderDetailPage() {
           )}
 
           {/* ── Section 6: Actions ── */}
-          <div className={cardCss}>
-            {/* delivered */}
-            {order.status === "delivered" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
-                <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
-                <button type="button" onClick={() => setRevisionOpen(true)} className={pageBtn({ look: "outline" })}>Request Revision</button>
-                <button type="button" disabled={submitting} onClick={handleApprove} className={pageBtn({ look: "primary" })}>
-                  <span className={startIconCss}>{submitting ? <Spinner size={14} /> : <CheckIcon size={20} />}</span>
-                  Approve &amp; Release Payment
-                </button>
-              </div>
-            )}
+          {hasActions && (
+            <div className={actionsBarCss}>
+              {/* delivered */}
+              {order.status === "delivered" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
+                  <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
+                  <button type="button" onClick={() => setRevisionOpen(true)} className={pageBtn({ look: "outline" })}>Request Revision</button>
+                  <button type="button" disabled={submitting} onClick={handleApprove} className={pageBtn({ look: "primary" })}>
+                    <span className={startIconCss}>{submitting ? <Spinner size={14} /> : <CheckIcon size={20} />}</span>
+                    Approve &amp; Release Payment
+                  </button>
+                </div>
+              )}
 
-            {/* active */}
-            {order.status === "active" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end" })}>
-                <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
-              </div>
-            )}
+              {/* active */}
+              {order.status === "active" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end" })}>
+                  <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
+                </div>
+              )}
 
-            {/* disputed — submit evidence */}
-            {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_evidence?.length && !order.dispute.client_statement && (
-              <div className={css({ display: "flex", justifyContent: "flex-end" })}>
-                <button type="button" onClick={() => setEvidenceOpen(true)} className={pageBtn({ look: "outline" })}>Submit Evidence</button>
-              </div>
-            )}
+              {/* disputed — submit evidence */}
+              {canSubmitEvidence && (
+                <div className={css({ display: "flex", justifyContent: "flex-end" })}>
+                  <button type="button" onClick={() => setEvidenceOpen(true)} className={pageBtn({ look: "outline" })}>Submit Evidence</button>
+                </div>
+              )}
 
-            {/* completed */}
-            {order.status === "completed" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
-                <CheckIcon size={15} style={{ color: "#94A3B8", flexShrink: 0 }} />
-                <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Completed</p>
-              </div>
-            )}
+              {/* completed */}
+              {order.status === "completed" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
+                  <CheckIcon size={15} style={{ color: "#94A3B8", flexShrink: 0 }} />
+                  <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Completed</p>
+                </div>
+              )}
 
-            {/* cancelled */}
-            {order.status === "cancelled" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
-                <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Cancelled</p>
-              </div>
-            )}
+              {/* cancelled */}
+              {order.status === "cancelled" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
+                  <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Cancelled</p>
+                </div>
+              )}
 
-            {/* pending — client may cancel freely until the freelancer accepts */}
-            {order.status === "pending" && (
-              <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
-                <p className={css({ textStyle: "ui", color: "#94A3B8" })}>Awaiting freelancer acceptance</p>
-                <button type="button" onClick={() => setCancelOpen(true)} className={pageBtn({ look: "danger" })}>Cancel Order</button>
-              </div>
-            )}
-          </div>
+              {/* pending — client may cancel freely until the freelancer accepts */}
+              {order.status === "pending" && (
+                <div className={css({ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
+                  <p className={css({ textStyle: "ui", color: "#94A3B8" })}>Awaiting freelancer acceptance</p>
+                  <button type="button" onClick={() => setCancelOpen(true)} className={pageBtn({ look: "danger" })}>Cancel Order</button>
+                </div>
+              )}
+            </div>
+          )}
 
         </div>
       </div>

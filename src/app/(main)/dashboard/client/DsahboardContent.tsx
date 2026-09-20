@@ -118,6 +118,9 @@ const statsInner = css({
   pt: "24px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "rgba(0,0,0,0.08)",
 });
 const statValue = css({ textStyle: "heading", fontWeight: 600, color: "ink" });
+// Icon + card name share the top row; the figure sits alone underneath.
+const statHead = css({ display: "flex", alignItems: "center", gap: "8px", minW: 0 });
+const statCardLabel = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
 const statLabel = css({ textStyle: "meta", color: "ink2" });
 
 const statsGrid = css({
@@ -325,22 +328,26 @@ export default function DashboardContent({ onTabChange }: Props) {
         <div className={cx(card, statCard)}>
           <div className={cardBody16}>
             <div className={statTopRow}>
-              <BriefcaseIcon size={20} color="#2563eb" />
+              <div className={statHead}>
+                <BriefcaseIcon size={18} color="#2563eb" />
+                <span className={statCardLabel}>Active Orders</span>
+              </div>
               <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
             </div>
             <p className={bigValue}>{stats.activeProjectsCount}</p>
-            <span className={statLabel}>Active Orders</span>
           </div>
         </div>
 
         <div className={cx(card, statCard, statCardRelative)} onClick={() => router.push("/dashboard/client/messages")}>
           <div className={cardBody16}>
             <div className={statTopRow}>
-              <MessageCircleIcon size={20} color="#9333ea" />
+              <div className={statHead}>
+                <MessageCircleIcon size={18} color="#9333ea" />
+                <span className={statCardLabel}>Unread Messages</span>
+              </div>
               <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
             </div>
             <p className={bigValue}>{stats.unreadMessagesCount}</p>
-            <span className={statLabel}>Unread Messages</span>
             {stats.unreadMessagesCount > 0 && <span className={unreadDot} />}
           </div>
         </div>
@@ -348,22 +355,26 @@ export default function DashboardContent({ onTabChange }: Props) {
         <div className={cx(card, statCard)}>
           <div className={cardBody16}>
             <div className={statTopRow}>
-              <WalletIcon size={20} color="#2563eb" />
+              <div className={statHead}>
+                <WalletIcon size={18} color="#2563eb" />
+                <span className={statCardLabel}>Available Balance</span>
+              </div>
               <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
             </div>
             <p className={bigValue}>{formatCurrency(stats.availableBalance)}</p>
-            <span className={statLabel}>Available Balance</span>
           </div>
         </div>
 
         <div className={cx(card, statCard)}>
           <div className={cardBody16}>
             <div className={statTopRow}>
-              <DollarSignIcon size={20} color="#16a34a" />
+              <div className={statHead}>
+                <DollarSignIcon size={18} color="#16a34a" />
+                <span className={statCardLabel}>In Escrow</span>
+              </div>
               <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
             </div>
             <p className={bigValue}>{formatCurrency(stats.inEscrow)}</p>
-            <span className={statLabel}>In Escrow</span>
           </div>
         </div>
       </div>

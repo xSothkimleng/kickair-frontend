@@ -34,8 +34,8 @@ const optionCard = css({
   "& .radio": { w: "16px", h: "16px", borderRadius: "999px", border: "1.5px solid var(--td-line-2)", flexShrink: 0, mt: "2px", display: "grid", placeItems: "center", color: "#fff" },
   "&[data-on=true] .radio": { bg: "var(--td-ink)", borderColor: "var(--td-ink)" },
 });
-// The shared OrderRecord keeps its own spacing inside our panel.
-const recordWrap = css({ p: "4px 20px 12px" });
+// The shared OrderRecord renders `embedded` here (timeline only): this panel is its card and title.
+const recordWrap = css({ p: "0 20px 20px" });
 
 const OPTIONS: { value: DisputeOutcome; label: string; help: string }[] = [
   { value: "full_client", label: "Refund the client", help: "Order ends. The full amount goes back to the client's wallet." },
@@ -192,38 +192,43 @@ export default function DisputeDetailPage({ id }: { id: number }) {
             </div>
           </Panel>
 
-          <Panel>
-            <PanelHead title="Conversation" meta="visible to both parties" />
-            <div className={cx(stack({ gap: 3 }), css({ p: "20px", maxH: "420px", overflowY: "auto" }))}>
-              {!conversationId ? <p className={text({ size: "meta", tone: 3 })}>No conversation exists for this order.</p> : messages.length === 0 ? <p className={text({ size: "meta", tone: 3 })}>No messages yet.</p> : null}
-              {messages.map((m) => {
-                const p = partyOf(m.sender_id);
-                const me = m.is_mine;
-                const label = me ? "You · admin" : `${m.sender?.name ?? p?.name ?? "Someone"} · ${roleOf(m.sender_id)}`;
-                return (
-                  <div key={m.id} className={bubbleRow} data-me={me}>
-                    <Avatar name={m.sender?.name ?? p?.name ?? "?"} size="sm" seed={m.sender_id} src={m.sender?.avatar_url ?? p?.avatar_url} />
-                    <div className={cx(stack({ gap: 1 }), css({ alignItems: me ? "flex-end" : "flex-start", maxW: "100%" }))}>
-                      <span className={text({ size: "micro", tone: 3 })}>{label} · {ago(m.created_at)}</span>
-                      <div className={bubble} data-me={me}>
-                        {m.type === "file" && m.file_url ? <a href={m.file_url} target="_blank" rel="noreferrer"><Paperclip size={12} className={css({ display: "inline", verticalAlign: "-1px" })} /> {m.file_name ?? "Attachment"}</a> : m.body}
+          {/* Only when the order has a conversation: without one the panel was a dead end
+              ("No conversation exists", a disabled box), so it is hidden. */}
+          {conversationId && (
+            <Panel>
+              <PanelHead title="Conversation" meta="visible to both parties" />
+              <div className={cx(stack({ gap: 3 }), css({ p: "20px", maxH: "420px", overflowY: "auto" }))}>
+                {messages.length === 0 ? <p className={text({ size: "meta", tone: 3 })}>No messages yet.</p> : null}
+                {messages.map((m) => {
+                  const p = partyOf(m.sender_id);
+                  const me = m.is_mine;
+                  const label = me ? "You · admin" : `${m.sender?.name ?? p?.name ?? "Someone"} · ${roleOf(m.sender_id)}`;
+                  return (
+                    <div key={m.id} className={bubbleRow} data-me={me}>
+                      <Avatar name={m.sender?.name ?? p?.name ?? "?"} size="sm" seed={m.sender_id} src={m.sender?.avatar_url ?? p?.avatar_url} />
+                      <div className={cx(stack({ gap: 1 }), css({ alignItems: me ? "flex-end" : "flex-start", maxW: "100%" }))}>
+                        <span className={text({ size: "micro", tone: 3 })}>{label} · {ago(m.created_at)}</span>
+                        <div className={bubble} data-me={me}>
+                          {m.type === "file" && m.file_url ? <a href={m.file_url} target="_blank" rel="noreferrer"><Paperclip size={12} className={css({ display: "inline", verticalAlign: "-1px" })} /> {m.file_name ?? "Attachment"}</a> : m.body}
+                        </div>
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-              <div ref={chatEnd} />
-            </div>
-            <div className={cx(row({ gap: 2 }), css({ p: "12px 16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "var(--td-line)", bg: "var(--td-surface-2)" }))}>
-              <Input placeholder={conversationId ? "Message both parties…" : "No conversation for this order"} value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} disabled={!conversationId || sending} />
-              <Btn variant="primary" onClick={send} disabled={!draft.trim() || !conversationId || sending}><Send size={14} /> {sending ? "Sending…" : "Send"}</Btn>
-            </div>
-          </Panel>
+                  );
+                })}
+                <div ref={chatEnd} />
+              </div>
+              <div className={cx(row({ gap: 2 }), css({ p: "12px 16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "var(--td-line)", bg: "var(--td-surface-2)" }))}>
+                <Input placeholder="Message both parties…" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} disabled={sending} />
+                <Btn variant="primary" onClick={send} disabled={!draft.trim() || sending}><Send size={14} /> {sending ? "Sending…" : "Send"}</Btn>
+              </div>
+            </Panel>
+          )}
 
           <Panel>
             <PanelHead title="Order record" meta="deliveries, revisions and disputes in order" />
             <div className={recordWrap}>
               <OrderRecord
+                embedded
                 orderId={d.order.id}
                 createdAt={d.order.created_at}
                 deliveryHistory={d.order.delivery_history}

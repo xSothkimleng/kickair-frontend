@@ -130,6 +130,9 @@ export const cardCss = css({
   p: "24px 28px",
   boxShadow: "0 1px 2px rgba(15,23,42,0.04)",
 });
+// The order pages' action row (Approve / Resubmit Work / Open Dispute …): deliberately NOT a card —
+// the buttons sit bare under the order record, flush with the cards' right edge.
+export const actionsBarCss = css({ pt: "4px" });
 /** The page's `SEC_LABEL` token object (its `mb` never applied — `globals.css` zeroes `p` margins). */
 export const secLabelCss = css({ textStyle: "eyebrow", fontWeight: 600, color: "#94A3B8" });
 
@@ -204,6 +207,24 @@ export const bannerCss = cva({
   },
   defaultVariants: { tone: "success" },
 });
+/**
+ * Quiet status line (no box, no tint) for neutral "in progress" states — e.g. an open
+ * dispute waiting on an admin. Tinted banners are kept for outcomes (success).
+ */
+export const statusNoteCss = css({
+  display: "flex",
+  alignItems: "center",
+  gap: "8px",
+  pb: "16px",
+  mb: "18px",
+  borderBottomWidth: "1px",
+  borderBottomStyle: "solid",
+  borderBottomColor: "rgba(15,23,42,0.08)",
+  textStyle: "ui",
+  color: "#475569",
+  "& strong": { fontWeight: 600, color: "#0F172A" },
+  "& svg": { flexShrink: 0, color: "#64748B" },
+});
 export const bannerGlyphCss = css({ textStyle: "lead", mt: "1px", flexShrink: 0, "& svg": { display: "block" } });
 export const mb225 = css({ mb: "18px" });
 export const mt225 = css({ mt: "18px" });
@@ -237,7 +258,8 @@ export const fileRowCss = css({
 });
 export const fileTileCss = css({ width: "34px", height: "34px", bg: "#F1F5F9", borderRadius: "7px", display: "grid", placeItems: "center", color: "#334155", flexShrink: 0 });
 export const fileNameWrapCss = css({ flex: 1, minWidth: 0 });
-export const fileNameCss = css({ textStyle: "ui", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
+// `display: block` — it sits on a <span>, and an inline box never ellipsises (a long name ran under "Download").
+export const fileNameCss = css({ display: "block", textStyle: "ui", fontWeight: 600, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" });
 export const fileDownloadCss = css({
   display: "flex",
   alignItems: "center",

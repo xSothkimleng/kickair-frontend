@@ -111,9 +111,10 @@ const tierDescCss = css({
 });
 const priceColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const hairlineCss = css({ h: "1px", bg: "hairline" });
-const escrowCss = css({ display: "flex", gap: "8px", mt: "18px", p: "12px 14px", bg: "pendingTint", borderRadius: "tile" });
-const escrowIconCss = css({ color: "pendingText", flex: "none" });
-const escrowTextCss = css({ textStyle: "meta", color: "pendingText" });
+// Escrow is reassurance, not a warning: a quiet line (no box, no status tint) with a green shield.
+const escrowCss = css({ display: "flex", alignItems: "flex-start", gap: "8px", mt: "16px" });
+const escrowIconCss = css({ color: "successText", flex: "none", mt: "1px" });
+const escrowTextCss = css({ textStyle: "meta", color: "ink2" });
 const payHeadingCss = css({ textStyle: "title", fontWeight: 600 });
 const optionsColCss = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const optionRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px" });

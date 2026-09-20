@@ -5,7 +5,7 @@ import Image from "next/image";
 import { Briefcase, ChevronDown, CircleHelp, LogOut, Settings as SettingsIcon, X } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Avatar, Divider, Drawer, Spinner, iconButton } from "@/components/ds";
-import { LANGUAGES, type Language, type UserMode } from "./types";
+import { LANGUAGES, SHOW_LANGUAGE_SWITCH, type Language, type UserMode } from "./types";
 import { WalletChip } from "./WalletChip";
 import { navBtnRaw, modeBtnOnCss, modeBtnOffCss } from "./styles";
 
@@ -159,26 +159,29 @@ export function MobileDrawer({
           })}
         </div>
 
-        <Divider />
-
-        {/* Language selector */}
-        <div className={langBoxCss}>
-          <div className={sectionLabelCss}>Language</div>
-          <div className={langRowCss}>
-            {LANGUAGES.map(lang => (
-              <button
-                key={lang.code}
-                type='button'
-                onClick={() => {
-                  onLanguageChange(lang);
-                  onClose();
-                }}
-                className={selectedLanguage.code === lang.code ? langOnCss : langOffCss}>
-                {lang.label}
-              </button>
-            ))}
-          </div>
-        </div>
+        {/* Language selector — hidden until translations exist (SHOW_LANGUAGE_SWITCH) */}
+        {SHOW_LANGUAGE_SWITCH && (
+          <>
+            <Divider />
+            <div className={langBoxCss}>
+              <div className={sectionLabelCss}>Language</div>
+              <div className={langRowCss}>
+                {LANGUAGES.map(lang => (
+                  <button
+                    key={lang.code}
+                    type='button'
+                    onClick={() => {
+                      onLanguageChange(lang);
+                      onClose();
+                    }}
+                    className={selectedLanguage.code === lang.code ? langOnCss : langOffCss}>
+                    {lang.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </>
+        )}
 
         <Divider />
 

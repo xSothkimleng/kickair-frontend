@@ -8,6 +8,7 @@ export { default as QrGlyph } from "./QrGlyph";
 export { default as MockAbaPayWayPopup } from "./MockAbaPayWayPopup";
 export { default as PaymentResult, type PaymentContext, type ResultKind } from "./PaymentResult";
 export { default as PaymentFooterLogos } from "./PaymentFooterLogos";
+export { default as SavedPaymentMethods } from "./SavedPaymentMethods";
 export { default as TopUpDialog } from "./TopUpDialog";
 export { default as WithdrawDialog } from "./WithdrawDialog";
 export { usePaymentProcessing } from "./usePaymentProcessing";

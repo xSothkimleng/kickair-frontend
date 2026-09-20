@@ -9,7 +9,7 @@ import { Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { Wallet, Transaction, TransactionRole } from "@/types/wallet";
-import { Annot, PayLogo, PaymentFooterLogos, StatusChip, TopUpDialog, WithdrawDialog, fmtUsd, type PayLogoId } from "@/components/payment";
+import { Annot, StatusChip, TopUpDialog, WithdrawDialog, fmtUsd } from "@/components/payment";
 
 type StatusFilter = "all" | "completed" | "pending" | "cancelled";
 const STATUS_FILTERS: [StatusFilter, string][] = [
@@ -77,10 +77,6 @@ const retryBtn = css({
 const head = css({ display: "flex", flexDirection: "column", gap: "8px", mb: "24px" });
 const headTitle = css({ textStyle: "stat", fontWeight: 600 });
 
-const layout = css({
-  display: "grid", gap: "24px", alignItems: "start",
-  gridTemplateColumns: { base: "1fr", lg: "1fr 320px" },
-});
 const leftCol = css({ display: "flex", flexDirection: "column", gap: "16px", minW: 0 });
 const balanceGrid = css({
   display: "grid", gap: "12px",
@@ -181,22 +177,6 @@ const txnNote = css({ textStyle: "meta", color: "ink3", fontStyle: "italic", ove
 const txnRight = css({ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "5px" });
 const txnAmount = css({ fontVariantNumeric: "tabular-nums", textStyle: "body", fontWeight: 600 });
 
-const methodTitle = css({ textStyle: "lead", fontWeight: 600 });
-const methodList = css({ display: "flex", flexDirection: "column", gap: "10px" });
-const methodRow = css({
-  display: "flex", alignItems: "center", gap: "12px", p: "12px",
-  borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", borderRadius: "cardSm",
-});
-const methodName = css({ textStyle: "body", fontWeight: 600 });
-const methodSub = css({ textStyle: "micro", fontWeight: 500, color: "ink2" });
-// The old height:1 in the old style prop meant 100% (its sizing shorthand), which resolved to a
-// 0px box inside the auto-height column, so this "divider" always rendered as plain
-// whitespace with no line. Ported as rendered: an 18px spacer.
-const hairlineRule = css({ h: "18px" });
-const acceptedLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3" });
-const logoRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
-const footerWrap = css({ borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline", mt: "24px", pt: "24px" });
-
 /**
  * The ONE wallet surface, identical in both spaces: same balance, same Top up
  * and Withdraw, same complete history (both roles, correctly labelled), with
@@ -275,171 +255,137 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
         <p className={headTitle}>Wallet</p>
       </div>
 
-      <div className={layout}>
-        {/* Left column */}
-        <div className={leftCol}>
-          {/* Balance + role-split escrow */}
-          <div className={balanceGrid}>
-            {/* Available balance — identical in both modes */}
-            <div className={balanceCard}>
-              <div className={cardHead}>
-                <div className={cardHeadLeft}>
-                  <span className={dot} style={{ background: "var(--colors-success)" }} />
-                  <span className={balanceLabel}>Available balance</span>
-                </div>
-                <WalletIcon size={15} color="rgba(255,255,255,0.5)" />
+      <div className={leftCol}>
+        {/* Balance + role-split escrow */}
+        <div className={balanceGrid}>
+          {/* Available balance — identical in both modes */}
+          <div className={balanceCard}>
+            <div className={cardHead}>
+              <div className={cardHeadLeft}>
+                <span className={dot} style={{ background: "var(--colors-success)" }} />
+                <span className={balanceLabel}>Available balance</span>
               </div>
-              <div className={balanceAmountRow}>
-                <span className={balanceCurrency}>$</span>
-                <span className={balanceValue}>{balance.toFixed(2)}</span>
-              </div>
-              <p className={balanceNote}>One shared wallet · free to spend or withdraw</p>
-              <div className={balanceActions}>
-                <button type="button" onClick={() => setTopUpOpen(true)} className={topUpBtn}>
-                  <AddIcon size={15} />
-                  Top up
-                </button>
-                <button type="button" onClick={() => setShowWithdraw(true)} className={withdrawBtn}>
-                  <ArrowUpIcon size={15} />
-                  Withdraw
-                </button>
-              </div>
+              <WalletIcon size={15} color="rgba(255,255,255,0.5)" />
             </div>
-
-            {/* Committed to orders — buyer escrow (amber, money out) */}
-            <div className={escrowCard}>
-              <div className={cardHead}>
-                <div className={cardHeadLeft}>
-                  <span className={dot} style={{ background: "#EA580C" }} />
-                  <span className={escrowLabel}>Committed to orders</span>
-                </div>
-                <ShieldIcon size={15} className={css({ color: "ink3" })} />
-              </div>
-              <p className={escrowValue}>{fmtUsd(committed)}</p>
-              <p className={escrowNote}>Held in escrow for gigs you&apos;re buying</p>
+            <div className={balanceAmountRow}>
+              <span className={balanceCurrency}>$</span>
+              <span className={balanceValue}>{balance.toFixed(2)}</span>
             </div>
-
-            {/* Pending earnings — seller escrow (green, money in) */}
-            <div className={escrowCard}>
-              <div className={cardHead}>
-                <div className={cardHeadLeft}>
-                  <span className={dot} style={{ background: "var(--colors-success)" }} />
-                  <span className={escrowLabel}>Pending earnings</span>
-                </div>
-                <PendingIcon size={15} className={css({ color: "ink3" })} />
-              </div>
-              <p className={escrowValueGreen}>{fmtUsd(pendingEarnings)}</p>
-              <p className={escrowNote}>Coming to you when your gigs complete</p>
+            <p className={balanceNote}>One shared wallet · free to spend or withdraw</p>
+            <div className={balanceActions}>
+              <button type="button" onClick={() => setTopUpOpen(true)} className={topUpBtn}>
+                <AddIcon size={15} />
+                Top up
+              </button>
+              <button type="button" onClick={() => setShowWithdraw(true)} className={withdrawBtn}>
+                <ArrowUpIcon size={15} />
+                Withdraw
+              </button>
             </div>
           </div>
 
-          {/* Lifetime totals — deliberately demoted, never confused with live balances */}
-          <div className={lifetimeRow}>
-            <p className={lifetimeText}>
-              Lifetime spent as client: <span className={lifetimeValue}>{fmtUsd(totalSpent)}</span>
-            </p>
-            <p className={lifetimeText}>
-              Lifetime earned as freelancer: <span className={lifetimeValue}>{fmtUsd(totalEarned)}</span>
-            </p>
+          {/* Committed to orders — buyer escrow (amber, money out) */}
+          <div className={escrowCard}>
+            <div className={cardHead}>
+              <div className={cardHeadLeft}>
+                <span className={dot} style={{ background: "#EA580C" }} />
+                <span className={escrowLabel}>Committed to orders</span>
+              </div>
+              <ShieldIcon size={15} className={css({ color: "ink3" })} />
+            </div>
+            <p className={escrowValue}>{fmtUsd(committed)}</p>
+            <p className={escrowNote}>Held in escrow for gigs you&apos;re buying</p>
           </div>
 
-          {/* Transaction history */}
-          <div className={panel}>
-            <p className={panelTitle}>Transaction history</p>
-            <p className={panelSub}>Your complete financial picture — buying and selling together, every row tagged.</p>
-
-            <div className={filterRow}>
-              {ROLE_FILTERS.map(([k, label]) => (
-                <button key={k} type="button" onClick={() => setRoleFilter(k)} className={roleBtn} data-active={roleFilter === k ? "" : undefined}>
-                  {label}
-                </button>
-              ))}
-            </div>
-            <div className={filterRow}>
-              {STATUS_FILTERS.map(([k, label]) => (
-                <button key={k} type="button" onClick={() => setStatusFilter(k)} className={statusBtn} data-active={statusFilter === k ? "" : undefined}>
-                  {label}
-                </button>
-              ))}
-            </div>
-
-            {filtered.length === 0 ? (
-              <p className={emptyText}>No matching transactions.</p>
-            ) : (
-              <div>
-                {filtered.map(t => {
-                  const display = typeDisplay(t);
-                  const roleTag = ROLE_TAG[t.role ?? "account"];
-                  return (
-                    <div key={t.id} className={txnRow}>
-                      <div className={txnIcon}>
-                        {display.flow === "in"
-                          ? <ArrowDownIcon size={18} className={css({ color: "success" })} />
-                          : display.flow === "out"
-                            ? <ArrowUpIcon size={18} className={css({ color: "ink2" })} />
-                            : <ShieldIcon size={16} className={css({ color: "ink3" })} />}
-                      </div>
-                      <div className={txnMain}>
-                        <div className={txnTitleRow}>
-                          <p className={txnTitleCss}>{txnTitle(t)}</p>
-                          <span className={txnTag} style={{ color: roleTag.color, background: roleTag.bg }}>
-                            {roleTag.label}
-                          </span>
-                        </div>
-                        <p className={txnMeta}>
-                          {display.label} · {formatDate(t.created_at)}
-                          {t.order_reference ? <span className={txnRef}> · {t.order_reference}</span> : null}
-                        </p>
-                        {t.metadata?.note && (
-                          <p className={txnNote}>
-                            “{t.metadata.note}”
-                          </p>
-                        )}
-                      </div>
-                      <div className={txnRight}>
-                        <p className={txnAmount} style={{ color: display.flow === "in" ? "var(--colors-successText)" : display.flow === "out" ? "var(--colors-ink)" : "var(--colors-ink3)" }}>
-                          {display.flow === "in" ? "+" : display.flow === "out" ? "–" : ""}{fmtUsd(Math.abs(parseFloat(t.amount_raw)))}
-                        </p>
-                        <StatusChip status={t.status === "cancelled" ? "failed" : t.status}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</StatusChip>
-                      </div>
-                    </div>
-                  );
-                })}
+          {/* Pending earnings — seller escrow (green, money in) */}
+          <div className={escrowCard}>
+            <div className={cardHead}>
+              <div className={cardHeadLeft}>
+                <span className={dot} style={{ background: "var(--colors-success)" }} />
+                <span className={escrowLabel}>Pending earnings</span>
               </div>
-            )}
+              <PendingIcon size={15} className={css({ color: "ink3" })} />
+            </div>
+            <p className={escrowValueGreen}>{fmtUsd(pendingEarnings)}</p>
+            <p className={escrowNote}>Coming to you when your gigs complete</p>
           </div>
         </div>
 
-        {/* Right column — payment methods */}
+        {/* Lifetime totals — deliberately demoted, never confused with live balances */}
+        <div className={lifetimeRow}>
+          <p className={lifetimeText}>
+            Lifetime spent as client: <span className={lifetimeValue}>{fmtUsd(totalSpent)}</span>
+          </p>
+          <p className={lifetimeText}>
+            Lifetime earned as freelancer: <span className={lifetimeValue}>{fmtUsd(totalEarned)}</span>
+          </p>
+        </div>
+
+        {/* Transaction history */}
         <div className={panel}>
-          <p className={methodTitle}>Payment methods</p>
-          <div className={methodList}>
-            {[
-              { id: "khqr" as PayLogoId, name: "ABA KHQR", sub: "Default · scan to pay", primary: true },
-              { id: "visa" as PayLogoId, name: "Visa ···· 4242", sub: "Expires 09/27", primary: false },
-            ].map(m => (
-              <div key={m.id} className={methodRow}>
-                <PayLogo id={m.id} />
-                <div className={css({ flex: 1, minW: 0 })}>
-                  <p className={methodName}>{m.name}</p>
-                  <p className={methodSub}>{m.sub}</p>
-                </div>
-                {m.primary && <StatusChip status='neutral' dot={false}>Default</StatusChip>}
-              </div>
-            ))}
-          </div>
-          <div className={hairlineRule} />
-          <p className={acceptedLabel}>Accepted via ABA PayWay</p>
-          <div className={logoRow}>
-            {(["visa", "mc", "unionpay", "jcb", "alipay", "wechat"] as PayLogoId[]).map(id => (
-              <PayLogo key={id} id={id} size='sm' />
-            ))}
-          </div>
-        </div>
-      </div>
+          <p className={panelTitle}>Transaction history</p>
+          <p className={panelSub}>Your complete financial picture — buying and selling together, every row tagged.</p>
 
-      <div className={footerWrap}>
-        <PaymentFooterLogos variant='light' />
+          <div className={filterRow}>
+            {ROLE_FILTERS.map(([k, label]) => (
+              <button key={k} type="button" onClick={() => setRoleFilter(k)} className={roleBtn} data-active={roleFilter === k ? "" : undefined}>
+                {label}
+              </button>
+            ))}
+          </div>
+          <div className={filterRow}>
+            {STATUS_FILTERS.map(([k, label]) => (
+              <button key={k} type="button" onClick={() => setStatusFilter(k)} className={statusBtn} data-active={statusFilter === k ? "" : undefined}>
+                {label}
+              </button>
+            ))}
+          </div>
+
+          {filtered.length === 0 ? (
+            <p className={emptyText}>No matching transactions.</p>
+          ) : (
+            <div>
+              {filtered.map(t => {
+                const display = typeDisplay(t);
+                const roleTag = ROLE_TAG[t.role ?? "account"];
+                return (
+                  <div key={t.id} className={txnRow}>
+                    <div className={txnIcon}>
+                      {display.flow === "in"
+                        ? <ArrowDownIcon size={18} className={css({ color: "success" })} />
+                        : display.flow === "out"
+                          ? <ArrowUpIcon size={18} className={css({ color: "ink2" })} />
+                          : <ShieldIcon size={16} className={css({ color: "ink3" })} />}
+                    </div>
+                    <div className={txnMain}>
+                      <div className={txnTitleRow}>
+                        <p className={txnTitleCss}>{txnTitle(t)}</p>
+                        <span className={txnTag} style={{ color: roleTag.color, background: roleTag.bg }}>
+                          {roleTag.label}
+                        </span>
+                      </div>
+                      <p className={txnMeta}>
+                        {display.label} · {formatDate(t.created_at)}
+                        {t.order_reference ? <span className={txnRef}> · {t.order_reference}</span> : null}
+                      </p>
+                      {t.metadata?.note && (
+                        <p className={txnNote}>
+                          “{t.metadata.note}”
+                        </p>
+                      )}
+                    </div>
+                    <div className={txnRight}>
+                      <p className={txnAmount} style={{ color: display.flow === "in" ? "var(--colors-successText)" : display.flow === "out" ? "var(--colors-ink)" : "var(--colors-ink3)" }}>
+                        {display.flow === "in" ? "+" : display.flow === "out" ? "–" : ""}{fmtUsd(Math.abs(parseFloat(t.amount_raw)))}
+                      </p>
+                      <StatusChip status={t.status === "cancelled" ? "failed" : t.status}>{t.status.charAt(0).toUpperCase() + t.status.slice(1)}</StatusChip>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
       <TopUpDialog open={topUpOpen} onClose={() => setTopUpOpen(false)} currentBalance={balance} suggestedAmount={25} />

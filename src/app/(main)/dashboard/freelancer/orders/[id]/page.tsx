@@ -16,11 +16,12 @@ import {
   Star,
   AlertCircle as ErrorIcon,
   X as CloseIcon,
+  Scale as ScaleIcon,
 } from "lucide-react";
 import { Spinner } from "@/components/ds";
 import { BareModal } from "@/components/ds/BareModal";
 import {
-  PageTextArea, backBtnCss, bannerCss, bannerGlyphCss, bodyMutedCss, bodyTextCss, cardCss,
+  PageTextArea, actionsBarCss, backBtnCss, bannerCss, bannerGlyphCss, bodyMutedCss, bodyTextCss, cardCss,
   cardTitleCss, catChipCss, centerPageCss, centerPageColCss, colStackCss, containerCss,
   descClamp2Css, dlgBodyCss, dlgFootCss, dlgHeadCss, dlgSubCss, dlgTitleCss, dropIconCss,
   dropItemCss, dropItemNameCss, dropListCss, dropRemoveCss, dropTextCss, dropWrapCss,
@@ -28,7 +29,7 @@ import {
   fileNameWrapCss, fileRowCss, fileTileCss, headWrapCss, infoGridCss, mb225, mutedSmallCss,
   notFoundTextCss, outcomeBoxCss, pageBtn, pageCss, pageTitleCss, partyAvatarCss,
   partyAvatarImgCss, partyMeta16Css, partyMetaCss, partyNameCss, partyRowCss, placedCss,
-  reviewBoxCss, reviewHeadCss, reviewerCss, secLabelCss, stack1Css, starRowCss, startIconCss,
+  reviewBoxCss, reviewHeadCss, reviewerCss, secLabelCss, stack1Css, starRowCss, statusNoteCss, startIconCss,
   statGridCss, statusBadgeCss, statusDotCss, tileCss, tileLabelCss,
   tileValCss, titleRowCss, topAlertActionCss,
   topAlertCloseCss, topAlertCss, topAlertIconCss, topAlertMsgCss, totalRowCss,
@@ -128,10 +129,18 @@ function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number
   const resolved = dispute.status === "resolved";
   return (
     <div className={cardCss}>
-      <div className={`${bannerCss({ tone: resolved ? "success" : "danger" })} ${mb225}`}>
-        <span className={bannerGlyphCss}>{resolved ? "✓" : "⚠"}</span>
-        {resolved ? "This dispute has been resolved by an admin." : "This order is under dispute. An admin will review it."}
-      </div>
+      {resolved ? (
+        <div className={`${bannerCss({ tone: "success" })} ${mb225}`}>
+          <span className={bannerGlyphCss}>✓</span>
+          This dispute has been resolved by an admin.
+        </div>
+      ) : (
+        // An open dispute is "in review", not an error: a quiet line, not a red alert box.
+        <div className={statusNoteCss}>
+          <ScaleIcon size={16} />
+          <p><strong>Under dispute</strong> — an admin will review it.</p>
+        </div>
+      )}
 
       <p className={fieldLabelCss}>Dispute #{dispute.sequence} · reason</p>
       <p className={bodyTextCss}>{dispute.reason}</p>
@@ -338,6 +347,11 @@ export default function FreelancerOrderDetailPage() {
       ? order.proposal?.timeline_days
       : parseInt(String(pricingOption?.delivery_time ?? ""));
   const revisions = Number((isCustom ? order.custom_order?.revisions : pricingOption?.revisions) ?? 0);
+  const canSubmitEvidence =
+    order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && !order.dispute.freelancer_statement;
+  // The actions card only renders when it has something in it — e.g. nothing once the
+  // freelancer's dispute evidence is in.
+  const hasActions = ["pending", "active", "revision_requested", "completed", "cancelled", "delivered"].includes(order.status) || canSubmitEvidence;
 
   return (
     <div className={pageCss}>
@@ -458,21 +472,8 @@ export default function FreelancerOrderDetailPage() {
 
           {/* ── Section 5: Status card ── */}
 
-          {/* Revision requested */}
-          {order.status === "revision_requested" && (
-            <div className={cardCss}>
-              <div className={`${bannerCss({ tone: "warning" })} ${mb225}`}>
-                <span className={bannerGlyphCss}>↺</span>
-                Revision requested by client.
-              </div>
-              {order.revision_note && (
-                <>
-                  <p className={fieldLabelCss}>Client feedback</p>
-                  <p className={bodyTextCss}>{order.revision_note}</p>
-                </>
-              )}
-            </div>
-          )}
+          {/* A requested revision has no card of its own: the order record above already
+              shows it, numbered, with the client's feedback. */}
 
           {/* Disputed */}
           {/* Open dispute, or the one that ended the order. A "continue" resolution
@@ -511,60 +512,62 @@ export default function FreelancerOrderDetailPage() {
           )}
 
           {/* ── Section 6: Actions ── */}
-          <div className={cardCss}>
-            {/* pending */}
-            {order.status === "pending" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
-                <button type="button" disabled={submitting} onClick={handleDecline} className={pageBtn({ look: "danger" })}>Decline</button>
-                <button type="button" disabled={submitting} onClick={handleAccept} className={pageBtn({ look: "primary" })}>
-                  <span className={startIconCss}>{submitting ? <Spinner size={14} /> : <CheckIcon size={20} />}</span>
-                  Accept Order
-                </button>
-              </div>
-            )}
+          {hasActions && (
+            <div className={actionsBarCss}>
+              {/* pending */}
+              {order.status === "pending" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
+                  <button type="button" disabled={submitting} onClick={handleDecline} className={pageBtn({ look: "danger" })}>Decline</button>
+                  <button type="button" disabled={submitting} onClick={handleAccept} className={pageBtn({ look: "primary" })}>
+                    <span className={startIconCss}>{submitting ? <Spinner size={14} /> : <CheckIcon size={20} />}</span>
+                    Accept Order
+                  </button>
+                </div>
+              )}
 
-            {/* active */}
-            {order.status === "active" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
-                <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
-                <button type="button" onClick={() => setDeliveryOpen(true)} className={pageBtn({ look: "primary" })}>
-                  <span className={startIconCss}><UploadIcon size={20} /></span>
-                  Submit Delivery
-                </button>
-              </div>
-            )}
+              {/* active */}
+              {order.status === "active" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
+                  <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
+                  <button type="button" onClick={() => setDeliveryOpen(true)} className={pageBtn({ look: "primary" })}>
+                    <span className={startIconCss}><UploadIcon size={20} /></span>
+                    Submit Delivery
+                  </button>
+                </div>
+              )}
 
-            {/* revision_requested */}
-            {order.status === "revision_requested" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end" })}>
-                <button type="button" onClick={() => setResubmitOpen(true)} className={pageBtn({ look: "primary" })}>
-                  Resubmit Work
-                </button>
-              </div>
-            )}
+              {/* revision_requested */}
+              {order.status === "revision_requested" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end" })}>
+                  <button type="button" onClick={() => setResubmitOpen(true)} className={pageBtn({ look: "primary" })}>
+                    Resubmit Work
+                  </button>
+                </div>
+              )}
 
-            {/* disputed — submit evidence */}
-            {order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && !order.dispute.freelancer_statement && (
-              <div className={css({ display: "flex", justifyContent: "flex-end" })}>
-                <button type="button" onClick={() => setEvidenceOpen(true)} className={pageBtn({ look: "outline" })}>Submit Evidence</button>
-              </div>
-            )}
+              {/* disputed — submit evidence */}
+              {canSubmitEvidence && (
+                <div className={css({ display: "flex", justifyContent: "flex-end" })}>
+                  <button type="button" onClick={() => setEvidenceOpen(true)} className={pageBtn({ look: "outline" })}>Submit Evidence</button>
+                </div>
+              )}
 
-            {/* completed */}
-            {order.status === "completed" && (
-              <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
-                <CheckIcon size={15} style={{ color: "#94A3B8", flexShrink: 0 }} />
-                <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Completed</p>
-              </div>
-            )}
+              {/* completed */}
+              {order.status === "completed" && (
+                <div className={css({ display: "flex", justifyContent: "flex-end", alignItems: "center", "& > :not(style) ~ :not(style)": { marginLeft: "8px" } })}>
+                  <CheckIcon size={15} style={{ color: "#94A3B8", flexShrink: 0 }} />
+                  <p className={css({ textStyle: "ui", fontWeight: 600, color: "#94A3B8" })}>Order Completed</p>
+                </div>
+              )}
 
-            {/* cancelled / delivered (no further action) */}
-            {(order.status === "cancelled" || order.status === "delivered") && (
-              <p className={css({ textStyle: "ui", color: "#94A3B8", textAlign: "right" })}>
-                {order.status === "cancelled" ? "Order Cancelled" : "Awaiting client review"}
-              </p>
-            )}
-          </div>
+              {/* cancelled / delivered (no further action) */}
+              {(order.status === "cancelled" || order.status === "delivered") && (
+                <p className={css({ textStyle: "ui", color: "#94A3B8", textAlign: "right" })}>
+                  {order.status === "cancelled" ? "Order Cancelled" : "Awaiting client review"}
+                </p>
+              )}
+            </div>
+          )}
 
         </div>
       </div>

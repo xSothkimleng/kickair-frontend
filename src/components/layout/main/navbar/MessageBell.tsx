@@ -6,7 +6,7 @@ import { registerMessageRefresh } from "@/components/layout/GlobalNotificationTo
 import { Indicator, Tooltip } from "@/components/ds";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
-import { bellBtnCss } from "./styles";
+import { bellBtnCss, BELL_BADGE_OFFSET } from "./styles";
 
 export function MessageBell() {
   const { user } = useAuth();
@@ -52,7 +52,7 @@ export function MessageBell() {
   if (!user) return null;
 
   return (
-    <Indicator count={unreadCount} max={99}>
+    <Indicator count={unreadCount} max={99} offset={BELL_BADGE_OFFSET}>
       <Tooltip content='Messages'>
         <button type='button' onClick={() => router.push(messagesHref)} className={bellBtnCss} aria-label='Messages'>
           <MessageCircle size={20} />

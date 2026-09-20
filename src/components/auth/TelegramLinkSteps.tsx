@@ -23,6 +23,8 @@ const steps = css({
 const openButton = css(button.raw({ variant: "solid", size: "md", full: true }), {
   // Telegram's brand blue so the button reads as "this leaves for Telegram".
   bg: "#2AABEE",
+  // globals.css `a { color: inherit }` beats the recipe's white on an anchor.
+  color: "white !important",
   _hover: { bg: "#229ED9" },
 });
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { DollarSign, MessageCircle, Eye, ArrowRight } from "lucide-react";
+import { DollarSign, MessageCircle, Eye, ArrowRight, Wallet } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Avatar, Spinner } from "@/components/ds";
 import { ProfileAvatar, LevelBadge, Stars5 } from "@/components/profile/profileKit";
@@ -109,27 +109,19 @@ const statsGrid = css({
   display: "grid", gap: "16px", mb: "32px",
   gridTemplateColumns: { base: "repeat(1, minmax(0, 1fr))", sm: "repeat(2, minmax(0, 1fr))", md: "repeat(4, minmax(0, 1fr))" },
 });
-// The green "Available balance" variant hangs off `data-green` so its colours
-// beat the base class by selector specificity (atomic order is not reliable).
 const statCard = css({
   bg: "surface", color: "ink", borderRadius: "16px", p: "24px",
   borderWidth: "1px", borderStyle: "solid", borderColor: "rgba(0, 0, 0, 0.08)",
   cursor: "pointer", transition: "all 0.3s",
   _hover: { borderColor: "rgba(0, 0, 0, 0.2)", "& .arrow-icon": { opacity: 1 } },
-  "&[data-green]": {
-    borderColor: "rgba(34, 197, 94, 0.2)",
-    background: "linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(34, 197, 94, 0.05) 100%)",
-    _hover: { borderColor: "rgba(34, 197, 94, 0.3)" },
-    "& .arrow-icon": { color: "rgba(22, 163, 74, 0.4)" },
-  },
 });
 const statCardRelative = css({ position: "relative" });
 const statTop = css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "16px" });
 const arrowIcon = css({ color: "ink3", opacity: 0, transition: "opacity 0.3s", display: "block" });
 const statValue = css({ textStyle: "stat", fontWeight: 600, color: "black" });
-const statValueGreen = css({ textStyle: "stat", fontWeight: 600, color: "rgb(21, 128, 61)" });
-const statLabel = css({ textStyle: "micro", color: "ink2" });
-const statLabelGreen = css({ textStyle: "micro", color: "rgba(21, 128, 61, 0.7)" });
+// Icon + card name share the top row; the figure sits alone underneath.
+const statHead = css({ display: "flex", alignItems: "center", gap: "8px", minW: 0 });
+const statLabel = css({ textStyle: "meta", fontWeight: 500, color: "ink2" });
 const unreadDot = css({ position: "absolute", top: "16px", right: "16px", w: "8px", h: "8px", bg: "#2563eb", borderRadius: "50%" });
 
 // The old grid = flex + gap with calc() widths; reproduced so the 8/4 split keeps
@@ -338,39 +330,47 @@ export default function DashboardContent({ onTabChange }: Props) {
       <div className={statsGrid}>
         <div className={statCard}>
           <div className={statTop}>
-            <DollarSign size={20} color="#9333ea" />
+            <div className={statHead}>
+              <DollarSign size={18} color="#9333ea" />
+              <p className={statLabel}>Total Earnings</p>
+            </div>
             <ArrowRight size={16} className={cx("arrow-icon", arrowIcon)} />
           </div>
           <p className={statValue}>{formatCurrency(stats.totalEarnings)}</p>
-          <p className={statLabel}>Total Earnings</p>
         </div>
 
-        <div className={statCard} data-green="">
+        <div className={statCard}>
           <div className={statTop}>
-            <DollarSign size={20} color="#16a34a" />
+            <div className={statHead}>
+              <Wallet size={18} color="#16a34a" />
+              <p className={statLabel}>Available Balance</p>
+            </div>
             <ArrowRight size={16} className={cx("arrow-icon", arrowIcon)} />
           </div>
-          <p className={statValueGreen}>{formatCurrency(stats.availableBalance)}</p>
-          <p className={statLabelGreen}>Available Balance</p>
+          <p className={statValue}>{formatCurrency(stats.availableBalance)}</p>
         </div>
 
         <div className={cx(statCard, statCardRelative)} onClick={() => router.push("/dashboard/freelancer/messages")}>
           <div className={statTop}>
-            <MessageCircle size={20} color="#2563eb" />
+            <div className={statHead}>
+              <MessageCircle size={18} color="#2563eb" />
+              <p className={statLabel}>Unread Messages</p>
+            </div>
             <ArrowRight size={16} className={cx("arrow-icon", arrowIcon)} />
           </div>
           <p className={statValue}>{stats.unreadMessagesCount}</p>
-          <p className={statLabel}>Unread Messages</p>
           {stats.unreadMessagesCount > 0 && <span className={unreadDot} />}
         </div>
 
         <div className={statCard}>
           <div className={statTop}>
-            <DollarSign size={20} color="#ea580c" />
+            <div className={statHead}>
+              <DollarSign size={18} color="#ea580c" />
+              <p className={statLabel}>In Escrow</p>
+            </div>
             <ArrowRight size={16} className={cx("arrow-icon", arrowIcon)} />
           </div>
           <p className={statValue}>{formatCurrency(stats.inEscrow)}</p>
-          <p className={statLabel}>In Escrow</p>
         </div>
       </div>
 

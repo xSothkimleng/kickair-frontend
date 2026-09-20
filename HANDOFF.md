@@ -178,6 +178,64 @@ Kimleng's team reversed the 09-07 Gateway decision: Gateway is funded only in TO
 - Pre-existing, noticed while screenshotting: in the Settings phone dialog at phone width (~400px) the sixth OTP box clips at the dialog's right edge (`OtpInput` boxes don't shrink). Sign-up is fine. Not touched.
 - Verified this session with headless Chrome (real sign-up and settings flows against the local API): the unlinked state renders on both screens at 1280px and 400px. **Live end-to-end passed 2026-09-16** with Kimleng's real number: site → Open Telegram → Start → Share → code delivered → account created 20 s after the share. The only hiccup was that the poller had died with the previous Claude session, so `/start` went unanswered until it was restarted — `php artisan telegram:poll` must be running in Kimleng's own terminal during local testing.
 
+## Status after the 2026-09-20 session (phone password reset + tolerant phone numbers) — committed & pushed 2026-09-20 (API b700f68)
+Two asks from Kimleng after the bot OTP went live on Railway: phone accounts had **no way to recover a password** (reset was email-only), and sign-in only accepted `+85512964520` while people register typing `012964520`.
+
+### Phone numbers are normalised in one place
+- `app/Services/PhoneNumber::normalize()` turns `012 964 520`, `12964520`, `+855 12 964 520`, `+855012964520`, `+855 (0)12…`, `85512964520`, `0085512964520` into the stored E.164 `+85512964520`. `855…` without a plus is only read as the country code when a whole national number (8–9 digits) follows, because 085 is a real operator prefix. Other country codes are kept; non-numbers are left for validation to reject.
+- The `NormalizesPhone` request trait (fields `phone` / `telephone`) is on `LoginWithPhoneRequest`, `SendPhoneOtpRequest`, `RegisterWithPhoneRequest` and the two new reset requests; `updatePhone` normalises inline. So sign-in, sign-up, settings and reset all accept any spelling.
+- The `phone-code` rate limiter now keys on the **normalised** number — otherwise every spelling would get its own bucket.
+- Frontend mirror: `src/lib/phone.ts` `toE164Kh()` (replaces the two inline copies in sign-up and settings; used by the forgot page). Sign-in placeholder now reads `you@example.com or 012 345 678`.
+- Still open (security list): `login/phone` answers "No account found with this phone number." (account enumeration) and login routes are unthrottled.
+
+### Password reset by phone
+- `POST /api/auth/forgot-password/phone {phone}` → same answer shape as send-otp (`delivered`, `bot_url`); behaves identically whether or not an account exists. `POST /api/auth/reset-password/phone {phone, code, password, password_confirmation}` → sets the password and revokes every Sanctum token. Both on the `phone-code` limiter. The email flow is untouched.
+- **Codes are bound to a purpose** (`PhoneVerificationContract::PURPOSE_VERIFY | PURPOSE_RESET`, stored with the pending entry): a sign-up code cannot reset a password and a reset code cannot register; trying counts as a wrong guess. The bot's reset message (`lang/en/telegram.php` → `reset_code`) says it is a password reset and that staff never ask for it.
+- **Verified phones only:** the account must have `is_verified_phone = true`; an unverified number on a profile is just something someone typed. "No KickAir account has verified this phone number…" is only shown after a correct code, i.e. to the number's owner.
+- When an unlinked user shares their contact, the bot re-sends the pending code **with its purpose** (`resendPendingCode`), so a reset stays a reset.
+- Frontend: `/auth/forgot-password` has the same Email / Phone picker as sign-up; the phone path is request → (Open Telegram steps if unlinked) code + new password on one screen → done. `api.forgotPasswordPhone` / `api.resetPasswordPhone`.
+- Tests: `PasswordResetByPhoneTest` (17), `PhoneNumberNormalizationTest` (25 cases), tolerant sign-in dataset in `LoginWithPhoneTest`. Suite: **488 passing**. Verified in headless Chrome at 1280px and 400px; sign-in with `012345678`, `+855012345678`, `85512345678` checked with curl against the local API.
+- **Taken numbers are refused before any code is sent** (Kimleng's ask after hitting it live): `SendPhoneOtpRequest` has `Rule::unique('users','telephone')->ignore(auth('sanctum')->id())`, so sign-up shows "This phone number is already registered. Sign in or reset your password instead." on the first form instead of after the Telegram round-trip. The signed-in user's own account is skipped (re-verifying your own number in Settings still works; another account's number answers "already linked to another account"). The check after the code stays as a backstop. This does reveal whether a number has an account — accepted, because email sign-up (`unique:users,email`) and phone sign-in already do, and the limiter caps probing. Forgot-password deliberately does **not** reveal it.
+- Known and accepted for now: a **recycled number** (carrier reassigns it) lets its new owner reset the old account's password by phone — the standard weakness of phone recovery. Cheap guard if wanted later: when `UpdateHandler` sees a number shared by a different Telegram account than before, mark it unverified on the KickAir account. Also no DB unique index on `users.telephone` (controller-level only).
+
+## Status after the 2026-09-20 session, part 2 (UI polish from Kimleng's screenshots) — committed & pushed 2026-09-20
+A run of small screenshot-driven fixes. All verified with signed-in headless-Chrome screenshots against the local API unless noted; tsc + eslint clean (only the two known `onTabChange` warnings).
+
+### Navbar (desktop, ≥1200px) — `components/layout/main/navbar/`
+- **Three zones:** logo left, page links on the bar's true centre, account controls right. The container is a grid `minmax(max-content,1fr) auto minmax(max-content,1fr)` (the old `desktopCss` wrapper is gone), so the links don't move when the right side changes width; if the right side outgrows its share the links give way instead of being overlapped. Measured: bar centre = links centre, signed in and out.
+- **Right cluster, one spec:** `clusterCtlRaw` in `styles.ts` (36px, pill, one hover fill, `ui` text). To restyle the cluster edit that block. Bells are 36px round buttons grouped 2px apart; the count badge tucks onto the icon via the new `Indicator` `offset` prop (`BELL_BADGE_OFFSET`).
+- **Account pill (Steam-style):** avatar · first name ⌄ | balance in one outlined pill, two hit zones — the name half opens the profile menu, the balance half goes to Finance (`WalletChip inPill`; the standalone chip remains in the mobile drawer). "First name" = first word of `user.name` (single name field; for family-name-first names that is the family name). Name is capped at 96px with an ellipsis.
+- **Language switch hidden** everywhere (desktop + drawer) behind `SHOW_LANGUAGE_SWITCH` in `types.ts` — it only stored a preference and changed no text. Flip to `true` to restore.
+- **Bell badge bug:** `Indicator` count bubble had no `box-sizing` (preflight is off), so "1" rendered as a 28px pill over the bell. Now border-box, 16px.
+- Noticed, not changed: the navbar balance prints `$2025.00` (no thousands comma) while cards print `$2,025.00`.
+
+### Wallet / dashboards
+- **Finance tab (`FinanceView`)**: removed the hardcoded "Payment methods" card, the "Accepted via ABA PayWay" logo row and the bottom "Secure payments by ABA PayWay" strip (not a payment screen; the strip stays in the footer and checkout). Layout is now full width.
+- **Settings → Payment methods**: the payment-methods mock moved here as `components/payment/SavedPaymentMethods.tsx`. **It is a MOCK** (hardcoded ABA KHQR + Visa ···· 4242, no API) kept for the client demo — replace with real data or hide before go-live. Real saved cards would need PayWay card-on-file (unverified) + backend token storage.
+- **Dashboard stat cards** (freelancer + client): the card name moved up next to the icon (12px/500, 18px icon), figure alone underneath. Freelancer "Available Balance" lost its green card/figure and uses a wallet icon (kept green so it doesn't sit next to the blue Messages icon).
+
+### "Scary" tinted boxes → quiet lines
+Reassurance/neutral states were using status tints (`pendingTint`, red `danger`). Pattern now: icon + grey text, no box, optional hairline under it.
+- Checkout escrow note (green shield + `ink2` text).
+- Custom order "Offer sent — awaiting the client's decision" (grey clock).
+- Order pages' open-dispute banner → `statusNoteCss` in `orderPageKit.tsx`: "**Under dispute** — an admin will review it." (wording changed). Resolved disputes keep the green box. The open state was checked on a throwaway preview page only — no open dispute existed locally at the time.
+- Small chips/badges in those tints were left alone; `pendingTint` full-width boxes remain in ds `Alert` warning, `Workspace` revision box, `WithdrawDialog`.
+
+### Order detail pages (client + freelancer)
+- Removed the "You requested a revision" / "Revision requested by client" card — the Order Record already shows the numbered revision with its feedback.
+- The actions area renders only when it has content (`hasActions` / `canSubmitEvidence`) — it used to draw an empty card (client: revision pending, evidence already in; freelancer: evidence already in).
+- The actions area is no longer a card: bare right-aligned row (`actionsBarCss`).
+- Evidence file rows: `fileNameCss` sat on an inline `<span>`, so it never ellipsised and long names ran under "Download" — now `display: block`.
+- Noticed, not changed: CLAUDE.md lists "Open Dispute" for the freelancer in `revision_requested`, but the page only offers Resubmit Work.
+
+### Admin dispute page
+- `OrderRecord` got an `embedded` prop (timeline only — no card, no "Order Record" heading/caption); the admin panel uses it, ending the card-in-a-card with a doubled title.
+- The Conversation panel is hidden when the order has no conversation (it was a dead end with a disabled box); it still shows when one exists.
+
+### Small
+- `TelegramLinkSteps`: "Open Telegram" label forced white (`globals.css` `a { color: inherit }` beat the recipe).
+- A specimen artifact of the navbar options (today / A / B / C) was published privately during the session; B (compact) was chosen, then extended with the first name and the in-pill balance.
+
 ## Status after the 2026-09-13 typography session — committed & pushed
 
 Kimleng's ask: the site's fonts and sizes were "random" (vibe-coded), make it one system and make it easy to change later. Audit found: numbers asked for Roboto Mono, which was never loaded, so they fell back to Menlo on Mac and a different system mono on every other platform; ~1,500 raw `fontSize` declarations with 70+ distinct values; line-heights/letter-spacings copied from MUI defaults; two text-colour sets (slate `heading/body/muted` vs black `ink/ink2/ink3`); `ink3` at 40 % black failed the 4.5:1 contrast floor.

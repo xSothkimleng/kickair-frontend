@@ -37,8 +37,10 @@ export function Badge({ tone, className, ...props }: BadgeProps) {
 /**
  * Small count/dot bubble anchored to a wrapped icon.
  * `count` 0/undefined hides it; `dot` renders a plain dot.
+ * `offset` (px) places the count bubble from the top-right corner: negative hangs it
+ * outside the wrapped control, positive tucks it in — for a button larger than its icon.
  */
-export function Indicator({ count, dot, max = 99, children, className, tone = "error" }: { count?: number; dot?: boolean; max?: number; children: React.ReactNode; className?: string; tone?: "error" | "accent" | "success" }) {
+export function Indicator({ count, dot, max = 99, children, className, tone = "error", offset = -3 }: { count?: number; dot?: boolean; max?: number; children: React.ReactNode; className?: string; tone?: "error" | "accent" | "success"; offset?: number }) {
   const show = dot || (count != null && count > 0);
   const bg = { error: "var(--colors-error)", accent: "var(--colors-accent)", success: "var(--colors-success)" }[tone];
   return (
@@ -49,8 +51,9 @@ export function Indicator({ count, dot, max = 99, children, className, tone = "e
           aria-hidden="true"
           className={dot
             ? css({ position: "absolute", top: "2px", right: "2px", w: "8px", h: "8px", borderRadius: "pill", boxShadow: "0 0 0 2px white" })
-            : css({ position: "absolute", top: "-4px", right: "-4px", minW: "18px", h: "18px", px: "5px", borderRadius: "pill", color: "white", textStyle: "micro", fontWeight: 700, textAlign: "center", boxShadow: "0 0 0 2px white" })}
-          style={{ background: bg }}>
+            // border-box: preflight is off, so without it the padding adds to minW and "1" renders as a 28px pill.
+            : css({ position: "absolute", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", minW: "16px", h: "16px", px: "4px", borderRadius: "pill", color: "white", textStyle: "micro", fontWeight: 700, boxShadow: "0 0 0 1.5px white" })}
+          style={dot ? { background: bg } : { background: bg, top: offset, right: offset }}>
           {dot ? null : count! > max ? `${max}+` : count}
         </span>
       ) : null}

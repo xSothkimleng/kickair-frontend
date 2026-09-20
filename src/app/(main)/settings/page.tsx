@@ -20,6 +20,7 @@ import { toE164Kh } from "@/lib/phone";
 import { useRouter } from "next/navigation";
 import { TextInput, PasswordInput, PhoneInput, OtpInput } from "@/components/ui/inputs";
 import { TelegramLinkSteps } from "@/components/auth/TelegramLinkSteps";
+import { SavedPaymentMethods } from "@/components/payment";
 
 // ─── Style tokens ──────────────────────────────────────────────────────────────
 
@@ -1119,7 +1120,15 @@ export default function SettingsPage() {
           <KycCard status={kycStatus} onSubmit={() => router.push("/dashboard/kyc")} />
         </Section>
 
-        {/* 6. Active sessions */}
+        {/* 6. Payment methods — MOCK, see SavedPaymentMethods */}
+        <Section
+          title="Payment methods"
+          description="Saved ways to pay for orders and top up your wallet."
+        >
+          <SavedPaymentMethods />
+        </Section>
+
+        {/* 7. Active sessions */}
         <Section
           title="Active sessions"
           description="Devices currently signed in to your account."
@@ -1190,7 +1199,7 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        {/* 7. Danger zone */}
+        {/* 8. Danger zone */}
         <div className={dangerBox}>
           <div className={flexOne}>
             <p className={dangerTitle}>Deactivate account</p>

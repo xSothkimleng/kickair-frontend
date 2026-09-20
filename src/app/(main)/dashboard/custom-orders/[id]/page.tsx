@@ -71,8 +71,10 @@ const detailActions = css({
 const detailActionsMain = css({ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "10px", ml: "auto" });
 
 const summaryCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
-const awaitBanner = css({ display: "flex", alignItems: "center", gap: "8px", p: "12px 14px", borderRadius: "10px", bg: "pendingTint", color: "pendingText", mb: "16px" });
-const awaitText = css({ textStyle: "ui", fontWeight: 500 });
+// Waiting on the client is a neutral state, not a warning: a quiet line (no box, no status tint).
+const awaitNote = css({ display: "flex", alignItems: "center", gap: "8px", mb: "16px", pb: "16px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const awaitIcon = css({ flexShrink: 0, color: "ink3" });
+const awaitText = css({ textStyle: "ui", color: "ink2", "& strong": { fontWeight: 600, color: "ink" } });
 const msRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", py: "10px" });
 const msRowLine = css({ borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
 const msTitle = css({ textStyle: "body", fontWeight: 500, color: "ink" });
@@ -274,9 +276,9 @@ export default function CustomOrderDetailPage() {
 
         {order.status === "offered" && role === "freelancer" ? (
           <div className={summaryCard}>
-            <div className={awaitBanner}>
-              <Clock size={16} className={css({ flexShrink: 0 })} />
-              <p className={awaitText}>Offer sent — awaiting the client&apos;s decision.</p>
+            <div className={awaitNote}>
+              <Clock size={16} className={awaitIcon} />
+              <p className={awaitText}><strong>Offer sent</strong> — awaiting the client&apos;s decision.</p>
             </div>
             <p className={coLabel}>{order.milestones.length > 1 ? `Your milestone plan · ${order.milestones.length} phases` : "Your offer"}</p>
             {order.milestones.map((m, i) => (
