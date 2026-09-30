@@ -467,8 +467,10 @@ export default function FreelancerOrderDetailPage() {
             revisionHistory={order.revision_history}
             preEvents={isCustom && order.custom_order ? [
               ...(order.custom_order.requested_at ? [{ id: -101, event_type: "request_sent", description: "The custom request was opened.", actor_role: "client" as const, created_at: order.custom_order.requested_at }] : []),
-              ...(order.custom_order.offered_at ? [{ id: -102, event_type: "offer_sent", description: "You sent a custom offer to the client.", actor_role: "freelancer" as const, created_at: order.custom_order.offered_at }] : []),
+              ...(!(order.custom_order.offers?.length) && order.custom_order.offered_at ? [{ id: -102, event_type: "offer_sent", description: "You sent a custom offer to the client.", actor_role: "freelancer" as const, created_at: order.custom_order.offered_at }] : []),
             ] : undefined}
+            rounds={order.custom_order?.offers}
+            roundsViewer="freelancer"
           />
 
           {/* ── Section 5: Status card ── */}

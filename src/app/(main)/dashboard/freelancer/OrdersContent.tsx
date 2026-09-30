@@ -131,7 +131,9 @@ export default function OrdersContent() {
       case "pending":
         return { label: "New request", bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
       case "offered":
-        return { label: "Offer sent", bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
+        return r.awaiting === "freelancer"
+          ? { label: "Client countered", bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" }
+          : { label: "Offer sent", bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
       case "accepted": // legacy milestone flow — work continues in the Workspace
         return { label: "Active", bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
       case "declined":

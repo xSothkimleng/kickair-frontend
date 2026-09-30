@@ -73,17 +73,21 @@ const cancelBtn = css({ mt: "8px" });
 /** Composer defaults — also what "Accept request" sends alongside the client's own budget and timeline. */
 export const OFFER_DEFAULTS = { deliveryDays: 30, revisions: 3, expiresInDays: 3 } as const;
 
-export default function OfferComposer({ order, onSent, onCancel }: { order: CustomOrder; onSent: () => void; onCancel: () => void }) {
+/** Terms the composer opens with: the offer on the table when the freelancer counters a client's counter-offer. */
+export interface ComposerInitial { scope: string; price: number; deliveryDays: number | null; revisions: number | null }
+
+export default function OfferComposer({ order, onSent, onCancel, initial, variant = "offer" }: { order: CustomOrder; onSent: () => void; onCancel: () => void; initial?: ComposerInitial; variant?: "offer" | "counter" }) {
   const invalidate = useCoInvalidate();
   const rate = useCommissionRate();
   const clientLabel = order.client.name ?? "the client";
+  const countering = variant === "counter";
 
-  const [scope, setScope] = useState(order.description ?? "");
-  const [deliveryDays, setDeliveryDays] = useState(String(OFFER_DEFAULTS.deliveryDays));
-  const [revisions, setRevisions] = useState(String(OFFER_DEFAULTS.revisions));
+  const [scope, setScope] = useState(initial?.scope ?? order.description ?? "");
+  const [deliveryDays, setDeliveryDays] = useState(String(initial?.deliveryDays ?? OFFER_DEFAULTS.deliveryDays));
+  const [revisions, setRevisions] = useState(initial ? (initial.revisions != null ? String(initial.revisions) : "") : String(OFFER_DEFAULTS.revisions));
   const [note, setNote] = useState("");
   const [expiresIn, setExpiresIn] = useState(String(OFFER_DEFAULTS.expiresInDays));
-  const [amount, setAmount] = useState(String(order.budget || ""));
+  const [amount, setAmount] = useState(initial ? String(initial.price) : String(order.budget || ""));
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -113,7 +117,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
       await invalidate();
       onSent();
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to send the offer.");
+      setError(e instanceof Error ? e.message : countering ? "Failed to send the counter-offer." : "Failed to send the offer.");
     } finally {
       setSubmitting(false);
     }
@@ -150,7 +154,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
 
       {/* ── Summary — stacked full-width below the builder ── */}
       <div className={card}>
-        <p className={coLabel}>Offer summary</p>
+        <p className={coLabel}>{countering ? "Counter-offer summary" : "Offer summary"}</p>
         <div className={clientRow}>
           <span className={coAvatar({ size: "sm" })}>{initials(clientLabel)}</span>
           <div>
@@ -203,7 +207,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
         <button type="button" onClick={handleSend} disabled={submitting} className={cx(coBtn({ tone: "black", size: "xl", strong: true, full: true }), sendBtn)}>
           {submitting ? <Spinner size={20} className={css({ color: "#fff" })} /> : (
             <>
-              Send offer
+              {countering ? "Send counter-offer" : "Send offer"}
               <ArrowRight size={20} className={coBtnEnd} />
             </>
           )}

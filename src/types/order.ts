@@ -1,3 +1,4 @@
+import type { CustomOrderOfferRound } from "./customOrder";
 import { ClientProfile } from "./service";
 
 export type OrderStatus =
@@ -87,6 +88,8 @@ export interface AdminDispute {
       offer_note: string | null;
       requested_at: string | null;
       offered_at: string | null;
+      /** Every negotiation round, oldest first (empty for legacy offers). */
+      offers?: CustomOrderOfferRound[];
     } | null;
   };
   client: {
@@ -231,6 +234,8 @@ export interface Order {
     offer_note?: string | null;
     requested_at?: string | null;
     offered_at?: string | null;
+    /** Every negotiation round, oldest first (empty for legacy offers). */
+    offers?: CustomOrderOfferRound[];
   } | null;
   price: string | null;              // locked at creation time
   status: OrderStatus;

@@ -123,7 +123,9 @@ export default function OrdersContent() {
       case "pending":
         return { label: "Awaiting offer", bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
       case "offered":
-        return { label: "Offer received", bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
+        return r.awaiting === "freelancer"
+          ? { label: "Counter sent", bgcolor: "rgba(0,0,0,0.06)", color: "ink2" }
+          : { label: "Offer received", bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
       case "accepted":
         if (r.order?.status === "completed") return { label: "Completed", bgcolor: "rgba(22, 163, 74, 0.1)", color: "#15803d" };
         if (r.order?.status === "cancelled") return { label: "Ended", bgcolor: "rgba(0,0,0,0.06)", color: "ink2" };
@@ -293,7 +295,7 @@ export default function OrdersContent() {
                     {r.status === "offered" && (
                       <div className={alertInfoCss}>
                         <span className={alertIconCss} style={{ color: "#0071e3" }}><BellRing size={16} /></span>
-                        <div className={alertMsgCss}>Custom offer received. Review and accept to start the order</div>
+                        <div className={alertMsgCss}>{r.awaiting === "freelancer" ? "Your counter-offer is with the freelancer" : "An offer is waiting for you. Accept, counter or decline"}</div>
                       </div>
                     )}
 

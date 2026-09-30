@@ -108,6 +108,8 @@ export interface CustomOrder {
   last_offer_by: "client" | "freelancer" | null;
   /** Whose move it is while an offer is on the table; null once the negotiation is over. */
   awaiting: "client" | "freelancer" | null;
+  /** Freelancer-initiated: no client request came first, so the first round opens the story. */
+  is_direct?: boolean;
   milestones: CustomOrderMilestone[];
   escrow: CustomOrderEscrow;
   order: { id: number; status: string; conversation_id: number | null } | null;

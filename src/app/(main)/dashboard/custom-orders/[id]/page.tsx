@@ -6,13 +6,18 @@ import { ArrowRight, Check, ChevronLeft, Clock } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Alert, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
+import { CustomOrder } from "@/types/customOrder";
 import { useCustomOrder, useCoInvalidate } from "@/components/customOrders/hooks";
 import {
   AttachChip, Money, coAvatar, coBtn, coBtnEnd, coBtnStart, coCard, coLabel, initials,
 } from "@/components/customOrders/kit";
 import ReviewOffer from "@/components/customOrders/ReviewOffer";
+import ReviewCounter from "@/components/customOrders/ReviewCounter";
+import CounterOfferForm from "@/components/customOrders/CounterOfferForm";
 import OfferComposer, { OFFER_DEFAULTS } from "@/components/customOrders/OfferComposer";
 import Workspace from "@/components/customOrders/Workspace";
+import OrderRecord from "@/components/dashboard/OrderRecord";
+import { firstName, fmtDays, fmtRevisions, fmtUsd, fmtUsdShort, isDirectOffer, roundTitle } from "@/components/customOrders/offerRounds";
 
 const STATUS_TEXT: Record<string, string> = {
   pending: "Your request was sent. You'll be notified when a custom offer arrives.",
@@ -39,6 +44,7 @@ const narrow = css({ maxW: "720px" });
 const wide = css({ maxW: "1080px" });
 
 const backBtn = css({ mb: "16px" });
+const recordGap = css({ mt: "20px" });
 
 const headerRow = css({ display: "flex", alignItems: "center", gap: "14px", mb: "24px" });
 const headerTitle = css({ textStyle: "title", fontWeight: 600, color: "ink" });
@@ -75,20 +81,10 @@ const summaryCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
 const awaitNote = css({ display: "flex", alignItems: "center", gap: "8px", mb: "16px", pb: "16px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
 const awaitIcon = css({ flexShrink: 0, color: "ink3" });
 const awaitText = css({ textStyle: "ui", color: "ink2", "& strong": { fontWeight: 600, color: "ink" } });
-const msRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", py: "10px" });
-const msRowLine = css({ borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
-const msTitle = css({ textStyle: "body", fontWeight: 500, color: "ink" });
-const totalRow = css({
-  display: "flex",
-  justifyContent: "space-between",
-  alignItems: "center",
-  pt: "12px",
-  mt: "4px",
-  borderTopWidth: "1px",
-  borderTopStyle: "solid",
-  borderTopColor: "hairlineStrong",
-});
-const totalLabel = css({ fontWeight: 600, textStyle: "lead", color: "ink" });
+const termRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", py: "10px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
+const termKey = css({ textStyle: "body", color: "ink2" });
+const termVal = css({ textStyle: "body", fontWeight: 600, color: "ink", fontVariantNumeric: "tabular-nums" });
+const summaryScope = css({ textStyle: "ui", color: "ink", whiteSpace: "pre-wrap", pt: "12px" });
 
 const statusCard = cx(coCard, css({ p: { base: "24px", md: "32px" }, textAlign: "center" }));
 const statusText = css({ textStyle: "body", color: "ink2", maxW: "420px", mx: "auto" });
@@ -100,6 +96,7 @@ export default function CustomOrderDetailPage() {
   const { data: order, isLoading, error, refetch } = useCustomOrder(id);
   const invalidate = useCoInvalidate();
   const [composing, setComposing] = useState(false);
+  const [countering, setCountering] = useState(false);
   const [declining, setDeclining] = useState(false);
   const [accepting, setAccepting] = useState(false);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -140,6 +137,8 @@ export default function CustomOrderDetailPage() {
   if (order.status === "accepted") {
     return <Workspace order={order} role={role} />;
   }
+
+  const backTo = role === "freelancer" ? "/dashboard/freelancer?tab=orders" : "/dashboard/client?tab=orders";
 
   // Pending + freelancer → the full request detail: brief, budget/timeline,
   // attachments, and the Decline / Make an offer / Accept actions (composer inline).
@@ -193,7 +192,7 @@ export default function CustomOrderDetailPage() {
     return (
       <div className={page}>
         <div className={cx(container, narrow)}>
-          <BackBtn onClick={() => router.push("/dashboard/freelancer?tab=orders")} label="Back to orders" />
+          <BackBtn onClick={() => router.push(backTo)} label="Back to orders" />
           <Header order={order} />
 
           {composing ? (
@@ -254,53 +253,111 @@ export default function CustomOrderDetailPage() {
     );
   }
 
-  // Offered → client reviews + accepts; freelancer sees a read-only summary
+  // Offered + client → the offer on the table (accept / counter / decline), or the counter form.
   if (order.status === "offered" && role === "client") {
     return (
       <div className={page}>
         <div className={cx(container, wide)}>
-          <BackBtn onClick={() => router.push("/dashboard/client?tab=orders")} label="Back to orders" />
-          <Header order={order} />
-          <ReviewOffer order={order} onChanged={() => refetch()} />
+          <BackBtn onClick={() => (countering ? setCountering(false) : router.push(backTo))} label={countering ? "Back to the offer" : "Back to orders"} />
+          {countering ? (
+            <CounterOfferForm order={order} onSent={() => { setCountering(false); refetch(); }} onCancel={() => setCountering(false)} />
+          ) : (
+            <>
+              <Header order={order} />
+              <ReviewOffer order={order} onChanged={() => refetch()} onCounter={() => setCountering(true)} />
+            </>
+          )}
+          <div className={recordGap}><NegotiationRecord order={order} viewer="client" /></div>
         </div>
       </div>
     );
   }
 
-  // Everything else → a compact status panel
+  // Offered + freelancer → either the client's counter to answer, or "your offer is with the client".
+  if (order.status === "offered" && role === "freelancer") {
+    const table = order.offers[order.offers.length - 1] ?? null;
+    const clientTurn = order.awaiting !== "freelancer";
+    return (
+      <div className={page}>
+        <div className={cx(container, clientTurn && !composing ? narrow : wide)}>
+          <BackBtn onClick={() => (composing ? setComposing(false) : router.push(backTo))} label={composing ? "Back to the counter-offer" : "Back to orders"} />
+          {composing ? (
+            <OfferComposer
+              order={order}
+              variant="counter"
+              initial={table ? { scope: table.scope ?? "", price: Number(table.total), deliveryDays: table.delivery_days, revisions: table.revisions } : undefined}
+              onSent={() => { setComposing(false); refetch(); }}
+              onCancel={() => setComposing(false)}
+            />
+          ) : (
+            <>
+              <Header order={order} />
+              {clientTurn ? (
+                <div className={summaryCard}>
+                  <div className={awaitNote}>
+                    <Clock size={16} className={awaitIcon} />
+                    <p className={awaitText}><strong>{table ? `${roundTitle(table)} sent.` : "Offer sent."}</strong> Awaiting {firstName(order.client.name)}&apos;s decision: accept, counter or decline.</p>
+                  </div>
+                  <p className={coLabel}>On the table</p>
+                  <div className={termRow}><span className={termKey}>{"Client pays"}</span><span className={termVal}>{fmtUsd(order.offer?.total ?? 0)}</span></div>
+                  <div className={termRow}><span className={termKey}>Delivery</span><span className={termVal}>{fmtDays(order.offer?.delivery_days ?? null)}</span></div>
+                  <div className={termRow}><span className={termKey}>Revisions</span><span className={termVal}>{fmtRevisions(order.offer?.revisions ?? null)}</span></div>
+                  <p className={summaryScope}>{order.offer?.scope}</p>
+                </div>
+              ) : (
+                <ReviewCounter order={order} onChanged={() => refetch()} onCounter={() => setComposing(true)} />
+              )}
+            </>
+          )}
+          <div className={recordGap}><NegotiationRecord order={order} viewer="freelancer" /></div>
+        </div>
+      </div>
+    );
+  }
+
+  // Everything else → a compact status panel, with the record of what happened.
   return (
     <div className={page}>
       <div className={cx(container, narrow)}>
-        <BackBtn onClick={() => router.push(role === "freelancer" ? "/dashboard/freelancer?tab=orders" : "/dashboard/client?tab=orders")} label="Back to orders" />
+        <BackBtn onClick={() => router.push(backTo)} label="Back to orders" />
         <Header order={order} />
-
-        {order.status === "offered" && role === "freelancer" ? (
-          <div className={summaryCard}>
-            <div className={awaitNote}>
-              <Clock size={16} className={awaitIcon} />
-              <p className={awaitText}><strong>Offer sent.</strong> Awaiting the client&apos;s decision.</p>
-            </div>
-            <p className={coLabel}>{order.milestones.length > 1 ? `Your milestone plan · ${order.milestones.length} phases` : "Your offer"}</p>
-            {order.milestones.map((m, i) => (
-              <div key={m.id} className={i < order.milestones.length - 1 ? cx(msRow, msRowLine) : msRow}>
-                <p className={msTitle}>{m.seq}. {m.title}</p>
-                <Money value={m.amount} size="body" weight={600} />
-              </div>
-            ))}
-            <div className={totalRow}>
-              <p className={totalLabel}>Total</p>
-              <Money value={order.offer?.total ?? 0} size="title" weight={600} />
-            </div>
-          </div>
-        ) : (
-          <div className={statusCard}>
-            <p className={statusText}>
-              {STATUS_TEXT[order.status] ?? "This custom order is no longer active."}
-            </p>
-          </div>
+        <div className={statusCard}>
+          <p className={statusText}>
+            {STATUS_TEXT[order.status] ?? "This custom order is no longer active."}
+          </p>
+        </div>
+        {(order.offers.length > 0 || order.status !== "pending") && (
+          <div className={recordGap}><NegotiationRecord order={order} viewer={role} /></div>
         )}
       </div>
     </div>
+  );
+}
+
+/** The request and every round so far, before any order exists. */
+function NegotiationRecord({ order, viewer }: { order: CustomOrder; viewer: "client" | "freelancer" }) {
+  const freelancer = firstName(order.freelancer.name);
+  const client = order.client.name ?? "The client";
+  const budget = `Budget ${fmtUsdShort(order.budget)}${order.desired_timeline_days ? ` · ${order.desired_timeline_days} days` : ""}.`;
+  const request = !isDirectOffer(order)
+    ? [{
+        id: -101,
+        event_type: "request_sent",
+        description: viewer === "client" ? `You asked ${freelancer} for a custom order. ${budget}` : `${client} asked you for a custom order. ${budget}`,
+        actor_role: "client" as const,
+        created_at: order.created_at,
+      }]
+    : [];
+  return (
+    <OrderRecord
+      preEvents={request}
+      rounds={order.offers}
+      roundsViewer={viewer}
+      negotiating={order.status === "offered"}
+      onTableNote="Shown in full at the top of this page."
+      title="Order record"
+      caption="Everything that happened on this request, in one timeline. Every offer is kept."
+    />
   );
 }
 
@@ -313,14 +370,17 @@ function BackBtn({ onClick, label }: { onClick: () => void; label: string }) {
   );
 }
 
-function Header({ order }: { order: import("@/types/customOrder").CustomOrder }) {
+function Header({ order }: { order: CustomOrder }) {
   const other = order.viewer_role === "freelancer" ? order.client.name : order.freelancer.name;
+  const n = order.offers?.length ?? 0;
   return (
     <div className={headerRow}>
       <span className={coAvatar({ size: "xl" })}>{initials(other)}</span>
       <div className={css({ flex: 1, minW: 0 })}>
         <p className={headerTitle}>{order.service.title ?? "Custom order"}</p>
-        <p className={headerSub}>with {other} · <span className={monoSpan}>${order.budget.toLocaleString()}</span> budget</p>
+        <p className={headerSub}>
+          with {other} · <span className={monoSpan}>${order.budget.toLocaleString()}</span> budget{n > 0 ? ` · ${n} ${n === 1 ? "offer" : "offers"} so far` : ""}
+        </p>
       </div>
     </div>
   );

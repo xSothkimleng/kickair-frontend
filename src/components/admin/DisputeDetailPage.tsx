@@ -235,8 +235,10 @@ export default function DisputeDetailPage({ id }: { id: number }) {
                 revisionHistory={d.order.revision_history}
                 preEvents={co ? [
                   ...(co.requested_at ? [{ id: -101, event_type: "request_sent", description: "The client opened a custom request.", actor_role: "client" as const, created_at: co.requested_at }] : []),
-                  ...(co.offered_at ? [{ id: -102, event_type: "offer_sent", description: "The freelancer sent a custom offer.", actor_role: "freelancer" as const, created_at: co.offered_at }] : []),
+                  ...(!(co.offers?.length) && co.offered_at ? [{ id: -102, event_type: "offer_sent", description: "The freelancer sent a custom offer.", actor_role: "freelancer" as const, created_at: co.offered_at }] : []),
                 ] : undefined}
+                rounds={co?.offers}
+                roundsViewer="admin"
               />
             </div>
           </Panel>

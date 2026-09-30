@@ -10,18 +10,21 @@ import { Chip, Money, coAvatar, coBtn, coBtnStart, coCard, coLabel, initials } f
 import { useCoInvalidate } from "./hooks";
 import FundMilestoneDialog from "./FundMilestoneDialog";
 import { MONEY, ESCROW_SHORT, escrowSentence } from "@/lib/moneyTerms";
+import { AgreedStrip, ChangedStrip, diffTerms, firstName, roundTitle, termsOf } from "./offerRounds";
 
 const grid = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "minmax(0,1fr) 348px" }, gap: "24px", alignItems: "start" });
 const mainCol = css({ display: "flex", flexDirection: "column", gap: "16px" });
 
 const offerCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
-const offerHead = css({ display: "flex", justifyContent: "space-between", gap: "12px", mb: "18px" });
-const who = css({ display: "flex", gap: "12px" });
+const offerHead = css({ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "12px", mb: "18px" });
+const who = css({ display: "flex", gap: "12px", alignItems: "center" });
 const whoName = css({ fontWeight: 600, textStyle: "lead", color: "ink" });
 const whoMeta = css({ display: "flex", alignItems: "center", gap: "4px", textStyle: "meta", color: "ink2" });
-const scopeText = css({ textStyle: "body", color: "ink" });
-const metaRow = css({ display: "flex", gap: "18px", flexWrap: "wrap", color: "ink2", textStyle: "meta" });
+const scopeText = css({ textStyle: "body", color: "ink", whiteSpace: "pre-wrap" });
+const metaRow = css({ display: "flex", gap: "18px", flexWrap: "wrap", color: "ink2", textStyle: "meta", mt: "12px" });
 const metaItem = css({ display: "flex", alignItems: "center", gap: "6px" });
+const noteBlock = css({ mt: "16px", pt: "14px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
+const noteText = css({ textStyle: "ui", color: "ink", whiteSpace: "pre-wrap" });
 
 // Same card, but on surface2 — written out rather than cx()'d over `coCard`
 // so the background isn't a class-order coin flip.
@@ -39,8 +42,7 @@ const shieldTitle = css({ fontWeight: 600, textStyle: "body", color: "ink" });
 const shieldBody = css({ textStyle: "ui", color: "ink2" });
 
 const aside = cx(coCard, css({ p: { base: "20px", md: "24px" }, position: { md: "sticky" }, top: "24px" }));
-// Neutral surface, same as the escrow explainer card — the amount is a fact,
-// not a warning, so it doesn't get the orange escrow tint.
+// Neutral surface, same as the escrow explainer card: the amount is a fact, not a warning.
 const payBox = css({
   p: "16px",
   mt: "12px",
@@ -51,26 +53,34 @@ const payBox = css({
   borderStyle: "solid",
   borderColor: "hairline",
 });
-
 const payValue = css({ mt: "6px" });
 const payNote = css({ textStyle: "micro", color: "ink2" });
 
 const laterList = css({ display: "flex", flexDirection: "column", gap: "10px", mb: "16px" });
 const betweenRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
 const betweenLabel = css({ textStyle: "ui", color: "ink2" });
-const errorText = css({ textStyle: "meta", color: "errorText" });
+const errorText = css({ textStyle: "meta", color: "errorText", mb: "10px" });
 
 const expiredBox = css({ display: "flex", gap: "8px", p: "12px 14px", bg: "rgba(0,0,0,0.04)", borderRadius: "10px" });
 const expiredText = css({ textStyle: "meta", color: "ink2" });
-const declineBtn = css({ mt: "10px" });
-const escrowNote = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", mt: "12px", color: "ink3", textStyle: "micro" });
+const btnGap = css({ mt: "10px" });
+const helpNote = css({ textStyle: "micro", color: "ink3", textAlign: "center", mt: "12px" });
 
-export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; onChanged: () => void }) {
+/**
+ * The client's view of the offer on the table: who sent it, what changed since the
+ * client's own last round, the full terms, and the three ways to answer. Accept pays;
+ * a counter keeps the request open; decline ends it.
+ */
+export default function ReviewOffer({ order, onChanged, onCounter }: { order: CustomOrder; onChanged: () => void; onCounter: () => void }) {
   const invalidate = useCoInvalidate();
   const offer = order.offer;
   const ms = order.milestones;
   const m1 = ms[0];
+  const rounds = order.offers ?? [];
+  const current = rounds[rounds.length - 1] ?? null;
+  const previous = rounds.length >= 2 ? rounds[rounds.length - 2] : null;
   const freelancerName = order.freelancer.name ?? "the freelancer";
+  const first = firstName(freelancerName);
   const expired = !!offer?.expires_at && new Date(offer.expires_at).getTime() < Date.now();
 
   const [fundOpen, setFundOpen] = useState(false);
@@ -84,6 +94,8 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
   // may still have later phases — those keep funding as they go.)
   const payNow = m1.amount;
   const fundedLater = offer.total - payNow;
+  const changes = current && previous ? diffTerms(termsOf(previous), termsOf(current)) : [];
+  const sentOn = current ? new Date(current.created_at).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : null;
 
   const handleAccept = async () => {
     setSubmitting(true);
@@ -107,7 +119,6 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
 
   const main = (
     <div className={mainCol}>
-      {/* freelancer + scope */}
       <div className={offerCard}>
         <div className={offerHead}>
           <div className={who}>
@@ -115,22 +126,34 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
             <div>
               <p className={whoName}>{freelancerName}</p>
               <p className={whoMeta}>
-                <Star size={14} fill="currentColor" className={css({ color: "pending", flexShrink: 0 })} /> Custom offer
+                <Star size={14} fill="currentColor" className={css({ color: "pending", flexShrink: 0 })} /> {current ? roundTitle(current) : "Custom offer"}{sentOn ? ` · sent ${sentOn}` : ""}
               </p>
             </div>
           </div>
-          {expired ? <Chip tone="neutral">Expired</Chip> : <Chip tone="pending" dot>New offer</Chip>}
+          {expired ? <Chip tone="neutral">Expired</Chip> : <Chip tone="pending" dot>Your turn</Chip>}
         </div>
+
+        {current?.accepts_previous && previous ? (
+          <AgreedStrip>{first} agreed to your {roundTitle(previous).toLowerCase()} as it stood.</AgreedStrip>
+        ) : previous ? (
+          <ChangedStrip heading={`Changed since your ${roundTitle(previous).toLowerCase()}`} changes={changes} keptSuffix="kept as you asked" />
+        ) : null}
+
         <p className={coLabel}>Scope</p>
         <p className={scopeText}>{offer.scope}</p>
         <div className={metaRow}>
-          {offer.delivery_days != null && <Span icon={<Clock size={14} />}>{offer.delivery_days}-day delivery</Span>}
-          {offer.revisions != null && <Span icon={<RotateCcw size={14} />}>{offer.revisions} revisions</Span>}
-          {offer.expires_at && !expired && <Span icon={<Clock size={14} />}>Expires {new Date(offer.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</Span>}
+          {offer.delivery_days != null && <span className={metaItem}><Clock size={14} /> {offer.delivery_days}-day delivery</span>}
+          {offer.revisions != null && <span className={metaItem}><RotateCcw size={14} /> {offer.revisions} revisions</span>}
+          {offer.expires_at && !expired && <span className={metaItem}><Clock size={14} /> Expires {new Date(offer.expires_at).toLocaleDateString("en-US", { month: "short", day: "numeric" })}</span>}
         </div>
+        {offer.note && (
+          <div className={noteBlock}>
+            <p className={coLabel}>Note from {first}</p>
+            <p className={noteText}>{offer.note}</p>
+          </div>
+        )}
       </div>
 
-      {/* escrow explainer */}
       <div className={shieldCard}>
         <div className={shieldRow}>
           <div className={shieldIcon}>
@@ -138,9 +161,7 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
           </div>
           <div>
             <p className={shieldTitle}>Your payment is protected</p>
-            <p className={shieldBody}>
-              {escrowSentence(freelancerName.split(" ")[0])}
-            </p>
+            <p className={shieldBody}>{escrowSentence(first)}</p>
           </div>
         </div>
       </div>
@@ -167,20 +188,21 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
       {expired ? (
         <div className={expiredBox}>
           <Clock size={15} className={css({ color: "ink3", flexShrink: 0 })} />
-          <p className={expiredText}>This offer expired. Ask {freelancerName.split(" ")[0]} to resend it.</p>
+          <p className={expiredText}>This offer expired. Ask {first} to resend it.</p>
         </div>
       ) : (
         <>
           <button type="button" onClick={() => setFundOpen(true)} className={coBtn({ tone: "black", size: "xl", strong: true, full: true })}>
             <Lock size={20} className={coBtnStart} />
-            Accept &amp; Pay
+            {MONEY.acceptAndPay}
           </button>
-          <button type="button" onClick={handleDecline} disabled={declining} className={cx(coBtn({ tone: "quiet", font: "ui", strong: true, full: true }), declineBtn)}>
+          <button type="button" onClick={onCounter} disabled={declining} className={cx(coBtn({ tone: "outline", size: "lg", strong: true, full: true }), btnGap)}>
+            Counter-offer
+          </button>
+          <button type="button" onClick={handleDecline} disabled={declining} className={cx(coBtn({ tone: "quiet", font: "ui", strong: true, full: true }), btnGap)}>
             {declining ? <Spinner size={16} /> : "Decline"}
           </button>
-          <div className={escrowNote}>
-            <Lock size={12} /> {ESCROW_SHORT}
-          </div>
+          <p className={helpNote}>A counter-offer keeps the request open. Decline ends it for good.</p>
         </>
       )}
     </div>
@@ -206,10 +228,6 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
       />
     </>
   );
-}
-
-function Span({ icon, children }: { icon: React.ReactNode; children: React.ReactNode }) {
-  return <div className={metaItem}>{icon}{children}</div>;
 }
 
 function Between({ label, children }: { label: string; children: React.ReactNode }) {

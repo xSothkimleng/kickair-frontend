@@ -12,7 +12,9 @@ import { Spinner } from "@/components/ds";
 import { qk } from "@/lib/queryKeys";
 import { api } from "@/lib/api";
 import { OrderTimelineEvent } from "@/types/order";
+import type { CustomOrderOfferRound } from "@/types/customOrder";
 import { downloadOrderAttachment } from "@/lib/downloadFile";
+import { diffTerms, fmtDays, fmtRevisions, fmtUsdShort, roundTitle, senderLabel, termsOf, type RoundViewer } from "@/components/customOrders/offerRounds";
 
 type Attachment = { url: string; file_name: string; file_type: string };
 type DeliveryEntry = { note: string | null; attachments: Attachment[]; submitted_at: string };
@@ -21,6 +23,7 @@ type RevisionEntry = { note: string | null; requested_at: string };
 const EVENT_STYLE: Record<string, { icon: React.ReactNode; color: string }> = {
   request_sent:       { icon: <Receipt size={13} />,      color: "#64748B" },
   offer_sent:         { icon: <Tag size={13} />,          color: "#7C3AED" },
+  offer_round:        { icon: <Tag size={13} />,          color: "#7C3AED" },
   order_placed:       { icon: <ShoppingCart size={13} />, color: "#0F172A" },
   order_accepted:     { icon: <CheckCircle2 size={13} />, color: "#2563EB" },
   work_delivered:     { icon: <Truck size={13} />,        color: "#16A34A" },
@@ -128,6 +131,7 @@ const badgeCss = cva({
     tone: {
       success: { color: "#2e7d32", borderColor: "rgba(46,125,50,0.7)" },
       warning: { color: "#ed6c02", borderColor: "rgba(237,108,2,0.7)" },
+      purple: { color: "#6D28D9", borderColor: "rgba(124,58,237,0.5)" },
     },
   },
   defaultVariants: { tone: "success" },
@@ -185,6 +189,61 @@ function AttachmentRow({ file, orderId }: { file: Attachment; orderId: number })
   );
 }
 
+/** One negotiation round as a record row, with the round before it for the "was" values. */
+interface RoundRowData {
+  round: CustomOrderOfferRound;
+  prev: CustomOrderOfferRound | null;
+  onTable: boolean;
+  agreed: boolean;
+  onTableNote?: string;
+}
+
+const termsLineCss = css({ display: "flex", gap: "6px 14px", flexWrap: "wrap", alignItems: "baseline", textStyle: "ui", color: "#334155", fontVariantNumeric: "tabular-nums", mt: "2px" });
+const termStrong = css({ fontWeight: 600 });
+const termWas = css({ textDecoration: "line-through", color: "#94A3B8", textStyle: "meta", ml: "4px" });
+const roundToggleCss = css({ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", minH: "44px", p: 0, border: "none", bg: "transparent", color: "#2563EB", textStyle: "meta", fontWeight: 600, cursor: "pointer", _hover: { textDecoration: "underline" } });
+const roundBoxCss = css({ display: "flex", flexDirection: "column", gap: "10px", p: "12px 14px", bg: "#F8FAFC", borderWidth: "1px", borderStyle: "solid", borderColor: "#E2E8F0", borderRadius: "8px", maxW: "760px" });
+const roundBoxLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "#64748B" });
+const roundBoxText = css({ textStyle: "ui", color: "#334155", whiteSpace: "pre-wrap" });
+const roundBodyCss = css({ display: "flex", flexDirection: "column", gap: "5px" });
+
+/** Terms line with struck "was" values, then the full scope and note behind a toggle. */
+function RoundTerms({ data }: { data: RoundRowData }) {
+  const [open, setOpen] = useState(false);
+  const { round: r, prev, onTable, onTableNote } = data;
+  const changed = new Set(diffTerms(prev ? termsOf(prev) : null, termsOf(r)).map((c) => c.key));
+  // A plain render helper, not a component: React's compiler forbids components created during render.
+  const term = (k: "delivery" | "revisions", value: string, was: string) => (
+    <span>
+      <span className={changed.has(k) ? termStrong : undefined}>{value}</span>
+      {changed.has(k) && prev ? <span className={termWas}>{was}</span> : null}
+    </span>
+  );
+  return (
+    <div className={roundBodyCss}>
+      <div className={termsLineCss}>
+        <span className={termStrong}>{fmtUsdShort(r.total)}{changed.has("price") && prev ? <span className={termWas}>{fmtUsdShort(prev.total)}</span> : null}</span>
+        {term("delivery", fmtDays(r.delivery_days), prev ? String(prev.delivery_days ?? "none") : "")}
+        {term("revisions", fmtRevisions(r.revisions), prev ? String(prev.revisions ?? "none") : "")}
+        {changed.has("scope") && <span className={badgeCss({ tone: "purple" })}>Scope edited</span>}
+      </div>
+      {onTable && onTableNote ? (
+        <p className={descCss}>{onTableNote}</p>
+      ) : (
+        <>
+          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={roundToggleCss}>{open ? "Hide full offer" : "Show full offer"}</button>
+          {open && (
+            <div className={roundBoxCss}>
+              <div><p className={roundBoxLabel}>Scope</p><p className={roundBoxText}>{r.scope || "No scope written."}</p></div>
+              {r.note && <div><p className={roundBoxLabel}>Note</p><p className={roundBoxText}>{r.note}</p></div>}
+            </div>
+          )}
+        </>
+      )}
+    </div>
+  );
+}
+
 interface RecordRow {
   key: string;
   at: string;
@@ -193,6 +252,7 @@ interface RecordRow {
   badge?: string; // "Delivery #2" / "Revision #1"
   description: string | null;
   note?: string | null;
+  round?: RoundRowData;
   attachments?: Attachment[];
   actor?: string | null;
 }
@@ -208,14 +268,30 @@ export default function OrderRecord({
   deliveryHistory,
   revisionHistory,
   preEvents,
+  rounds,
+  roundsViewer = "client",
+  negotiating = false,
+  onTableNote,
+  title = "Order Record",
+  caption = "Everything that happened on this order in one timeline: activity, deliveries and revisions.",
   embedded = false,
 }: {
-  orderId: number;
+  /** Absent on the negotiation page, where no order exists yet: only the rounds and pre-events show. */
+  orderId?: number;
   createdAt?: string;
   deliveryHistory?: DeliveryEntry[];
   revisionHistory?: RevisionEntry[];
   /** Events that predate the order itself (e.g. a custom request/offer), merged into the timeline. */
   preEvents?: OrderTimelineEvent[];
+  /** Every negotiation round, oldest first; each becomes a row with its terms and what changed. */
+  rounds?: CustomOrderOfferRound[];
+  roundsViewer?: RoundViewer;
+  /** While the negotiation is open the last round is "On the table"; afterwards it is the agreed one. */
+  negotiating?: boolean;
+  /** Replaces the last round's toggle while it is on the table (the page shows it in full above). */
+  onTableNote?: string;
+  title?: string;
+  caption?: string;
   /**
    * The host already frames and titles the record (the admin dispute page's "Order record"
    * panel): render just the timeline — no card, no "Order Record" heading or caption —
@@ -226,10 +302,11 @@ export default function OrderRecord({
   // The event log lives in React Query under the orders prefix, so every
   // `invalidateQueries({ queryKey: qk.orders.all() })` — after a party acts on the
   // page, or when a realtime notification lands — refetches it without a reload.
+  const hasOrder = orderId != null && Number.isFinite(orderId);
   const { data: events = [], isLoading: loading } = useQuery({
-    queryKey: qk.orders.timeline(orderId),
-    queryFn: async () => (await api.getOrderTimeline(orderId)).data ?? [],
-    enabled: Number.isFinite(orderId),
+    queryKey: qk.orders.timeline(orderId ?? 0),
+    queryFn: async () => (await api.getOrderTimeline(orderId ?? 0)).data ?? [],
+    enabled: hasOrder,
   });
 
   const deliveries = deliveryHistory ?? [];
@@ -295,6 +372,20 @@ export default function OrderRecord({
     description: null, note: r.note, actor: "client",
   }));
 
+  // Negotiation rounds: one row each, titled by round, with the previous round for "was" values.
+  (rounds ?? []).forEach((r, i, all) => {
+    const last = i === all.length - 1;
+    const prev = i > 0 ? all[i - 1] : null;
+    rows.push({
+      key: `round-${r.id}`, at: r.created_at, eventType: "offer_round",
+      title: roundTitle(r),
+      badge: last ? (negotiating ? "On the table" : "Agreed") : undefined,
+      description: r.accepts_previous && prev ? `Agreed to ${roundTitle(prev).toLowerCase()} as it stood.` : null,
+      actor: senderLabel(r, roundsViewer),
+      round: { round: r, prev, onTable: last && negotiating, agreed: last && !negotiating, onTableNote },
+    });
+  });
+
   rows.sort((a, b) => new Date(a.at).getTime() - new Date(b.at).getTime());
 
   return (
@@ -302,15 +393,15 @@ export default function OrderRecord({
       {!embedded && (
         <>
           <p className={eyebrowCss}>
-            Order Record
+            {title}
           </p>
           <span className={captionCss}>
-            Everything that happened on this order in one timeline: activity, deliveries and revisions.
+            {caption}
           </span>
         </>
       )}
 
-      {loading ? (
+      {hasOrder && loading ? (
         <div className={loadingWrapCss}>
           <Spinner size={20} style={{ color: "#94A3B8" }} />
         </div>
@@ -359,6 +450,7 @@ export default function OrderRecord({
                   {row.description && (
                     <p className={descCss}>{row.description}</p>
                   )}
+                  {row.round && <RoundTerms data={row.round} />}
                   {row.note && (
                     <p className={noteCss}>
                       {row.note}
@@ -366,7 +458,7 @@ export default function OrderRecord({
                   )}
                   {!!row.attachments?.length && (
                     <div className={attachListCss}>
-                      {row.attachments.map((f, fi) => <AttachmentRow key={fi} file={f} orderId={orderId} />)}
+                      {row.attachments.map((f, fi) => <AttachmentRow key={fi} file={f} orderId={orderId ?? 0} />)}
                     </div>
                   )}
                 </div>
