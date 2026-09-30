@@ -8,6 +8,7 @@ import { css, cx } from "styled-system/css";
 import { Avatar } from "@/components/ds";
 import { Service } from "@/types/service";
 import { serviceCoverUrl } from "@/lib/serviceCover";
+import { categoryLine } from "@/lib/categoryLine";
 
 interface ServiceCardProps {
   service: Service;
@@ -115,7 +116,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
   // Extract display data from service
   const freelancerName = service.freelancer_profile?.user?.name || "Unknown";
   const freelancerAvatar = service.freelancer_profile?.user?.avatar_url || "";
-  const categoryName = service.category?.category_name || "Uncategorized";
+  const categoryName = categoryLine(service.category, service.category_label);
   const image = serviceCoverUrl(service) || "";
 
   // Get the lowest price from pricing options

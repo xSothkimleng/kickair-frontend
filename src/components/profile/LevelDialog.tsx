@@ -120,7 +120,7 @@ export default function LevelDialog({ open, onClose }: { open: boolean; onClose:
               <p className={nextText}>
                 {stats.next_level_threshold != null
                   ? `${stats.points_to_next_level.toLocaleString()} XP to the next level`
-                  : "Top level reached — legend."}
+                  : "Top level reached. Legend."}
               </p>
             </div>
 
@@ -149,7 +149,7 @@ export default function LevelDialog({ open, onClose }: { open: boolean; onClose:
             {/* beyond the profile */}
             <div className={beyondBox}>
               <p className={beyondText}>
-                Beyond your profile: completing orders and earning reviews keeps the XP coming — bigger orders and better ratings pay more.
+                Beyond your profile: completing orders and earning reviews keeps the XP coming. Bigger orders and better ratings pay more.
               </p>
             </div>
 

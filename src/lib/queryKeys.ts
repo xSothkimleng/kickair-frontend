@@ -62,6 +62,7 @@ export const qk = {
     users: (params?: Record<string, unknown>) => ["admin", "users", params ?? {}] as const,
     user: (id: number | string) => ["admin", "user", String(id)] as const,
     categories: () => ["admin", "categories"] as const,
+    unsorted: () => ["admin", "categories", "unsorted"] as const,
     skills: () => ["admin", "skills"] as const,
   },
   customOrders: {

@@ -72,8 +72,8 @@ export interface JobPost {
   created_at: string;
   updated_at: string;
   category_id?: number | null;
-  requested_category?: string | null;
-  requested_parent_id?: number | null;
+  /** The client's own words when filed on a group without a fitting subcategory. */
+  category_label?: string | null;
   category?: JobCategory | null;
   skills: JobSkill[];
   media: JobMedia[];
@@ -116,9 +116,8 @@ export interface PaginatedResponse<T> {
 export interface CreateJobPostRequest {
   // Nullable fields may be empty while saving a draft; they're required to publish.
   category_id: number | null;
-  // Set instead of category_id when the user requests a brand-new category (admin-reviewed).
-  requested_category?: string | null;
-  requested_parent_id?: number | null;
+  // The client's own words, sent when category_id is a top-level group.
+  category_label?: string | null;
   title: string;
   description: string | null;
   budget_min: number | null;

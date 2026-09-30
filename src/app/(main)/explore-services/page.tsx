@@ -149,7 +149,8 @@ export default function ServicesPage() {
     ? Math.max(...services.flatMap(s => s.pricing_options?.map(p => Number(p.price_raw)) || [0]), DEFAULT_BUDGET_MAX)
     : DEFAULT_BUDGET_MAX;
 
-  const sidebarCategories: FilterCategory[] = apiCategories.map(c => ({
+  // The sidebar lists groups only; "Something else" is left out (its listings are found by search).
+  const sidebarCategories: FilterCategory[] = apiCategories.filter(c => !c.is_catch_all).map(c => ({
     id: c.id.toString(),
     label: c.category_name,
   }));
@@ -158,7 +159,14 @@ export default function ServicesPage() {
   let filtered = [...services];
 
   if (filters.categories.length > 0) {
-    filtered = filtered.filter(s => s.category_id && filters.categories.includes(s.category_id.toString()));
+    // A ticked group matches listings on the group itself and on any of its subcategories.
+    const ids = new Set<string>();
+    for (const group of apiCategories) {
+      if (!filters.categories.includes(group.id.toString())) continue;
+      ids.add(group.id.toString());
+      for (const shelf of group.children ?? []) ids.add(shelf.id.toString());
+    }
+    filtered = filtered.filter(s => s.category_id && ids.has(s.category_id.toString()));
   }
 
   filtered = filtered.filter(s => {

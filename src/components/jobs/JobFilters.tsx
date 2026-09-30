@@ -116,7 +116,7 @@ export default function JobFilters({ categories, expertises, filters, onChange }
       <div className={section}>
         <Label>Category</Label>
         <div className={tree}>
-          {categories.map(aisle => {
+          {categories.filter(aisle => !aisle.is_catch_all).map(aisle => {
             const expanded = open === aisle.id;
             return (
               <div key={aisle.id} className={aisleWrap}>

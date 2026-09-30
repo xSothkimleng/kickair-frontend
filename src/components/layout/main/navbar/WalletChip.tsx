@@ -5,6 +5,7 @@ import { Wallet } from "lucide-react";
 import { useAuth } from "@/components/context/AuthContext";
 import { useWalletSummary } from "@/hooks/useWalletSummary";
 import { walletChipCss, pillBalanceCss, pillDividerCss } from "./styles";
+import { MONEY } from "@/lib/moneyTerms";
 
 /**
  * Steam-style wallet balance — money only, links to the Finance tab of whichever
@@ -24,7 +25,7 @@ export function WalletChip({ inPill = false }: { inPill?: boolean }) {
       ? "/dashboard/freelancer?tab=finance"
       : "/dashboard/client?tab=finance";
 
-  const label = `Wallet balance $${balance.toFixed(2)} — open Finance`;
+  const label = `${MONEY.availableBalance} $${balance.toFixed(2)}, open Finance`;
 
   if (inPill) {
     return (

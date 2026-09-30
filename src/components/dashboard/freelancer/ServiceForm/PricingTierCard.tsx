@@ -23,16 +23,9 @@ const tierName = cva({
 const body = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const editorLabel = css({ textStyle: "ui", fontWeight: 500, color: "body" });
 const optionalMark = css({ color: "ink3" });
-const earnings = css({
-  p: "8px 12px",
-  bg: "rgba(22,163,74,0.06)",
-  borderWidth: "1px",
-  borderStyle: "solid",
-  borderColor: "rgba(22,163,74,0.15)",
-  borderRadius: "8px",
-});
-const earningsText = css({ textStyle: "meta", color: "#166534" });
-const earningsAmount = css({ fontWeight: 700 });
+
+/** Shown greyed-out in an empty Name field, and saved as the tier's name when it is left empty. */
+export const DEFAULT_TIER_NAME = { basic: "Basic", standard: "Standard", premium: "Premium" } as const;
 
 interface PricingTierCardProps {
   tier: "basic" | "standard" | "premium";
@@ -41,11 +34,9 @@ interface PricingTierCardProps {
   onToggle: (enabled: boolean) => void;
   errors?: { price?: string; revisions?: string; delivery?: string };
   onClearError?: (field: "price" | "revisions" | "delivery") => void;
-  /** Platform commission rate (0.2 = 20%); null while loading. */
-  commissionRate?: number | null;
 }
 
-export default function PricingTierCard({ tier, data, onChange, onToggle, errors, onClearError, commissionRate }: PricingTierCardProps) {
+export default function PricingTierCard({ tier, data, onChange, onToggle, errors, onClearError }: PricingTierCardProps) {
   const disabled = !data.enabled;
 
   return (
@@ -59,7 +50,7 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
 
       {!disabled && (
         <div className={body}>
-          <TextInput size="sm" label="Name" value={data.name} onChange={(v) => onChange({ ...data, name: v })} />
+          <TextInput size="sm" label="Name" value={data.name} onChange={(v) => onChange({ ...data, name: v })} placeholder={DEFAULT_TIER_NAME[tier]} />
 
           <div>
             <p className={editorLabel}>
@@ -96,19 +87,6 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
             onChange={(v) => { onChange({ ...data, price: v }); onClearError?.("price"); }}
             error={errors?.price}
           />
-
-          {/* Live earnings preview — the seller-side commission, shown before posting */}
-          {commissionRate != null && parseFloat(data.price) > 0 && (
-            <div className={earnings}>
-              <p className={earningsText}>
-                You&apos;ll receive{" "}
-                <span className={earningsAmount}>
-                  ${(parseFloat(data.price) * (1 - commissionRate)).toFixed(2)}
-                </span>
-                {" "}· after the {Math.round(commissionRate * 100)}% platform fee
-              </p>
-            </div>
-          )}
         </div>
       )}
     </div>

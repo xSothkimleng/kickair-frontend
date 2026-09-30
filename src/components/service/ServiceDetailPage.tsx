@@ -408,7 +408,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
         setService(response.data);
         // Set default selected package to first one, or the one marked as popular
         if (response.data.pricing_options && response.data.pricing_options.length > 0) {
-          const popularIndex = response.data.pricing_options.findIndex(p => p.title === "Standard");
+          const popularIndex = response.data.pricing_options.findIndex(p => (p.tier ?? p.title.trim().toLowerCase()) === "standard");
           setSelectedPackage(popularIndex >= 0 ? popularIndex : 0);
         }
       } catch (err) {
@@ -611,6 +611,12 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                       </>
                     )}
                     <span className={crumbCss}>{service.category.category_name}</span>
+                    {service.category_label && (
+                      <>
+                        <span className={crumbSepCss}>›</span>
+                        <span className={crumbCss}>{service.category_label}</span>
+                      </>
+                    )}
                   </div>
                 )}
                 <h3 className={serviceTitleCss}>{service.title}</h3>

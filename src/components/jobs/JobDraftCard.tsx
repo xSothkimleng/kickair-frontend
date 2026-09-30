@@ -2,6 +2,7 @@ import { Send, Trash2 } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Spinner, iconButton } from "@/components/ds";
 import { JobPost } from "@/types/job";
+import { categoryLine } from "@/lib/categoryLine";
 
 const cardBox = css({
   p: "16px",
@@ -106,7 +107,7 @@ export default function JobDraftCard({
             </div>
           </div>
           <p className={category}>
-            {draft.category?.category_name ?? "No category yet"}
+            {categoryLine(draft.category, draft.category_label, "No category yet")}
           </p>
           <p className={edited}>
             Last edited {timeAgo(draft.updated_at)}

@@ -39,7 +39,7 @@ const recordWrap = css({ p: "0 20px 20px" });
 
 const OPTIONS: { value: DisputeOutcome; label: string; help: string }[] = [
   { value: "full_client", label: "Refund the client", help: "Order ends. The full amount goes back to the client's wallet." },
-  { value: "full_freelancer", label: "Pay the freelancer", help: "Order ends. The freelancer receives the full amount, minus commission." },
+  { value: "full_freelancer", label: "Pay the freelancer", help: "Order ends. The freelancer receives the full amount, minus the platform fee." },
   { value: "partial", label: "Split the amount", help: "Order ends. You decide how much of the amount the freelancer receives." },
   { value: "continue", label: "Continue with feedback", help: "No money moves. The order goes back to active with your note, and either side may dispute again." },
 ];

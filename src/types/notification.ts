@@ -24,6 +24,8 @@ export type NotificationType =
   | "admin_kyc_pending"
   | "custom_order_requested"
   | "custom_order_offered"
+  | "custom_order_countered"
+  | "custom_order_counter_accepted"
   | "custom_order_accepted"
   | "custom_order_declined"
   | "custom_order_withdrawn"

@@ -7,6 +7,7 @@ import { Spinner } from "@/components/ds";
 import { pillButton } from "./pill";
 import { fmtUsd } from "./format";
 import Annot from "./Annot";
+import { ESCROW_SHORT } from "@/lib/moneyTerms";
 
 export type ResultKind = "waiting" | "success" | "failure";
 export type PaymentContext = "checkout" | "topup";
@@ -180,9 +181,9 @@ function Waiting({ amount, methodLabel }: PaymentResultProps) {
 function Success({ context, amount, newBalance, reference, onPrimary, onSecondary }: PaymentResultProps) {
   const isTopup = context === "topup";
   const items: [LucideIcon, string, string][] = isTopup
-    ? [[Wallet, "Balance is ready to spend", "Use it on any gig — no checkout needed."]]
+    ? [[Wallet, "Balance is ready to spend", "Use it on any gig, no checkout needed."]]
     : [
-        [ShieldCheck, "Funds held in escrow", "Released to the freelancer only when you approve."],
+        [ShieldCheck, "Held in escrow", "Released to the freelancer only when you approve the delivery."],
         [Clock, "Order placed", "The freelancer is notified to start your delivery."],
       ];
   return (
@@ -195,7 +196,7 @@ function Success({ context, amount, newBalance, reference, onPrimary, onSecondar
       <div className={leadCss}>
         {isTopup
           ? `Added to your KickAir wallet.${newBalance != null ? ` New balance ${fmtUsd(newBalance)}.` : ""}`
-          : "Your order is placed and the funds are safely held in escrow."}
+          : `Your order is placed. ${ESCROW_SHORT}`}
       </div>
 
       <div className={nextCardCss}>

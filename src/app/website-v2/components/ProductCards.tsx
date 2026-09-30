@@ -9,7 +9,7 @@
  * once they sign up, so the landing page is not making a promise the app breaks
  * (§16 Familiarity).
  */
-import { Check, Lock, Paperclip } from "lucide-react";
+import { ArrowUpRight, Check, Lock, Paperclip } from "lucide-react";
 import { css, cx } from "styled-system/css";
 
 import { Avatar, EscrowBadge, Money, StatusBadge } from "../ui";
@@ -20,6 +20,10 @@ const surface = css({
   boxShadow: `inset 0 0 0 1px ${"var(--v2-hairline)"}, ${"var(--v2-sh-raised)"}`,
   p: "1rem",
   width: "100%",
+  // Preflight is off site-wide, so this is content-box by default and every card
+  // was 2rem wider than the slot it sat in — enough to push the hero's
+  // right-anchored cards off a phone screen.
+  boxSizing: "border-box",
 });
 
 const row = css({ display: "flex", alignItems: "center", gap: "0.75rem" });
@@ -107,6 +111,83 @@ export function DeliveryCard() {
             <Paperclip size={11} aria-hidden /> {f}
           </span>
         ))}
+      </div>
+    </div>
+  );
+}
+
+const eyebrow = css({
+  fontSize: "0.6875rem", fontWeight: 600, letterSpacing: "0.04em",
+  textTransform: "uppercase", color: "var(--v2-tertiary)",
+});
+
+/** A pill that looks like the app's button but is only a picture of one. */
+const fauxBtn = css({
+  display: "inline-flex", alignItems: "center", justifyContent: "center",
+  height: "1.875rem", px: "0.875rem", borderRadius: "var(--v2-r-pill)",
+  fontSize: "0.75rem", fontWeight: 500,
+});
+
+/**
+ * Freelancer-side: a funded order waiting to be accepted. The escrow badge is
+ * the point — the money is already there before any work starts.
+ */
+export function RequestCard() {
+  return (
+    <div className={surface}>
+      <div className={css({ display: "flex", alignItems: "center", justifyContent: "space-between", mb: "0.75rem" })}>
+        <span className={eyebrow}>New order</span>
+        <EscrowBadge>
+          <Lock size={11} strokeWidth={2.5} aria-hidden /> Funded
+        </EscrowBadge>
+      </div>
+      <div className={row}>
+        <Avatar name="Nary Kong" size={38} />
+        <div className={css({ flex: 1, minWidth: 0 })}>
+          <div className={css({ fontSize: "0.875rem", fontWeight: 600, letterSpacing: "-0.01em" })}>
+            Café menu &amp; signage
+          </div>
+          <div className={css({ fontSize: "0.75rem", color: "var(--v2-secondary)", mt: "0.125rem" })}>
+            Nary Kong · due in 5 days
+          </div>
+        </div>
+        <Money value={180} className={css({ fontSize: "0.9375rem" })} />
+      </div>
+      <div className={css({ display: "flex", gap: "0.5rem", mt: "0.875rem" })}>
+        <span className={fauxBtn} style={{ background: "var(--v2-primary)", color: "var(--v2-white)" }}>
+          Accept
+        </span>
+        <span className={fauxBtn} style={{ boxShadow: "inset 0 0 0 1px var(--v2-hairlineStrong)", color: "var(--v2-primary)" }}>
+          Decline
+        </span>
+      </div>
+    </div>
+  );
+}
+
+/** Freelancer-side: the end of the story — money leaving the platform. */
+export function PayoutCard() {
+  return (
+    <div className={surface}>
+      <div className={row}>
+        <span
+          className={css({
+            display: "inline-flex", alignItems: "center", justifyContent: "center",
+            w: "1.75rem", h: "1.75rem", borderRadius: "999px", flexShrink: 0,
+          })}
+          style={{ background: "var(--v2-accentTint)", color: "var(--v2-accent)" }}
+        >
+          <ArrowUpRight size={15} strokeWidth={2.5} aria-hidden />
+        </span>
+        <div className={css({ flex: 1, minWidth: 0 })}>
+          <div className={css({ fontSize: "0.875rem", fontWeight: 600, letterSpacing: "-0.01em" })}>
+            Withdrawal sent
+          </div>
+          <div className={css({ fontSize: "0.75rem", color: "var(--v2-secondary)", mt: "0.125rem" })}>
+            To your bank account · today
+          </div>
+        </div>
+        <Money value={500} className={css({ fontSize: "0.875rem" })} />
       </div>
     </div>
   );

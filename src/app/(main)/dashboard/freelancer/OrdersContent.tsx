@@ -434,7 +434,7 @@ export default function OrdersContent() {
                   {order.status === "delivered" && (
                     <div className={alertWarnCss}>
                       <span className={alertIconCss} style={{ color: "#d97706" }}><Hourglass size={16} /></span>
-                      <div className={alertMsgCss}>Awaiting client approval — delivery submitted</div>
+                      <div className={alertMsgCss}>Delivery submitted. Awaiting client approval</div>
                     </div>
                   )}
 

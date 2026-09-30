@@ -457,7 +457,7 @@ export default function MediaGallerySection({
         Gallery / Media <span className={requiredMark}>*</span>
       </p>
       <p className={sectionSub}>
-        Upload images, videos, or PDFs to showcase your work — at least one image is required to publish
+        Upload images, videos, or PDFs to showcase your work. At least one image is required to publish
       </p>
 
       {error && (

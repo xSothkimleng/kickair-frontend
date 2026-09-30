@@ -2,7 +2,6 @@ import { css, cva } from "styled-system/css";
 import { ServiceFormData } from "../types";
 import PricingTierCard from "./PricingTierCard";
 import EarningsBreakdown from "./EarningsBreakdown";
-import { useCommissionRate } from "@/hooks/useCommissionRate";
 
 const sectionCard = css({
   bg: "surface",
@@ -34,8 +33,6 @@ interface PricingSectionProps {
 }
 
 export default function PricingSection({ formData, onFormDataChange, fieldErrors, onClearTierError }: PricingSectionProps) {
-  const commissionRate = useCommissionRate();
-
   const handleTierChange = (tier: "basic" | "standard" | "premium", data: ServiceFormData["pricing"]["basic"]) => {
     onFormDataChange({
       ...formData,
@@ -77,7 +74,6 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
                 delivery: fieldErrors?.[`${tier}_delivery`],
               }}
               onClearError={(field) => onClearTierError?.(`${tier}_${field}`)}
-              commissionRate={commissionRate}
             />
           </div>
         ))}
@@ -86,7 +82,7 @@ export default function PricingSection({ formData, onFormDataChange, fieldErrors
       <div className={noteBox}>
         <p className={noteText}>
           <strong>Note:</strong> You can update pricing anytime, but edits to a live service go back to admin review and the
-          listing is hidden until approved. Existing orders keep the exact price and details they were purchased with — only
+          listing is hidden until approved. Existing orders keep the exact price and details they were purchased with. Only
           new orders use the updated pricing.
         </p>
       </div>

@@ -11,6 +11,7 @@ import { useToast } from "./toast";
 import { Avatar, Btn, ErrorState, Field, Input, Loading, Modal, Panel, PanelHead, Pill, Tabs, Textarea, grid, kvList, page, row, stack, text } from "./ui";
 import { ago, dateTime, errorMessage, longDate, money, shortDate } from "./format";
 import { accountLabel, accountState, kycLabel, kycState } from "./labels";
+import { MONEY } from "@/lib/moneyTerms";
 
 const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
 const banner = css({ display: "flex", alignItems: "center", gap: "12px", p: "12px 16px", borderRadius: "12px", mb: "20px", bg: "var(--td-amber-soft)", color: "var(--td-amber)", "&[data-kind=banned]": { bg: "var(--td-red-soft)", color: "var(--td-red)" } });
@@ -128,7 +129,7 @@ export default function PersonDetailPage({ id }: { id: number }) {
                       <Stat label="Rating" value={<span className={row({ gap: 1 })}><Star size={16} /> {fp.rating != null ? fp.rating.toFixed(1) : "—"} <span className={text({ size: "meta", tone: 3, weight: 400 })}>({fp.rating_count})</span></span>} />
                       <Stat label="Completed orders" value={fp.completed_orders} />
                       <Stat label="Services" value={p.activity.services ?? 0} />
-                      <Stat label="Earned" value={money(p.activity.total_earned ?? 0)} />
+                      <Stat label={MONEY.totalEarnings} value={money(p.activity.total_earned ?? 0)} />
                     </div>
                     <dl className={kvList}>
                       <dt>Tagline</dt><dd>{fp.tagline ?? "—"}</dd>
@@ -148,7 +149,7 @@ export default function PersonDetailPage({ id }: { id: number }) {
                       <Stat label="Orders placed" value={p.activity.orders_placed ?? 0} />
                       <Stat label="Completed" value={p.activity.orders_completed_as_client ?? 0} />
                       <Stat label="Job posts" value={p.activity.job_posts ?? 0} />
-                      <Stat label="Spent" value={money(p.activity.total_spent ?? 0)} />
+                      <Stat label={MONEY.totalSpent} value={money(p.activity.total_spent ?? 0)} />
                     </div>
                     <dl className={kvList}>
                       <dt>Company</dt><dd>{cp.company_name ?? "—"}</dd>

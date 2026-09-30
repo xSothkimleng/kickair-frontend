@@ -4,7 +4,7 @@ import { Suspense, useEffect, useRef, useState } from "react";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, Check, Clock, CreditCard, Info, Lock, Plus, RotateCw, ShieldCheck, Wallet } from "lucide-react";
-import { css, cx } from "styled-system/css";
+import { css, cva, cx } from "styled-system/css";
 import { Alert, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
@@ -30,6 +30,7 @@ import {
   usePaymentProcessing,
   type AbaMethod,
 } from "@/components/payment";
+import { MONEY, escrowSentence } from "@/lib/moneyTerms";
 
 type PaySource = "wallet" | "aba";
 
@@ -136,6 +137,24 @@ const lowBalanceHeadCss = css({ display: "flex", gap: "8px", mb: "10px", alignIt
 const lowBalanceTitleCss = css({ textStyle: "ui", fontWeight: 600, color: "errorText" });
 const lowBalanceTextCss = css({ textStyle: "ui", color: "errorText" });
 const topUpBtnCss = css({ px: "16px", fontWeight: 500 });
+/* Wallet arithmetic under the payment options — same three rows as the custom-order payment dialog. */
+const walletMathCss = css({
+  display: "flex",
+  flexDirection: "column",
+  gap: "10px",
+  mt: "16px",
+  p: "14px 16px",
+  borderWidth: "1px",
+  borderStyle: "solid",
+  borderColor: "hairline",
+  borderRadius: "12px",
+});
+const walletAfterRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center" });
+const walletAfterLabelCss = css({ textStyle: "body", fontWeight: 600, color: "ink" });
+const walletAfterValueCss = cva({
+  base: { textStyle: "body", fontWeight: 600, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
+  variants: { short: { true: { color: "errorText" }, false: { color: "ink" } } },
+});
 const abaWrapCss = css({ mt: "18px" });
 const ctaWrapCss = css({ mt: "22px" });
 const secureNoteCss = css({ display: "flex", justifyContent: "center", alignItems: "center", gap: "6px", mt: "12px", color: "ink3" });
@@ -247,6 +266,14 @@ function CheckoutContent() {
 
   const canPay = paySource === "wallet" ? !insufficient : paySource === "aba" && !!abaMethod;
 
+  // What this order does to the wallet. Shown from the start (the wallet is the default way
+  // to pay) and whenever the wallet pays some of it; a bank transfer that covers the whole
+  // price leaves the wallet out of the picture.
+  const viaBank = paySource === "aba";
+  const walletPart = viaBank ? (shortfall > 0 ? walletCovers : 0) : total;
+  const showWalletMath = wallet != null && (!viaBank || walletPart > 0);
+  const walletShort = !viaBank && insufficient;
+
   // Surface the login / client-role / KYC gate as soon as auth is resolved so an
   // unauthenticated (or ineligible) visitor never sees the payment wall unguarded.
   useEffect(() => {
@@ -309,7 +336,7 @@ function CheckoutContent() {
             <p className={titleCss}>Checkout</p>
           </div>
           <div className={titleAsideCss}>
-            <Annot>Billing address skipped (STEP 5 — digital service)</Annot>
+            <Annot>Billing address skipped (STEP 5, digital service)</Annot>
           </div>
         </div>
 
@@ -362,25 +389,25 @@ function CheckoutContent() {
             </div>
 
             <div className={priceColCss}>
-              <PriceRow label='Package price' value={fmtUsd(total)} />
+              <PriceRow label={selectedPricing?.title ? `${selectedPricing.title} package` : "Package"} value={fmtUsd(total)} />
               {paySource === "aba" && shortfall > 0 && (
                 <>
                   <PriceRow label='Paid from wallet' value={`−${fmtUsd(walletCovers)}`} />
-                  <PriceRow label='Top-up via bank transfer' value={fmtUsd(shortfall)} />
+                  <PriceRow label={`${MONEY.topUp} via bank transfer`} value={fmtUsd(shortfall)} />
                 </>
               )}
               <div className={hairlineCss} />
               {paySource === "aba" && shortfall > 0 ? (
-                <PriceRow label='Charged now' sub='USD · only the shortfall — no service fees' value={fmtUsd(shortfall)} strong />
+                <PriceRow label='Charged now' sub='USD · only the shortfall' value={fmtUsd(shortfall)} strong />
               ) : (
-                <PriceRow label='Total' sub='USD · charged once · no service fees' value={fmtUsd(total)} strong />
+                <PriceRow label={MONEY.youPay} sub='USD · charged once' value={fmtUsd(total)} strong />
               )}
             </div>
 
             <div className={escrowCss}>
               <ShieldCheck size={16} className={escrowIconCss} />
               <p className={escrowTextCss}>
-                Funds are held in escrow and released to {freelancerName.split(" ")[0]} only when you mark the order complete.
+                {escrowSentence(freelancerName.split(" ")[0])}
               </p>
             </div>
           </div>
@@ -397,7 +424,7 @@ function CheckoutContent() {
                       <Wallet size={20} />
                     </span>
                     <div>
-                      <p className={optionTitleCss}>Wallet balance</p>
+                      <p className={optionTitleCss}>{MONEY.availableBalance}</p>
                       <p className={optionSubCss}>{fmtUsd(balance)} available</p>
                     </div>
                   </div>
@@ -415,7 +442,7 @@ function CheckoutContent() {
                       <p className={optionTitleCss}>Bank Transfer</p>
                       <p className={optionSubCss}>
                         {shortfall > 0 && shortfall < total
-                          ? `Tops up the ${fmtUsd(shortfall)} shortfall — wallet covers the rest`
+                          ? `Tops up the ${fmtUsd(shortfall)} shortfall, wallet covers the rest`
                           : "KHQR, card, Alipay or WeChat"}
                       </p>
                     </div>
@@ -428,6 +455,20 @@ function CheckoutContent() {
                 </div>
               </PaymentOption>
             </div>
+
+            {showWalletMath && (
+              <div className={walletMathCss}>
+                <PriceRow label={MONEY.availableBalance} value={fmtUsd(balance)} />
+                <PriceRow label={viaBank ? "Paid from wallet" : MONEY.youPay} value={`−${fmtUsd(walletPart)}`} />
+                <div className={hairlineCss} />
+                <div className={walletAfterRowCss}>
+                  <p className={walletAfterLabelCss}>{walletShort ? MONEY.shortBy : MONEY.balanceAfter}</p>
+                  <p className={walletAfterValueCss({ short: walletShort })}>
+                    {fmtUsd(walletShort ? total - balance : Math.max(0, balance - walletPart))}
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* Insufficient balance inline path */}
             {paySource === "wallet" && insufficient && (
@@ -444,7 +485,7 @@ function CheckoutContent() {
                   onClick={() => setTopUpOpen(true)}
                   className={cx(pillButton({ tone: "grey", size: "sm" }), topUpBtnCss)}>
                   <Plus size={15} />
-                  Top up {fmtUsd(topUpSuggested)}
+                  {MONEY.topUp} {fmtUsd(topUpSuggested)}
                 </button>
               </div>
             )}
@@ -464,10 +505,10 @@ function CheckoutContent() {
                 className={pillButton({ tone: "black", size: "lg", full: true })}>
                 {paySource === "wallet" ? <Check size={16} /> : <Lock size={16} />}
                 {paySource === "wallet"
-                  ? `Pay ${fmtUsd(total)} from wallet`
+                  ? MONEY.acceptAndPay
                   : shortfall > 0
-                    ? `Confirm & Pay ${fmtUsd(shortfall)} via ABA`
-                    : `Confirm & Pay ${fmtUsd(total)}`}
+                    ? `${MONEY.acceptAndPay} via ABA`
+                    : MONEY.acceptAndPay}
               </button>
               <div className={secureNoteCss}>
                 <Lock size={12} />

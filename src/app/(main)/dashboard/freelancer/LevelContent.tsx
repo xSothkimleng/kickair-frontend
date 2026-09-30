@@ -6,6 +6,7 @@ import { css } from "styled-system/css";
 import { Progress, Skeleton } from "@/components/ds";
 import { api } from "@/lib/api";
 import { LevelStats } from "@/types/dashboard";
+import { MONEY, titleCase } from "@/lib/moneyTerms";
 
 interface LevelDef {
   name: string;
@@ -273,7 +274,7 @@ export default function LevelContent() {
           sub={stats.rating_count > 0 ? `${stats.rating_count} review${stats.rating_count !== 1 ? "s" : ""}` : "No reviews yet"}
         />
         <StatCard
-          label="Total Earnings"
+          label={titleCase(MONEY.totalEarnings)}
           value={`$${parseFloat(stats.total_earnings).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`}
         />
       </div>
@@ -323,8 +324,8 @@ export default function LevelContent() {
         <p className={sectionTitle}>How to Earn Points &amp; Level Up</p>
         <div className={earnGrid}>
           {[
-            { icon: "📋", title: "Complete Your Profile", desc: "Every profile step pays one-time XP — a finished profile reaches Silver on its own", pts: "+135 XP total" },
-            { icon: "✅", title: "Complete Projects", desc: "Successfully complete projects — XP scales with order value", pts: "+51–100 XP per project" },
+            { icon: "📋", title: "Complete Your Profile", desc: "Every profile step pays one-time XP. A finished profile reaches Silver on its own", pts: "+135 XP total" },
+            { icon: "✅", title: "Complete Projects", desc: "Successfully complete projects. XP scales with order value", pts: "+51–100 XP per project" },
             { icon: "⭐", title: "Get High Ratings", desc: "Every review earns XP; higher ratings earn significantly more", pts: "+30–70 XP per review" },
           ].map(item => (
             <div className={earnCard} key={item.title}>
@@ -337,7 +338,7 @@ export default function LevelContent() {
         </div>
         <div className={tipCard}>
           <p className={tipText}>
-            <strong>💡 Pro Tip:</strong> Focus on delivering high-quality work and getting great reviews — a 5-star review gives up to 70 XP, more than completing a small order!
+            <strong>💡 Pro Tip:</strong> Focus on delivering high-quality work and getting great reviews. A 5-star review gives up to 70 XP, more than completing a small order!
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { ArrowRight } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box, Grid } from "styled-system/jsx";
+import { ESCROW_SHORT } from "@/lib/moneyTerms";
 
 // Bespoke outline pill CTA (marketing-specific — not the shared Button recipe).
 const ctaOutline = css({
@@ -96,7 +97,7 @@ export default function HowItWorksSection() {
     {
       number: 3,
       title: "Pay Securely",
-      description: "Payment held in escrow until you're satisfied with the work",
+      description: ESCROW_SHORT,
     },
   ];
 

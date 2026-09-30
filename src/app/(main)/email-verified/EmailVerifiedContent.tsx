@@ -120,7 +120,7 @@ export default function EmailVerifiedContent({ status }: { status: VerifiedStatu
           <VerifyBody>
             {expired
               ? "Verification links only work for 60 minutes. Enter the email you signed up with and we'll send a fresh one."
-              : "This link doesn't match an account — it may have been copied incompletely. Enter the email you signed up with and we'll send a fresh one."}
+              : "This link doesn't match an account. It may have been copied incompletely. Enter the email you signed up with and we'll send a fresh one."}
           </VerifyBody>
         </div>
         <ResendLinkForm />
@@ -153,8 +153,8 @@ export default function EmailVerifiedContent({ status }: { status: VerifiedStatu
           {user
             ? "You're signed in and ready. Taking you to Explore Services…"
             : already
-              ? "This address was confirmed earlier — nothing else to do here. Sign in and pick up where you left off."
-              : "Your email is confirmed and your account is active. Sign in to finish your profile — a finished profile gets noticed first."}
+              ? "This address was confirmed earlier. Nothing else to do here. Sign in and pick up where you left off."
+              : "Your email is confirmed and your account is active. Sign in to finish your profile. A finished profile gets noticed first."}
         </VerifyBody>
       </div>
       <div className={gap28}>

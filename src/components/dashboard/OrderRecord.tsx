@@ -305,7 +305,7 @@ export default function OrderRecord({
             Order Record
           </p>
           <span className={captionCss}>
-            Everything that happened on this order — activity, deliveries, and revisions — in one timeline.
+            Everything that happened on this order in one timeline: activity, deliveries and revisions.
           </span>
         </>
       )}

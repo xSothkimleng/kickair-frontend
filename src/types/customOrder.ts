@@ -60,6 +60,32 @@ export interface CustomOrderOffer {
   offered_at: string | null;
 }
 
+/** One round of the negotiation — the freelancer's offer, or a counter-offer from either side. */
+export interface CustomOrderOfferRound {
+  id: number;
+  /** 1-based, in the order the rounds were sent. */
+  round: number;
+  sender_role: "client" | "freelancer";
+  scope: string | null;
+  total: number;
+  delivery_days: number | null;
+  revisions: number | null;
+  note: string | null;
+  /** The sender agreed to the other side's previous round as it stood. */
+  accepts_previous: boolean;
+  expires_at: string | null;
+  created_at: string;
+}
+
+/** A client's counter-offer. Custom orders are paid once, so the terms are flat. */
+export interface CounterCustomOfferRequest {
+  scope: string;
+  price: number;
+  delivery_days: number;
+  revisions: number | null;
+  note: string | null;
+}
+
 export interface CustomOrder {
   id: number;
   status: CustomOrderStatus;
@@ -77,6 +103,11 @@ export interface CustomOrder {
   client: { id: number | null; name: string | null };
   freelancer: { id: number | null; name: string | null };
   offer: CustomOrderOffer | null;
+  /** Every round so far, oldest first. The last one is the offer on the table. */
+  offers: CustomOrderOfferRound[];
+  last_offer_by: "client" | "freelancer" | null;
+  /** Whose move it is while an offer is on the table; null once the negotiation is over. */
+  awaiting: "client" | "freelancer" | null;
   milestones: CustomOrderMilestone[];
   escrow: CustomOrderEscrow;
   order: { id: number; status: string; conversation_id: number | null } | null;

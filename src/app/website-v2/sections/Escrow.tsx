@@ -3,7 +3,7 @@
 import { Check, Gavel, Lock, Wallet } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { css, cx } from "styled-system/css";
-import { crossFade, shadow, spring, text } from "../design";
+import { crossFade, spring, text } from "../design";
 
 /**
  * The rhythm break. Every other section on this page sits on a light ground;
@@ -88,20 +88,24 @@ export default function Escrow() {
         viewport={{ once: true, amount: 0.2 }}
         variants={{ hidden: {}, show: { transition: { staggerChildren: 0.06 } } }}
       >
-        <motion.h2
-          variants={item}
-          className={cx(text.display, css({ maxW: "18ch", color: "var(--v2-onDark)" }))}
-        >
-          Your money doesn&apos;t move until you say so.
-        </motion.h2>
+        {/* Spacing comes from the wrapper's gap: globals.css zeroes the margin on
+            every <p> and <h*>, so an `mt` on the lead would silently do nothing. */}
+        <div className={css({ display: "flex", flexDirection: "column", gap: "1.25rem" })}>
+          <motion.h2
+            variants={item}
+            className={cx(text.display, css({ maxW: "18ch", color: "var(--v2-onDark)" }))}
+          >
+            Your money doesn&apos;t move until you say so.
+          </motion.h2>
 
-        <motion.p
-          variants={item}
-          className={cx(text.lead, css({ mt: "1.25rem", maxW: "38rem", color: "var(--v2-onDark2)" }))}
-        >
-          Escrow is the whole point of Kick Air. It is why hiring a stranger here
-          is not a leap of faith.
-        </motion.p>
+          <motion.p
+            variants={item}
+            className={cx(text.lead, css({ maxW: "38rem", color: "var(--v2-onDark2)" }))}
+          >
+            Escrow is the whole point of Kick Air. It is why hiring a stranger here
+            is not a leap of faith.
+          </motion.p>
+        </div>
 
         <div className={steps}>
           {STEPS.map((s) => {

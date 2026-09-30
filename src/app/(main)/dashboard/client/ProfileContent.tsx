@@ -9,7 +9,7 @@ import { Alert, Skeleton, Spinner, toast } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
 import { Industry, ClientProfileRequest } from "@/types/user";
-import { TextInput, SelectInput } from "@/components/ui/inputs";
+import { TextInput, AutocompleteInput } from "@/components/ui/inputs";
 import { ProfileAvatar, SectionCard, Field, VerifyRow } from "@/components/profile/profileKit";
 
 const CLIENT_SIZES = ["1-10", "11-50", "51-200", "201-500", "500+"] as const;
@@ -106,6 +106,8 @@ export default function ProfileContent() {
   const [formData, setFormData] = useState({
     company_name: "",
     industry_id: "" as number | "",
+    // An industry the client typed because it is not in the list. Never set together with industry_id.
+    industry_other: "",
     company_size: "" as ClientProfileRequest["company_size"] | "",
     location: "",
     website: "",
@@ -138,6 +140,7 @@ export default function ProfileContent() {
       setFormData({
         company_name: profile.company_name || "",
         industry_id: profile.industry_id || "",
+        industry_other: profile.industry_other || "",
         company_size: profile.company_size || "",
         location: profile.location || "",
         website: profile.website || "",
@@ -151,6 +154,14 @@ export default function ProfileContent() {
     setHasUnsavedChanges(true);
   };
 
+  // Typing filters the list; text that names a listed industry picks it, anything else is kept as typed.
+  const handleIndustryChange = (text: string | null) => {
+    const typed = (text ?? "").trim();
+    const listed = industries.find(i => (i.name ?? "").toLowerCase() === typed.toLowerCase());
+    setFormData(prev => ({ ...prev, industry_id: listed ? listed.id : "", industry_other: listed ? "" : (text ?? "") }));
+    setHasUnsavedChanges(true);
+  };
+
   const handleSaveChanges = async () => {
     if (!user?.client_profile) return;
     setSaving(true);
@@ -161,6 +172,7 @@ export default function ProfileContent() {
       const requestData: ClientProfileRequest = {
         company_name: formData.company_name || null,
         industry_id: formData.industry_id ? Number(formData.industry_id) : null,
+        industry_other: formData.industry_other.trim() || null,
         company_size: formData.company_size || null,
         location: formData.location || null,
         website: website && !/^[a-z][a-z0-9+.-]*:\/\//i.test(website) ? `https://${website}` : website || null,
@@ -236,7 +248,7 @@ export default function ProfileContent() {
     return <div><Alert tone="warning">Please log in to view your profile.</Alert></div>;
   }
 
-  const industryName = industries.find(i => i.id === formData.industry_id)?.name;
+  const industryName = industries.find(i => i.id === formData.industry_id)?.name || formData.industry_other.trim() || undefined;
 
   return (
     <div className={pageStack}>
@@ -291,7 +303,7 @@ export default function ProfileContent() {
       <SectionCard icon={<Building2 size={19} />} title="Company details">
         <div className={detailsGrid}>
           <Field label="Company name"><TextInput value={formData.company_name} onChange={v => handleInputChange("company_name", v)} placeholder="e.g. Brown Coffee Roastery" /></Field>
-          <Field label="Industry"><SelectInput value={formData.industry_id} onChange={v => handleInputChange("industry_id", v)} options={industries.map(i => ({ value: i.id, label: i.name ?? "" }))} placeholder="Select an industry" disabled={loadingIndustries} /></Field>
+          <Field label="Industry"><AutocompleteInput freeSolo value={industryName ?? null} onChange={handleIndustryChange} options={industries.map(i => i.name ?? "").filter(Boolean)} placeholder="Search, or type your own" disabled={loadingIndustries} /></Field>
           <Field label="Location"><TextInput value={formData.location} onChange={v => handleInputChange("location", v)} placeholder="City, Country" startIcon={<MapPin size={16} className={css({ color: "ink3" })} />} /></Field>
           <Field label="Website" optional><TextInput value={formData.website} onChange={v => handleInputChange("website", v)} placeholder="yourcompany.com" startIcon={<Globe size={16} className={css({ color: "ink3" })} />} /></Field>
         </div>

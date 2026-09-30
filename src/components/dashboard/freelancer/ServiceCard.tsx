@@ -117,7 +117,7 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
   const banner =
     service.status === "rejected" ? <Banner tone="error" icon={<Info size={16} />} label="Rejected by admin" text={service.rejection_reason || "No reason provided. Use Resubmit to send it for review again."} />
       : service.status === "disabled" ? <Banner tone="error" icon={<Info size={16} />} label="Disabled by admin" text={service.rejection_reason || "This service has been taken down. Contact support for details."} />
-        : service.status === "draft" ? <Banner tone="quiet" icon={<Pencil size={16} />} label="Draft — only you can see this" />
+        : service.status === "draft" ? <Banner tone="quiet" icon={<Pencil size={16} />} label="Draft. Only you can see this" />
           : null;
 
   return (

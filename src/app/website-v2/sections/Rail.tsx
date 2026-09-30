@@ -2,6 +2,7 @@
 
 import { ArrowLeft, ArrowRight, Star } from "lucide-react";
 import { animate, motion, useMotionValue, useReducedMotion } from "motion/react";
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { css, cx } from "styled-system/css";
 import { palette, text } from "../design";
@@ -57,6 +58,14 @@ const viewport = css({
 });
 
 const track = css({ display: "flex", gap: "1rem", willChange: "transform" });
+
+const seeAll = css({
+  display: "inline-flex", alignItems: "center", gap: "0.375rem",
+  fontSize: "0.875rem", fontWeight: 500,
+  color: "var(--v2-accent) !important",
+  WebkitTapHighlightColor: "transparent",
+  _hover: { textDecoration: "underline", textUnderlineOffset: "3px" },
+});
 
 const personCard = css({
   flexShrink: 0,
@@ -180,11 +189,15 @@ export default function Rail() {
   return (
     <section id="freelancers" className={section}>
       <div className={head}>
-        <div>
+        {/* gap, not `mt` on the <p> — globals.css zeroes paragraph margins. */}
+        <div className={css({ display: "flex", flexDirection: "column", alignItems: "flex-start", gap: "0.875rem" })}>
           <h2 className={cx(text.display, css({ color: "var(--v2-primary)" }))}>People, not profiles.</h2>
-          <p className={cx(text.body, css({ color: "var(--v2-secondary)", mt: "0.75rem", maxW: "34rem" }))}>
+          <p className={cx(text.body, css({ color: "var(--v2-secondary)", maxW: "34rem" }))}>
             Every one of them ID-verified, rated by clients who actually paid.
           </p>
+          <Link href="/website-v2/explore" className={seeAll}>
+            Browse everyone <ArrowRight size={14} aria-hidden />
+          </Link>
         </div>
         <div className={css({ display: { base: "none", md: "flex" }, gap: "0.5rem" })}>
           <Button variant="secondary" size="sm" onClick={() => page(-1)} disabled={atStart} aria-label="Previous">

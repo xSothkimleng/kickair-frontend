@@ -20,6 +20,7 @@ import { Notification } from "@/types/notification";
 import { getNotificationRoute } from "@/components/notifications/shared";
 import { api } from "@/lib/api";
 import type { Tab } from "./page";
+import { MONEY, titleCase } from "@/lib/moneyTerms";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -304,7 +305,7 @@ export default function DashboardContent({ onTabChange }: Props) {
             <div className={statsInner}>
               <div>
                 <p className={statValue}>{formatCurrency(stats.totalSpent)}</p>
-                <span className={statLabel}>Total Spent</span>
+                <span className={statLabel}>{titleCase(MONEY.totalSpent)}</span>
               </div>
               <div>
                 <p className={statValue}>{stats.activeProjectsCount}</p>
@@ -357,7 +358,7 @@ export default function DashboardContent({ onTabChange }: Props) {
             <div className={statTopRow}>
               <div className={statHead}>
                 <WalletIcon size={18} color="#2563eb" />
-                <span className={statCardLabel}>Available Balance</span>
+                <span className={statCardLabel}>{titleCase(MONEY.availableBalance)}</span>
               </div>
               <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
             </div>
@@ -370,7 +371,7 @@ export default function DashboardContent({ onTabChange }: Props) {
             <div className={statTopRow}>
               <div className={statHead}>
                 <DollarSignIcon size={18} color="#16a34a" />
-                <span className={statCardLabel}>In Escrow</span>
+                <span className={statCardLabel}>{titleCase(MONEY.committedToOrders)}</span>
               </div>
               <ArrowUpRightIcon size={16} className={cx("arrow-icon", arrowIcon)} />
             </div>

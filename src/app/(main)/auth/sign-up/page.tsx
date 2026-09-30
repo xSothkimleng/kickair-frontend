@@ -178,7 +178,7 @@ function SignUpContent() {
                 </div>
               </div>
               <FieldHelper>
-                {method === "email" ? "We'll send a verification link here." : "Cambodian number — we'll send your code on Telegram."}
+                {method === "email" ? "We'll send a verification link here." : "Cambodian number. We'll send your code on Telegram."}
               </FieldHelper>
             </div>
 

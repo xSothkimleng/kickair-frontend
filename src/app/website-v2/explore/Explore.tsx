@@ -175,10 +175,16 @@ function FilterMenu({ label, options }: { label: string; options: string[] }) {
   );
 }
 
-export default function Explore() {
+interface ExploreProps {
+  /** From the landing page's search field and category chips (`?q=`, `?category=`). */
+  initialQuery?: string;
+  initialCategory?: string;
+}
+
+export default function Explore({ initialQuery = "", initialCategory = "All" }: ExploreProps) {
   const reduced = useReducedMotion();
-  const [cat, setCat] = useState("All");
-  const [q, setQ] = useState("");
+  const [cat, setCat] = useState(CATEGORIES.includes(initialCategory) ? initialCategory : "All");
+  const [q, setQ] = useState(initialQuery);
 
   const results = useMemo(
     () =>

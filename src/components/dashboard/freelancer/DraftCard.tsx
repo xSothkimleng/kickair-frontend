@@ -2,6 +2,7 @@ import { Trash2 } from "lucide-react";
 import { css } from "styled-system/css";
 import { iconButton } from "@/components/ds";
 import { Service } from "@/types/service";
+import { categoryLine } from "@/lib/categoryLine";
 
 const cardBox = css({
   p: "16px",
@@ -89,7 +90,7 @@ export default function DraftCard({ draft, onContinueEditing, onDelete }: DraftC
             </div>
           </div>
           <p className={category}>
-            {draft.category?.category_name ?? "No category yet"}
+            {categoryLine(draft.category, draft.category_label, "No category yet")}
           </p>
           <p className={edited}>
             Last edited {timeAgo(draft.updated_at)}

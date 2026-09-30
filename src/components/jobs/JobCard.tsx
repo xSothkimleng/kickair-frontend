@@ -5,6 +5,7 @@ import { Bookmark, Zap, Users, Calendar, MapPin } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { css, cva } from "styled-system/css";
 import { JobPost } from "@/types/job";
+import { categoryLine } from "@/lib/categoryLine";
 
 function money(value: string | number) {
   const n = typeof value === "string" ? parseFloat(value) : value;
@@ -144,7 +145,7 @@ export default function JobCard({ job }: { job: JobPost }) {
 
   const metaLine = (
     <div className={metaRow}>
-      <span className={categoryPill}>{job.category?.category_name ?? "Uncategorized"}</span>
+      <span className={categoryPill}>{categoryLine(job.category, job.category_label)}</span>
       <p className={postedText}>{timeAgo(job.created_at)}</p>
     </div>
   );

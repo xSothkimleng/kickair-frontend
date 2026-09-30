@@ -431,7 +431,7 @@ function CaptureStep({ docType, front, back, setFront, setBack, onBack, onContin
         </>
       }
     >
-      <Title title={`Photograph your ${docType.short}`} sub={isCard ? "Capture both sides on a flat surface with good lighting." : "Capture the photo page — the one with your picture and details."} />
+      <Title title={`Photograph your ${docType.short}`} sub={isCard ? "Capture both sides on a flat surface with good lighting." : "Capture the photo page, the one with your picture and details."} />
       <div className={captureGridCss({ card: isCard })}>
         <UploadTile label={isCard ? "Front" : "Photo page"} file={front} onFile={setFront} onClear={() => setFront(null)} />
         {isCard && <UploadTile label="Back" file={back} onFile={setBack} onClear={() => setBack(null)} />}
@@ -569,7 +569,7 @@ function SelfieStep({ selfie, setSelfie, onBack, onContinue }: { selfie: File | 
       <div className={heroWrapCss}>
         <div className={promptTileCss}><Camera size={34} /></div>
       </div>
-      <Title center title="Take a live selfie" sub="We'll match your face to your document. This must be a live photo — gallery uploads aren't accepted unless your camera is unavailable." />
+      <Title center title="Take a live selfie" sub="We'll match your face to your document. This must be a live photo. Gallery uploads aren't accepted unless your camera is unavailable." />
       <div className={promptNoteCss}>
         <Lock size={16} className={promptNoteIconCss} />
         <p className={promptNoteTextCss}>KickAir needs camera access for this step only. Your selfie is never shown on your public profile.</p>

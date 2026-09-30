@@ -140,7 +140,7 @@ export default function RequestCustomOrderDialog({ open, onClose, serviceId, fre
           </div>
           <p className={sentLead}>Your request is on its way to {freelancerName.split(" ")[0]}.</p>
           <p className={sentBody}>
-            {responds ? `They typically respond ${responds}. ` : ""}You&apos;ll get a notification when a custom offer arrives — nothing is charged until you accept and pay.
+            {responds ? `They typically respond ${responds}. ` : ""}You&apos;ll get a notification when a custom offer arrives. Nothing is charged until you accept and pay.
           </p>
           <button
             type="button"

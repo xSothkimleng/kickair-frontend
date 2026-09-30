@@ -8,6 +8,7 @@
  * that look the same must behave the same).
  */
 import { motion, useReducedMotion, type HTMLMotionProps } from "motion/react";
+import Link from "next/link";
 import { forwardRef, type ReactNode } from "react";
 import { css, cx } from "styled-system/css";
 import { spring, text } from "./design";
@@ -81,6 +82,51 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
     </motion.button>
   );
 });
+
+/**
+ * The same button as a navigation link. `globals.css` has a bare
+ * `a { color: inherit }` that outranks every Panda class, so each variant's
+ * colour is restated here with `!important` — without it a primary link renders
+ * dark text on a dark pill.
+ */
+const linkColor: Record<Variant, string> = {
+  primary: css({ color: "var(--v2-white) !important" }),
+  accent: css({ color: "var(--v2-white) !important" }),
+  secondary: css({ color: "var(--v2-primary) !important" }),
+  ghost: css({
+    color: "var(--v2-secondary) !important",
+    _hover: { color: "var(--v2-primary) !important" },
+  }),
+  onDark: css({ color: "var(--v2-primary) !important" }),
+};
+
+export const MotionLink = motion.create(Link);
+
+interface ButtonLinkProps {
+  href: string;
+  variant?: Variant;
+  size?: Size;
+  className?: string;
+  onClick?: () => void;
+  children?: ReactNode;
+}
+
+export function ButtonLink({
+  href, variant = "primary", size = "md", className, onClick, children,
+}: ButtonLinkProps) {
+  const reduced = useReducedMotion();
+  return (
+    <MotionLink
+      href={href}
+      onClick={onClick}
+      className={cx(base, sizes[size], variants[variant], linkColor[variant], className)}
+      whileTap={reduced ? undefined : { scale: 0.97 }}
+      transition={spring.quick}
+    >
+      {children}
+    </MotionLink>
+  );
+}
 
 /* ── Card ────────────────────────────────────────────────────────────────── */
 

@@ -20,15 +20,21 @@ export interface ServiceCategory {
   slug?: string | null;
   sort_order?: number;
   is_active: boolean;
+  /** The "Something else" group: listings that fit no group land here with the owner's label. */
+  is_catch_all?: boolean;
   parent?: ServiceCategory | null;
   children?: ServiceCategory[];
   created_at?: string;
   updated_at?: string;
 }
 
+export type PricingTierSlot = "basic" | "standard" | "premium";
+
 export interface PricingOption {
   id: number;
   service_id: number;
+  /** Which of the three slots this option fills. The title is free text and may be renamed. */
+  tier?: PricingTierSlot | null;
   title: string;
   description: string;
   price: string;
@@ -99,9 +105,8 @@ export interface Service {
   rejection_reason?: string | null;
   freelancer_profile_id: number;
   category_id: number | null;
-  requested_category?: string | null;
-  requested_parent_id?: number | null;
-  requested_parent?: ServiceCategory | null;
+  /** The owner's own words when filed on a group without a fitting subcategory. */
+  category_label?: string | null;
   title: string;
   description: string | null;
   search_tags: string[] | null;
@@ -161,6 +166,7 @@ export interface ServiceDetailResponse {
 // Request types for creating/updating services
 export interface CreatePricingOptionRequest {
   id?: number; // present when editing an existing tier — backend upserts in place
+  tier: PricingTierSlot;
   title: string;
   description?: string;
   price: number;
@@ -170,9 +176,8 @@ export interface CreatePricingOptionRequest {
 
 export interface CreateServiceRequest {
   category_id?: number | null;
-  // Set instead of category_id when the user requests a brand-new category (admin-reviewed).
-  requested_category?: string | null;
-  requested_parent_id?: number | null;
+  // The owner's own words, sent when category_id is a top-level group.
+  category_label?: string | null;
   title: string;
   description: string;
   search_tags: string[];

@@ -269,7 +269,7 @@ export default function WithdrawDialog({
             <FieldLabel>Remarks (optional)</FieldLabel>
             <textarea
               rows={3}
-              placeholder='A note for yourself — stays on this transaction in your history'
+              placeholder='A note for yourself. It stays on this transaction in your history'
               value={note}
               onChange={(e) => setNote(e.target.value)}
               className={noteArea}

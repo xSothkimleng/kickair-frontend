@@ -4,7 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { css, cx } from "styled-system/css";
 import { crossFade, spring, text } from "../design";
-import { Button } from "../ui";
+import { ButtonLink } from "../ui";
 
 /** One decision, nothing else on screen competing for it. */
 export default function Closing() {
@@ -26,10 +26,10 @@ export default function Closing() {
           Post a job, or put your skills up. It costs nothing until work begins.
         </p>
         <div className={css({ display: "flex", flexWrap: "wrap", justifyContent: "center", gap: "0.75rem" })}>
-          <Button variant="primary" size="lg">
+          <ButtonLink href="/website-v2/explore" variant="primary" size="lg">
             Hire a freelancer <ArrowRight size={16} aria-hidden />
-          </Button>
-          <Button variant="secondary" size="lg">Start freelancing</Button>
+          </ButtonLink>
+          <ButtonLink href="/auth/sign-up" variant="secondary" size="lg">Start freelancing</ButtonLink>
         </div>
       </motion.div>
     </section>

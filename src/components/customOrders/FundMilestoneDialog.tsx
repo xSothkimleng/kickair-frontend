@@ -9,6 +9,7 @@ import { Alert, Dialog, Spinner } from "@/components/ds";
 import { BareModal } from "@/components/ds/BareModal";
 import { api } from "@/lib/api";
 import { Money, coBtn, coBtnStart, coIconBtn, coLabel, coLabelAccent } from "./kit";
+import { MONEY, ESCROW_SHORT } from "@/lib/moneyTerms";
 
 interface Props {
   open: boolean;
@@ -58,7 +59,6 @@ const rowLabel = cva({
   base: { textStyle: "ui" },
   variants: { last: { true: { fontWeight: 600, color: "ink" }, false: { fontWeight: 400, color: "ink2" } } },
 });
-const rowValue = css({ fontVariantNumeric: "tabular-nums", textStyle: "body" });
 
 const shortBox = css({ display: "flex", gap: "8px", p: "12px", bg: "errorTint", borderRadius: "10px" });
 const shortText = css({ textStyle: "meta", color: "errorText" });
@@ -72,8 +72,8 @@ export default function FundMilestoneDialog({
   amount,
   onConfirm,
   submitting,
-  title = "Fund the project",
-  annotation = "Fund into escrow",
+  title = MONEY.acceptAndPay,
+  annotation = ESCROW_SHORT,
   ctaLabel,
   error,
 }: Props) {
@@ -84,7 +84,8 @@ export default function FundMilestoneDialog({
     enabled: open,
   });
 
-  const available = Number(wallet?.available_balance ?? 0);
+  // `available_balance` is the formatted string ("4,000.00") — Number() of it is NaN.
+  const available = wallet ? parseFloat(String(wallet.available_balance_raw)) : 0;
   const insufficient = wallet != null && available < amount;
   const short = amount - available;
 
@@ -109,7 +110,7 @@ export default function FundMilestoneDialog({
       <div className={body}>
         {/* amount → escrow visual */}
         <div className={amountCard}>
-          <p className={coLabel}>Moving to escrow</p>
+          <p className={coLabel}>{MONEY.youPay}</p>
           <div className={amountValue}>
             <Money value={amount} size="stat" weight={600} color="var(--colors-pending-text)" cents />
           </div>
@@ -124,11 +125,10 @@ export default function FundMilestoneDialog({
 
         {/* wallet rows */}
         <div>
-          <Row label="Available balance" valueEl={<Money value={available} size="body" weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />} />
-          <Row label="This payment" valueEl={<span className={rowValue}>−{`$${amount.toLocaleString(undefined, { minimumFractionDigits: 2 })}`}</span>} />
+          <Row label={MONEY.availableBalance} valueEl={<Money value={available} size="body" weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />} />
           <Row
             last
-            label={insufficient ? "Short by" : "Balance after"}
+            label={insufficient ? MONEY.shortBy : MONEY.balanceAfter}
             valueEl={<Money value={insufficient ? short : available - amount} size="lead" weight={600} color={insufficient ? "var(--colors-error-text)" : "var(--colors-ink)"} cents />}
           />
         </div>
@@ -139,24 +139,24 @@ export default function FundMilestoneDialog({
           <>
             <div className={shortBox}>
               <p className={shortText}>
-                Not enough in your wallet for this payment. Top up{" "}
+                Not enough in your wallet. {MONEY.topUp}{" "}
                 <span className={monoSpan}>${short.toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>{" "}
-                or more, then fund.
+                or more, then pay.
               </p>
             </div>
             <button type="button" onClick={() => router.push("/dashboard/client?tab=finance")} className={coBtn({ tone: "black", size: "md", strong: true, full: true })}>
               <Plus size={20} className={coBtnStart} />
-              Top up wallet
+              {MONEY.topUp}
             </button>
           </>
         ) : (
           <>
             <button type="button" onClick={onConfirm} disabled={submitting || wallet == null} className={coBtn({ tone: "black", size: "lg", strong: true, full: true })}>
               <Lock size={20} className={coBtnStart} />
-              {submitting ? <Spinner size={18} className={css({ color: "#fff" })} /> : (ctaLabel ?? `Confirm & fund ${`$${amount.toLocaleString()}`}`)}
+              {submitting ? <Spinner size={18} className={css({ color: "#fff" })} /> : (ctaLabel ?? MONEY.acceptAndPay)}
             </button>
             <div className={footNote}>
-              <Shield size={13} /> Released to the freelancer only when you approve the delivery
+              <Shield size={13} /> {ESCROW_SHORT}
             </div>
           </>
         )}

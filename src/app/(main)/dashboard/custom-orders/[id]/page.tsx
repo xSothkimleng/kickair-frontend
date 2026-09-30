@@ -278,7 +278,7 @@ export default function CustomOrderDetailPage() {
           <div className={summaryCard}>
             <div className={awaitNote}>
               <Clock size={16} className={awaitIcon} />
-              <p className={awaitText}><strong>Offer sent</strong> — awaiting the client&apos;s decision.</p>
+              <p className={awaitText}><strong>Offer sent.</strong> Awaiting the client&apos;s decision.</p>
             </div>
             <p className={coLabel}>{order.milestones.length > 1 ? `Your milestone plan · ${order.milestones.length} phases` : "Your offer"}</p>
             {order.milestones.map((m, i) => (

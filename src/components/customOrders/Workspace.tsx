@@ -27,6 +27,7 @@ import {
 } from "./kit";
 import { useCoInvalidate } from "./hooks";
 import FundMilestoneDialog from "./FundMilestoneDialog";
+import { MONEY } from "@/lib/moneyTerms";
 
 type Role = "client" | "freelancer";
 
@@ -224,19 +225,19 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
 
   // ── turn hint ──
   const turn = (() => {
-    if (complete) return { who: "done" as const, text: "Project complete — payment released." };
+    if (complete) return { who: "done" as const, text: `Project complete. ${MONEY.paymentReleased}.` };
     const sub = ms.find((m) => m.status === "submitted");
     if (sub) return isClient
-      ? { who: "you" as const, text: `Review “${sub.title}” — approve to release ${money(sub.amount)} from escrow.` }
+      ? { who: "you" as const, text: `Review “${sub.title}”. Approve to release ${money(sub.amount)}.` }
       : { who: "them" as const, text: `Waiting for ${otherName.split(" ")[0]} to approve “${sub.title}”.` };
     const work = ms.find((m) => m.status === "funded" || m.status === "in_progress");
     if (work) return isClient
       ? { who: "them" as const, text: `${otherName.split(" ")[0]} is working on “${work.title}”.` }
-      : { who: "you" as const, text: `Deliver “${work.title}” — submit when it’s ready for review.` };
+      : { who: "you" as const, text: `Deliver “${work.title}”. Submit when it’s ready for review.` };
     const up = firstUpcomingIdx >= 0 ? ms[firstUpcomingIdx] : null;
     if (up) return isClient
-      ? { who: "you" as const, text: ms.length > 1 ? `Fund “${up.title}” to start the next phase.` : "Fund the project to get started." }
-      : { who: "them" as const, text: ms.length > 1 ? `Waiting for ${otherName.split(" ")[0]} to fund “${up.title}”.` : `Waiting for ${otherName.split(" ")[0]} to fund the project.` };
+      ? { who: "you" as const, text: ms.length > 1 ? `Pay for “${up.title}” to start the next phase.` : `${MONEY.acceptAndPay} to get started.` }
+      : { who: "them" as const, text: ms.length > 1 ? `Waiting for ${otherName.split(" ")[0]} to pay for “${up.title}”.` : `Waiting for ${otherName.split(" ")[0]} to pay.` };
     return { who: "done" as const, text: "" };
   })();
 
@@ -287,7 +288,7 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
                 ? <ArrowRight size={18} className={css({ color: "pendingText", flexShrink: 0 })} />
                 : <Clock size={18} className={css({ color: "ink3", flexShrink: 0 })} />}
             <p className={turnText({ who: turn.who })}>
-              {turn.who === "you" && <strong>Your turn — </strong>}{turn.text}
+              {turn.who === "you" && <strong>Your turn: </strong>}{turn.text}
             </p>
           </div>
         )}
@@ -337,8 +338,8 @@ export default function Workspace({ order, role }: { order: CustomOrder; role: R
         <FundMilestoneDialog
           open onClose={() => setFundTarget(null)}
           milestoneTitle={fundTarget.title} amount={fundTarget.amount} submitting={busy} error={error}
-          title={ms.length > 1 ? `Fund milestone ${fundTarget.seq}` : "Fund the project"}
-          ctaLabel={`Confirm & fund $${fundTarget.amount.toLocaleString()}`}
+          title={ms.length > 1 ? `${MONEY.acceptAndPay}: milestone ${fundTarget.seq}` : MONEY.acceptAndPay}
+          ctaLabel={MONEY.acceptAndPay}
           onConfirm={async () => { const ok = await run(() => api.fundMilestone(fundTarget.id)); if (ok) setFundTarget(null); }}
         />
       )}
@@ -399,8 +400,8 @@ function MilestoneCard({
     );
   } else if (m.status === "upcoming" && isFirstUpcoming) {
     action = isClient
-      ? <ActBtn primary onClick={onFund} disabled={busy} icon={<Lock size={15} className={coBtnStart} />}>Fund · {money(m.amount)}</ActBtn>
-      : <Waiting text={`Waiting for ${otherName.split(" ")[0]} to fund`} muted />;
+      ? <ActBtn primary onClick={onFund} disabled={busy} icon={<Lock size={15} className={coBtnStart} />}>{MONEY.acceptAndPay} · {money(m.amount)}</ActBtn>
+      : <Waiting text={`Waiting for ${otherName.split(" ")[0]} to pay`} muted />;
   }
 
   return (
@@ -621,12 +622,12 @@ function EndDialog({ order, busy, onClose, onConfirm }: { order: CustomOrder; bu
       </div>
       <div className={endBody}>
         <p className={endIntro}>
-          Milestone escrow keeps the split fair — you only ever settle for the work that actually changed hands.
+          Milestone escrow keeps the split fair. You only ever settle for the work that actually changed hands.
         </p>
         <Group icon={<Check size={15} />} title="Released payments stay paid" color="var(--colors-success-text)" bg="var(--colors-success-tint)" items={released}
           note="Approved work has already been released to the freelancer. Nothing here is refundable." />
-        <Group icon={<Shield size={15} />} title="Held in escrow" color="var(--colors-pending-text)" bg="var(--colors-pending-tint)" items={inEscrow}
-          note="Held funds are refunded to you when the order ends." />
+        <Group icon={<Shield size={15} />} title="Still committed" color="var(--colors-pending-text)" bg="var(--colors-pending-tint)" items={inEscrow}
+          note="Committed money is refunded to you when the order ends." />
         <Group icon={<X size={15} />} title="Unfunded work cancelled" color="var(--colors-ink3)" bg="rgba(0,0,0,0.05)" items={unfunded}
           note="Never funded, so they’re simply cancelled. You pay nothing for these." />
 

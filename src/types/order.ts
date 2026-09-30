@@ -18,6 +18,17 @@ export interface EvidenceFile {
 /** How an admin closed a dispute. `continue` returns the order to the parties with feedback; the others end it. */
 export type DisputeOutcome = "full_freelancer" | "partial" | "full_client" | "continue";
 
+/** Who got what when a dispute ended. Present on resolved money outcomes, null after a "continue". */
+export interface DisputeSettlement {
+  order_total: number;
+  /** The part of the order awarded to the freelancer, before the platform fee. */
+  freelancer_share: number;
+  platform_fee: number;
+  freelancer_receives: number;
+  client_refund: number;
+  commission_rate: number;
+}
+
 export interface Dispute {
   id: number;
   order_id: number;
@@ -28,6 +39,7 @@ export interface Dispute {
   status: "open" | "resolved";
   outcome: DisputeOutcome | null;
   partial_freelancer_amount: string | null;
+  settlement?: DisputeSettlement | null;
   client_evidence: EvidenceFile[] | null;
   freelancer_evidence: EvidenceFile[] | null;
   client_statement: string | null;

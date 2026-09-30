@@ -38,7 +38,9 @@ import { api } from "@/lib/api";
 import { downloadOrderAttachment } from "@/lib/downloadFile";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { Order, OrderStatus, Dispute, EvidenceFile } from "@/types/order";
+import DisputeSettlementRows from "@/components/dashboard/DisputeSettlementRows";
 import OrderRecord from "@/components/dashboard/OrderRecord";
+import { MONEY, afterPlatformFee } from "@/lib/moneyTerms";
 
 // ─── Design tokens (same as client page) ─────────────────────────────────────
 // (the CARD / SEC_LABEL / BTN_* objects now live in `dashboard/orderPageKit`)
@@ -103,8 +105,8 @@ function FileRow({ file, orderId }: { file: UploadedFile; orderId?: number }) {
 
 const OUTCOME_LABEL: Record<string, string> = {
   full_freelancer: "Resolved in favor of the freelancer",
-  full_client: "Resolved in favor of the client — refunded",
-  partial: "Partial resolution — split between both parties",
+  full_client: "Resolved in favor of the client, refunded",
+  partial: "Partial resolution, split between both parties",
   continue: "Order continues with admin feedback",
 };
 
@@ -138,7 +140,7 @@ function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number
         // An open dispute is "in review", not an error: a quiet line, not a red alert box.
         <div className={statusNoteCss}>
           <ScaleIcon size={16} />
-          <p><strong>Under dispute</strong> — an admin will review it.</p>
+          <p><strong>Under dispute.</strong> An admin will review it.</p>
         </div>
       )}
 
@@ -149,9 +151,8 @@ function DisputeBlock({ dispute, orderId }: { dispute: Dispute; orderId?: number
         <div className={outcomeBoxCss}>
           <p className={fieldLabelCss}>
             Outcome: {OUTCOME_LABEL[dispute.outcome ?? ""] ?? "Resolved"}
-            {dispute.outcome === "partial" && dispute.partial_freelancer_amount
-              ? ` ($${dispute.partial_freelancer_amount} to freelancer)` : ""}
           </p>
+          {dispute.settlement && <DisputeSettlementRows settlement={dispute.settlement} viewer="freelancer" />}
           {dispute.admin_note && (
             <p className={bodyMutedCss}>
               <strong>Admin feedback:</strong> {dispute.admin_note}
@@ -447,9 +448,9 @@ export default function FreelancerOrderDetailPage() {
             </div>
             <div className={totalRowCss}>
               <div>
-                <p className={tileLabelCss}>Your earnings</p>
+                <p className={tileLabelCss}>{MONEY.youReceive}</p>
                 {commissionRate != null && (
-                  <p className={css({ textStyle: "micro", color: "#94A3B8" })}>after the {Math.round(commissionRate * 100)}% platform fee</p>
+                  <p className={css({ textStyle: "micro", color: "#94A3B8" })}>{afterPlatformFee(Math.round(commissionRate * 100))}</p>
                 )}
               </div>
               <p className={css({ textStyle: "title", fontWeight: 700, color: "#10B981" })}>

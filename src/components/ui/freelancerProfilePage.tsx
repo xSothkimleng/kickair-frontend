@@ -347,7 +347,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
           <p className={reviewsCount}>{ratingCount} review{ratingCount !== 1 ? "s" : ""}</p>
         </div>
         <p className={reviewsBlurb}>
-          {hasRating ? "Ratings come from clients after they complete and approve an order, so they reflect real, paid work." : "No reviews yet — they'll appear here once clients complete orders with this freelancer."}
+          {hasRating ? "Ratings come from clients after they complete and approve an order, so they reflect real, paid work." : "No reviews yet. They'll appear here once clients complete orders with this freelancer."}
         </p>
       </div>
       {reviewsLoading ? (

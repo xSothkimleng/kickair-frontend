@@ -23,7 +23,9 @@ export default function Stats() {
     : { hidden: { opacity: 0, y: 16 }, show: { opacity: 1, y: 0, transition: spring.ui } };
 
   return (
-    <section className={css({ bg: "var(--v2-paper)", px: { base: "1.25rem", sm: "2rem", lg: "2.5rem" }, py: { base: "3.5rem", md: "5rem" } })}>
+    // White, not paper: it now sits between the canvas of Work and the paper of
+    // Faq, and a ground only reads as a ground when its neighbours differ.
+    <section className={css({ bg: "var(--v2-white)", px: { base: "1.25rem", sm: "2rem", lg: "2.5rem" }, py: { base: "3.5rem", md: "5rem" } })}>
       <motion.div
         className={css({
           maxW: "78rem", mx: "auto",

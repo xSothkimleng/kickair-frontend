@@ -187,7 +187,7 @@ export default function ProposalModal({
             <div className={header}>
               <div>
                 <Ark.Title className={headTitle}>{isEdit ? "Edit your proposal" : "Submit a proposal"}</Ark.Title>
-                <p className={headSub}>Take your time — this is your pitch to the client.</p>
+                <p className={headSub}>Take your time. This is your pitch to the client.</p>
               </div>
               <button type="button" onClick={onClose} aria-label="Close" className={closeBtn}>
                 <X size={18} />

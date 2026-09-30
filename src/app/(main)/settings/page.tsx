@@ -683,7 +683,7 @@ export default function SettingsPage() {
     try {
       const updatedUser = await api.addEmail(email.trim());
       setUser(updatedUser);
-      setProfileMsg({ type: "success", text: "Email added — check your inbox to verify it." });
+      setProfileMsg({ type: "success", text: "Email added. Check your inbox to verify it." });
     } catch (err) {
       setProfileMsg({
         type: "error",
@@ -982,7 +982,7 @@ export default function SettingsPage() {
             </p>
             <p className={dialogDesc}>
               {phone && !phoneVerified
-                ? "Enter your Cambodian mobile number below — we'll send a verification code to it via Telegram."
+                ? "Enter your Cambodian mobile number below. We'll send a verification code to it via Telegram."
                 : "Enter your Cambodian mobile number. We'll send a verification code via Telegram."}
             </p>
 
@@ -1002,7 +1002,7 @@ export default function SettingsPage() {
                     onChange={(v) => { setNewPhone(v); setPhoneOtpSent(false); setPhoneBotUrl(null); setPhoneCode(""); }}
                     disabled={savingPhone}
                     size="sm"
-                    helper="Cambodian number — digits only, we add the +855 for you."
+                    helper="Cambodian number, digits only. We add the +855 for you."
                   />
                 </div>
                 <button

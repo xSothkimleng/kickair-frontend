@@ -318,7 +318,7 @@ export default function PostServiceContent() {
           <div className={centreBlock}>
             <Briefcase size={48} className={emptyIcon} />
             <p className={emptyText}>
-              No published jobs yet — publish a draft below to start receiving proposals.
+              No published jobs yet. Publish a draft below to start receiving proposals.
             </p>
           </div>
         ) : (

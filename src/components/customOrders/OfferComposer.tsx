@@ -10,6 +10,7 @@ import { CustomOrder } from "@/types/customOrder";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { CoInput, CoTextArea, Money, coAvatar, coBtn, coBtnEnd, coCard, coLabel, initials } from "./kit";
 import { useCoInvalidate } from "./hooks";
+import { MONEY, platformFee } from "@/lib/moneyTerms";
 
 const layout = css({ display: "grid", gridTemplateColumns: "1fr", gap: "24px", alignItems: "start" });
 const card = cx(coCard, css({ p: { base: "18px", md: "24px" } }));
@@ -169,16 +170,16 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
         {rate != null && commission != null && net != null && (
           <div className={feeBox}>
             <div className={feeRow}>
-              <p className={feeLabel}>Client pays</p>
+              <p className={feeLabel}>{MONEY.clientPays}</p>
               <p className={feeValue}>${total.toFixed(2)}</p>
             </div>
             <div className={feeRow}>
-              <p className={feeLabel}>Platform fee ({Math.round(rate * 100)}%)</p>
+              <p className={feeLabel}>{platformFee(Math.round(rate * 100))}</p>
               <p className={feeValueWarn}>−${commission.toFixed(2)}</p>
             </div>
             <div className={feeDivider} />
             <div className={feeRow}>
-              <p className={netLabel}>You receive</p>
+              <p className={netLabel}>{MONEY.youReceive}</p>
               <p className={netValue}>${net.toFixed(2)}</p>
             </div>
           </div>
@@ -193,7 +194,7 @@ export default function OfferComposer({ order, onSent, onCancel }: { order: Cust
               ? <>Over the client&apos;s budget by <span className={monoSpan}>${over.toLocaleString()}</span>. They may counter or decline.</>
               : over === 0
                 ? <>Matches the client&apos;s ${order.budget.toLocaleString()} budget exactly.</>
-                : <><span className={monoSpan}>${(-over).toLocaleString()}</span> under budget — comfortable room.</>}
+                : <><span className={monoSpan}>${(-over).toLocaleString()}</span> under budget, comfortable room.</>}
           </p>
         </div>
 

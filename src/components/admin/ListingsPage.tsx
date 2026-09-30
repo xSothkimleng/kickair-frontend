@@ -11,7 +11,8 @@ import type { JobPost } from "@/types/job";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import { useAdminAction, useAdminStats, useCategories, useJobPosts, useServices } from "./queries";
 import { useToast } from "./toast";
-import { Avatar, Btn, Drawer, EmptyState, ErrorState, Field, Input, Loading, Modal, Pager, Panel, Pill, Segmented, Select, Tabs, Textarea, kvList, page, PageHeader, row, stack, table, text } from "./ui";
+import { categoryLine } from "@/lib/categoryLine";
+import { Avatar, Btn, Drawer, EmptyState, ErrorState, Field, Loading, Modal, Pager, Panel, Pill, Segmented, Select, Tabs, Textarea, kvList, page, PageHeader, row, stack, table, text } from "./ui";
 import { ago, errorMessage, money, waiting } from "./format";
 import { listingLabel, type ListingStatus } from "./labels";
 
@@ -21,7 +22,8 @@ type Kind = "service" | "job";
 interface Listing {
   id: number; kind: Kind; title: string; status: ListingStatus; submitted: string;
   owner: { id: number | null; name: string; avatar: string | null; sub: string | null };
-  category: string | null; categoryId: number | null; suggested: string | null; suggestedParentId: number | null;
+  /** "Web Development › Podcast editing" when the owner typed their own label, else the category name. */
+  category: string | null; categoryId: number | null; label: string | null;
   price?: number; budget?: string; tiers?: number; delivery?: string; proposals?: number; deadline?: string;
   cover: string | null; reason: string | null; description: string | null;
 }
@@ -42,7 +44,7 @@ function fromService(s: Service): Listing {
   return {
     id: s.id, kind: "service", title: s.title, status: serviceStatus(s.status), submitted: s.updated_at ?? s.created_at,
     owner: { id: u?.id ?? null, name: u?.name ?? "Unknown", avatar: u?.avatar_url ?? null, sub: s.freelancer_profile?.tagline ?? u?.email ?? null },
-    category: s.category?.category_name ?? null, categoryId: s.category_id, suggested: s.requested_category ?? null, suggestedParentId: s.requested_parent_id ?? null,
+    category: s.category ? categoryLine(s.category, s.category_label) : null, categoryId: s.category_id, label: s.category_label ?? null,
     price: opts[0]?.price, tiers: s.pricing_options?.length ?? 0, delivery: opts[0]?.delivery ? `${opts[0].delivery}${/^\d+$/.test(opts[0].delivery) ? " days" : ""}` : undefined,
     cover: s.feature_image?.file_url ?? s.media?.find((m) => m.file_type === "image")?.file_url ?? null, reason: s.rejection_reason ?? null, description: s.description,
   };
@@ -53,14 +55,13 @@ function fromJob(j: JobPost): Listing {
   return {
     id: j.id, kind: "job", title: j.title, status: jobStatus(j.status), submitted: j.updated_at ?? j.created_at,
     owner: { id: u?.id ?? null, name: j.client_profile?.company_name || u?.name || "Unknown", avatar: u?.avatar_url ?? null, sub: j.client_profile?.company_name ? u?.name ?? null : u?.email ?? null },
-    category: j.category?.category_name ?? null, categoryId: j.category_id ?? j.category?.id ?? null, suggested: j.requested_category ?? null, suggestedParentId: j.requested_parent_id ?? null,
+    category: j.category ? categoryLine(j.category, j.category_label) : null, categoryId: j.category_id ?? j.category?.id ?? null, label: j.category_label ?? null,
     budget: min && max && min !== max ? `${money(min)} – ${money(max)}` : money(max || min), proposals: j.proposal_count, deadline: j.deadline,
     cover: j.media?.find((m) => m.file_type === "image")?.file_url ?? null, reason: j.rejection_reason ?? null, description: j.description,
   };
 }
 
 const cover = css({ w: "44px", h: "32px", borderRadius: "7px", flexShrink: 0, objectFit: "cover", display: "block", "&[data-lg=true]": { w: "100%", h: "180px", borderRadius: "12px" } });
-const suggest = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "meta", color: "var(--td-amber)", fontWeight: 500 });
 const linkBtn = css({ bg: "none", border: "none", p: 0, cursor: "pointer", textStyle: "meta", fontWeight: 600, color: "var(--td-accent)", _hover: { textDecoration: "underline" } });
 const desc = css({ textStyle: "ui", color: "var(--td-ink-2)", whiteSpace: "pre-wrap", "& p": { margin: "0 0 8px" }, "& ul, & ol": { paddingLeft: "18px", margin: "0 0 8px" } });
 
@@ -80,7 +81,7 @@ export default function ListingsPage() {
   const [preview, setPreview] = useState<number | null>(null);
   const [reject, setReject] = useState<{ id: number; reason: string } | null>(null);
   const [disable, setDisable] = useState<{ id: number; reason: string } | null>(null);
-  const [assign, setAssign] = useState<{ id: number; thenApprove: boolean; categoryId: string; newName: string; parentId: string } | null>(null);
+  const [assign, setAssign] = useState<{ id: number; thenApprove: boolean; categoryId: string } | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
   useEffect(() => { if (params.get("kind") === "job") setKind("job"); }, [params]);
 
@@ -109,7 +110,7 @@ export default function ListingsPage() {
     finally { setBusyId(null); }
   };
   const approveCall = (l: Listing) => (l.kind === "service" ? api.approveService(l.id) : api.approveJobPost(l.id));
-  const openAssign = (l: Listing, thenApprove: boolean) => setAssign({ id: l.id, thenApprove, categoryId: "", newName: "", parentId: String(l.suggestedParentId ?? parents[0]?.id ?? "") });
+  const openAssign = (l: Listing, thenApprove: boolean) => setAssign({ id: l.id, thenApprove, categoryId: "" });
 
   const approve = async (l: Listing) => {
     if (!l.categoryId) { openAssign(l, true); return; }
@@ -128,25 +129,14 @@ export default function ListingsPage() {
   const enable = async (l: Listing) => {
     if (await run(l.id, () => api.enableService(l.id), `“${l.title}” is live again.`)) setPreview(null);
   };
-  const useSuggestion = () => {
-    if (!assign) return;
-    const l = rows.find((x) => x.id === assign.id); if (!l?.suggested) return;
-    const existing = cats.find((c) => c.category_name.toLowerCase() === l.suggested!.toLowerCase() && c.parent_id !== null);
-    if (existing) setAssign({ ...assign, categoryId: String(existing.id), newName: "" });
-    else setAssign({ ...assign, categoryId: "", newName: l.suggested });
-  };
   const confirmAssign = async () => {
     if (!assign) return;
     const l = rows.find((x) => x.id === assign.id); if (!l) return;
+    const categoryId = Number(assign.categoryId);
+    const name = cats.find((c) => c.id === categoryId)?.category_name;
+    if (!categoryId) return;
     setBusyId(l.id);
     try {
-      let categoryId = Number(assign.categoryId);
-      let name = cats.find((c) => c.id === categoryId)?.category_name;
-      if (assign.newName.trim()) {
-        const created = await api.createAdminCategory(assign.newName.trim(), Number(assign.parentId) || null);
-        categoryId = created.id; name = created.category_name;
-      }
-      if (!categoryId) return;
       await (l.kind === "service" ? api.setServiceCategory(l.id, categoryId) : api.setJobPostCategory(l.id, categoryId));
       if (assign.thenApprove) await approveCall(l);
       await act.mutateAsync({ fn: async () => undefined });
@@ -180,7 +170,7 @@ export default function ListingsPage() {
 
   return (
     <div className={page}>
-      <PageHeader title="Listings" description="Services and job posts go live after a review. When the owner didn't pick a category, file it before approving." />
+      <PageHeader title="Listings" description="Services and job posts go live after a review. A listing filed with the owner's own words can be sorted here one at a time, or by label in Catalog." />
       <div className={css({ mb: "16px" })}>
         <Tabs value={kind} onChange={changeKind} items={[{ value: "service", label: `Services${pendingServices != null ? ` (${pendingServices} to review)` : ""}` }, { value: "job", label: `Job posts${pendingJobs != null ? ` (${pendingJobs} to review)` : ""}` }]} />
       </div>
@@ -206,11 +196,13 @@ export default function ListingsPage() {
                     </div>
                   </td>
                   <td>
-                    {l.category ? <Pill outline>{l.category}</Pill> : (
+                    {l.category ? (
                       <div className={cx(stack({ gap: 1 }), css({ alignItems: "flex-start" }))}>
-                        {l.suggested ? <span className={suggest}><Tag size={12} /> Suggested: {l.suggested}</span> : null}
-                        <button className={linkBtn} onClick={(e) => { e.stopPropagation(); openAssign(l, false); }}>Assign category</button>
+                        <Pill outline>{l.category}</Pill>
+                        {l.label ? <button className={linkBtn} onClick={(e) => { e.stopPropagation(); openAssign(l, false); }}>Owner&apos;s own words · file under…</button> : null}
                       </div>
+                    ) : (
+                      <button className={linkBtn} onClick={(e) => { e.stopPropagation(); openAssign(l, false); }}>Assign category</button>
                     )}
                   </td>
                   <td className="num"><span className={text({ weight: 600, mono: true })}>{l.price != null ? money(l.price) : l.budget ?? "—"}</span></td>
@@ -247,13 +239,13 @@ export default function ListingsPage() {
               ) : (
                 <><dt>Budget</dt><dd>{current.budget}</dd><dt>Deadline</dt><dd>{current.deadline ? ago(current.deadline).replace(" ago", "") : "—"}</dd><dt>Proposals</dt><dd>{current.status === "live" ? `${current.proposals ?? 0} received` : "Not open yet"}</dd></>
               )}
-              {current.suggested && !current.category ? <><dt>Owner suggested</dt><dd>{current.suggested}</dd></> : null}
+              {current.label ? <><dt>Owner wrote</dt><dd>{current.label}</dd></> : null}
             </dl>
             <div>
               <p className={cx(text({ size: "meta", weight: 600, tone: 2 }), css({ mb: "6px" }))}>Description</p>
               {current.description ? (current.kind === "service" ? <RichTextDisplay value={current.description} className={desc} /> : <p className={desc}>{current.description}</p>) : <p className={text({ size: "meta", tone: 3 })}>No description.</p>}
             </div>
-            {!current.category ? <Btn onClick={() => openAssign(current, false)}><Tag size={14} /> Assign a category</Btn> : null}
+            {!current.category || current.label ? <Btn onClick={() => openAssign(current, false)}><Tag size={14} /> {current.label ? "File under a subcategory" : "Assign a category"}</Btn> : null}
           </div>
         ) : null}
       </Drawer>
@@ -268,29 +260,19 @@ export default function ListingsPage() {
         <Field label="Reason shown to the seller"><Textarea autoFocus value={disable?.reason ?? ""} onChange={(e) => setDisable(disable && { ...disable, reason: e.target.value })} /></Field>
       </Modal>
 
-      <Modal open={!!assign} onClose={() => setAssign(null)} title={assign?.thenApprove ? "Pick a category, then publish" : "Assign a category"} description="Pick an existing subcategory or create a new one under a top-level group." size="sm"
-        footer={<><Btn variant="ghost" onClick={() => setAssign(null)}>Cancel</Btn><Btn variant="primary" disabled={!assign || (!assign.categoryId && !assign.newName.trim()) || busyId != null} onClick={confirmAssign}>{busyId != null ? "Saving…" : assign?.thenApprove ? "Save and publish" : "Save"}</Btn></>}>
+      <Modal open={!!assign} onClose={() => setAssign(null)} title={assign?.thenApprove ? "Pick a category, then publish" : "File under a subcategory"} description="The owner is told where it went. To turn their words into a new subcategory, use Catalog." size="sm"
+        footer={<><Btn variant="ghost" onClick={() => setAssign(null)}>Cancel</Btn><Btn variant="primary" disabled={!assign?.categoryId || busyId != null} onClick={confirmAssign}>{busyId != null ? "Saving…" : assign?.thenApprove ? "Save and publish" : "Save"}</Btn></>}>
         {assign ? (
           <div className={stack({ gap: 4 })}>
-            {rows.find((l) => l.id === assign.id)?.suggested ? (
-              <div className={cx(row({ between: true }), css({ p: "10px 12px", borderRadius: "10px", bg: "var(--td-amber-soft)" }))}>
-                <span className={cx(text({ size: "meta" }), css({ color: "var(--td-amber)" }))}>Owner suggested <b>{rows.find((l) => l.id === assign.id)?.suggested}</b></span>
-                <Btn size="xs" onClick={useSuggestion}>Use it</Btn>
-              </div>
-            ) : null}
-            <Field label="Existing category">
-              <Select value={assign.categoryId} onChange={(e) => setAssign({ ...assign, categoryId: e.target.value, newName: "" })}>
+            {rows.find((l) => l.id === assign.id)?.label ? <p className={text({ size: "meta", tone: 2 })}>Owner wrote: <b>{rows.find((l) => l.id === assign.id)?.label}</b></p> : null}
+            <Field label="Subcategory">
+              <Select autoFocus value={assign.categoryId} onChange={(e) => setAssign({ ...assign, categoryId: e.target.value })}>
                 <option value="">Choose…</option>
-                {parents.map((p) => (
+                {parents.filter((p) => !p.is_catch_all).map((p) => (
                   <optgroup key={p.id} label={p.category_name}>{cats.filter((c) => c.parent_id === p.id && c.is_active).map((c) => <option key={c.id} value={c.id}>{c.category_name}</option>)}</optgroup>
                 ))}
               </Select>
             </Field>
-            <div className={cx(row({ gap: 3 }), css({ color: "var(--td-ink-3)", textStyle: "meta", "&::before, &::after": { content: '""', flex: 1, h: "1px", bg: "var(--td-line)" } }))}>or create new</div>
-            <div className={css({ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" })}>
-              <Field label="New subcategory"><Input value={assign.newName} onChange={(e) => setAssign({ ...assign, newName: e.target.value, categoryId: "" })} placeholder="e.g. Podcast editing" /></Field>
-              <Field label="Under"><Select value={assign.parentId} onChange={(e) => setAssign({ ...assign, parentId: e.target.value })}>{parents.map((p) => <option key={p.id} value={p.id}>{p.category_name}</option>)}</Select></Field>
-            </div>
           </div>
         ) : null}
       </Modal>

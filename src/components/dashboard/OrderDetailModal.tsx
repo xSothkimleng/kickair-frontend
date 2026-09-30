@@ -154,7 +154,7 @@ export default function OrderDetailModal({ open, order, onClose, onReviewSubmitt
     const labels: Record<OrderStatus, string> = {
       active: "In Progress",
       pending: "Pending",
-      delivered: "Delivered — Review Required",
+      delivered: "Delivered, review required",
       revision_requested: "Revision Requested",
       disputed: "Disputed",
       completed: "Completed",

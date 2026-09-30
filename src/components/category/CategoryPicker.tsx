@@ -1,35 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo } from "react";
 import { css } from "styled-system/css";
 import { Stack } from "styled-system/jsx";
-import { SelectInput, TextInput } from "@/components/ui/inputs";
+import { AutocompleteInput, SelectInput, TextInput } from "@/components/ui/inputs";
 import { ServiceCategory } from "@/types/service";
 
 export interface CategoryValue {
+  /** A subcategory, or the top-level group the owner filed under with their own label. */
   categoryId: number | null;
-  requestedCategory: string | null;
-  requestedParentId: number | null;
+  /** The owner's own words when no subcategory fits. Only meaningful with a top-level group. */
+  categoryLabel: string | null;
 }
 
-const NEW = "__new__";
+const hintCss = css({ textStyle: "meta", color: "ink3", mt: "6px" });
 
-// Owner-facing review hint under a "new category" field.
-const hintCss = css({ textStyle: "meta", color: "pendingText" });
+const nameOf = (c: ServiceCategory) => c.name ?? c.category_name;
 
-function findAisleId(tree: ServiceCategory[], categoryId: number | null): number | null {
+/** The top-level group a value sits in, whether it points at the group or at one of its subcategories. */
+export function groupIdFor(tree: ServiceCategory[], categoryId: number | null): number | null {
   if (!categoryId) return null;
-  for (const aisle of tree) {
-    if (aisle.id === categoryId) return aisle.id;
-    if ((aisle.children ?? []).some(c => c.id === categoryId)) return aisle.id;
+  for (const group of tree) {
+    if (group.id === categoryId) return group.id;
+    if ((group.children ?? []).some(c => c.id === categoryId)) return group.id;
   }
   return null;
 }
 
 /**
- * Cascading category picker: pick an aisle (category) → a shelf (subcategory), or
- * choose "Suggest a new subcategory" to request one (admin-reviewed). Emits a
- * {categoryId | requestedCategory + requestedParentId} value.
+ * Category picker: choose a group, then either pick one of its subcategories or type your
+ * own words. Typed text that isn't a listed subcategory is kept as a label on the group, so
+ * nothing is blocked and an admin can sort it later. "Something else" (the catch-all group)
+ * only asks for the words.
  */
 export default function CategoryPicker({
   tree,
@@ -38,7 +40,6 @@ export default function CategoryPicker({
   loading,
   error,
   required,
-  showNewCategoryHint = true,
 }: {
   tree: ServiceCategory[];
   value: CategoryValue;
@@ -46,105 +47,71 @@ export default function CategoryPicker({
   loading?: boolean;
   error?: string;
   required?: boolean;
-  // Owner-facing hint under a new-category field ("an admin will review…"). Hidden in the
-  // admin dialog, where the admin is the reviewer and this copy would be wrong.
-  showNewCategoryHint?: boolean;
 }) {
-  const isNew = value.requestedCategory != null;
-  const isNewAisle = isNew && value.requestedParentId == null; // brand-new top-level (main) category
-  const isNewShelf = isNew && value.requestedParentId != null; // new subcategory under an existing aisle
+  const groupId = groupIdFor(tree, value.categoryId);
+  const group = tree.find(g => g.id === groupId) ?? null;
+  const shelves = group?.children ?? [];
+  const shelf = shelves.find(s => s.id === value.categoryId) ?? null;
+  // The catch-all group sits last whatever the API order.
+  const groups = useMemo(() => [...tree].sort((a, b) => Number(!!a.is_catch_all) - Number(!!b.is_catch_all)), [tree]);
 
-  const [aisleId, setAisleId] = useState<number | null>(value.requestedParentId ?? findAisleId(tree, value.categoryId));
-
-  const resolvedAisle = isNewAisle ? null : (aisleId ?? value.requestedParentId ?? findAisleId(tree, value.categoryId));
-  const aisle = tree.find(a => a.id === resolvedAisle) ?? null;
-  const shelves = aisle?.children ?? [];
-  const aisleValue: number | string = isNewAisle ? NEW : (resolvedAisle ?? "");
-  const shelfValue: number | string = isNewShelf ? NEW : (value.categoryId ?? "");
-
-  const handleAisle = (v: string | number) => {
-    if (String(v) === NEW) {
-      setAisleId(null);
-      onChange({ categoryId: null, requestedCategory: "", requestedParentId: null });
-      return;
-    }
-    const id = v ? Number(v) : null;
-    setAisleId(id);
-    onChange({ categoryId: null, requestedCategory: null, requestedParentId: null });
+  const handleGroup = (v: string | number) => {
+    onChange({ categoryId: v === "" ? null : Number(v), categoryLabel: null });
   };
 
-  const handleShelf = (v: string | number) => {
-    if (String(v) === NEW) {
-      onChange({ categoryId: null, requestedCategory: "", requestedParentId: resolvedAisle });
-    } else if (v === "" || v == null) {
-      onChange({ categoryId: null, requestedCategory: null, requestedParentId: null });
-    } else {
-      onChange({ categoryId: Number(v), requestedCategory: null, requestedParentId: null });
-    }
+  // Typing filters the list; text that names a subcategory picks it, anything else stays as the owner's label.
+  const handleText = (text: string | null) => {
+    const typed = (text ?? "").trim();
+    const match = shelves.find(s => nameOf(s).toLowerCase() === typed.toLowerCase());
+    if (match) onChange({ categoryId: match.id, categoryLabel: null });
+    else onChange({ categoryId: groupId, categoryLabel: text || null });
   };
+
+  const textValue = shelf ? nameOf(shelf) : (value.categoryLabel ?? "");
+  const typedOwn = !shelf && !!value.categoryLabel?.trim();
 
   return (
     <Stack gap="16px">
       <SelectInput
-        label='Category'
+        label="Category"
         required={required}
-        value={aisleValue}
-        onChange={handleAisle}
-        options={[
-          ...tree.map(a => ({ value: a.id, label: a.name ?? a.category_name })),
-          { value: NEW, label: "➕ Suggest a new category" },
-        ]}
+        value={groupId ?? ""}
+        onChange={handleGroup}
+        options={groups.map(g => ({ value: g.id, label: nameOf(g) }))}
         placeholder={loading ? "Loading categories…" : "Select a category"}
         disabled={loading}
-        error={!isNew && resolvedAisle == null ? error : undefined}
+        error={groupId == null ? error : undefined}
       />
 
-      {isNewAisle && (
+      {group && group.is_catch_all && (
         <div>
           <TextInput
-            label='New category name'
-            required
-            value={value.requestedCategory ?? ""}
-            onChange={v => onChange({ categoryId: null, requestedCategory: v, requestedParentId: null })}
-            placeholder='e.g., Renewable Energy'
+            label="What is it?"
+            required={required}
+            value={value.categoryLabel ?? ""}
+            onChange={v => onChange({ categoryId: group.id, categoryLabel: v || null })}
+            placeholder="e.g. Drone photography"
             error={error}
           />
-          {showNewCategoryHint && (
-            <p className={hintCss}>
-              New top-level category — an admin will review and approve it. Your listing still goes live in the meantime.
-            </p>
-          )}
+          <p className={hintCss}>A few words is enough. We sort it into the right place.</p>
         </div>
       )}
 
-      {!isNewAisle && resolvedAisle != null && (
-        <SelectInput
-          label='Subcategory'
-          required={required}
-          value={shelfValue}
-          onChange={handleShelf}
-          options={[
-            ...shelves.map(s => ({ value: s.id, label: s.name ?? s.category_name })),
-            { value: NEW, label: "➕ Suggest a new subcategory" },
-          ]}
-          placeholder='Select a subcategory'
-          error={!isNewShelf ? error : undefined}
-        />
-      )}
-
-      {isNewShelf && (
+      {group && !group.is_catch_all && (
         <div>
-          <TextInput
-            label='New subcategory name'
-            required
-            value={value.requestedCategory ?? ""}
-            onChange={v => onChange({ categoryId: null, requestedCategory: v, requestedParentId: resolvedAisle })}
-            placeholder='e.g., Drone Photography'
+          <AutocompleteInput
+            freeSolo
+            label="Subcategory"
+            required={required}
+            value={textValue || null}
+            onChange={handleText}
+            options={shelves.map(nameOf)}
+            placeholder={shelves.length ? "Search, or type your own if it's not listed" : "Type what you offer"}
             error={error}
           />
-          {showNewCategoryHint && (
+          {typedOwn && (
             <p className={hintCss}>
-              New subcategory — an admin will review and approve it. Your listing still goes live in the meantime.
+              Not in our list yet. It shows under {nameOf(group)} as “{value.categoryLabel?.trim()}”.
             </p>
           )}
         </div>

@@ -6,7 +6,7 @@ import { useRef } from "react";
 import { css, cx } from "styled-system/css";
 import { DeliveryCard, OrderCard, ReleaseCard } from "../components/ProductCards";
 import { crossFade, spring, text } from "../design";
-import { Button } from "../ui";
+import { ButtonLink } from "../ui";
 
 /**
  * The composition is the change here: the old hero was centred, with a search
@@ -50,9 +50,16 @@ const copy = css({
   gap: "1.5rem",
 });
 
+/**
+ * Capped and centred until the two-column layout starts: the cards are anchored
+ * to the stage's corners, so on a tablet an uncapped stage flung them to opposite
+ * edges of the screen and the composition stopped reading as one object.
+ */
 const stage = css({
   position: "relative",
   width: "100%",
+  maxW: { base: "32rem", lg: "none" },
+  mx: { base: "auto", lg: "0" },
   minHeight: { base: "22rem", md: "27rem" },
 });
 
@@ -61,7 +68,7 @@ const stage = css({
  * offsets ride on inline style, because a css() call with a spread argument is
  * invisible to Panda's static extraction and would emit no rule at all.
  */
-const at = css({ position: "absolute", width: "min(21rem, 82%)" });
+const at = css({ position: "absolute", width: "min(23rem, 88%)" });
 
 export default function Hero() {
   const reduced = useReducedMotion();
@@ -107,12 +114,12 @@ export default function Hero() {
             variants={item}
             className={css({ display: "flex", flexWrap: "wrap", gap: "0.75rem", mt: "0.25rem" })}
           >
-            <Button variant="primary" size="lg">
+            <ButtonLink href="/website-v2/explore" variant="primary" size="lg">
               Browse services <ArrowRight size={16} aria-hidden />
-            </Button>
-            <Button variant="secondary" size="lg">
+            </ButtonLink>
+            <ButtonLink href="/website-v2#work" variant="secondary" size="lg">
               Start freelancing
-            </Button>
+            </ButtonLink>
           </motion.div>
         </motion.div>
 

@@ -23,6 +23,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { JobPost, Proposal, ProposalStatus } from "@/types/job";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import ProposalModal from "@/components/jobs/ProposalModal";
+import { categoryLine } from "@/lib/categoryLine";
 
 const money = (v: string | number) => "$" + Number(v).toLocaleString("en-US");
 const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -358,7 +359,7 @@ export default function JobDetailPage() {
         <div className={headMain}>
           <div className={chipRow}>
             <Chip tone={jobCfg.tone} label={jobCfg.label} size="lg" />
-            <span className={categoryChip}>{job.category?.category_name ?? "Uncategorized"}</span>
+            <span className={categoryChip}>{categoryLine(job.category, job.category_label)}</span>
           </div>
           <p className={jobTitle}>{job.title}</p>
           <p className={postedLine}>Posted {fmtDate(job.created_at)} · {timeAgo(job.created_at)}</p>

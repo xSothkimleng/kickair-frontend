@@ -32,6 +32,7 @@ import {
   CustomOrder,
   CreateCustomOrderRequest,
   SendCustomOfferRequest,
+  CounterCustomOfferRequest,
   CreateDirectCustomOfferRequest,
 } from "@/types/customOrder";
 
@@ -1025,6 +1026,24 @@ class ApiClient {
     return res.data;
   }
 
+  /** Owner labels waiting to be sorted, grouped by group + label with how many listings carry each. */
+  async getUnsortedCategories(): Promise<UnsortedCategoryRow[]> {
+    const res = await this.get("/api/admin/categories/unsorted");
+    return res.data;
+  }
+
+  /** Turn an owner label into a subcategory (under `parent_id`, default the row's group) and move every listing carrying it. */
+  async promoteUnsorted(body: { group_id: number; label: string; parent_id?: number | null; name?: string }): Promise<UnsortedMove> {
+    const res = await this.post("/api/admin/categories/unsorted/promote", body);
+    return res.data;
+  }
+
+  /** Move every listing carrying an owner label into an existing subcategory. */
+  async fileUnsorted(body: { group_id: number; label: string; category_id: number }): Promise<UnsortedMove> {
+    const res = await this.post("/api/admin/categories/unsorted/file", body);
+    return res.data;
+  }
+
   async createAdminCategory(name: string, parentId?: number | null): Promise<AdminCategory> {
     const res = await this.post("/api/admin/categories", {
       category_name: name,
@@ -1102,6 +1121,18 @@ class ApiClient {
 
   async acceptCustomOrder(id: number): Promise<CustomOrder> {
     const res = await this.post(`/api/custom-orders/${id}/accept`, {});
+    return res.data;
+  }
+
+  /** Client answers the offer on the table with terms of their own. */
+  async counterCustomOffer(id: number, payload: CounterCustomOfferRequest): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-orders/${id}/counter`, payload);
+    return res.data;
+  }
+
+  /** Freelancer agrees to the client's counter-offer as it stands; the client then pays it. */
+  async acceptCustomCounter(id: number): Promise<CustomOrder> {
+    const res = await this.post(`/api/custom-orders/${id}/accept-counter`, {});
     return res.data;
   }
 
@@ -1323,10 +1354,28 @@ export interface AdminCategory {
   parent_id: number | null;
   category_name: string;
   is_active: boolean;
+  /** The "Something else" group where listings that fit no group land. Can't be deleted or given subcategories. */
+  is_catch_all: boolean;
   /** Live + pending services filed under this category (admin list only). */
   services_count?: number;
+  job_posts_count?: number;
   created_at: string;
   updated_at: string;
+}
+
+/** One owner label on one group, with how many listings carry it. */
+export interface UnsortedCategoryRow {
+  group_id: number;
+  label: string;
+  services_count: number;
+  job_posts_count: number;
+  last_seen_at: string | null;
+  group: { id: number; category_name: string; is_catch_all: boolean } | null;
+}
+
+export interface UnsortedMove {
+  category: AdminCategory;
+  moved: { services: number; job_posts: number };
 }
 
 export interface AdminSkill {

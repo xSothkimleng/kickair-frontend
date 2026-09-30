@@ -365,7 +365,7 @@ export default function ChatView({
             <div>
               <p className={headerNameCss}>{conversation.other_participant.name}</p>
               <p className={headerSubCss}>
-                {conversation.order ? conversation.order.title : "One thread — all your orders & messages"}
+                {conversation.order ? conversation.order.title : "One thread for all your orders & messages"}
               </p>
             </div>
           </div>

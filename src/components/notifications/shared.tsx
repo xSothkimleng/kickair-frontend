@@ -80,6 +80,8 @@ export const TYPE_META: Record<NotificationType, TypeMeta> = {
   // Custom orders & milestones
   custom_order_requested: { Icon: FileSignature, tone: "blue", cta: "View request" },
   custom_order_offered: { Icon: Handshake, tone: "pending", cta: "Review offer" },
+  custom_order_countered: { Icon: Handshake, tone: "pending", cta: "Review counter-offer" },
+  custom_order_counter_accepted: { Icon: Handshake, tone: "success", cta: "Review and pay" },
   custom_order_accepted: { Icon: Handshake, tone: "success", cta: "Open workspace" },
   custom_order_declined: { Icon: XCircle, tone: "error", cta: "View request" },
   custom_order_withdrawn: { Icon: XCircle, tone: "neutral", cta: "View request" },
@@ -132,7 +134,8 @@ export function getNotificationRoute(n: Notification): string | null {
     return role === "client" ? `/dashboard/client?tab=orders` : `/dashboard/freelancer?tab=orders`;
   }
   if (customOrderId && (
-    type === "custom_order_offered" || type === "custom_order_accepted" || type === "custom_order_ended" ||
+    type === "custom_order_offered" || type === "custom_order_countered" || type === "custom_order_counter_accepted" ||
+    type === "custom_order_accepted" || type === "custom_order_ended" ||
     type === "milestone_funded" || type === "milestone_submitted" ||
     type === "milestone_payment_released" || type === "milestone_revision_requested"
   )) {

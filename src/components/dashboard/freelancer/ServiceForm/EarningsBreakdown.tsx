@@ -1,6 +1,7 @@
 import { css, cva } from "styled-system/css";
 import { ServiceFormData } from "../types";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
+import { MONEY, platformFee } from "@/lib/moneyTerms";
 
 const wrap = css({ mt: "24px", pt: "24px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "hairline" });
 const title = css({ textStyle: "body", fontWeight: 600, color: "ink" });
@@ -47,7 +48,7 @@ export default function EarningsBreakdown({ pricing }: { pricing: ServiceFormDat
     <div className={wrap}>
       <p className={title}>Your earnings per order</p>
       <p className={sub}>
-        Clients always pay your exact price — KickAir&apos;s {Math.round(rate * 100)}% commission comes out of your side.
+        Clients pay your exact price. The platform fee ({Math.round(rate * 100)}%) comes out of your side.
       </p>
 
       <div className={tierGrid({ cols: COLS[tiers.length] })}>
@@ -59,16 +60,16 @@ export default function EarningsBreakdown({ pricing }: { pricing: ServiceFormDat
               <p className={tierName}>{tier}</p>
               <div className={rows}>
                 <div className={row}>
-                  <p className={rowLabel}>Client pays</p>
+                  <p className={rowLabel}>{MONEY.clientPays}</p>
                   <p className={rowValue}>${price.toFixed(2)}</p>
                 </div>
                 <div className={row}>
-                  <p className={rowLabel}>Platform fee ({Math.round(rate * 100)}%)</p>
+                  <p className={rowLabel}>{platformFee(Math.round(rate * 100))}</p>
                   <p className={feeValue}>−${commission.toFixed(2)}</p>
                 </div>
                 <div className={rule} />
                 <div className={row}>
-                  <p className={netLabel}>You receive</p>
+                  <p className={netLabel}>{MONEY.youReceive}</p>
                   <p className={netValue}>${net.toFixed(2)}</p>
                 </div>
               </div>

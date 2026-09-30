@@ -136,7 +136,7 @@ export default function FreelancerOrderDetailModal({
     const labels: Record<OrderStatus, string> = {
       active: "In Progress",
       pending: "Pending Approval",
-      delivered: "Delivered — Awaiting Client",
+      delivered: "Delivered, awaiting client",
       revision_requested: "Revision Requested",
       disputed: "Disputed",
       completed: "Completed",

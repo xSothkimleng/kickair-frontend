@@ -43,6 +43,9 @@ export function useUser(id: number) {
 export function useCategories() {
   return useQuery({ queryKey: qk.admin.categories(), queryFn: () => api.getAdminCategories(), staleTime: 5 * 60_000 });
 }
+export function useUnsorted() {
+  return useQuery({ queryKey: qk.admin.unsorted(), queryFn: () => api.getUnsortedCategories(), staleTime: 60_000 });
+}
 export function useSkills() {
   return useQuery({ queryKey: qk.admin.skills(), queryFn: () => api.getAdminSkills(), staleTime: 5 * 60_000 });
 }

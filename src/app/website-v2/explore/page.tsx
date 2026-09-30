@@ -7,11 +7,23 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function ExplorePage() {
+const first = (v: string | string[] | undefined) => (Array.isArray(v) ? v[0] : v);
+
+export default async function ExplorePage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const params = await searchParams;
+  const q = first(params.q) ?? "";
+  const category = first(params.category) ?? "All";
+
   return (
     <>
       <SiteNav />
-      <Explore />
+      {/* Keyed on the params: searching again from the nav while already here
+          has to reset the filters, and state initialisers only run on mount. */}
+      <Explore key={`${q}|${category}`} initialQuery={q} initialCategory={category} />
     </>
   );
 }

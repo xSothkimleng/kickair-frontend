@@ -98,7 +98,7 @@ export default function EmailVerificationWall({ email, onResend, onLogout }: Ema
 
       <div className={gap20}>
         <VerifyBody>
-          Open it and press <strong className={strong}>Verify email address</strong> — it takes about ten
+          Open it and press <strong className={strong}>Verify email address</strong>. It takes about ten
           seconds. The link works for 60 minutes.
         </VerifyBody>
       </div>

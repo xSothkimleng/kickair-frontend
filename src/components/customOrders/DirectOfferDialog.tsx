@@ -172,7 +172,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
                   onChange={setClientUserId}
                   options={people.map((p) => ({ value: p.id, label: p.name }))}
                   placeholder="Pick a person…"
-                  emptyLabel={convsLoading ? "Loading conversations…" : people.length === 0 ? "No conversations yet — message a client first" : undefined}
+                  emptyLabel={convsLoading ? "Loading conversations…" : people.length === 0 ? "No conversations yet. Message a client first" : undefined}
                 />
               </div>
               <div>
@@ -182,7 +182,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
                   onChange={setServiceId}
                   options={activeServices.map((s) => ({ value: s.id, label: s.title }))}
                   placeholder="Pick a service…"
-                  emptyLabel={servicesLoading ? "Loading services…" : activeServices.length === 0 ? "No active services — publish one first" : undefined}
+                  emptyLabel={servicesLoading ? "Loading services…" : activeServices.length === 0 ? "No active services. Publish one first" : undefined}
                 />
               </div>
             </div>
@@ -191,7 +191,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
               <p className={labelCss}>Scope of work</p>
               <CoTextArea
                 minRows={3}
-                placeholder="What you'll deliver overall — write it the way you'd pitch it to them…"
+                placeholder="What you'll deliver overall. Write it the way you'd pitch it to them…"
                 value={scope}
                 onChange={setScope}
               />
@@ -229,7 +229,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
             <div className={footNote}>
               <Lock size={13} className={css({ color: "ink3", flexShrink: 0 })} />
               <p className={footText}>
-                Only the client can accept — total <span className={footMoney}><Money value={total} size="micro" weight={600} /></span>
+                Only the client can accept. Total <span className={footMoney}><Money value={total} size="micro" weight={600} /></span>
               </p>
             </div>
             <div className={actions}>

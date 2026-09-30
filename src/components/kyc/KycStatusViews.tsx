@@ -98,7 +98,7 @@ export function KycPendingView({ docTypeLabel, submittedAt, onDone }: { docTypeL
   return (
     <ResultCard footer={<button type="button" onClick={onDone} className={primaryBtn}>Back to KickAir</button>}>
       <ResultIcon tone="amber"><Clock size={40} /></ResultIcon>
-      <Heading title="We're reviewing your documents" sub="Thanks — everything's been submitted. We'll notify you once it's reviewed, usually within 1–2 business days." />
+      <Heading title="We're reviewing your documents" sub="Thanks, everything's been submitted. We'll notify you once it's reviewed, usually within 1–2 business days." />
       <div className={pendingRowCss}>
         <div className={pendingPillCss}>
           <span className={pendingDotCss} />Pending review
@@ -187,7 +187,7 @@ export function KycRejectedView({ reason, onResubmit }: { reason: string | null;
       }
     >
       <ResultIcon tone="red"><AlertCircle size={40} /></ResultIcon>
-      <Heading title="We couldn't verify your identity" sub="Don't worry — this happens. Fix the issue below and submit again." />
+      <Heading title="We couldn't verify your identity" sub="Don't worry, this happens. Fix the issue below and submit again." />
       {reason && (
         <div className={reasonBoxCss}>
           <AlertCircle size={18} className={reasonIconCss} />

@@ -7,13 +7,14 @@ import { css, cva, cx } from "styled-system/css";
 import { Spinner } from "@/components/ds";
 import { BareModal } from "@/components/ds/BareModal";
 import { Checkbox } from "@/components/ui/inputs";
-import { Service, ServiceCategory, ServiceMedia, CreateServiceRequest, TemporaryUpload } from "@/types/service";
+import { Service, ServiceCategory, ServiceMedia, CreateServiceRequest, TemporaryUpload, PricingTierSlot } from "@/types/service";
 import { ServiceFormData } from "../types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
 import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
+import { DEFAULT_TIER_NAME } from "./PricingTierCard";
 import MediaGallerySection from "./MediaGallerySection";
 import FAQsSection from "./FAQsSection";
 import CustomOrdersSection from "./CustomOrdersSection";
@@ -87,12 +88,25 @@ const termsCard = css({
   borderWidth: "1px",
   borderStyle: "solid",
   borderColor: "hairline",
-  p: "32px",
+  p: "24px 32px",
+  display: "flex",
+  flexDirection: "column",
+  gap: "20px",
 });
 const termsRow = css({ display: "flex", alignItems: "center" });
-const termsText = css({ textStyle: "micro", color: "ink2" });
-const termsLink = css({ textStyle: "micro", color: "accent", cursor: "pointer", _hover: { textDecoration: "underline" } });
-const actions = css({ display: "flex", alignItems: "center", gap: "12px" });
+const termsText = css({ textStyle: "ui", color: "ink2" });
+/* Plain emphasis, not a link — there is no Terms page to send people to yet. */
+const termsName = css({ color: "ink", fontWeight: 500 });
+const actions = css({
+  display: "flex",
+  alignItems: "center",
+  flexWrap: "wrap",
+  gap: "12px",
+  pt: "20px",
+  borderTopWidth: "1px",
+  borderTopStyle: "solid",
+  borderTopColor: "hairline",
+});
 /* Base metrics only — `bg`/`cursor` live on the per-button classes so no two
    atomic classes ever fight (Panda's `cx` concatenates, it can't resolve conflicts). */
 const bigBtnBase = css({
@@ -105,6 +119,7 @@ const bigBtnBase = css({
   px: "24px",
   h: "44px",
   minW: "64px",
+  flexGrow: { base: 1, sm: 0 },
   border: "none",
   textStyle: "ui",
   fontWeight: 500,
@@ -122,7 +137,15 @@ const publishBtn = cva({
   },
 });
 const draftBtn = css({ borderRadius: "40px", color: "ink", bg: "rgba(0, 0, 0, 0.05)", cursor: "pointer", _hover: { bg: "rgba(0, 0, 0, 0.1)" } });
-const cancelBtn = css({ color: "ink2", bg: "transparent", cursor: "pointer", _hover: { color: "ink", bg: "transparent" } });
+/* Outline drawn with an inset shadow: `border` is already spoken for by `bigBtnBase`. */
+const cancelBtn = css({
+  borderRadius: "40px",
+  color: "ink",
+  bg: "transparent",
+  cursor: "pointer",
+  boxShadow: "inset 0 0 0 1px rgba(0, 0, 0, 0.2)",
+  _hover: { boxShadow: "inset 0 0 0 1px rgba(0, 0, 0, 0.4)" },
+});
 
 /* Saved-as-draft dialog (Dialog + `PaperProps p:1`). */
 const dialogPanel = css({ p: "8px" });
@@ -207,15 +230,22 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   // Initialize form data from service if editing
   const getInitialFormData = (): ServiceFormData => {
     const pricingOptions = service?.pricing_options || [];
-    const basicOption = pricingOptions.find(p => p.title === "Basic");
-    const standardOption = pricingOptions.find(p => p.title === "Standard");
-    const premiumOption = pricingOptions.find(p => p.title === "Premium");
+    // Match by the tier slot — the title is free text and may have been renamed.
+    const optionFor = (tier: PricingTierSlot) =>
+      pricingOptions.find(p => (p.tier ?? p.title.trim().toLowerCase()) === tier);
+    // A name that is still the default stays empty so the field shows its placeholder.
+    const nameFor = (tier: PricingTierSlot) => {
+      const title = optionFor(tier)?.title.trim() ?? "";
+      return title === DEFAULT_TIER_NAME[tier] ? "" : title;
+    };
+    const basicOption = optionFor("basic");
+    const standardOption = optionFor("standard");
+    const premiumOption = optionFor("premium");
 
     return {
       title: service?.title || "",
       categoryId: service?.category_id || null,
-      requestedCategory: service?.requested_category ?? null,
-      requestedParentId: service?.requested_parent_id ?? null,
+      categoryLabel: service?.category_label ?? null,
       searchTags: service?.search_tags?.filter((t: string) => t.trim()) || [],
       description: service?.description || "",
       location: service?.location || "Phnom Penh, Cambodia",
@@ -223,7 +253,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         basic: {
           id: basicOption?.id,
           enabled: !!basicOption,
-          name: "Basic",
+          name: nameFor("basic"),
           description: basicOption?.description || "",
           revisions: String(basicOption?.revisions || "1"),
           deliveryTime: String(basicOption?.delivery_time || "").replace(" days", "") || "3",
@@ -232,7 +262,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         standard: {
           id: standardOption?.id,
           enabled: isEditing ? !!standardOption : true,
-          name: "Standard",
+          name: nameFor("standard"),
           description: standardOption?.description || "",
           revisions: String(standardOption?.revisions || "3"),
           deliveryTime: String(standardOption?.delivery_time || "").replace(" days", "") || "5",
@@ -241,7 +271,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         premium: {
           id: premiumOption?.id,
           enabled: !!premiumOption,
-          name: "Premium",
+          name: nameFor("premium"),
           description: premiumOption?.description || "",
           revisions: String(premiumOption?.revisions || "Unlimited"),
           deliveryTime: String(premiumOption?.delivery_time || "").replace(" days", "") || "7",
@@ -307,7 +337,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       if (!t.enabled) return;
       pricingOptions.push({
         ...(t.id ? { id: t.id } : {}),
-        title: t.name,
+        tier,
+        title: t.name.trim() || DEFAULT_TIER_NAME[tier],
         description: t.description || undefined,
         price: parseFloat(t.price) || 0,
         revisions: t.revisions || undefined,
@@ -319,10 +350,9 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const validFaqs = formData.faqs.filter(faq => faq.question.trim() && faq.answer.trim());
 
     return {
-      // Either an existing category, or a brand-new one to be reviewed by an admin.
-      ...(formData.categoryId
-        ? { category_id: formData.categoryId }
-        : { requested_category: formData.requestedCategory, requested_parent_id: formData.requestedParentId ?? undefined }),
+      // A subcategory, or a top-level group plus the owner's own label.
+      category_id: formData.categoryId,
+      category_label: formData.categoryLabel?.trim() || null,
       title: formData.title,
       description: formData.description,
       search_tags: formData.searchTags.filter(tag => tag.trim() !== ""),
@@ -347,7 +377,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const errs: Record<string, string> = {};
 
     if (!formData.title.trim()) errs.title = "Service title is required";
-    if (!formData.categoryId && !formData.requestedCategory?.trim()) errs.category = "Please select or suggest a category";
+    if (!formData.categoryId) errs.category = "Please select a category";
+    else if (categories.some(g => g.id === formData.categoryId) && !formData.categoryLabel?.trim()) errs.category = "Pick a subcategory, or tell us in a few words what this is";
     if (imageCount === 0) errs.image = "Add at least one image";
 
     const enabledTiers = (["basic", "standard", "premium"] as const).filter(t => formData.pricing[t].enabled);
@@ -517,7 +548,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         <div className={banner}>
           <ShieldCheck size={20} className={bannerIcon} />
           <p className={bannerText}>
-            <strong>Verify your identity to publish.</strong> You can build and save this service as a draft now — once your
+            <strong>Verify your identity to publish.</strong> You can build and save this service as a draft now. Once your
             identity (KYC) is verified, you can publish it for review.
           </p>
           <button
@@ -584,11 +615,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
             onChange={c => setFormData({ ...formData, agreeToTerms: c })}
             label={
               <span className={termsText}>
-                I agree to the{" "}
-                <span className={termsLink}>
-                  Terms of Service
-                </span>{" "}
-                and confirm that all information provided is accurate
+                I agree to the <span className={termsName}>Terms of Service</span> and confirm that all information
+                provided is accurate
               </span>
             }
           />
@@ -637,7 +665,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
             {kycNotice}
           </p>
           <p className={dialogText2}>
-            Your work is safe under <strong>Drafts</strong> — publish it for review once you&apos;re verified.
+            Your work is safe under <strong>Drafts</strong>. Publish it for review once you&apos;re verified.
           </p>
         </div>
         <div className={dialogActions}>

@@ -76,7 +76,7 @@ export default function FinancePage() {
             <div><p className={text({ size: "meta", tone: 2 })}>Gross volume today</p><p className={kpiNum}>{money(s.gmv_today)}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{money(s.total_gmv)} all time</p></div>
             <div><p className={text({ size: "meta", tone: 2 })}>Payouts awaiting approval</p><p className={kpiNum}>{money(s.pending_payouts_amount)}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{s.pending_payouts_count} {s.pending_payouts_count === 1 ? "request" : "requests"}</p></div>
             <div><p className={text({ size: "meta", tone: 2 })}>Refunds today</p><p className={kpiNum}>{money(s.refunds_today_amount)}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{s.refunds_today_count} {s.refunds_today_count === 1 ? "refund" : "refunds"}</p></div>
-            <div><p className={text({ size: "meta", tone: 2 })}>Platform commission</p><p className={kpiNum}>{rate != null ? `${Math.round(rate * 100)}%` : "—"}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>Charged to sellers on completion</p></div>
+            <div><p className={text({ size: "meta", tone: 2 })}>Platform fee</p><p className={kpiNum}>{rate != null ? `${Math.round(rate * 100)}%` : "—"}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>Charged to sellers on completion</p></div>
           </div>
         )}
       </Panel>

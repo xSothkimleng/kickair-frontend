@@ -10,6 +10,7 @@ import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { Wallet, Transaction, TransactionRole } from "@/types/wallet";
 import { Annot, StatusChip, TopUpDialog, WithdrawDialog, fmtUsd } from "@/components/payment";
+import { MONEY } from "@/lib/moneyTerms";
 
 type StatusFilter = "all" | "completed" | "pending" | "cancelled";
 const STATUS_FILTERS: [StatusFilter, string][] = [
@@ -19,38 +20,47 @@ const STATUS_FILTERS: [StatusFilter, string][] = [
   ["cancelled", "Cancelled"],
 ];
 
-type RoleFilter = "all" | "buyer" | "seller" | "account";
-const ROLE_FILTERS: [RoleFilter, string][] = [
-  ["all", "All activity"],
-  ["buyer", "As client"],
-  ["seller", "As freelancer"],
-  ["account", "Top-ups & withdrawals"],
-];
+/** "space" = this space's side of the wallet plus top-ups and withdrawals, which belong to both. */
+type RoleFilter = "space" | "all" | "account";
+type Mode = "client" | "freelancer";
+
+/**
+ * What each space shows. One wallet sits behind both, so "Available balance" is the same
+ * figure on either side; the two cards beside it and the default history view follow the space.
+ */
+const SPACE: Record<Mode, { role: TransactionRole; filterLabel: string; historySub: string }> = {
+  client: {
+    role: "buyer",
+    filterLabel: "Client space",
+    historySub: "What you paid, what came back, and your top-ups and withdrawals.",
+  },
+  freelancer: {
+    role: "seller",
+    filterLabel: "Freelancer space",
+    historySub: "What you earned, what is still pending, and your top-ups and withdrawals.",
+  },
+};
 
 /** Per-type display: label + how the amount reads. "in" = green +, "out" = –, "info" = unsigned. */
 const TYPE_DISPLAY: Record<string, { label: string; flow: "in" | "out" | "info" }> = {
-  deposit: { label: "Wallet top-up", flow: "in" },
-  withdrawal: { label: "Withdrawal", flow: "out" },
-  payment: { label: "Committed to order", flow: "out" },
-  release: { label: "Order completed — escrow settled", flow: "info" },
-  refund: { label: "Refund received", flow: "in" },
-  earning: { label: "Earning (in escrow)", flow: "info" },
-  clearance: { label: "Earning paid to wallet", flow: "in" },
+  deposit: { label: MONEY.topUp, flow: "in" },
+  withdrawal: { label: MONEY.withdrawal, flow: "out" },
+  payment: { label: MONEY.committedToOrder, flow: "out" },
+  release: { label: MONEY.orderCompletedReleased, flow: "info" },
+  refund: { label: MONEY.refundReceived, flow: "in" },
+  // The earning row keeps its label once released; the clearance row is the release itself.
+  earning: { label: MONEY.pendingEarnings, flow: "info" },
+  clearance: { label: MONEY.earningReleased, flow: "in" },
 };
 
 function typeDisplay(t: Transaction): { label: string; flow: "in" | "out" | "info" } {
   if (t.type === "dispute_release") {
-    return t.role === "buyer"
-      ? { label: "Dispute settled — paid to freelancer", flow: "info" }
-      : { label: "Dispute payout received", flow: "in" };
+    return { label: MONEY.releasedToFreelancer, flow: t.role === "buyer" ? "info" : "in" };
   }
   if (t.type === "dispute_refund") {
     return t.role === "buyer"
-      ? { label: "Dispute refund received", flow: "in" }
-      : { label: "Dispute — escrow returned to client", flow: "info" };
-  }
-  if (t.type === "earning" && t.status === "completed") {
-    return { label: "Earning released", flow: "info" };
+      ? { label: MONEY.refundReceived, flow: "in" }
+      : { label: MONEY.refundedToClient, flow: "info" };
   }
   return TYPE_DISPLAY[t.type] ?? { label: "Transaction", flow: "info" };
 }
@@ -126,9 +136,6 @@ const escrowValueGreen = css({ fontVariantNumeric: "tabular-nums", textStyle: "h
 // `mt: auto` never applied to these <p>s (globals.css resets p margins) — only the 4px padding did.
 const escrowNote = css({ textStyle: "micro", color: "ink3", pt: "4px" });
 
-const lifetimeRow = css({ display: "flex", gap: "24px", px: "4px", flexWrap: "wrap" });
-const lifetimeText = css({ textStyle: "meta", color: "ink3" });
-const lifetimeValue = css({ fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "ink2" });
 
 const panel = css({
   bg: "surface", borderWidth: "1px", borderStyle: "solid", borderColor: "hairline",
@@ -183,9 +190,15 @@ const txnAmount = css({ fontVariantNumeric: "tabular-nums", textStyle: "body", f
  * the role-split escrow cards. Lifetime totals are demoted below the cards so
  * "money I have" is never confused with "money I've ever moved".
  */
-export default function FinanceView({ mode }: { mode: "client" | "freelancer" }) {
+export default function FinanceView({ mode }: { mode: Mode }) {
+  const space = SPACE[mode];
+  const roleFilters: [RoleFilter, string][] = [
+    ["space", space.filterLabel],
+    ["all", "All activity"],
+    ["account", "Top-ups and withdrawals"],
+  ];
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("space");
   const [topUpOpen, setTopUpOpen] = useState(false);
   const [showWithdraw, setShowWithdraw] = useState(false);
   const queryClient = useQueryClient();
@@ -219,9 +232,12 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
     queryClient.invalidateQueries({ queryKey: mode === "client" ? qk.dashboard.client() : qk.dashboard.freelancer() });
   };
 
+  const matchesRole = (role: TransactionRole | "account") =>
+    roleFilter === "all" || role === "account" || (roleFilter === "space" && role === space.role);
+
   const filtered = transactions.filter(t =>
     (statusFilter === "all" || t.status === statusFilter) &&
-    (roleFilter === "all" || (t.role ?? "account") === roleFilter)
+    matchesRole(t.role ?? "account")
   );
 
   const formatDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
@@ -251,7 +267,7 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
   return (
     <div>
       <div className={head}>
-        <Annot>Finance overview · one shared wallet, both roles</Annot>
+        <Annot>{mode === "client" ? "Finance · client space" : "Finance · freelancer space"}</Annot>
         <p className={headTitle}>Wallet</p>
       </div>
 
@@ -263,7 +279,7 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
             <div className={cardHead}>
               <div className={cardHeadLeft}>
                 <span className={dot} style={{ background: "var(--colors-success)" }} />
-                <span className={balanceLabel}>Available balance</span>
+                <span className={balanceLabel}>{MONEY.availableBalance}</span>
               </div>
               <WalletIcon size={15} color="rgba(255,255,255,0.5)" />
             </div>
@@ -271,11 +287,11 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
               <span className={balanceCurrency}>$</span>
               <span className={balanceValue}>{balance.toFixed(2)}</span>
             </div>
-            <p className={balanceNote}>One shared wallet · free to spend or withdraw</p>
+            <p className={balanceNote}>One wallet for both spaces · free to spend or withdraw</p>
             <div className={balanceActions}>
               <button type="button" onClick={() => setTopUpOpen(true)} className={topUpBtn}>
                 <AddIcon size={15} />
-                Top up
+                {MONEY.topUp}
               </button>
               <button type="button" onClick={() => setShowWithdraw(true)} className={withdrawBtn}>
                 <ArrowUpIcon size={15} />
@@ -284,50 +300,70 @@ export default function FinanceView({ mode }: { mode: "client" | "freelancer" })
             </div>
           </div>
 
-          {/* Committed to orders — buyer escrow (amber, money out) */}
-          <div className={escrowCard}>
-            <div className={cardHead}>
-              <div className={cardHeadLeft}>
-                <span className={dot} style={{ background: "#EA580C" }} />
-                <span className={escrowLabel}>Committed to orders</span>
+          {mode === "client" ? (
+            <>
+              {/* Committed to orders — money locked for orders in progress (amber, money out) */}
+              <div className={escrowCard}>
+                <div className={cardHead}>
+                  <div className={cardHeadLeft}>
+                    <span className={dot} style={{ background: "#EA580C" }} />
+                    <span className={escrowLabel}>{MONEY.committedToOrders}</span>
+                  </div>
+                  <ShieldIcon size={15} className={css({ color: "ink3" })} />
+                </div>
+                <p className={escrowValue}>{fmtUsd(committed)}</p>
+                <p className={escrowNote}>Held in escrow until you approve each delivery</p>
               </div>
-              <ShieldIcon size={15} className={css({ color: "ink3" })} />
-            </div>
-            <p className={escrowValue}>{fmtUsd(committed)}</p>
-            <p className={escrowNote}>Held in escrow for gigs you&apos;re buying</p>
-          </div>
 
-          {/* Pending earnings — seller escrow (green, money in) */}
-          <div className={escrowCard}>
-            <div className={cardHead}>
-              <div className={cardHeadLeft}>
-                <span className={dot} style={{ background: "var(--colors-success)" }} />
-                <span className={escrowLabel}>Pending earnings</span>
+              <div className={escrowCard}>
+                <div className={cardHead}>
+                  <div className={cardHeadLeft}>
+                    <span className={dot} style={{ background: "var(--colors-ink3)" }} />
+                    <span className={escrowLabel}>{MONEY.totalSpent}</span>
+                  </div>
+                  <ArrowUpIcon size={15} className={css({ color: "ink3" })} />
+                </div>
+                <p className={escrowValue}>{fmtUsd(totalSpent)}</p>
+                <p className={escrowNote}>Paid for completed orders, all time</p>
               </div>
-              <PendingIcon size={15} className={css({ color: "ink3" })} />
-            </div>
-            <p className={escrowValueGreen}>{fmtUsd(pendingEarnings)}</p>
-            <p className={escrowNote}>Coming to you when your gigs complete</p>
-          </div>
-        </div>
+            </>
+          ) : (
+            <>
+              {/* Pending earnings — coming in once the client approves (green, money in) */}
+              <div className={escrowCard}>
+                <div className={cardHead}>
+                  <div className={cardHeadLeft}>
+                    <span className={dot} style={{ background: "var(--colors-success)" }} />
+                    <span className={escrowLabel}>{MONEY.pendingEarnings}</span>
+                  </div>
+                  <PendingIcon size={15} className={css({ color: "ink3" })} />
+                </div>
+                <p className={escrowValueGreen}>{fmtUsd(pendingEarnings)}</p>
+                <p className={escrowNote}>Coming to you when your orders complete</p>
+              </div>
 
-        {/* Lifetime totals — deliberately demoted, never confused with live balances */}
-        <div className={lifetimeRow}>
-          <p className={lifetimeText}>
-            Lifetime spent as client: <span className={lifetimeValue}>{fmtUsd(totalSpent)}</span>
-          </p>
-          <p className={lifetimeText}>
-            Lifetime earned as freelancer: <span className={lifetimeValue}>{fmtUsd(totalEarned)}</span>
-          </p>
+              <div className={escrowCard}>
+                <div className={cardHead}>
+                  <div className={cardHeadLeft}>
+                    <span className={dot} style={{ background: "var(--colors-ink3)" }} />
+                    <span className={escrowLabel}>{MONEY.totalEarnings}</span>
+                  </div>
+                  <ArrowDownIcon size={15} className={css({ color: "ink3" })} />
+                </div>
+                <p className={escrowValue}>{fmtUsd(totalEarned)}</p>
+                <p className={escrowNote}>Received from completed orders, after fees, all time</p>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Transaction history */}
         <div className={panel}>
           <p className={panelTitle}>Transaction history</p>
-          <p className={panelSub}>Your complete financial picture — buying and selling together, every row tagged.</p>
+          <p className={panelSub}>{roleFilter === "all" ? "Both spaces together, every row tagged." : space.historySub}</p>
 
           <div className={filterRow}>
-            {ROLE_FILTERS.map(([k, label]) => (
+            {roleFilters.map(([k, label]) => (
               <button key={k} type="button" onClick={() => setRoleFilter(k)} className={roleBtn} data-active={roleFilter === k ? "" : undefined}>
                 {label}
               </button>

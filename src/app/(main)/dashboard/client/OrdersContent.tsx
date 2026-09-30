@@ -293,7 +293,7 @@ export default function OrdersContent() {
                     {r.status === "offered" && (
                       <div className={alertInfoCss}>
                         <span className={alertIconCss} style={{ color: "#0071e3" }}><BellRing size={16} /></span>
-                        <div className={alertMsgCss}>Custom offer received — review and accept to start the order</div>
+                        <div className={alertMsgCss}>Custom offer received. Review and accept to start the order</div>
                       </div>
                     )}
 
@@ -402,7 +402,7 @@ export default function OrdersContent() {
                 {order.status === "delivered" && (
                   <div className={alertInfoCss}>
                     <span className={alertIconCss} style={{ color: "#0071e3" }}><BellRing size={16} /></span>
-                    <div className={alertMsgCss}>Work delivered — please review and approve or request a revision</div>
+                    <div className={alertMsgCss}>Work delivered. Review and approve, or request a revision</div>
                   </div>
                 )}
 

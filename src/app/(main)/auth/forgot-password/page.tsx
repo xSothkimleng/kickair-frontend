@@ -121,7 +121,7 @@ export default function ForgotPasswordPage() {
           <MailCheck size={44} className={stateIcon} aria-hidden="true" />
           <h1 className={authTitle}>Check your inbox</h1>
           <p className={authSubtitle}>
-            If <b>{email.trim()}</b> is registered, we&apos;ve sent a link to reset your password. The link expires in 60 minutes — check your spam folder if it doesn&apos;t arrive.
+            If <b>{email.trim()}</b> is registered, we&apos;ve sent a link to reset your password. The link expires in 60 minutes. Check your spam folder if it doesn&apos;t arrive.
           </p>
           <AuthPrimaryButton onClick={() => router.push("/auth/sign-in")}>Back to sign in</AuthPrimaryButton>
         </div>

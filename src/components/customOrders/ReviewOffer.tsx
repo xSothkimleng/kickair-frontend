@@ -9,6 +9,7 @@ import { CustomOrder } from "@/types/customOrder";
 import { Chip, Money, coAvatar, coBtn, coBtnStart, coCard, coLabel, initials } from "./kit";
 import { useCoInvalidate } from "./hooks";
 import FundMilestoneDialog from "./FundMilestoneDialog";
+import { MONEY, ESCROW_SHORT, escrowSentence } from "@/lib/moneyTerms";
 
 const grid = css({ display: "grid", gridTemplateColumns: { base: "1fr", md: "minmax(0,1fr) 348px" }, gap: "24px", alignItems: "start" });
 const mainCol = css({ display: "flex", flexDirection: "column", gap: "16px" });
@@ -138,7 +139,7 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
           <div>
             <p className={shieldTitle}>Your payment is protected</p>
             <p className={shieldBody}>
-              The payment goes into escrow now — it only releases to {freelancerName.split(" ")[0]} after you approve the delivery.
+              {escrowSentence(freelancerName.split(" ")[0])}
             </p>
           </div>
         </div>
@@ -150,9 +151,9 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
     <div className={aside}>
       <p className={coLabel}>To start the project</p>
       <div className={payBox}>
-        <p className={coLabel}>You pay now</p>
+        <p className={coLabel}>{MONEY.youPay}</p>
         <div className={payValue}><Money value={payNow} size="stat" weight={600} color="var(--colors-ink)" cents /></div>
-        <p className={payNote}>One-time payment → held in escrow</p>
+        <p className={payNote}>One-time payment. {ESCROW_SHORT}</p>
       </div>
       {fundedLater > 0 && (
         <div className={laterList}>
@@ -178,7 +179,7 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
             {declining ? <Spinner size={16} /> : "Decline"}
           </button>
           <div className={escrowNote}>
-            <Lock size={12} /> Funds held in escrow · refundable until delivery
+            <Lock size={12} /> {ESCROW_SHORT}
           </div>
         </>
       )}
@@ -198,9 +199,9 @@ export default function ReviewOffer({ order, onChanged }: { order: CustomOrder; 
         amount={payNow}
         onConfirm={handleAccept}
         submitting={submitting}
-        title="Fund the project"
-        annotation="Accept & fund into escrow"
-        ctaLabel={`Confirm & pay $${payNow.toLocaleString()}`}
+        title={MONEY.acceptAndPay}
+        annotation={ESCROW_SHORT}
+        ctaLabel={MONEY.acceptAndPay}
         error={error}
       />
     </>

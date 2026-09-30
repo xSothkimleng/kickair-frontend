@@ -193,8 +193,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   const [title, setTitle] = useState(job?.title ?? "");
   const [category, setCategory] = useState<CategoryValue>({
     categoryId: job?.category?.id ?? null,
-    requestedCategory: job?.requested_category ?? null,
-    requestedParentId: job?.requested_parent_id ?? null,
+    categoryLabel: job?.category_label ?? null,
   });
   const [description, setDescription] = useState(job?.description ?? "");
   const [budgetMin, setBudgetMin] = useState(job?.budget_min ?? "");
@@ -359,7 +358,8 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     if (!asDraft) {
       const errs: Record<string, string> = {};
       if (!title.trim()) errs.title = "Job title is required";
-      if (!category.categoryId && !category.requestedCategory?.trim()) errs.category = "Please select or suggest a category";
+      if (!category.categoryId) errs.category = "Please select a category";
+      else if (categories.some(g => g.id === category.categoryId) && !category.categoryLabel?.trim()) errs.category = "Pick a subcategory, or tell us in a few words what this is";
       if (!description.trim() || description === "<p></p>") errs.description = "Description is required";
       if (!budgetMin) errs.budgetMin = "Required";
       if (!budgetMax) errs.budgetMax = "Required";
@@ -383,9 +383,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
       const hasDescription = !!description.trim() && description !== "<p></p>";
       const payload: CreateJobPostRequest = {
         category_id: category.categoryId,
-        ...(category.categoryId
-          ? {}
-          : { requested_category: category.requestedCategory, requested_parent_id: category.requestedParentId ?? undefined }),
+        category_label: category.categoryLabel?.trim() || null,
         title: title.trim(),
         description: hasDescription ? description : null,
         budget_min: budgetMin === "" ? null : Number(budgetMin),
@@ -497,7 +495,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
               <RichTextEditor
                 value={description}
                 onChange={(v) => { setDescription(v); clearFieldError("description"); }}
-                placeholder="Describe the project in detail — goals, features, requirements..."
+                placeholder="Describe the project in detail: goals, features, requirements..."
                 minHeight={180}
               />
             </div>

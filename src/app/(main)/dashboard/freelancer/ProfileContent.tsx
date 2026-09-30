@@ -683,7 +683,7 @@ export default function ProfileContent() {
             </div>
           ) : (
             <p className={completeText}>
-              <Check size={15} /> Your profile is complete — nice work.
+              <Check size={15} /> Your profile is complete. Nice work.
             </p>
           )}
         </div>
@@ -722,7 +722,7 @@ export default function ProfileContent() {
                   <span className={ratingMeta}>{orders} orders</span>
                 </>
               ) : (
-                <p className={noReviews}>No reviews yet — your rating shows here once you complete orders.</p>
+                <p className={noReviews}>No reviews yet. Your rating shows here once you complete orders.</p>
               )}
             </div>
           </div>
@@ -736,7 +736,7 @@ export default function ProfileContent() {
       {/* Headline */}
       <SectionCard icon={<Sparkles size={19} />} title="Headline">
         <div className={fieldStack}>
-          <Field label="Professional tagline" hint="A short line that sums up what you do — shown under your name.">
+          <Field label="Professional tagline" hint="A short line that sums up what you do. Shown under your name.">
             <TextInput value={formData.tagline} onChange={v => handleInputChange("tagline", v.slice(0, 255))} placeholder="e.g. Brand & logo designer for cafés and startups" />
           </Field>
           <Field label="Location">
@@ -770,7 +770,7 @@ export default function ProfileContent() {
           value={selectedExpertiseIds}
           onChange={ids => { setSelectedExpertiseIds(ids as number[]); setHasUnsavedChanges(true); }}
           options={expertises.map(exp => ({ value: exp.id, label: exp.expertise_name }))}
-          placeholder="Search skills — or type a new one and press Enter"
+          placeholder="Search skills, or type a new one and press Enter"
           onCreate={handleCreateExpertise}
         />
       </SectionCard>
@@ -848,7 +848,7 @@ export default function ProfileContent() {
             })}
           </div>
         ) : (
-          <Empty icon={<LayoutGrid size={24} />} title="No projects yet" sub="Show your best work — projects with multiple images convert browsers into clients."
+          <Empty icon={<LayoutGrid size={24} />} title="No projects yet" sub="Show your best work. Projects with multiple images convert browsers into clients."
             action={
               <button type="button" onClick={() => openPortfolioDialog()} className={firstProjectBtn}>
                 <Plus size={15} />
@@ -903,7 +903,7 @@ export default function ProfileContent() {
       <PfDialog open={certificateDialog.open} onClose={() => setCertificateDialog(prev => ({ ...prev, open: false }))}
         eyebrow={certificateDialog.editIndex !== null ? "Edit certification" : "Add certification"}
         title={certificateDialog.editIndex !== null ? "Edit certification" : "Add certification"}
-        sub="Add a credential you've earned. Suggestions appear as you type — you can still enter a custom one."
+        sub="Add a credential you've earned. Suggestions appear as you type. You can still enter a custom one."
         footer={<>
           <button type="button" onClick={() => setCertificateDialog(prev => ({ ...prev, open: false }))} className={ghostBtn}>Cancel</button>
           <button type="button" onClick={handleSaveCertificate} disabled={!certificateDialog.data.title || !certificateDialog.data.source} className={primaryBtn}>{certificateDialog.editIndex !== null ? "Save changes" : "Add certification"}</button>
@@ -941,12 +941,12 @@ export default function ProfileContent() {
       <PfDialog open={portfolioDialog.open} onClose={() => !pfSaving && setPortfolioDialog(prev => ({ ...prev, open: false }))} width={560}
         eyebrow={portfolioDialog.editing ? "Edit project" : "Add portfolio project"}
         title={portfolioDialog.editing ? "Edit project" : "Add portfolio project"}
-        sub="Showcase a piece of work. Add several images — clients can page through them in a gallery."
+        sub="Showcase a piece of work. Add several images. Clients can page through them in a gallery."
         footer={<>
           <button type="button" onClick={() => setPortfolioDialog(prev => ({ ...prev, open: false }))} disabled={pfSaving} className={ghostBtn}>Cancel</button>
           <button type="button" onClick={handleSavePortfolio} disabled={!pf.title.trim() || pfSaving} className={primaryBtn}>{pfSaving ? <Spinner size={18} style={{ color: "white" }} /> : portfolioDialog.editing ? "Save project" : "Add project"}</button>
         </>}>
-        <Field label="Project title"><TextInput value={pf.title} onChange={v => setPf(p => ({ ...p, title: v.slice(0, 255) }))} placeholder="e.g. Sombai Coffee — full rebrand" /></Field>
+        <Field label="Project title"><TextInput value={pf.title} onChange={v => setPf(p => ({ ...p, title: v.slice(0, 255) }))} placeholder="e.g. Sombai Coffee, full rebrand" /></Field>
         <Field label="Description"><TextArea minRows={3} value={pf.description} onChange={v => setPf(p => ({ ...p, description: v }))} placeholder="What was the brief, and what did you deliver?" /></Field>
         <div className={pfFieldGrid}>
           <Field label="Project link" optional><TextInput value={pf.projectUrl} onChange={v => setPf(p => ({ ...p, projectUrl: v }))} placeholder="https://…" startIcon={<Link2 size={16} className={iconInk3} />} /></Field>

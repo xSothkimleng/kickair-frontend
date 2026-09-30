@@ -39,13 +39,13 @@ type UsePurchaseGateOptions = {
 const CONTENT = {
   login: {
     heading: "Sign in to place your order",
-    body: "Sign in or create a free account to continue — you'll come right back here to finish. You won't be charged yet.",
+    body: "Sign in or create a free account to continue. You'll come right back here to finish. You won't be charged yet.",
     primary: "Sign in",
     secondary: "Create an account",
   },
   "become-client": {
     heading: "Switch to a client account",
-    body: "Orders are placed from a client account. Add one to continue — you keep your freelancer account and can switch anytime.",
+    body: "Orders are placed from a client account. Add one to continue. You keep your freelancer account and can switch anytime.",
     primary: "Become a client",
     secondary: "Cancel",
   },

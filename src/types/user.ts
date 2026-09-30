@@ -112,6 +112,8 @@ export interface ClientProfile {
   user_id: number;
   company_name: string | null;
   industry_id: number | null;
+  /** The client's own wording when their industry is not in the list. */
+  industry_other?: string | null;
   company_size: '1-10' | '11-50' | '51-200' | '201-500' | '500+' | null;
   location: string | null;
   website: string | null;
@@ -221,6 +223,7 @@ export interface FreelancerProfileRequest {
 export interface ClientProfileRequest {
   company_name?: string | null;
   industry_id?: number | null;
+  industry_other?: string | null;
   company_size?: '1-10' | '11-50' | '51-200' | '201-500' | '500+' | null;
   location?: string | null;
   website?: string | null;

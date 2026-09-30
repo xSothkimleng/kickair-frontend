@@ -530,7 +530,7 @@ export default function MainNavbar() {
                     onClick={() => handleDropdownToggle("profile")}
                     aria-haspopup='menu'
                     aria-expanded={activeDropdown === "profile"}
-                    aria-label={`Profile menu — ${user.name}`}
+                    aria-label={`Profile menu: ${user.name}`}
                     className={profileBtnCss}>
                     <Avatar src={profileImageSrc} name={user.name} px={28} />
                     <span className={profileNameCss}>{user.name.trim().split(/\s+/)[0]}</span>
@@ -663,7 +663,7 @@ export default function MainNavbar() {
                   </div>
                   <Dialog.Description className={dlgBodyCss}>
                     {profileDialogType === "freelancer"
-                      ? "Enable your freelancer account to offer services and apply to jobs. It's free — you can set up your profile next."
+                      ? "Enable your freelancer account to offer services and apply to jobs. It's free. You can set up your profile next."
                       : "Enable your client account to post jobs and hire freelancers. It's free and only takes a moment."}
                   </Dialog.Description>
                   {profileDialogError && <div className={dlgErrorCss}>{profileDialogError}</div>}

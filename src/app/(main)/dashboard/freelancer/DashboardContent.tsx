@@ -14,6 +14,7 @@ import { invalidateForNotification } from "@/lib/realtimeInvalidation";
 import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Tab } from "./page";
+import { MONEY, titleCase } from "@/lib/moneyTerms";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -332,7 +333,7 @@ export default function DashboardContent({ onTabChange }: Props) {
           <div className={statTop}>
             <div className={statHead}>
               <DollarSign size={18} color="#9333ea" />
-              <p className={statLabel}>Total Earnings</p>
+              <p className={statLabel}>{titleCase(MONEY.totalEarnings)}</p>
             </div>
             <ArrowRight size={16} className={cx("arrow-icon", arrowIcon)} />
           </div>
@@ -343,7 +344,7 @@ export default function DashboardContent({ onTabChange }: Props) {
           <div className={statTop}>
             <div className={statHead}>
               <Wallet size={18} color="#16a34a" />
-              <p className={statLabel}>Available Balance</p>
+              <p className={statLabel}>{titleCase(MONEY.availableBalance)}</p>
             </div>
             <ArrowRight size={16} className={cx("arrow-icon", arrowIcon)} />
           </div>
@@ -366,7 +367,7 @@ export default function DashboardContent({ onTabChange }: Props) {
           <div className={statTop}>
             <div className={statHead}>
               <DollarSign size={18} color="#ea580c" />
-              <p className={statLabel}>In Escrow</p>
+              <p className={statLabel}>{titleCase(MONEY.pendingEarnings)}</p>
             </div>
             <ArrowRight size={16} className={cx("arrow-icon", arrowIcon)} />
           </div>
