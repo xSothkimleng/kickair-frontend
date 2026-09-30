@@ -356,7 +356,7 @@ The client returned `kickair-feedback/rounds/20.9.2026-terminology-approved.docx
 
 **Verified:** API 531 green (`ClientDashboardTest`, `DisputeTest` updated for the new strings), `tsc`, eslint (no new warnings), `next build`, local migrations run (0 legacy rows left), signed-in headless-Chrome screenshots of client + freelancer dashboards, both Finance tabs, checkout, and both sides of settled order #14 (tokens `terminology-shot`, deleted).
 
-## Status after the 2026-09-30 session (round-4 #06: counter-offer screens) — NOT committed (both repos)
+## Status after the 2026-09-30 session (round-4 #06: counter-offer screens) — committed & pushed 2026-09-30 (API 6aade96, FE see git log)
 Kimleng said yes to the specimen (https://claude.ai/artifact/RjqaNzAQhYKHELEhHXBD4T), so the screens were built on top of the Sept 21 API. Round 4 is now complete except for Kimleng's own trial of the category flow.
 
 **Frontend**
