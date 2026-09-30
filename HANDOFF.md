@@ -274,7 +274,7 @@ At handoff: both repos are committed and pushed to `main` (Telegram Gateway hard
 - Verified: `tsc` clean, `eslint` clean on the touched files. The `🐼 error [sheet:process]` line printed by `panda cssgen` / `next dev` is pre-existing (identical on the baseline) — not investigated.
 - Not touched: the composer's default delivery is still 30 days rather than the requested timeline — that's why the offer in Kimleng's screenshot said 30 days against a 2-day request. Small follow-up if wanted.
 
-## Status after the 2026-09-20 session, part 3 (website-v2 landing page completed) — NOT committed
+## Status after the 2026-09-20 session, part 3 (website-v2 landing page completed) — committed & pushed 2026-09-30 (FE 35f6624)
 The `/website-v2` landing was a six-section spike whose own header comment promised seven, with `EarningsCard` built and never used, no working links and no phone navigation. It is now a finished page. Everything is inside `src/app/website-v2/`; no shared file was touched. Still throwaway: `rm -rf src/app/website-v2` + drop `motion` retires it.
 - **Eight sections, no two neighbours on the same ground** (the table is in `page.tsx`): Hero white · Bento canvas · Escrow ink · Rail white · **Work canvas (new)** · Stats white (was paper) · **Faq paper (new)** · Closing white.
 - **`sections/Work.tsx` (new, `#work`)** — the freelancer's side, which the page never argued: "Start work knowing the money is there." The hero mirrored (product left, type right); the cards step down in the order the money moves — `RequestCard` (funded order, Accept/Decline) → `EarningsCard` → `PayoutCard` (the first and last are new in `components/ProductCards.tsx`) — beside a ruled list of the three ways to earn. The hero's "Start freelancing" scrolls here instead of dumping a stranger on sign-up.
@@ -289,7 +289,7 @@ The `/website-v2` landing was a six-section spike whose own header comment promi
 ### Site-wide bug found, NOT fixed (needs Kimleng's yes): `backdrop-filter` never renders outside Safari
 Panda's `backdropFilter` utility emits `backdrop-filter` **then** `-webkit-backdrop-filter`. Next's Lightning CSS (targets include Safari 16.4) collapses that pair to the **prefixed one only** — confirmed in the production build: 10 `-webkit-backdrop-filter` rules, 0 unprefixed. Chrome, Edge and Firefox ignore the prefixed property (`getComputedStyle(...).backdropFilter === "none"`), so every blur on the site — the live navbar's glass, modal scrims, the website-v2 chrome — is a flat tint for everyone not on Safari. Reproduced in isolation with `lightningcss.transform`: `unprefixed, -webkit-` → prefixed only; `unprefixed` alone → both, correctly. **Proposed fix (one place):** override the utility in `panda.config.ts` (`utilities.extend.backdropFilter.transform`) to emit only `backdropFilter`, and let Lightning add the prefix. It changes how the live site looks in Chrome (blurs appear for the first time), so screenshot the navbar and a modal before/after.
 
-## Status after client feedback round 4 (notes: 20.9.2026.pdf) — 2026-09-21, NOT committed (both repos)
+## Status after client feedback round 4 (notes: 20.9.2026.pdf) — 2026-09-21, committed & pushed 2026-09-30 (FE 35f6624 / API 67e6bfe)
 Full per-task log: `kickair-feedback/rounds/20.9.2026-todo.html` (published as a Claude artifact). 11 notes; 10 tasks done, #06 half done (API done, screens wait for Kimleng's yes on the specimen), #07c waits on the client approving the terminology document, 2 parked (#01 category flow, #10b "Dashboard will combine everything?").
 
 ### What changed — where things live
@@ -318,7 +318,7 @@ Order #13 (cancelled) and order #14 with dispute #4 resolved 40/60 (`[feedback-r
 - `CustomOrderOffered`'s body still says "Review the milestones to accept" (milestones are gone from the UI) — fold into #07c.
 - Service 1 and 2 in the local seed belong to the admin user's freelancer profile (checkout says "released to KickAir").
 
-## Status after the 2026-09-23 session (category flow rework, round-4 task #01 un-parked) — NOT committed (both repos)
+## Status after the 2026-09-23 session (category flow rework, round-4 task #01 un-parked) — committed & pushed 2026-09-30 (FE 35f6624 / API 67e6bfe); still awaiting Kimleng's live trial
 Kimleng asked what I thought of the category creation flow, then "please implement it … I need to see it in action". Design discussion and screenshots are in the chat; the todo page (`kickair-feedback/rounds/20.9.2026-todo.html`, task #01) carries the outcome. **Still needs Kimleng's yes on the live screens before commit.**
 
 **The rule:** collect signal, not categories. Owners never make a taxonomy decision. They pick a **group**, then either pick a **subcategory** or **type their own words**; the listing is filed on the group with that text as `category_label`, goes through the normal review, and an admin sorts labels by demand later. "Something else" is a real catch-all group for listings that fit no group.
@@ -340,7 +340,7 @@ Kimleng asked what I thought of the category creation flow, then "please impleme
 
 **Not done / to decide:** the two legacy services sitting directly on "Web Development" with no label (pre-existing data) stay as they are; editing them will ask the owner for a subcategory or words. Terminology is still "Category / Subcategory" for owners and "group / subcategory" in the admin console (#07c territory).
 
-## Status after the 2026-09-23 session, part 2 (round-4 #07c: approved terminology applied) — NOT committed (both repos)
+## Status after the 2026-09-23 session, part 2 (round-4 #07c: approved terminology applied) — committed & pushed 2026-09-30 (FE 35f6624 / API 67e6bfe)
 The client returned `kickair-feedback/rounds/20.9.2026-terminology-approved.docx`. Kimleng: "letter case depends on the situation on our platform. Anything, please decide for me." So every open question was decided here; the todo page (#07c) lists the calls. The four items the client asked us to suggest back are in `rounds/20.9.2026-terminology-followup.docx` for Kimleng to send.
 
 **Rule:** money words live in **one file per side** and nothing else writes them inline.
