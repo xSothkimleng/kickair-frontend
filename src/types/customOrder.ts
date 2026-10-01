@@ -101,7 +101,8 @@ export interface CustomOrder {
   freelancer_read_at: string | null;
   service: { id: number | null; title: string | null };
   client: { id: number | null; name: string | null };
-  freelancer: { id: number | null; name: string | null };
+  /** `id` is the freelancer profile; `user_id` is the account, which conversations are started with. */
+  freelancer: { id: number | null; user_id?: number | null; name: string | null };
   offer: CustomOrderOffer | null;
   /** Every round so far, oldest first. The last one is the offer on the table. */
   offers: CustomOrderOfferRound[];

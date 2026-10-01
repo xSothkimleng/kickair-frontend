@@ -1,6 +1,5 @@
 import HeroSection from "./HeroSection";
 import ServicesSection from "./ServicesSection";
-import { freelancers, serviceCategories } from "../../data/mockdata";
 import ExploreFreelancersSection from "./FreelancersSection";
 import FreelancerEmpowermentSection from "./FreelancerEmpowermentSection";
 import FindStableJobsSection from "./FindStableJobsSection";
@@ -17,8 +16,8 @@ export default function Home() {
   return (
     <>
       <HeroSection />
-      <ServicesSection serviceCategories={serviceCategories} />
-      <ExploreFreelancersSection freelancers={freelancers} />
+      <ServicesSection />
+      <ExploreFreelancersSection />
       <FreelancerEmpowermentSection />
       <FindStableJobsSection />
       <KickAirProSection />

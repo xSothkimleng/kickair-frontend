@@ -19,7 +19,7 @@ src/
     admin/           — admin console (Panda CSS): Shell.tsx (sidebar/topbar/guard/realtime), one *Page.tsx per /admin route,
                        ui.tsx (tokens + primitives), queries.ts (React Query hooks, qk.admin.*), notify.ts, toast.tsx, format.ts, labels.ts
     context/         — React context providers (AuthContext)
-    dashboard/       — shared order modals (OrderDetailModal, FreelancerOrderDetailModal)
+    dashboard/       — shared dashboard pieces (OrderRecord, ManagementCard, order page/list kits)
   lib/
     api.ts           — ApiClient class with all API methods
   types/             — TypeScript interfaces (order.ts, user.ts, wallet.ts, job.ts, etc.)
@@ -37,7 +37,7 @@ Admin list endpoints return `{ data: [...], meta: { current_page, last_page, per
 Admin pages fetch through the hooks in `components/admin/queries.ts`; every key lives under `qk.admin.*` so `registerAdminRefresh` (fed by `GlobalNotificationToast`) and `useAdminAction` can refresh the whole console with one `invalidateQueries(qk.admin.all())`. Admin notifications are routed by type in `components/admin/notify.ts`, never by the stored `data.link`.
 
 **Status handling**
-When adding new order statuses, update both the `getStatusColor` and `getStatusLabel` maps in every component that renders a status chip — currently `OrderDetailModal`, `FreelancerOrderDetailModal`, `client/OrdersContent`, `freelancer/OrdersContent`.
+When adding new order statuses, update the status maps in every component that renders a status chip — currently `client/OrdersContent`, `freelancer/OrdersContent` and the two order pages (`dashboard/orders/[id]`, `dashboard/freelancer/orders/[id]`). The old `OrderDetailModal` / `FreelancerOrderDetailModal` were deleted on 2026-10-01 (they had no importers).
 
 **Order history = the Order Record**
 `components/dashboard/OrderRecord.tsx` is the single history surface (lifecycle events + numbered deliveries/revisions with files + dispute rows). It's shared by the client and freelancer order pages and the admin dispute page. Don't add parallel history cards (a delivered-work card, a separate timeline, …) — add an event type / row style to the record instead. New `event_type`s need an `EVENT_STYLE` entry there.
@@ -95,8 +95,7 @@ Both `OrdersContent` files interleave regular orders with negotiation-phase cust
 - `resolveDispute(disputeId, data)` — `POST /api/admin/disputes/{id}/resolve`
 
 ### Components updated
-- **`src/components/dashboard/FreelancerOrderDetailModal.tsx`** — Submit Delivery, Resubmit, evidence, dispute form; all new statuses
-- **`src/components/dashboard/OrderDetailModal.tsx`** — Approve, Request Revision, evidence, dispute form; all new statuses
+- Order actions (deliver, resubmit, approve, revision, evidence, dispute) live on the two order pages: `dashboard/orders/[id]/page.tsx` (client) and `dashboard/freelancer/orders/[id]/page.tsx`
 - **`src/app/(main)/dashboard/client/OrdersContent.tsx`** — New status filters; `onOrderUpdate` wired to modal
 - **`src/app/(main)/dashboard/freelancer/OrdersContent.tsx`** — New status filters; Deliver / Resubmit inline buttons
 - Admin dispute review — now `src/components/admin/DisputesPage.tsx` + `DisputeDetailPage.tsx` (the console replaced the old `admin/trust/*` files on 2026-09-07)
@@ -109,3 +108,7 @@ Both `OrdersContent` files interleave regular orders with negotiation-phase cust
 - Withdraw button wired to `POST /api/wallet/withdraw`
 - "Pending Withdrawals" card and section added
 - Transaction activity correctly handles `earning` type
+
+## Public lists are filtered by the API (2026-10-01)
+Explore Services and Find Freelancers send their search, filters and sort to the API (`/api/services`, `/api/freelancer-profiles`) and render the page it returns; never filter or sort those lists in the browser, because a page only holds 15 rows. Filter option lists for freelancers come from `/api/freelancer-profiles/filters`. Shared text formatters (`plural`, `formatAmount`, `deliveryText`, `jobBudget`) are in `src/lib/format.ts`.
+

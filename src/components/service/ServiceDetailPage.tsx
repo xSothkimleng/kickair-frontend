@@ -34,6 +34,10 @@ import { usePurchaseGate, type PurchaseSummary } from "@/components/purchase/Pur
 import { useServiceListingLive } from "@/hooks/useServiceListingLive";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import { LevelBadge } from "@/components/profile/profileKit";
+import { plural } from "@/lib/format";
+import { SHOW_SAVE_BUTTONS } from "@/lib/features";
+import { sharePage } from "@/lib/share";
+import { withRedirect } from "@/lib/redirect";
 
 interface ServiceDetailPageProps {
   serviceId: number;
@@ -218,7 +222,7 @@ const flNameRowCss = css({ display: "flex", alignItems: "center", gap: "8px", fl
 const flNameCss = css({ textStyle: "lead", fontWeight: 600 });
 const statsGridCss = css({
   display: "grid",
-  gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(4, 1fr)" },
+  gridTemplateColumns: { base: "repeat(2, 1fr)", md: "repeat(3, 1fr)" },
   gap: "16px",
   pt: "16px",
   borderTopWidth: "1px",
@@ -432,7 +436,7 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
 
   const handleContact = async () => {
     if (!currentUser) {
-      router.push("/auth/sign-in");
+      router.push(withRedirect("/auth/sign-in", `/explore-services/${serviceId}`));
       return;
     }
     if (!contactUserId) return;
@@ -638,20 +642,22 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                   )}
                   <div className={metaItemCss}>
                     <ShoppingBag size={14} className={iconMutedCss} />
-                    <p className={body2MutedCss}>{service.orders_count} orders</p>
+                    <p className={body2MutedCss}>{plural(service.orders_count, "order")}</p>
                   </div>
                 </div>
               </div>
               <div className={actionsCss}>
-                <button
-                  type='button'
-                  aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
-                  onClick={() => setIsFavorite(!isFavorite)}
-                  data-active={isFavorite ? "" : undefined}
-                  className={roundBtnCss}>
-                  <Heart size={24} className={isFavorite ? css({ fill: "currentcolor" }) : undefined} />
-                </button>
-                <button type='button' aria-label='Share' className={roundBtnCss}>
+                {SHOW_SAVE_BUTTONS && (
+                  <button
+                    type='button'
+                    aria-label={isFavorite ? "Remove from favourites" : "Add to favourites"}
+                    onClick={() => setIsFavorite(!isFavorite)}
+                    data-active={isFavorite ? "" : undefined}
+                    className={roundBtnCss}>
+                    <Heart size={24} className={isFavorite ? css({ fill: "currentcolor" }) : undefined} />
+                  </button>
+                )}
+                <button type='button' aria-label='Share' onClick={() => sharePage(service.title)} className={roundBtnCss}>
                   <Share2 size={24} />
                 </button>
               </div>
@@ -675,10 +681,6 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                     </button>
                   </div>
                   <div className={statsGridCss}>
-                    <div>
-                      <span className={statCaptionCss}>Response Time</span>
-                      <p className={statValueCss}>{"< 1 hour"}</p>
-                    </div>
                     <div>
                       <span className={statCaptionCss}>Total Orders</span>
                       <p className={statValueCss}>{service.orders_count}</p>
@@ -925,7 +927,14 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
                             <button
                               type='button'
                               disabled={listingChanged}
-                              onClick={() => !listingChanged && setShowCustomOrderDialog(true)}
+                              onClick={() => {
+                                if (listingChanged) return;
+                                if (!currentUser) {
+                                  router.push(withRedirect("/auth/sign-in", `/explore-services/${serviceId}`));
+                                  return;
+                                }
+                                setShowCustomOrderDialog(true);
+                              }}
                               className={cx(ctaCss, ctaBlackCss)}>
                               <Receipt size={20} />
                               Request a Custom Order

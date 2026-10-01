@@ -159,5 +159,20 @@ export default defineConfig({
     },
   },
 
+  // Panda's own `backdropFilter` utility emits the standard property and then
+  // `-webkit-backdrop-filter`. Next's Lightning CSS collapses that pair to the
+  // prefixed one only, which Chrome, Edge and Firefox ignore, so every blur on
+  // the site was Safari-only. Emit the standard property alone; Lightning CSS
+  // adds the prefix for the Safari versions that need it.
+  utilities: {
+    extend: {
+      backdropFilter: {
+        transform(value: string) {
+          return { backdropFilter: value };
+        },
+      },
+    },
+  },
+
   outdir: "styled-system",
 });

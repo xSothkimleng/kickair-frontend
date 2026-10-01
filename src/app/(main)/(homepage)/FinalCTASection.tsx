@@ -23,7 +23,7 @@ const ctaSolid = cx(
   ctaBase,
   css({
     bg: "accent",
-    color: "white",
+    color: "white!",
     borderColor: "accent",
     boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
     _hover: { bg: "accentHover", borderColor: "accentHover" },
@@ -33,9 +33,9 @@ const ctaOutline = cx(
   ctaBase,
   css({
     bg: "transparent",
-    color: "accent",
+    color: "accent!",
     borderColor: "accent",
-    _hover: { bg: "accent", color: "white" },
+    _hover: { bg: "accent", color: "white!" },
   })
 );
 

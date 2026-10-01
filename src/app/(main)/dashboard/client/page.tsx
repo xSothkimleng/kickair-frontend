@@ -11,6 +11,7 @@ import PostProjectContent from "./PostServiceContent";
 import FinanceContent from "./FinanceContent";
 import OrdersContent from "./OrdersContent";
 import KycBanner from "@/components/dashboard/KycBanner";
+import { RoleGate } from "@/components/auth/RoleGate";
 
 export type Tab = "dashboard" | "profile" | "service" | "orders" | "finance";
 
@@ -69,7 +70,9 @@ function ClientSpace() {
 export default function ClientSpacePage() {
   return (
     <Suspense fallback={<div className={pageCss} />}>
-      <ClientSpace />
+      <RoleGate role="client">
+        <ClientSpace />
+      </RoleGate>
     </Suspense>
   );
 }

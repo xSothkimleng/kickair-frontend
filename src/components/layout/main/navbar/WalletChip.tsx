@@ -6,6 +6,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { useWalletSummary } from "@/hooks/useWalletSummary";
 import { walletChipCss, pillBalanceCss, pillDividerCss } from "./styles";
 import { MONEY } from "@/lib/moneyTerms";
+import { formatAmount } from "@/lib/format";
 
 /**
  * Steam-style wallet balance — money only, links to the Finance tab of whichever
@@ -25,14 +26,14 @@ export function WalletChip({ inPill = false }: { inPill?: boolean }) {
       ? "/dashboard/freelancer?tab=finance"
       : "/dashboard/client?tab=finance";
 
-  const label = `${MONEY.availableBalance} $${balance.toFixed(2)}, open Finance`;
+  const label = `${MONEY.availableBalance} $${formatAmount(balance)}, open Finance`;
 
   if (inPill) {
     return (
       <>
         <span aria-hidden className={pillDividerCss} />
         <button type='button' onClick={() => router.push(financeHref)} aria-label={label} className={pillBalanceCss}>
-          ${balance.toFixed(2)}
+          ${formatAmount(balance)}
         </button>
       </>
     );
@@ -41,7 +42,7 @@ export function WalletChip({ inPill = false }: { inPill?: boolean }) {
   return (
     <button type='button' onClick={() => router.push(financeHref)} aria-label={label} className={walletChipCss}>
       <Wallet size={18} />
-      ${balance.toFixed(2)}
+      ${formatAmount(balance)}
     </button>
   );
 }

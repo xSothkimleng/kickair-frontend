@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { LucideIcon } from "lucide-react";
 import { Target, Crown, DollarSign, Zap, ArrowRight } from "lucide-react";
 import { css } from "styled-system/css";
@@ -12,7 +13,7 @@ const ctaPill = css({
   px: "8",
   py: "3.5",
   bg: "accent",
-  color: "white",
+  color: "white!",
   borderRadius: "pill",
   textStyle: "body",
   fontWeight: 600,
@@ -127,10 +128,10 @@ export default function FreelancerEmpowermentSection() {
 
         {/* CTA Button */}
         <Box textAlign="center">
-          <button className={ctaPill}>
+          <Link href="/auth/sign-up" className={ctaPill}>
             Start Freelancing Today
             <ArrowRight size={16} />
-          </button>
+          </Link>
         </Box>
       </Box>
     </Box>

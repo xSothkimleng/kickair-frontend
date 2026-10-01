@@ -6,11 +6,9 @@ import { useRouter } from "next/navigation";
 import { css, cva } from "styled-system/css";
 import { JobPost } from "@/types/job";
 import { categoryLine } from "@/lib/categoryLine";
+import { jobBudget } from "@/lib/format";
+import { SHOW_SAVE_BUTTONS } from "@/lib/features";
 
-function money(value: string | number) {
-  const n = typeof value === "string" ? parseFloat(value) : value;
-  return "$" + (Number.isFinite(n) ? n : 0).toLocaleString("en-US");
-}
 function stripHtml(html: string) {
   return html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
 }
@@ -46,7 +44,6 @@ const budgetFigure = cva({
   base: { fontVariantNumeric: "tabular-nums", fontWeight: 600, color: "successText", whiteSpace: "nowrap" },
   variants: { mobile: { true: { textStyle: "title" }, false: { textStyle: "title" } } },
 });
-const budgetDash = css({ color: "ink3", fontWeight: 500 });
 const budgetLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "ink3", whiteSpace: "nowrap" });
 
 const bookmarkBtn = cva({
@@ -115,7 +112,7 @@ function BudgetBlock({ job, mobile }: { job: JobPost; mobile?: boolean }) {
   return (
     <div className={budgetBlock({ mobile: isMobile })}>
       <p className={budgetFigure({ mobile: isMobile })}>
-        {money(job.budget_min)}<span className={budgetDash}> – </span>{money(job.budget_max)}
+        {jobBudget(job.budget_min, job.budget_max)}
       </p>
       <p className={budgetLabel}>Budget · USD</p>
     </div>
@@ -133,7 +130,7 @@ export default function JobCard({ job }: { job: JobPost }) {
   const isFirst = job.proposal_count === 0;
   const proposalText = isFirst ? "Be the first to apply" : job.proposal_count >= 20 ? "20+ proposals" : `${job.proposal_count} proposal${job.proposal_count !== 1 ? "s" : ""}`;
 
-  const bookmark = (
+  const bookmark = SHOW_SAVE_BUTTONS && (
     <button
       type="button"
       aria-label={saved ? "Saved" : "Save job"}

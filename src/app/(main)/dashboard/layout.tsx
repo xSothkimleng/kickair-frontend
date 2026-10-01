@@ -1,7 +1,9 @@
-export default function RootLayout({
+import { RequireAuth } from "@/components/auth/RequireAuth";
+
+export default function DashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <div>{children}</div>;
+  return <RequireAuth>{children}</RequireAuth>;
 }

@@ -243,25 +243,33 @@ function CheckoutContent() {
     redirectTo: `/explore-services/${serviceId}/checkout?pricing_option_id=${pricingOptionId ?? ""}`,
   });
 
+  // What a bank payment charges: the shortfall when the wallet covers part, otherwise the full price.
+  const bankCharge = shortfall > 0 ? shortfall : total;
+  // The new order's own reference, shown on the success screen.
+  const [orderReference, setOrderReference] = useState<string | null>(null);
+
   const flow = usePaymentProcessing({
     context: "checkout",
     merchant: "KickAir",
     perform: async () => {
       if (!selectedPricing) throw new Error("No package selected");
-      // ABA path: top up exactly the shortfall into the wallet first, then the
-      // wallet funds the full order — one pool, one escrow entry.
-      if (paySource === "aba" && shortfall > 0) {
-        await api.post("/api/wallet/deposit", { amount: shortfall });
+      // ABA path: whatever the bank was charged goes into the wallet first, then the
+      // wallet funds the full order: one pool, one escrow entry. That is the shortfall
+      // when the wallet pays part, and the whole price when the buyer chose to pay it
+      // all by bank (skipping the deposit there made the wallet pay as well).
+      if (paySource === "aba") {
+        await api.post("/api/wallet/deposit", { amount: bankCharge });
       }
       const res: CreateOrderResponse = await api.post("/api/orders", { pricing_option_id: selectedPricing.id });
       createdOrderId.current = res.data.id;
+      setOrderReference(res.data.reference ?? `ORD-${String(res.data.id).padStart(6, "0")}`);
       await qc.invalidateQueries({ queryKey: qk.wallet() });
       qc.invalidateQueries({ queryKey: qk.orders.all() });
       qc.invalidateQueries({ queryKey: qk.dashboard.client() });
     },
     onSuccessPrimary: () => router.push(createdOrderId.current ? `/dashboard/orders/${createdOrderId.current}` : "/dashboard/client"),
     onSuccessDone: () => router.push("/explore-services"),
-    reference: { success: "#KA-OR-48217", failure: "#KA-ERR-90341 · ABA PayWay" },
+    reference: { success: orderReference ?? undefined },
   });
 
   const canPay = paySource === "wallet" ? !insufficient : paySource === "aba" && !!abaMethod;
@@ -285,7 +293,7 @@ function CheckoutContent() {
     if (!ensureCanPurchase()) return;
     if (paySource === "wallet" && !insufficient) flow.startWallet(total);
     // ABA charges only the shortfall (or the full price when the wallet is empty).
-    else if (paySource === "aba" && abaMethod) flow.startAba(abaMethod, shortfall > 0 ? shortfall : total);
+    else if (paySource === "aba" && abaMethod) flow.startAba(abaMethod, bankCharge);
   };
 
   if (isLoading) {
@@ -359,7 +367,7 @@ function CheckoutContent() {
               </div>
               <div className={css({ minW: 0 })}>
                 <p className={sellerNameCss}>{freelancerName}</p>
-                {service.rating_average && (
+                {service.rating_count > 0 && service.rating_average && (
                   <p className={sellerRatingCss}>
                     ★ {Number(service.rating_average).toFixed(1)} ({service.rating_count})
                   </p>

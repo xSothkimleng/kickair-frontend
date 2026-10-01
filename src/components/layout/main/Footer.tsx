@@ -15,6 +15,11 @@ const HREF: Record<string, string> = {
 
 type FooterLink = { label: string; page?: string; href?: string };
 
+// The social icons stay hidden until KickAir has real pages to link to (they used
+// to point at "#"). Add entries here to bring them back, e.g.
+// { label: "Facebook", glyph: "f", href: "https://facebook.com/…" }.
+const SOCIAL_LINKS: { label: string; glyph: string; href: string }[] = [];
+
 const COLUMNS: { title: string; links: FooterLink[] }[] = [
   {
     title: "Platform",
@@ -39,7 +44,7 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
     title: "For Clients",
     links: [
       { label: "Hire Talent", page: "services" },
-      { label: "Post a Job", page: "jobs" },
+      { label: "Post a Job", href: "/dashboard/client?tab=service" },
       { label: "Upgrade to Pro", page: "why-kickair" },
       { label: "Hiring Guides", page: "university" },
     ],
@@ -49,9 +54,9 @@ const COLUMNS: { title: string; links: FooterLink[] }[] = [
     links: [
       { label: "About Us", page: "why-kickair" },
       { label: "Reviews", page: "why-kickair" },
-      { label: "Terms & Conditions", href: "#" },
-      { label: "Privacy Policy", href: "#" },
-      { label: "Contact Support", href: "#" },
+      { label: "Terms of Service", href: "/terms" },
+      { label: "Privacy Policy", href: "/privacy" },
+      { label: "Contact Support", href: "/contact" },
     ],
   },
 ];
@@ -112,16 +117,17 @@ export default function Footer() {
               className={css({
                 textStyle: "ui",
                 color: "rgba(255, 255, 255, 0.6)",
-                mb: "6",
               })}
             >
               Cambodia&apos;s premier marketplace for freelancers and clients. Build your brand, earn your way.
             </Box>
-            <Box display="flex" alignItems="center" gap="3">
-              <a href="#" aria-label="Facebook" className={socialBtn}>f</a>
-              <a href="#" aria-label="LinkedIn" className={socialBtn}>in</a>
-              <a href="#" aria-label="Instagram" className={socialBtn}>ig</a>
-            </Box>
+            {SOCIAL_LINKS.length > 0 && (
+              <Box display="flex" alignItems="center" gap="3">
+                {SOCIAL_LINKS.map((s) => (
+                  <a key={s.label} href={s.href} target="_blank" rel="noreferrer" aria-label={s.label} className={socialBtn}>{s.glyph}</a>
+                ))}
+              </Box>
+            )}
           </Box>
 
           {/* Link columns */}

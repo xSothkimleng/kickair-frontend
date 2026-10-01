@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Clock, Lock, RotateCcw, Shield, Star } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Spinner } from "@/components/ds";
@@ -86,6 +87,8 @@ export default function ReviewOffer({ order, onChanged, onCounter }: { order: Cu
   const [fundOpen, setFundOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [declining, setDeclining] = useState(false);
+  const [messaging, setMessaging] = useState(false);
+  const router = useRouter();
   const [error, setError] = useState<string | null>(null);
 
   if (!offer || !m1) return null;
@@ -113,8 +116,33 @@ export default function ReviewOffer({ order, onChanged, onCounter }: { order: Cu
   };
 
   const handleDecline = async () => {
+    // Declining closes the request for good, so it asks first.
+    if (!window.confirm("Decline this offer? This closes the request and cannot be undone.")) return;
     setDeclining(true);
-    try { await api.withdrawCustomOrder(order.id); await invalidate(); onChanged(); } finally { setDeclining(false); }
+    setError(null);
+    try {
+      await api.withdrawCustomOrder(order.id);
+      await invalidate();
+      onChanged();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not decline the offer.");
+    } finally {
+      setDeclining(false);
+    }
+  };
+
+  // Opens the conversation with the freelancer (used when the offer has expired).
+  const handleMessage = async () => {
+    if (!order.freelancer.user_id) return;
+    setMessaging(true);
+    setError(null);
+    try {
+      const conversation = await api.startConversation(order.freelancer.user_id);
+      router.push(`/dashboard/client/messages?id=${conversation.id}`);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not open the conversation.");
+      setMessaging(false);
+    }
   };
 
   const main = (
@@ -186,10 +214,18 @@ export default function ReviewOffer({ order, onChanged, onCounter }: { order: Cu
       {error && <p className={errorText}>{error}</p>}
 
       {expired ? (
-        <div className={expiredBox}>
-          <Clock size={15} className={css({ color: "ink3", flexShrink: 0 })} />
-          <p className={expiredText}>This offer expired. Ask {first} to resend it.</p>
-        </div>
+        <>
+          <div className={expiredBox}>
+            <Clock size={15} className={css({ color: "ink3", flexShrink: 0 })} />
+            <p className={expiredText}>This offer ran out of time, so it can no longer be accepted. {first} can send a new one. You can ask for it in a message, or decline to close the request.</p>
+          </div>
+          <button type="button" onClick={handleMessage} disabled={messaging || declining} className={cx(coBtn({ tone: "outline", size: "lg", strong: true, full: true }), btnGap)}>
+            {messaging ? <Spinner size={16} /> : `Message ${first}`}
+          </button>
+          <button type="button" onClick={handleDecline} disabled={declining || messaging} className={cx(coBtn({ tone: "quiet", font: "ui", strong: true, full: true }), btnGap)}>
+            {declining ? <Spinner size={16} /> : "Decline"}
+          </button>
+        </>
       ) : (
         <>
           <button type="button" onClick={() => setFundOpen(true)} className={coBtn({ tone: "black", size: "xl", strong: true, full: true })}>

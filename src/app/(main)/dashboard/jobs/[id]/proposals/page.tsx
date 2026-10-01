@@ -9,6 +9,7 @@ import { Alert, Avatar, Pager, Skeleton, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
 import { JobPost, Proposal, ProposalStatus, JobPostStatus } from "@/types/job";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
+import { jobBudget } from "@/lib/format";
 
 type Filter = "all" | ProposalStatus;
 
@@ -526,7 +527,7 @@ export default function JobOverviewPage() {
                 {/* meta facts */}
                 <div className={factsRow}>
                   {([
-                    { label: "Budget", value: `${money(job.budget_min)} – ${money(job.budget_max)}` },
+                    { label: "Budget", value: jobBudget(job.budget_min, job.budget_max) },
                     ...(job.deadline ? [{ label: "Deadline", value: deadlineInfo(job.deadline).label, sub: fmtDate(job.deadline), urgent: deadlineInfo(job.deadline).urgent }] : []),
                     ...(job.category ? [{ label: "Category", value: job.category.category_name }] : []),
                     { label: "Posted", value: fmtDate(job.created_at) },
@@ -559,7 +560,7 @@ export default function JobOverviewPage() {
 
               {/* Proposals region */}
               {status === "rejected" ? null : proposals.length === 0 ? (
-                <EmptyProposals onEdit={editJob} />
+                <EmptyProposals onEdit={editJob} status={job.status} />
               ) : (
                 <div className={proposalsRegion}>
                   <div className={regionHead}>
@@ -637,7 +638,15 @@ function Attachments({ media }: { media: JobPost["media"] }) {
 }
 
 /* ── empty proposals ── */
-function EmptyProposals({ onEdit }: { onEdit: () => void }) {
+// What the empty state says depends on where the job is: only an open job is visible to freelancers.
+const EMPTY_BODY: Record<string, string> = {
+  draft: "This job is still a draft. Publish it to send it for review.",
+  pending_review: "This job is waiting for review. Freelancers will see it once it is approved.",
+  rejected: "This job was not approved. Edit it and send it for review again.",
+  open: "Your job is live and visible to freelancers. We’ll notify you the moment a proposal arrives.",
+};
+
+function EmptyProposals({ onEdit, status }: { onEdit: () => void; status: string }) {
   return (
     <div className={emptyCard}>
       <div className={emptyIcon}>
@@ -645,7 +654,7 @@ function EmptyProposals({ onEdit }: { onEdit: () => void }) {
       </div>
       <div className={emptyTextWrap}>
         <p className={emptyTitle}>No proposals yet</p>
-        <p className={emptyBody}>Your job is live and visible to freelancers. We&rsquo;ll notify you the moment a proposal arrives.</p>
+        <p className={emptyBody}>{EMPTY_BODY[status] ?? "This job is no longer open to proposals."}</p>
       </div>
       <div className={emptyActions}>
         <button type="button" onClick={onEdit} className={cx(pillBtnBase, softBtn, px14)}>

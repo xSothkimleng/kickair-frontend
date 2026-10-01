@@ -11,6 +11,7 @@ import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { CoInput, CoTextArea, Money, coAvatar, coBtn, coBtnEnd, coCard, coLabel, initials } from "./kit";
 import { useCoInvalidate } from "./hooks";
 import { MONEY, platformFee } from "@/lib/moneyTerms";
+import { formatUsd } from "@/lib/format";
 
 const layout = css({ display: "grid", gridTemplateColumns: "1fr", gap: "24px", alignItems: "start" });
 const card = cx(coCard, css({ p: { base: "18px", md: "24px" } }));
@@ -71,6 +72,7 @@ const sendBtn = css({ mt: "18px" });
 const cancelBtn = css({ mt: "8px" });
 
 /** Composer defaults — also what "Accept request" sends alongside the client's own budget and timeline. */
+// `deliveryDays` is only the fallback: the composer opens on the timeline the client asked for when there is one.
 export const OFFER_DEFAULTS = { deliveryDays: 30, revisions: 3, expiresInDays: 3 } as const;
 
 /** Terms the composer opens with: the offer on the table when the freelancer counters a client's counter-offer. */
@@ -83,7 +85,7 @@ export default function OfferComposer({ order, onSent, onCancel, initial, varian
   const countering = variant === "counter";
 
   const [scope, setScope] = useState(initial?.scope ?? order.description ?? "");
-  const [deliveryDays, setDeliveryDays] = useState(String(initial?.deliveryDays ?? OFFER_DEFAULTS.deliveryDays));
+  const [deliveryDays, setDeliveryDays] = useState(String(initial?.deliveryDays ?? order.desired_timeline_days ?? OFFER_DEFAULTS.deliveryDays));
   const [revisions, setRevisions] = useState(initial ? (initial.revisions != null ? String(initial.revisions) : "") : String(OFFER_DEFAULTS.revisions));
   const [note, setNote] = useState("");
   const [expiresIn, setExpiresIn] = useState(String(OFFER_DEFAULTS.expiresInDays));
@@ -128,7 +130,7 @@ export default function OfferComposer({ order, onSent, onCancel, initial, varian
       {/* ── Builder ── */}
       <div className={card}>
         <p className={labelCss}>Scope of work</p>
-        <CoTextArea radius="9" minRows={3} value={scope} onChange={setScope} className={gap20} placeholder="What you'll deliver overall…" />
+        <CoTextArea radius="9" minRows={3} value={scope} onChange={(v) => { setScope(v); setError(null); }} className={gap20} placeholder="What you'll deliver overall…" />
 
         <div className={twoCol}>
           <div>
@@ -142,7 +144,7 @@ export default function OfferComposer({ order, onSent, onCancel, initial, varian
         </div>
 
         <p className={labelCss}>Project price <span className={labelSub}>· one-time payment</span></p>
-        <CoInput mono radius="9" size="sm" className={priceField} value={amount} onChange={(v) => setAmount(sanitizeMoneyInput(v))} start="$" />
+        <CoInput mono radius="9" size="sm" className={priceField} value={amount} onChange={(v) => { setAmount(sanitizeMoneyInput(v)); setError(null); }} start="$" />
 
         <div className={noteBlock}>
           <p className={labelCss}>Note to client <span className={labelSub}>· optional</span></p>
@@ -160,7 +162,7 @@ export default function OfferComposer({ order, onSent, onCancel, initial, varian
           <div>
             <p className={clientName}>For {clientLabel}</p>
             <p className={clientMeta}>
-              Budget ${order.budget.toLocaleString()}{order.desired_timeline_days ? ` · ${order.desired_timeline_days} days` : ""}
+              Budget {formatUsd(order.budget)}{order.desired_timeline_days ? ` · ${order.desired_timeline_days} days` : ""}
             </p>
           </div>
         </div>
@@ -195,10 +197,10 @@ export default function OfferComposer({ order, onSent, onCancel, initial, varian
             : <CheckCircle2 size={16} className={css({ color: "success", flexShrink: 0 })} />}
           <p className={statusText({ over: overBudget })}>
             {overBudget
-              ? <>Over the client&apos;s budget by <span className={monoSpan}>${over.toLocaleString()}</span>. They may counter or decline.</>
+              ? <>Over the client&apos;s budget by <span className={monoSpan}>{formatUsd(over)}</span>. They may counter or decline.</>
               : over === 0
-                ? <>Matches the client&apos;s ${order.budget.toLocaleString()} budget exactly.</>
-                : <><span className={monoSpan}>${(-over).toLocaleString()}</span> under budget, comfortable room.</>}
+                ? <>Matches the client&apos;s {formatUsd(order.budget)} budget exactly.</>
+                : <><span className={monoSpan}>{formatUsd(-over)}</span> under budget, comfortable room.</>}
           </p>
         </div>
 

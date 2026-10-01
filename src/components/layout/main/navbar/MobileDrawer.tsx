@@ -1,12 +1,13 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Briefcase, ChevronDown, CircleHelp, LogOut, Settings as SettingsIcon, X } from "lucide-react";
+import { Bell, Briefcase, ChevronDown, CircleHelp, LogOut, MessageCircle, Settings as SettingsIcon, X } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Avatar, Divider, Drawer, Spinner, iconButton } from "@/components/ds";
 import { LANGUAGES, SHOW_LANGUAGE_SWITCH, type Language, type UserMode } from "./types";
 import { WalletChip } from "./WalletChip";
+import { api } from "@/lib/api";
 import { navBtnRaw, modeBtnOnCss, modeBtnOffCss } from "./styles";
 
 export interface MobileDrawerProps {
@@ -49,7 +50,7 @@ const NAV_SECTIONS: NavSection[] = [
       { title: "KickAir University", href: "/kick-air-university", description: "Learn project management and hiring best practices" },
       { title: "Explore Services", href: "/explore-services", description: "Browse freelancer offerings" },
       { title: "Find Freelancers", href: "/find-freelancer", description: "One-off jobs & projects" },
-      { title: "Post Your Gig", href: "/dashboard/freelancer", description: "Create a service listing to sell", authGated: true },
+      { title: "Post a Job", href: "/dashboard/client?tab=service", description: "Describe a project and get proposals", authGated: true },
     ],
   },
 ];
@@ -84,6 +85,8 @@ const modeRowCss = css({ display: "flex", gap: "8px" });
 const linksCss = css({ display: "flex", flexDirection: "column", mb: "8px" });
 const linkCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", textStyle: "ui", color: "black", _hover: { bg: "rgba(0,0,0,0.04)" } });
 const linkIconCss = css({ color: "ink2", mr: "8px", flexShrink: 0 });
+// Unread count at the end of a drawer link (Messages, Notifications).
+const linkCountCss = css({ ml: "auto", minW: "20px", h: "20px", px: "6px", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", borderRadius: "pill", bg: "error", color: "white", textStyle: "micro", fontWeight: 700 });
 const logoutCss = css(navBtnRaw, { w: "100%", justifyContent: "flex-start", px: "8px", py: "8px", textStyle: "ui", color: "#dc2626", _hover: { bg: "#fef2f2" } });
 const logoutIconCss = css({ mr: "8px", flexShrink: 0 });
 // `<a>` colour needs !important: globals.css sets `a { color: inherit }` outside any layer.
@@ -101,6 +104,20 @@ export function MobileDrawer({
   onModeSwitch,
 }: MobileDrawerProps) {
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+
+  // Unread counts for the Messages and Notifications links, read each time the drawer opens.
+  const [unread, setUnread] = useState({ messages: 0, notifications: 0 });
+  const signedIn = !!user;
+  useEffect(() => {
+    if (!open || !signedIn) return;
+    let cancelled = false;
+    Promise.all([api.getUnreadMessageCount().catch(() => 0), api.getUnreadCount().catch(() => 0)]).then(([messages, notifications]) => {
+      if (!cancelled) setUnread({ messages, notifications });
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [open, signedIn]);
 
   const toggleSection = (label: string) => {
     setExpandedSection(prev => (prev === label ? null : label));
@@ -234,20 +251,34 @@ export function MobileDrawer({
                     icon: <Briefcase size={14} className={linkIconCss} />,
                     label: currentMode === "freelancer" ? "Freelancer Dashboard" : "Client Dashboard",
                   },
+                  // The two bells are desktop-only, so on a phone the drawer is the way in.
+                  {
+                    href: `/dashboard/${currentMode}/messages`,
+                    icon: <MessageCircle size={14} className={linkIconCss} />,
+                    label: "Messages",
+                    count: unread.messages,
+                  },
+                  {
+                    href: "/notifications",
+                    icon: <Bell size={14} className={linkIconCss} />,
+                    label: "Notifications",
+                    count: unread.notifications,
+                  },
                   {
                     href: "/settings",
                     icon: <SettingsIcon size={14} className={linkIconCss} />,
                     label: "Settings",
                   },
                   {
-                    href: "/help",
+                    href: "/contact",
                     icon: <CircleHelp size={14} className={linkIconCss} />,
                     label: "Help & Support",
                   },
-                ].map(item => (
+                ].map((item: { href: string; icon: React.ReactNode; label: string; count?: number }) => (
                   <Link key={item.href} href={item.href} onClick={onClose} className={linkCss}>
                     {item.icon}
                     {item.label}
+                    {item.count ? <span className={linkCountCss}>{item.count > 99 ? "99+" : item.count}</span> : null}
                   </Link>
                 ))}
               </div>

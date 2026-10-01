@@ -15,6 +15,7 @@ import { MobileDrawer } from "./MobileDrawer";
 import { NotificationBell } from "./NotificationBell";
 import { MessageBell } from "./MessageBell";
 import { WalletChip } from "./WalletChip";
+import { withRedirect } from "@/lib/redirect";
 
 // The desktop/hamburger switch keeps the `lg` breakpoint (1200px) via a
 // literal media query — Panda's `lg` token is 1024px.
@@ -240,7 +241,13 @@ export default function MainNavbar() {
   // Posting a service lives in the freelancer space; send guests to sign in first.
   const goToCreateService = () => {
     setActiveDropdown(null);
-    router.push(user ? "/dashboard/freelancer" : "/auth/sign-in");
+    router.push(user ? "/dashboard/freelancer?tab=services" : withRedirect("/auth/sign-in", "/dashboard/freelancer?tab=services"));
+  };
+
+  // Posting a job lives on the client's Jobs tab; send guests to sign in first.
+  const goToPostJob = () => {
+    setActiveDropdown(null);
+    router.push(user ? "/dashboard/client?tab=service" : withRedirect("/auth/sign-in", "/dashboard/client?tab=service"));
   };
 
   const handleDropdownToggle = (dropdown: DropdownType) => {
@@ -465,9 +472,9 @@ export default function MainNavbar() {
                     />
                     <DropdownItem
                       icon={<Briefcase size={20} className={ddIconCss} />}
-                      title='Post Your Gig'
-                      description='Create a service listing to sell'
-                      onClick={goToCreateService}
+                      title='Post a Job'
+                      description='Describe a project and get proposals'
+                      onClick={goToPostJob}
                     />
                   </div>
                 </div>
@@ -601,7 +608,7 @@ export default function MainNavbar() {
                           label: "Settings",
                         },
                         {
-                          href: "/help",
+                          href: "/contact",
                           icon: <CircleHelp size={14} className={menuIconCss} />,
                           label: "Help & Support",
                         },

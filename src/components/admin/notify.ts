@@ -15,7 +15,10 @@ export function adminNotificationRoute(n: Notification): string {
       return "/admin/listings";
     case "admin_job_pending":
       return "/admin/listings?kind=job";
+    case "admin_payout_requested":
+      return "/admin/finance";
     case "admin_dispute_opened":
+    case "admin_dispute_evidence":
       return n.data?.dispute_id ? `/admin/disputes/${n.data.dispute_id}` : "/admin/disputes";
     default:
       return getNotificationRoute(n) ?? "/admin/inbox";

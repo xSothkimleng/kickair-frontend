@@ -35,11 +35,12 @@ import {
 } from "@/components/dashboard/orderPageKit";
 import { api } from "@/lib/api";
 import { downloadOrderAttachment } from "@/lib/downloadFile";
-import { Order, OrderStatus, MyOrdersResponse, Dispute, EvidenceFile } from "@/types/order";
+import { OrderStatus, Dispute, EvidenceFile } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
 import DisputeSettlementRows from "@/components/dashboard/DisputeSettlementRows";
 import OrderRecord from "@/components/dashboard/OrderRecord";
 import { MONEY } from "@/lib/moneyTerms";
+import { formatAmount, revisionsText } from "@/lib/format";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 // (the CARD / SEC_LABEL / BTN_* objects now live in `dashboard/orderPageKit`)
@@ -252,12 +253,7 @@ export default function ClientOrderDetailPage() {
   const queryClient = useQueryClient();
   const { data: order = null, isLoading: loading, error: queryError } = useQuery({
     queryKey: qk.orders.detail(orderId, "client"),
-    queryFn: async () => {
-      const response: MyOrdersResponse = await api.get("/api/my-orders");
-      const found = response.data.find((o: Order) => o.id === orderId);
-      if (!found) throw new Error("Order not found.");
-      return found;
-    },
+    queryFn: () => api.getOrder(orderId),
     enabled: Number.isFinite(orderId),
   });
   const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load order.") : null;
@@ -286,9 +282,11 @@ export default function ClientOrderDetailPage() {
   };
 
   const handleApprove = async () => {
+    // Releasing the payment cannot be undone, so it asks first.
+    if (!window.confirm("Approve this delivery and release the payment to the freelancer? This cannot be undone.")) return;
     setSubmitting(true); setActionError(null);
     try { await api.approveOrder(orderId); await fetchOrder(); }
-    catch { setActionError("Failed to approve order."); }
+    catch (e) { setActionError(e instanceof Error ? e.message : "Failed to approve order."); }
     finally { setSubmitting(false); }
   };
 
@@ -347,7 +345,7 @@ export default function ClientOrderDetailPage() {
     return (
       <div className={centerPageColCss}>
         <p className={notFoundTextCss}>{error ?? "Order not found."}</p>
-        <button type="button" onClick={() => router.back()} className={pageBtn({ look: "outline", h36: true })}>Go back</button>
+        <button type="button" onClick={() => router.push("/dashboard/client?tab=orders")} className={pageBtn({ look: "outline", h36: true })}>Back to Orders</button>
       </div>
     );
   }
@@ -357,16 +355,18 @@ export default function ClientOrderDetailPage() {
   const service = order.service;
   const freelancer = order.freelancer ?? order.proposal?.freelancer_profile;
   const pricingOption = order.pricing_option;
+  // What the client paid is stored on the order; the package price (display text) is only a fallback for old orders.
+  const paidPrice = Number(String(order.price ?? pricingOption?.price ?? "0").replace(/,/g, "")) || 0;
   const deliveryDays = isCustom
     ? order.custom_order?.delivery_days ?? undefined
     : isJobBased
       ? order.proposal?.timeline_days
       : parseInt(String(pricingOption?.delivery_time ?? ""));
-  const revisions = Number((isCustom ? order.custom_order?.revisions : pricingOption?.revisions) ?? 0);
+  const revisions = revisionsText(isCustom ? order.custom_order?.revisions : pricingOption?.revisions);
   const canReview = user?.is_client && order.status === "completed" && !order.review;
   const hasReview = order.status === "completed" && order.review;
   const canSubmitEvidence =
-    order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_evidence?.length && !order.dispute.client_statement;
+    order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.client_statement;
   // The actions card only renders when it has something in it — e.g. nothing for the client
   // to do while a revision is pending, or once their dispute evidence is in.
   const hasActions = ["delivered", "active", "completed", "cancelled", "pending"].includes(order.status) || canSubmitEvidence;
@@ -376,7 +376,7 @@ export default function ClientOrderDetailPage() {
       <div className={containerCss}>
 
         {/* Back */}
-        <button type="button" onClick={() => router.back()} className={backBtnCss}>
+        <button type="button" onClick={() => router.push("/dashboard/client?tab=orders")} className={backBtnCss}>
           <span className={startIconCss}><ChevronLeft size={20} /></span>
           Back to Orders
         </button>
@@ -453,9 +453,9 @@ export default function ClientOrderDetailPage() {
             )}
             <div className={statGridCss}>
               {[
-                { k: "Price", v: `$${pricingOption?.price ?? order.price ?? "0"}` },
+                { k: "Price", v: `$${formatAmount(paidPrice)}` },
                 { k: "Delivery", v: !isNaN(deliveryDays as number) ? `${deliveryDays} day${deliveryDays !== 1 ? "s" : ""}` : "N/A" },
-                { k: "Revisions", v: !isJobBased ? (revisions === -1 ? "Unlimited" : String(revisions)) : "N/A" },
+                { k: "Revisions", v: !isJobBased ? revisions : "N/A" },
               ].map(({ k, v }) => (
                 <div key={k} className={tileCss}>
                   <p className={tileLabelCss}>{k}</p>
@@ -465,7 +465,7 @@ export default function ClientOrderDetailPage() {
             </div>
             <div className={totalRowCss}>
               <p className={tileLabelCss}>{MONEY.youPay}</p>
-              <p className={tileValCss}>${pricingOption?.price ?? order.price ?? "0"}</p>
+              <p className={tileValCss}>${formatAmount(paidPrice)}</p>
             </div>
           </div>
 
@@ -602,7 +602,7 @@ export default function ClientOrderDetailPage() {
         <div className={dlgHeadCss}>
           <p className={dlgTitleCss}>Cancel this order?</p>
           <p className={dlgSubCss}>
-            The freelancer hasn&apos;t accepted yet, so you can cancel freely. Your ${Number(order.price ?? pricingOption?.price ?? 0).toFixed(2)} will be returned to your wallet immediately.
+            The freelancer hasn&apos;t accepted yet, so you can cancel freely. Your ${formatAmount(paidPrice)} will be returned to your wallet immediately.
           </p>
         </div>
         <div className={dlgFootTightCss}>

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Suspense, useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import { ChevronLeft, ChevronUp } from "lucide-react";
 import { css } from "styled-system/css";
@@ -11,6 +12,7 @@ import ServiceGrid from "./ServiceGrid";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
 import { useMarketplaceLive } from "@/hooks/useMarketplaceLive";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { Service, ServicesListResponse } from "@/types/service";
 import Link from "next/link";
 
@@ -110,17 +112,70 @@ const fabCss = css({
   "& svg": { display: "block" },
 });
 
+// What the URL can pre-set: `?q=` (the homepage search box) and `?category=` (a
+// homepage category card, by group id).
+function filtersFromUrl(params: URLSearchParams): Filters {
+  const category = params.get("category");
+  return {
+    ...defaultFilters(DEFAULT_BUDGET_MAX),
+    query: params.get("q") ?? "",
+    categories: category && /^\d+$/.test(category) ? [category] : [],
+  };
+}
+
+// Search, filters and sorting run on the API, so they cover every live service and
+// not only the page on screen. This turns the sidebar state into the query string.
+function toApiQuery(filters: Filters, sort: SortValue, page: number): string {
+  const params = new URLSearchParams({ page: String(page), sort });
+  const search = filters.query.trim();
+  if (search) params.set("search", search);
+  for (const id of filters.categories) params.append("category_ids[]", id);
+  // A range typed the wrong way round (min above max) still means that range.
+  const low = Math.min(...filters.budget);
+  const high = Math.max(...filters.budget);
+  if (low > 0) params.set("min_price", String(low));
+  if (high < DEFAULT_BUDGET_MAX) params.set("max_price", String(high));
+  if (filters.delivery !== "any") params.set("max_delivery_days", filters.delivery);
+  if (filters.rating !== "any") params.set("min_rating", filters.rating);
+  return params.toString();
+}
+
 export default function ServicesPage() {
+  // useSearchParams needs a Suspense boundary for the static build.
+  return (
+    <Suspense fallback={null}>
+      <ServicesPageInner />
+    </Suspense>
+  );
+}
+
+function ServicesPageInner() {
+  const searchParams = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const [showScrollTop, setShowScrollTop] = useState(false);
-  const [filters, setFilters] = useState<Filters>(defaultFilters(DEFAULT_BUDGET_MAX));
-  const [sort, setSort] = useState<SortValue>("relevant");
+  const [filters, setFiltersState] = useState<Filters>(() => filtersFromUrl(searchParams));
+  const [sort, setSortState] = useState<SortValue>("relevant");
   const [view, setView] = useState<"grid" | "list">("grid");
 
+  // Any change to what is being asked for starts again from page 1.
+  const setFilters = (next: Filters | ((f: Filters) => Filters)) => {
+    setFiltersState(next);
+    setCurrentPage(1);
+  };
+  const setSort = (next: SortValue) => {
+    setSortState(next);
+    setCurrentPage(1);
+  };
+
+  // Typing and dragging the budget slider change `filters` many times a second; the
+  // request follows a moment later.
+  const appliedFilters = useDebouncedValue(filters, 300);
+  const apiQuery = toApiQuery(appliedFilters, sort, currentPage);
+
   const { data, isLoading: loading, error: queryError, refetch } = useQuery({
-    queryKey: qk.services.explore({ page: currentPage }),
+    queryKey: qk.services.explore({ query: apiQuery }),
     queryFn: async () => {
-      const response: ServicesListResponse = await api.get(`/api/services?page=${currentPage}`);
+      const response: ServicesListResponse = await api.get(`/api/services?${apiQuery}`);
       return response;
     },
     placeholderData: keepPreviousData,
@@ -145,71 +200,17 @@ export default function ServicesPage() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  const budgetMax = services.length > 0
-    ? Math.max(...services.flatMap(s => s.pricing_options?.map(p => Number(p.price_raw)) || [0]), DEFAULT_BUDGET_MAX)
-    : DEFAULT_BUDGET_MAX;
+  const budgetMax = DEFAULT_BUDGET_MAX;
 
   // The sidebar lists groups only; "Something else" is left out (its listings are found by search).
+  // A ticked group matches listings on the group itself and on any of its subcategories (the API expands it).
   const sidebarCategories: FilterCategory[] = apiCategories.filter(c => !c.is_catch_all).map(c => ({
     id: c.id.toString(),
     label: c.category_name,
   }));
 
-  // --- Client-side filtering ---
-  let filtered = [...services];
-
-  if (filters.categories.length > 0) {
-    // A ticked group matches listings on the group itself and on any of its subcategories.
-    const ids = new Set<string>();
-    for (const group of apiCategories) {
-      if (!filters.categories.includes(group.id.toString())) continue;
-      ids.add(group.id.toString());
-      for (const shelf of group.children ?? []) ids.add(shelf.id.toString());
-    }
-    filtered = filtered.filter(s => s.category_id && ids.has(s.category_id.toString()));
-  }
-
-  filtered = filtered.filter(s => {
-    const lowest = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => Number(p.price_raw))) : 0;
-    return lowest >= filters.budget[0] && lowest <= filters.budget[1];
-  });
-
-  if (filters.delivery !== "any") {
-    const maxDays = parseInt(filters.delivery);
-    filtered = filtered.filter(s => {
-      const fastest = s.pricing_options?.length ? Math.min(...s.pricing_options.map(p => parseInt(String(p.delivery_time)))) : 0;
-      return fastest <= maxDays;
-    });
-  }
-
-  if (filters.rating !== "any") {
-    const minRating = parseFloat(filters.rating);
-    filtered = filtered.filter(s => s.rating_count > 0 && parseFloat(s.rating_average ?? "0") >= minRating);
-  }
-
-  if (filters.query.trim()) {
-    const q = filters.query.toLowerCase();
-    filtered = filtered.filter(s =>
-      s.title.toLowerCase().includes(q) ||
-      s.freelancer_profile?.user?.name?.toLowerCase().includes(q) ||
-      s.search_tags?.some(tag => tag.toLowerCase().includes(q)),
-    );
-  }
-
-  // --- Sorting ---
-  const sorted = [...filtered].sort((a, b) => {
-    const aPrice = a.pricing_options?.length ? Math.min(...a.pricing_options.map(p => Number(p.price_raw))) : 0;
-    const bPrice = b.pricing_options?.length ? Math.min(...b.pricing_options.map(p => Number(p.price_raw))) : 0;
-    const aRating = parseFloat(a.rating_average ?? "0");
-    const bRating = parseFloat(b.rating_average ?? "0");
-    switch (sort) {
-      case "price_asc": return aPrice - bPrice;
-      case "price_desc": return bPrice - aPrice;
-      case "rating": return bRating - aRating;
-      case "newest": return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
-      default: return b.orders_count - a.orders_count;
-    }
-  });
+  // The API returns the page already filtered and sorted.
+  const sorted = services;
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);

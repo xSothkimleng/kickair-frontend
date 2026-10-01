@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { css } from "styled-system/css";
 import { Box, Grid } from "styled-system/jsx";
 import { Briefcase, CheckCircle2, ArrowRight } from "lucide-react";
@@ -11,7 +12,7 @@ const ctaPill = css({
   px: "8",
   py: "3.5",
   bg: "accent",
-  color: "white",
+  color: "white!",
   borderRadius: "pill",
   textStyle: "body",
   fontWeight: 600,
@@ -124,10 +125,10 @@ export default function StableJobsSection() {
               ))}
             </Box>
 
-            <button className={ctaPill}>
+            <Link href="/jobs" className={ctaPill}>
               Browse Job Listings
               <ArrowRight size={16} />
-            </button>
+            </Link>
           </Box>
 
           {/* Right Content - Job Cards */}

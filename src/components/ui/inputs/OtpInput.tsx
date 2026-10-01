@@ -4,8 +4,13 @@ import { useRef } from "react";
 import { css } from "styled-system/css";
 import { FieldShell } from "./FieldShell";
 
+// 48px wide at rest (the old 46px + border) but allowed to shrink, so six boxes
+// still fit a narrow dialog on a phone instead of the last one being clipped.
 const otpBox = css({
-  w: "46px",
+  boxSizing: "border-box",
+  flex: "0 1 48px",
+  w: "48px",
+  minW: 0,
   h: "52px",
   p: 0,
   m: 0,
@@ -65,7 +70,7 @@ export default function OtpInput({ label, helper, error, value, onChange, length
 
   return (
     <FieldShell label={label} helper={helper} error={error}>
-      <div className={css({ display: "flex", gap: "10px" })}>
+      <div className={css({ display: "flex", gap: { base: "8px", sm: "10px" }, maxW: "100%" })}>
         {chars.map((c, i) => (
           <input
             key={i}

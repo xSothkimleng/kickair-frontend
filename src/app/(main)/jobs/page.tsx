@@ -238,7 +238,7 @@ export default function JobBoardPage() {
           </button>
         </div>
         <div className={sheetBody}>
-          <JobFilters categories={categories} expertises={expertises} filters={filters} onChange={setFilters} />
+          <JobFilters categories={categories} expertises={expertises} filters={filters} onChange={setFilters} bare />
         </div>
         <div className={sheetFoot}>
           <button type="button" onClick={clear} className={cx(sheetBtn, sheetClear)}>Clear all</button>

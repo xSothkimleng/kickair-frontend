@@ -10,6 +10,7 @@ import { AuthFallback, AuthPage, AuthPrimaryButton, authFooterText, authForm, au
 import { TextInput, PasswordInput } from "@/components/ui/inputs";
 import { safeRedirect } from "@/lib/redirect";
 import { User } from "@/types/user";
+import { useRedirectIfSignedIn } from "@/components/auth/useRedirectIfSignedIn";
 
 const intro = css({ textAlign: "center", mb: "32px" });
 const orRow = css({ my: "20px" });
@@ -27,6 +28,7 @@ function SignInContent() {
   const { loginEmail, loginPhone } = useAuth();
   const router = useRouter();
   const redirectTo = safeRedirect(useSearchParams().get("redirect"));
+  useRedirectIfSignedIn(redirectTo);
 
   const goAfterAuth = (loggedInUser: User) => {
     // Honor an explicit return path (e.g. bounced here from the purchase gate)
@@ -48,8 +50,16 @@ function SignInContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
     setError("");
+
+    // Checked here so the messages use the field's own name ("Email or phone") instead
+    // of the API's ("The telephone field is required").
+    const typed = identifier.trim();
+    if (!typed) return setError("Enter your email or phone number.");
+    if (!typed.includes("@") && !/^[\d\s+()-]{6,}$/.test(typed)) return setError("Enter a valid email address or phone number.");
+    if (!password) return setError("Enter your password.");
+
+    setIsLoading(true);
 
     try {
       // Auto-detect: an "@" means email, otherwise treat it as a phone number.

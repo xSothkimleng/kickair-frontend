@@ -70,6 +70,7 @@ export default function ReviewCounter({ order, onChanged, onCounter }: { order: 
     finally { setAgreeing(false); }
   };
   const handleDecline = async () => {
+    if (!window.confirm("Decline this counter-offer? This closes the request and cannot be undone.")) return;
     setDeclining(true);
     setError(null);
     try { await api.declineCustomOrder(order.id); await invalidate(); onChanged(); }

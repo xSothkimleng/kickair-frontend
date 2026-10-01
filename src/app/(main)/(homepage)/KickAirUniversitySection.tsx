@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookOpen, ArrowRight } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box } from "styled-system/jsx";
@@ -13,7 +14,7 @@ const ctaSolid = css({
   borderRadius: "pill",
   borderWidth: "0",
   bg: "white",
-  color: "accent",
+  color: "accent!",
   textStyle: "body",
   fontWeight: 600,
   cursor: "pointer",
@@ -72,10 +73,10 @@ export default function KickAirUniversitySection() {
             Master freelancing with free courses on pricing, client management, marketing, and more
           </Box>
         </Box>
-        <button className={ctaSolid}>
+        <Link href="/kick-air-university" className={ctaSolid}>
           Start Learning Free
           <ArrowRight size={16} />
-        </button>
+        </Link>
       </Box>
     </Box>
   );

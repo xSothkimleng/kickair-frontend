@@ -13,6 +13,7 @@ import FinanceContent from "./FinanceContent";
 import LevelContent from "./LevelContent";
 import ProposalsContent from "./ProposalsContent";
 import KycBanner from "@/components/dashboard/KycBanner";
+import { RoleGate } from "@/components/auth/RoleGate";
 
 export type Tab = "dashboard" | "profile" | "services" | "orders" | "finance" | "level" | "proposals";
 
@@ -75,7 +76,9 @@ function FreelancerSpace() {
 export default function FreelancerSpacePage() {
   return (
     <Suspense fallback={<div className={pageCss} />}>
-      <FreelancerSpace />
+      <RoleGate role="freelancer">
+        <FreelancerSpace />
+      </RoleGate>
     </Suspense>
   );
 }

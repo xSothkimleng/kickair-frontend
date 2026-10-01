@@ -10,7 +10,7 @@ interface UseChatReturn {
   loading: boolean;
   error: string | null;
   sending: boolean;
-  sendMessage: (body: string) => Promise<Message | null>;
+  sendMessage: (body: string, file?: File) => Promise<Message | null>;
   markAsRead: () => Promise<void>;
 }
 
@@ -39,14 +39,15 @@ export function useChat(conversationId: number | null): UseChatReturn {
 
   // Send message
   const sendMessage = useCallback(
-    async (body: string): Promise<Message | null> => {
-      if (!conversationId || !body.trim()) return null;
+    async (body: string, file?: File): Promise<Message | null> => {
+      if (!conversationId || (!body.trim() && !file)) return null;
 
       try {
         setSending(true);
-        const response = await api.post(`/api/conversations/${conversationId}/messages`, {
-          body: body.trim(),
-        });
+        setError(null);
+        const response = file
+          ? await api.sendConversationFile(conversationId, file, body)
+          : await api.post(`/api/conversations/${conversationId}/messages`, { body: body.trim() });
         const newMessage = response.data;
         // Add message immediately for sender (real-time event will also arrive but we dedupe)
         setMessages((prev) => {

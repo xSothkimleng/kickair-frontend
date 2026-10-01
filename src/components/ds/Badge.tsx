@@ -50,9 +50,11 @@ export function Indicator({ count, dot, max = 99, children, className, tone = "e
         <span
           aria-hidden="true"
           className={dot
-            ? css({ position: "absolute", top: "2px", right: "2px", w: "8px", h: "8px", borderRadius: "pill", boxShadow: "0 0 0 2px white" })
+            // pointerEvents none on both: the bubble sits on top of the control it marks, and a
+            // click on it has to reach that control (a two-digit count covered half the bell).
+            ? css({ position: "absolute", top: "2px", right: "2px", w: "8px", h: "8px", borderRadius: "pill", boxShadow: "0 0 0 2px white", pointerEvents: "none" })
             // border-box: preflight is off, so without it the padding adds to minW and "1" renders as a 28px pill.
-            : css({ position: "absolute", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", minW: "16px", h: "16px", px: "4px", borderRadius: "pill", color: "white", textStyle: "micro", fontWeight: 700, boxShadow: "0 0 0 1.5px white" })}
+            : css({ position: "absolute", boxSizing: "border-box", display: "inline-flex", alignItems: "center", justifyContent: "center", minW: "16px", h: "16px", px: "4px", borderRadius: "pill", color: "white", textStyle: "micro", fontWeight: 700, boxShadow: "0 0 0 1.5px white", pointerEvents: "none" })}
           style={dot ? { background: bg } : { background: bg, top: offset, right: offset }}>
           {dot ? null : count! > max ? `${max}+` : count}
         </span>

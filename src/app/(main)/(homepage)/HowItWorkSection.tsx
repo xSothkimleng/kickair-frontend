@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box, Grid } from "styled-system/jsx";
@@ -16,12 +17,12 @@ const ctaOutline = css({
   borderStyle: "solid",
   borderColor: "accent",
   bg: "transparent",
-  color: "accent",
+  color: "accent!",
   textStyle: "body",
   fontWeight: 600,
   cursor: "pointer",
   transition: "background-color .15s, color .15s, border-color .15s",
-  _hover: { bg: "accent", color: "white" },
+  _hover: { bg: "accent", color: "white!" },
 });
 
 const stepCircle = css({
@@ -148,10 +149,10 @@ export default function HowItWorksSection() {
 
         {/* CTA Button */}
         <Box textAlign="center">
-          <button className={ctaOutline}>
+          <Link href="/why-kick-air#how-it-works" className={ctaOutline}>
             Learn More About Our Process
             <ArrowRight size={16} />
-          </button>
+          </Link>
         </Box>
       </Box>
     </Box>

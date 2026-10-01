@@ -10,11 +10,11 @@ import { useAdminAction, useUser } from "./queries";
 import { useToast } from "./toast";
 import { Avatar, Btn, ErrorState, Field, Input, Loading, Modal, Panel, PanelHead, Pill, Tabs, Textarea, grid, kvList, page, row, stack, text } from "./ui";
 import { ago, dateTime, errorMessage, longDate, money, shortDate } from "./format";
-import { accountLabel, accountState, kycLabel, kycState } from "./labels";
+import { accountPill, accountState, kycLabel, kycState } from "./labels";
 import { MONEY } from "@/lib/moneyTerms";
 
 const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
-const banner = css({ display: "flex", alignItems: "center", gap: "12px", p: "12px 16px", borderRadius: "12px", mb: "20px", bg: "var(--td-amber-soft)", color: "var(--td-amber)", "&[data-kind=banned]": { bg: "var(--td-red-soft)", color: "var(--td-red)" } });
+const banner = css({ display: "flex", alignItems: "center", gap: "12px", p: "12px 16px", borderRadius: "12px", mb: "20px", bg: "var(--td-amber-soft)", color: "var(--td-amber)", "&[data-kind=banned]": { bg: "var(--td-red-soft)", color: "var(--td-red)" }, "&[data-kind=deactivated]": { bg: "var(--td-hover)", color: "var(--td-ink-2)" } });
 const chip = css({ display: "inline-flex", h: "26px", px: "10px", alignItems: "center", borderRadius: "999px", bg: "var(--td-hover)", textStyle: "meta", fontWeight: 500 });
 const statBox = css({ p: "14px 16px", borderRadius: "10px", bg: "var(--td-surface-2)", border: "1px solid var(--td-line)" });
 const statNum = css({ textStyle: "title", fontWeight: 600, fontVariantNumeric: "tabular-nums", mt: "2px" });
@@ -89,7 +89,7 @@ export default function PersonDetailPage({ id }: { id: number }) {
           <div className={stack({ gap: 2 })}>
             <div className={row({ gap: 3 })}>
               <h1 className={text({ size: "heading", weight: 600 })}>{p.name}</h1>
-              <Pill tone={accountLabel[status].tone} dot>{accountLabel[status].label}</Pill>
+              <Pill tone={accountPill(p.account_status).tone} dot>{accountPill(p.account_status).label}</Pill>
               {showVerification ? <Pill tone={kycLabel[k].tone}>{kycLabel[k].label}</Pill> : null}
             </div>
             <p className={text({ tone: 2 })}>{roles.join(" and ") || "No role yet"}{fp?.tagline ? ` · ${fp.tagline}` : cp?.company_name ? ` · ${cp.company_name}` : ""}</p>
@@ -104,6 +104,13 @@ export default function PersonDetailPage({ id }: { id: number }) {
           {status === "active" ? <><Btn onClick={() => setModal("suspend")} disabled={busy}><PauseCircle size={15} /> Suspend</Btn><Btn variant="dangerSoft" onClick={() => setModal("ban")} disabled={busy}><Ban size={15} /> Ban</Btn></> : <Btn variant="primary" onClick={doReinstate} disabled={busy}><PlayCircle size={15} /> {busy ? "Working…" : status === "banned" ? "Unban" : "Reinstate"}</Btn>}
         </div>
       </header>
+
+      {status === "active" && p.account_status.deactivated_at ? (
+        <div className={banner} data-kind="deactivated">
+          <PauseCircle size={16} />
+          <p className={text({ weight: 600, size: "meta" })}>{`Deactivated by the user ${ago(p.account_status.deactivated_at)}. Hidden from the marketplace; signing in again within 30 days brings the account back.`}</p>
+        </div>
+      ) : null}
 
       {status !== "active" ? (
         <div className={banner} data-kind={status}>

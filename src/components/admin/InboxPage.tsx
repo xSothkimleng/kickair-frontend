@@ -14,7 +14,7 @@ import { Btn, EmptyState, ErrorState, Loading, Pager, Panel, Segmented, page, Pa
 import { ago } from "./format";
 
 const ICONS: Partial<Record<NotificationType, typeof Bell>> = {
-  admin_kyc_pending: ShieldCheck, admin_dispute_opened: Scale, admin_service_pending: Store, admin_job_pending: Store,
+  admin_kyc_pending: ShieldCheck, admin_dispute_opened: Scale, admin_dispute_evidence: Scale, admin_service_pending: Store, admin_job_pending: Store, admin_payout_requested: Wallet,
   withdrawal_approved: Wallet, withdrawal_rejected: Wallet, order_placed: ShoppingBag, order_completed: ShoppingBag,
 };
 const rowCss = css({

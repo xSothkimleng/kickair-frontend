@@ -28,15 +28,17 @@ const SERVICE_TONE: Record<Service["status"], { tone: CardTone; label: string }>
 const usd = (v: string | number) => "$" + Number(v).toLocaleString("en-US", { maximumFractionDigits: 0 });
 
 // `[data-muted]` (draft/disabled) swaps the surface: the attribute selector outranks `mgCard`'s own `bg`.
-const cardLayout = css({ display: "flex", alignItems: "center", gap: "18px", p: "18px", "&[data-muted]": { bg: "#FBFBFD" } });
+// On a phone the thumbnail sits above the text and the actions drop under the title;
+// side by side they overlapped the title and pushed Delete out of the card.
+const cardLayout = css({ display: "flex", flexDirection: { base: "column", sm: "row" }, alignItems: { base: "stretch", sm: "center" }, gap: { base: "14px", sm: "18px" }, p: "18px", boxSizing: "border-box", "&[data-muted]": { bg: "#FBFBFD" }, "& > .mg-chev": { display: { base: "none", sm: "flex" } } });
 const cardBody = css({ display: "flex", flexDirection: "column", gap: "12px", flex: 1, minW: 0 });
-const topRow = css({ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "12px" });
+const topRow = css({ display: "flex", flexDirection: { base: "column", sm: "row" }, justifyContent: "space-between", alignItems: "flex-start", gap: "12px" });
 const titleWrap = css({ display: "flex", gap: "8px", flexWrap: "wrap", minW: 0, alignItems: "center" });
 const titleText = cva({
   base: { textStyle: "lead", fontWeight: 600 },
   variants: { muted: { true: { color: "ink2" }, false: { color: "ink" } } },
 });
-const actionsWrap = css({ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: "flex-end", flex: "none" });
+const actionsWrap = css({ display: "flex", gap: "6px", flexWrap: "wrap", justifyContent: { base: "flex-start", sm: "flex-end" }, flex: "none", maxW: "100%" });
 
 /* Small button metrics with the card's own tones. */
 const actionBtn = cva({
@@ -105,7 +107,7 @@ export default function ServiceCard({ service, onEdit, onView, onDelete }: Servi
   const muted = service.status === "disabled" || service.status === "draft";
   const needsResubmit = service.status === "rejected" || service.status === "disabled";
 
-  const prices = service.pricing_options?.map(o => parseFloat(o.price)).filter(p => p > 0) ?? [];
+  const prices = service.pricing_options?.map(o => Number(o.price_raw)).filter(p => p > 0) ?? [];
   const minPrice = prices.length ? Math.min(...prices) : 0;
   const maxPrice = prices.length ? Math.max(...prices) : 0;
 

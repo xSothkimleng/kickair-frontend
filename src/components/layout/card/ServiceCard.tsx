@@ -1,27 +1,33 @@
 "use client";
 
-import { Briefcase, Code, Palette, Pencil, TrendingUp, Video, type LucideIcon } from "lucide-react";
+import { createElement } from "react";
+import Link from "next/link";
+import { Briefcase, Building2, Code, Palette, Pencil, TrendingUp, Video, type LucideIcon } from "lucide-react";
 import { css, cx } from "styled-system/css";
 
 interface ServiceCardProps {
   name: string;
   description: string;
-  icon: string;
+  href: string;
 }
 
-// Keys are the icon names stored on the category data; values are the nearest lucide
-// glyphs to the icons used before (Edit → Pencil, BusinessCenter → Briefcase,
-// VideoLibrary → Video).
-const iconMap: Record<string, LucideIcon> = {
-  Palette,
-  Code,
-  TrendingUp,
-  Video,
-  PenTool: Pencil,
-  Briefcase,
-};
+// The icon follows the category name, so a group an admin adds later still gets a
+// sensible glyph. First match wins; anything else falls back to the briefcase.
+const ICON_BY_KEYWORD: [RegExp, LucideIcon][] = [
+  [/design|brand|logo|art/i, Palette],
+  [/web|develop|software|app|code|program/i, Code],
+  [/market|seo|ads|sales/i, TrendingUp],
+  [/video|motion|animation|film/i, Video],
+  [/writ|content|translat|copy/i, Pencil],
+  [/architect|interior|construction|building/i, Building2],
+];
+
+function iconFor(name: string): LucideIcon {
+  return ICON_BY_KEYWORD.find(([pattern]) => pattern.test(name))?.[1] ?? Briefcase;
+}
 
 const cardCss = css({
+  display: "block",
   width: "100%",
   boxSizing: "border-box",
   bg: "surface",
@@ -57,24 +63,18 @@ const textColCss = css({ display: "flex", flexDirection: "column", gap: "4px" })
 const titleCss = css({ textStyle: "title", fontWeight: 500, color: "ink" });
 const descCss = css({ textStyle: "body", color: "ink2" });
 
-export function ServiceCard({ name, description, icon }: ServiceCardProps) {
-  const IconComponent = iconMap[icon] || Palette;
-
+export function ServiceCard({ name, description, href }: ServiceCardProps) {
   return (
-    <button
-      type="button"
-      //   onClick={onClick}
-      className={cardCss}
-    >
+    <Link href={href} className={cardCss}>
       <div className={innerCss}>
         <div className={cx("icon-wrapper", iconWrapCss)}>
-          <IconComponent className={cx("icon", iconCss)} size={24} />
+          {createElement(iconFor(name), { className: cx("icon", iconCss), size: 24 })}
         </div>
         <div className={textColCss}>
           <h3 className={titleCss}>{name}</h3>
           <p className={descCss}>{description}</p>
         </div>
       </div>
-    </button>
+    </Link>
   );
 }

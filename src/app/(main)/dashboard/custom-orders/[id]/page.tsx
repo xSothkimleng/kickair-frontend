@@ -17,7 +17,8 @@ import CounterOfferForm from "@/components/customOrders/CounterOfferForm";
 import OfferComposer, { OFFER_DEFAULTS } from "@/components/customOrders/OfferComposer";
 import Workspace from "@/components/customOrders/Workspace";
 import OrderRecord from "@/components/dashboard/OrderRecord";
-import { firstName, fmtDays, fmtRevisions, fmtUsd, fmtUsdShort, isDirectOffer, roundTitle } from "@/components/customOrders/offerRounds";
+import { firstName, fmtDays, fmtRevisions, fmtUsd, fmtUsdShort, isDirectOffer, isOfferExpired, roundTitle } from "@/components/customOrders/offerRounds";
+import { MONEY } from "@/lib/moneyTerms";
 
 const STATUS_TEXT: Record<string, string> = {
   pending: "Your request was sent. You'll be notified when a custom offer arrives.",
@@ -146,6 +147,7 @@ export default function CustomOrderDetailPage() {
     const busy = declining || accepting;
 
     const handleDecline = async () => {
+      if (!window.confirm("Decline this request? This closes it and cannot be undone.")) return;
       setDeclining(true);
       setActionError(null);
       try {
@@ -261,6 +263,11 @@ export default function CustomOrderDetailPage() {
           <BackBtn onClick={() => (countering ? setCountering(false) : router.push(backTo))} label={countering ? "Back to the offer" : "Back to orders"} />
           {countering ? (
             <CounterOfferForm order={order} onSent={() => { setCountering(false); refetch(); }} onCancel={() => setCountering(false)} />
+          ) : order.awaiting === "freelancer" ? (
+            <>
+              <Header order={order} />
+              <WaitingCard order={order} waitingFor={firstName(order.freelancer.name)} options="agree, counter or decline" payLabel={MONEY.youPay} />
+            </>
           ) : (
             <>
               <Header order={order} />
@@ -280,11 +287,11 @@ export default function CustomOrderDetailPage() {
     return (
       <div className={page}>
         <div className={cx(container, clientTurn && !composing ? narrow : wide)}>
-          <BackBtn onClick={() => (composing ? setComposing(false) : router.push(backTo))} label={composing ? "Back to the counter-offer" : "Back to orders"} />
+          <BackBtn onClick={() => (composing ? setComposing(false) : router.push(backTo))} label={composing ? (clientTurn ? "Back to your offer" : "Back to the counter-offer") : "Back to orders"} />
           {composing ? (
             <OfferComposer
               order={order}
-              variant="counter"
+              variant={clientTurn ? "offer" : "counter"}
               initial={table ? { scope: table.scope ?? "", price: Number(table.total), deliveryDays: table.delivery_days, revisions: table.revisions } : undefined}
               onSent={() => { setComposing(false); refetch(); }}
               onCancel={() => setComposing(false)}
@@ -293,17 +300,13 @@ export default function CustomOrderDetailPage() {
             <>
               <Header order={order} />
               {clientTurn ? (
-                <div className={summaryCard}>
-                  <div className={awaitNote}>
-                    <Clock size={16} className={awaitIcon} />
-                    <p className={awaitText}><strong>{table ? `${roundTitle(table)} sent.` : "Offer sent."}</strong> Awaiting {firstName(order.client.name)}&apos;s decision: accept, counter or decline.</p>
-                  </div>
-                  <p className={coLabel}>On the table</p>
-                  <div className={termRow}><span className={termKey}>{"Client pays"}</span><span className={termVal}>{fmtUsd(order.offer?.total ?? 0)}</span></div>
-                  <div className={termRow}><span className={termKey}>Delivery</span><span className={termVal}>{fmtDays(order.offer?.delivery_days ?? null)}</span></div>
-                  <div className={termRow}><span className={termKey}>Revisions</span><span className={termVal}>{fmtRevisions(order.offer?.revisions ?? null)}</span></div>
-                  <p className={summaryScope}>{order.offer?.scope}</p>
-                </div>
+                <WaitingCard
+                  order={order}
+                  waitingFor={firstName(order.client.name)}
+                  options="accept, counter or decline"
+                  payLabel="Client pays"
+                  onResend={() => setComposing(true)}
+                />
               ) : (
                 <ReviewCounter order={order} onChanged={() => refetch()} onCounter={() => setComposing(true)} />
               )}
@@ -330,6 +333,43 @@ export default function CustomOrderDetailPage() {
           <div className={recordGap}><NegotiationRecord order={order} viewer={role} /></div>
         )}
       </div>
+    </div>
+  );
+}
+
+/**
+ * "Your offer is with the other side": the terms on the table and who is expected to
+ * answer. When that offer has run out of time it says so, and the freelancer (the only
+ * side that can restart the negotiation) gets a button to send a new one.
+ */
+function WaitingCard({ order, waitingFor, options, payLabel, onResend }: { order: CustomOrder; waitingFor: string; options: string; payLabel: string; onResend?: () => void }) {
+  const table = order.offers[order.offers.length - 1] ?? null;
+  const expired = isOfferExpired(order);
+  return (
+    <div className={summaryCard}>
+      <div className={awaitNote}>
+        <Clock size={16} className={awaitIcon} />
+        {expired ? (
+          <p className={awaitText}>
+            <strong>{table ? `${roundTitle(table)} expired.` : "The offer expired."}</strong> {waitingFor} did not answer in time, so it can no longer be accepted.
+            {onResend ? " Send a new offer to keep the request going." : ` ${waitingFor} can send a new offer.`}
+          </p>
+        ) : (
+          <p className={awaitText}>
+            <strong>{table ? `${roundTitle(table)} sent.` : "Offer sent."}</strong> Awaiting {waitingFor}&apos;s decision: {options}.
+          </p>
+        )}
+      </div>
+      <p className={coLabel}>On the table</p>
+      <div className={termRow}><span className={termKey}>{payLabel}</span><span className={termVal}>{fmtUsd(order.offer?.total ?? 0)}</span></div>
+      <div className={termRow}><span className={termKey}>Delivery</span><span className={termVal}>{fmtDays(order.offer?.delivery_days ?? null)}</span></div>
+      <div className={termRow}><span className={termKey}>Revisions</span><span className={termVal}>{fmtRevisions(order.offer?.revisions ?? null)}</span></div>
+      <p className={summaryScope}>{order.offer?.scope}</p>
+      {expired && onResend && (
+        <div className={css({ mt: "14px" })}>
+          <button type="button" onClick={onResend} className={coBtn({ tone: "black", size: "lg", strong: true })}>Send a new offer</button>
+        </div>
+      )}
     </div>
   );
 }

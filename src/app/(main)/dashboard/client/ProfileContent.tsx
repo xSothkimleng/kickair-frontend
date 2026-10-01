@@ -8,7 +8,7 @@ import { css } from "styled-system/css";
 import { Alert, Skeleton, Spinner, toast } from "@/components/ds";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
-import { Industry, ClientProfileRequest } from "@/types/user";
+import { ClientProfile, ClientProfileRequest, Industry } from "@/types/user";
 import { TextInput, AutocompleteInput } from "@/components/ui/inputs";
 import { ProfileAvatar, SectionCard, Field, VerifyRow } from "@/components/profile/profileKit";
 
@@ -98,27 +98,40 @@ const detailsGrid = css({ display: "grid", gridTemplateColumns: { base: "1fr", s
 const sizeBlock = css({ mt: "16px" });
 const tailSpacer = css({ h: "4px" });
 
+interface ProfileForm {
+  company_name: string;
+  industry_id: number | "";
+  /** An industry the client typed because it is not in the list. Never set together with industry_id. */
+  industry_other: string;
+  company_size: ClientProfileRequest["company_size"] | "";
+  location: string;
+  website: string;
+  about: string;
+}
+
+function formFromProfile(profile: ClientProfile | null | undefined): ProfileForm {
+  return {
+    company_name: profile?.company_name || "",
+    industry_id: profile?.industry_id || "",
+    industry_other: profile?.industry_other || "",
+    company_size: profile?.company_size || "",
+    location: profile?.location || "",
+    website: profile?.website || "",
+    about: profile?.about || "",
+  };
+}
+
 export default function ProfileContent() {
   const { user, refreshUser, loading: authLoading } = useAuth();
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [formData, setFormData] = useState({
-    company_name: "",
-    industry_id: "" as number | "",
-    // An industry the client typed because it is not in the list. Never set together with industry_id.
-    industry_other: "",
-    company_size: "" as ClientProfileRequest["company_size"] | "",
-    location: "",
-    website: "",
-    about: "",
-  });
+  const [formData, setFormData] = useState<ProfileForm>(() => formFromProfile(user?.client_profile));
 
   const [industries, setIndustries] = useState<Industry[]>([]);
   const [loadingIndustries, setLoadingIndustries] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   useEffect(() => {
     const loadIndustries = async () => {
@@ -135,31 +148,26 @@ export default function ProfileContent() {
   }, []);
 
   useEffect(() => {
-    if (user?.client_profile) {
-      const profile = user.client_profile;
-      setFormData({
-        company_name: profile.company_name || "",
-        industry_id: profile.industry_id || "",
-        industry_other: profile.industry_other || "",
-        company_size: profile.company_size || "",
-        location: profile.location || "",
-        website: profile.website || "",
-        about: profile.about || "",
-      });
-    }
+    if (user?.client_profile) setFormData(formFromProfile(user.client_profile));
   }, [user?.client_profile]);
+
+  // "Unsaved" means the form differs from what is stored. It is worked out, not
+  // flagged by change events: the industry field reports its value while it fills
+  // itself in on load, which used to mark an untouched form as unsaved.
+  const saved = formFromProfile(user?.client_profile);
+  const hasUnsavedChanges = !!user?.client_profile && (Object.keys(saved) as (keyof ProfileForm)[]).some(key => String(formData[key]).trim() !== String(saved[key]).trim());
 
   const handleInputChange = (field: string, value: string | number) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    setHasUnsavedChanges(true);
   };
 
   // Typing filters the list; text that names a listed industry picks it, anything else is kept as typed.
   const handleIndustryChange = (text: string | null) => {
+    // The field also reports its value while the list is still loading; that is not an edit.
+    if (loadingIndustries) return;
     const typed = (text ?? "").trim();
     const listed = industries.find(i => (i.name ?? "").toLowerCase() === typed.toLowerCase());
     setFormData(prev => ({ ...prev, industry_id: listed ? listed.id : "", industry_other: listed ? "" : (text ?? "") }));
-    setHasUnsavedChanges(true);
   };
 
   const handleSaveChanges = async () => {
@@ -180,7 +188,6 @@ export default function ProfileContent() {
       };
       await api.updateClientProfile(user.client_profile.id, requestData);
       await refreshUser();
-      setHasUnsavedChanges(false);
       toast.success("Profile updated successfully!");
     } catch (error) {
       const message = error instanceof Error ? error.message : "Failed to update profile";

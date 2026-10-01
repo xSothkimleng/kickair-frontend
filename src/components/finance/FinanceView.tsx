@@ -11,6 +11,7 @@ import { qk } from "@/lib/queryKeys";
 import { Wallet, Transaction, TransactionRole } from "@/types/wallet";
 import { Annot, StatusChip, TopUpDialog, WithdrawDialog, fmtUsd } from "@/components/payment";
 import { MONEY } from "@/lib/moneyTerms";
+import { formatAmount } from "@/lib/format";
 
 type StatusFilter = "all" | "completed" | "pending" | "cancelled";
 const STATUS_FILTERS: [StatusFilter, string][] = [
@@ -206,16 +207,12 @@ export default function FinanceView({ mode }: { mode: Mode }) {
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: qk.wallet(),
     queryFn: async () => {
-      const [walletResponse, transactionsResponse] = await Promise.all([
+      // Every transaction, not only the newest page: the filters below work on the whole history.
+      const [walletResponse, transactions] = await Promise.all([
         api.get("/api/wallet"),
-        api.get("/api/wallet/transactions"),
+        api.getAllPages<Transaction>("/api/wallet/transactions"),
       ]);
-      return {
-        wallet: walletResponse.data as Wallet,
-        transactions: (Array.isArray(transactionsResponse.data)
-          ? transactionsResponse.data
-          : transactionsResponse.data?.data ?? []) as Transaction[],
-      };
+      return { wallet: walletResponse.data as Wallet, transactions };
     },
   });
 
@@ -285,7 +282,7 @@ export default function FinanceView({ mode }: { mode: Mode }) {
             </div>
             <div className={balanceAmountRow}>
               <span className={balanceCurrency}>$</span>
-              <span className={balanceValue}>{balance.toFixed(2)}</span>
+              <span className={balanceValue}>{formatAmount(balance)}</span>
             </div>
             <p className={balanceNote}>One wallet for both spaces · free to spend or withdraw</p>
             <div className={balanceActions}>
@@ -407,6 +404,12 @@ export default function FinanceView({ mode }: { mode: Mode }) {
                       {t.metadata?.note && (
                         <p className={txnNote}>
                           “{t.metadata.note}”
+                        </p>
+                      )}
+                      {/* Why an admin declined a withdrawal. */}
+                      {t.admin_note && (
+                        <p className={txnNote}>
+                          Reason: {t.admin_note}
                         </p>
                       )}
                     </div>

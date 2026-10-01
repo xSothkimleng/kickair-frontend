@@ -21,11 +21,9 @@ import { Proposal } from "@/types/job";
 import { Order } from "@/types/order";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import ProposalForm from "@/components/jobs/ProposalForm";
+import { formatUsd, jobBudget } from "@/lib/format";
 
-function formatCurrency(value: string) {
-  const num = parseFloat(value);
-  return isNaN(num) ? value : num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-}
+const formatCurrency = (value: string | number) => formatUsd(value);
 
 function formatDate(dateStr: string) {
   return new Date(dateStr).toLocaleDateString("en-US", {
@@ -189,12 +187,18 @@ export default function ProposalDetailPage() {
     setActionError(null);
     try {
       const updated = await api.rejectProposal(proposal.id);
-      setProposal(updated);
+      keepJob(updated);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to reject proposal.");
     } finally {
       setActionLoading(false);
     }
+  };
+
+  // The API's answer to an edit, accept, reject or withdraw carries the proposal but not
+  // the job it belongs to; without this the title fell back to "Job Post" until a reload.
+  const keepJob = (updated: Proposal) => {
+    setProposal(prev => ({ ...updated, job_post: updated.job_post ?? prev?.job_post }));
   };
 
   const handleWithdraw = async () => {
@@ -204,7 +208,7 @@ export default function ProposalDetailPage() {
     setActionError(null);
     try {
       const updated = await api.withdrawProposal(proposal.id);
-      setProposal(updated);
+      keepJob(updated);
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "Failed to withdraw proposal.");
     } finally {
@@ -213,7 +217,7 @@ export default function ProposalDetailPage() {
   };
 
   const handleProposalSaved = (updated: Proposal) => {
-    setProposal(updated);
+    keepJob(updated);
     setEditOpen(false);
   };
 
@@ -406,7 +410,7 @@ export default function ProposalDetailPage() {
                   Job Budget
                 </p>
                 <p className={budgetValue}>
-                  {formatCurrency(proposal.job_post.budget_min)} – {formatCurrency(proposal.job_post.budget_max)}
+                  {jobBudget(proposal.job_post.budget_min, proposal.job_post.budget_max)}
                 </p>
                 <p className={budgetMeta}>
                   Deadline: {formatDate(proposal.job_post.deadline)}

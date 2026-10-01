@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, type ReactNode } from "react";
+import { Fragment, useState, type ReactNode } from "react";
 import { Menu as ArkMenu, Portal } from "@ark-ui/react";
 import { ChevronRight, EllipsisVertical, Image as ImageIcon } from "lucide-react";
 import { css, cx } from "styled-system/css";
@@ -142,12 +142,15 @@ export function Banner({ tone, icon, label, text }: { tone: "error" | "quiet"; i
 const thumbBase = css({ borderWidth: "1px", borderStyle: "solid", borderColor: "hairline", overflow: "hidden", flex: "none" });
 const thumbEmpty = css({ bg: "surface2", display: "flex", alignItems: "center", justifyContent: "center", color: "ink3" });
 export function CoverThumb({ src, size = 92, radius = 12 }: { src?: string | null; size?: number; radius?: number }) {
+  // A file that is gone (deleted upload, expired link) falls back to the placeholder
+  // instead of the browser's broken-image icon. Remembered per URL, so a new image retries.
+  const [failedSrc, setFailedSrc] = useState<string | null>(null);
   const box = { width: size, height: size, borderRadius: radius };
-  if (src) {
+  if (src && failedSrc !== src) {
     return (
       <div className={thumbBase} style={box}>
         {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={src} alt="" className={css({ w: "100%", h: "100%", objectFit: "cover", display: "block" })} />
+        <img src={src} alt="" onError={() => setFailedSrc(src)} className={css({ w: "100%", h: "100%", objectFit: "cover", display: "block" })} />
       </div>
     );
   }

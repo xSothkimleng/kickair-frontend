@@ -141,6 +141,8 @@ export default function TopUpDialog({
   const amt = parseMoney(amount) ?? 0;
   const valid = amt >= 1 && !!method;
 
+  const [balanceAfter, setBalanceAfter] = useState<number | null>(null);
+
   const finish = () => {
     onSuccess?.();
     onClose();
@@ -149,14 +151,16 @@ export default function TopUpDialog({
   const flow = usePaymentProcessing({
     context: "topup",
     perform: async () => {
-      await api.post("/api/wallet/deposit", { amount: amt });
+      const res = await api.post("/api/wallet/deposit", { amount: amt });
+      // The balance the API reports after the deposit. (Adding the amount to the balance
+      // on screen counted it twice once the wallet had refreshed.)
+      setBalanceAfter(typeof res?.data?.available_balance_raw === "number" ? res.data.available_balance_raw : currentBalance + amt);
       await qc.invalidateQueries({ queryKey: qk.wallet() });
       qc.invalidateQueries({ queryKey: qk.dashboard.client() });
     },
     onSuccessPrimary: finish,
     onSuccessDone: finish,
-    getNewBalance: () => currentBalance + amt,
-    reference: { success: "#KA-TP-48217", failure: "#KA-ERR-90341 · ABA PayWay" },
+    getNewBalance: () => balanceAfter ?? undefined,
   });
 
   const setChip = (v: number) => {

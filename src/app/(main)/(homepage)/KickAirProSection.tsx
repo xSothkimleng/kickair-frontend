@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Crown, Users, Shield, Award, ArrowRight } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box, Grid } from "styled-system/jsx";
@@ -13,7 +14,7 @@ const ctaSolid = css({
   borderRadius: "pill",
   borderWidth: "0",
   bg: "accent",
-  color: "white",
+  color: "white!",
   textStyle: "body",
   fontWeight: 600,
   cursor: "pointer",
@@ -126,10 +127,10 @@ export default function KickAirProSection() {
               ))}
             </Grid>
 
-            <button className={ctaSolid}>
+            <Link href="/why-kick-air" className={ctaSolid}>
               Learn More About Pro
               <ArrowRight size={16} />
-            </button>
+            </Link>
           </Box>
         </Box>
       </Box>

@@ -13,7 +13,7 @@ import { useAdminAction, useAdminStats, useCategories, useJobPosts, useServices 
 import { useToast } from "./toast";
 import { categoryLine } from "@/lib/categoryLine";
 import { Avatar, Btn, Drawer, EmptyState, ErrorState, Field, Loading, Modal, Pager, Panel, Pill, Segmented, Select, Tabs, Textarea, kvList, page, PageHeader, row, stack, table, text } from "./ui";
-import { ago, errorMessage, money, waiting } from "./format";
+import { ago, errorMessage, money, shortDate, waiting } from "./format";
 import { listingLabel, type ListingStatus } from "./labels";
 
 type Kind = "service" | "job";
@@ -237,7 +237,7 @@ export default function ListingsPage() {
               {current.kind === "service" ? (
                 <><dt>Starting at</dt><dd className={text({ mono: true })}>{current.price != null ? money(current.price) : "—"}</dd><dt>Packages</dt><dd>{current.tiers} {current.tiers === 1 ? "tier" : "tiers"}</dd><dt>Delivery</dt><dd>{current.delivery ?? "—"}</dd></>
               ) : (
-                <><dt>Budget</dt><dd>{current.budget}</dd><dt>Deadline</dt><dd>{current.deadline ? ago(current.deadline).replace(" ago", "") : "—"}</dd><dt>Proposals</dt><dd>{current.status === "live" ? `${current.proposals ?? 0} received` : "Not open yet"}</dd></>
+                <><dt>Budget</dt><dd>{current.budget}</dd><dt>Deadline</dt><dd>{current.deadline ? shortDate(current.deadline) : "—"}</dd><dt>Proposals</dt><dd>{current.status === "live" ? `${current.proposals ?? 0} received` : "Not open yet"}</dd></>
               )}
               {current.label ? <><dt>Owner wrote</dt><dd>{current.label}</dd></> : null}
             </dl>

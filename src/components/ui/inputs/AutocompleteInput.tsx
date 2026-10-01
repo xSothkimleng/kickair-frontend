@@ -35,7 +35,11 @@ export default function AutocompleteInput({
     return options.filter((o) => !q || matches(o, q)).map((o) => ({ label: o, value: o }));
   }, [options, query]);
   const collection = useMemo(() => createListCollection<Item>({ items }), [items]);
-  const selected = value && options.includes(value) ? [value] : [];
+  // A free-text field has no "selected option": its value is whatever is typed, and the
+  // list is only suggestions. Marking the current text as selected (when it happened to
+  // match a suggestion) made the first keystroke of an edit deselect it, which cleared
+  // the field and swallowed the key.
+  const selected = !freeSolo && value && options.includes(value) ? [value] : [];
 
   return (
     <FieldShell label={label} required={required} helper={helper} error={error} htmlFor={id} fullWidth={fullWidth}>

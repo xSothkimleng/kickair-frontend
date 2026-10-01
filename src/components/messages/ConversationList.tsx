@@ -7,7 +7,7 @@ import { Avatar, Spinner } from "@/components/ds";
 import { Conversation } from "@/types/message";
 
 const rootCss = css({
-  w: "360px",
+  w: "100%",
   borderRightWidth: "1px",
   borderRightStyle: "solid",
   borderRightColor: "hairline",

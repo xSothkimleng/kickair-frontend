@@ -12,6 +12,8 @@ interface JobFiltersProps {
   expertises: Expertise[];
   filters: JobPostFilters;
   onChange: (filters: JobPostFilters) => void;
+  /** Leave out the heading row (title + clear), for hosts that draw their own. */
+  bare?: boolean;
 }
 
 function findAisleId(tree: ServiceCategory[], categoryId?: number): number | null {
@@ -94,7 +96,7 @@ const skillChip = cva({
   },
 });
 
-export default function JobFilters({ categories, expertises, filters, onChange }: JobFiltersProps) {
+export default function JobFilters({ categories, expertises, filters, onChange, bare = false }: JobFiltersProps) {
   const [open, setOpen] = useState<number | null>(findAisleId(categories, filters.category_id) ?? categories[0]?.id ?? null);
 
   const update = (patch: Partial<JobPostFilters>) => onChange({ ...filters, ...patch, page: 1 });
@@ -103,14 +105,17 @@ export default function JobFilters({ categories, expertises, filters, onChange }
 
   return (
     <div className={root}>
-      <div className={headRow}>
-        <p className={headTitle}>Filters</p>
-        {active && (
-          <button type="button" onClick={() => onChange({ page: 1 })} className={clearBtn}>
-            Clear all
-          </button>
-        )}
-      </div>
+      {/* The phone sheet has its own "Filters" title and "Clear all" button. */}
+      {!bare && (
+        <div className={headRow}>
+          <p className={headTitle}>Filters</p>
+          {active && (
+            <button type="button" onClick={() => onChange({ page: 1 })} className={clearBtn}>
+              Clear all
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Category tree */}
       <div className={section}>

@@ -264,7 +264,7 @@ export default function WhyKickAirPage() {
             subtitle="Simple, transparent, and designed for both clients and freelancers"
           />
 
-          <Grid columns={2} gap="12">
+          <Grid columns={{ base: 1, md: 2 }} gap={{ base: "8", md: "12" }}>
             <StepColumn heading="For Clients" subtitle="Get work done with trusted talent" steps={clientSteps} />
             <StepColumn
               heading="For Freelancers"
@@ -306,7 +306,7 @@ export default function WhyKickAirPage() {
             </Box>
 
             <Box maxW="800px" mx="auto">
-              <Grid columns={3} gap="6">
+              <Grid columns={{ base: 1, md: 3 }} gap="6">
                 {paymentSteps.map((step) => {
                   const cardBg = step.gradient ? "accentFill" : step.success ? "rgba(52, 199, 89, 0.05)" : "surface";
                   const cardBorder = step.gradient
@@ -358,7 +358,7 @@ export default function WhyKickAirPage() {
           </Box>
 
           {/* Trust Features */}
-          <Grid columns={3} gap="6">
+          <Grid columns={{ base: 1, md: 3 }} gap="6">
             {trustFeatures.map((feature, index) => {
               const Icon = feature.icon;
               return (
@@ -403,7 +403,7 @@ export default function WhyKickAirPage() {
         <Box as="section" id="success-stories" mb="24" scrollMarginTop="96px">
           <SectionHeader title="Success Stories" subtitle="Real results from clients and freelancers on KickAir" />
 
-          <Grid columns={3} gap="6">
+          <Grid columns={{ base: 1, md: 3 }} gap="6">
             {successStories.map((story, index) => {
               const Icon = story.icon;
               return (
@@ -493,7 +493,7 @@ export default function WhyKickAirPage() {
           </Box>
 
           {/* Review Cards */}
-          <Grid columns={2} gap="6">
+          <Grid columns={{ base: 1, md: 2 }} gap="6">
             {reviews.map((review, index) => (
               <Box
                 key={index}

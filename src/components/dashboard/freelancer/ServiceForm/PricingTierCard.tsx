@@ -75,7 +75,7 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
             required
             inputMode="numeric"
             value={data.deliveryTime}
-            onChange={(v) => { onChange({ ...data, deliveryTime: v }); onClearError?.("delivery"); }}
+            onChange={(v) => { onChange({ ...data, deliveryTime: v.replace(/[^0-9]/g, "").slice(0, 3) }); onClearError?.("delivery"); }}
             error={errors?.delivery}
           />
 

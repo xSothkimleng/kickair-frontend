@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { TrendingUp, CheckCircle } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box, Flex, Grid } from "styled-system/jsx";
@@ -21,12 +22,12 @@ const chip = css({
 const storyLink = css({
   textStyle: "ui",
   fontWeight: 600,
-  color: "accent",
+  color: "accent!",
   bg: "transparent",
   border: "none",
   p: "0",
   cursor: "pointer",
-  _hover: { textDecoration: "underline" },
+  _hover: { textDecoration: "underline!" },
 });
 
 export default function SuccessStoriesSection() {
@@ -124,13 +125,9 @@ export default function SuccessStoriesSection() {
                     </Flex>
                   ))}
                 </Box>
-                <button
-                  type="button"
-                  // onClick={() => onNavigate("why-kickair", { scrollTo: "success-stories" })}
-                  className={storyLink}
-                >
+                <Link href="/why-kick-air#success-stories" className={storyLink}>
                   Read Full Story →
-                </button>
+                </Link>
               </Box>
             </Box>
           ))}

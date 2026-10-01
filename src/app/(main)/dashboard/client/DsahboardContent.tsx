@@ -44,6 +44,9 @@ const getStatusLabel = (status: string) => {
   switch (status) {
     case "pending": return "Awaiting Acceptance";
     case "active": return "In Progress";
+    case "delivered": return "Delivered";
+    case "revision_requested": return "Revision Requested";
+    case "disputed": return "Disputed";
     case "completed": return "Completed";
     case "cancelled": return "Cancelled";
     default: return status;
@@ -389,7 +392,7 @@ export default function DashboardContent({ onTabChange }: Props) {
               <div className={cardBody24}>
                 <div className={sectionHead}>
                   <h6 className={sectionTitle}>Active Orders</h6>
-                  <button type="button" className={textBtn}>View All</button>
+                  <button type="button" className={textBtn} onClick={() => router.push("/dashboard/client?tab=orders")}>View All</button>
                 </div>
 
                 <div className={stack12}>
@@ -484,7 +487,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                         key={conv.conversationId}
                         type="button"
                         className={convBtn}
-                        onClick={() => router.push("/dashboard/client/messages")}>
+                        onClick={() => router.push(`/dashboard/client/messages?id=${conv.conversationId}`)}>
                         <span className={convInner}>
                           <Avatar name={conv.otherParticipant.name} src={conv.otherParticipant.avatarUrl ?? undefined} px={40} />
                           <span className={css({ flex: 1, minW: 0 })}>

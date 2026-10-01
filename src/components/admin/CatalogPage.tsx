@@ -59,7 +59,9 @@ export default function CatalogPage() {
   const parents = cats.filter((c) => c.parent_id === null);
   const realParents = parents.filter((c) => !c.is_catch_all);
   const children = (id: number) => cats.filter((c) => c.parent_id === id);
-  const listings = (c: AdminCategory) => (c.parent_id === null ? children(c.id).reduce((a, x) => a + (x.services_count ?? 0), c.services_count ?? 0) : c.services_count ?? 0);
+  // Services and job posts both count: deleting a category removes whatever is filed under it.
+  const own = (c: AdminCategory) => (c.services_count ?? 0) + (c.job_posts_count ?? 0);
+  const listings = (c: AdminCategory) => (c.parent_id === null ? children(c.id).reduce((a, x) => a + own(x), own(c)) : own(c));
   const filteredSkills = allSkills.filter((s) => s.expertise_name.toLowerCase().includes(skillQ.trim().toLowerCase()));
   const rows = unsorted.data ?? [];
 

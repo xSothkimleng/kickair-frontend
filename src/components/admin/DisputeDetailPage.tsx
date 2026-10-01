@@ -301,7 +301,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
               <PanelHead title="Decision" />
               <div className={cx(stack({ gap: 2 }), css({ p: "16px" }))}>
                 <p className={text({ weight: 600 })}>{d.outcome ? outcomeLabel[d.outcome].long : "Resolved"}</p>
-                {d.outcome === "partial" && d.partial_freelancer_amount ? <p className={text({ size: "meta", tone: 2 })}>Freelancer received {money(d.partial_freelancer_amount)}, client refunded {money(amount - Number(d.partial_freelancer_amount))}.</p> : null}
+                {d.outcome === "partial" && d.partial_freelancer_amount ? <p className={text({ size: "meta", tone: 2 })}>Freelancer&apos;s share {money(d.partial_freelancer_amount)}{d.settlement ? ` (${money(d.settlement.freelancer_receives)} after the platform fee)` : ""}, client refunded {money(amount - Number(d.partial_freelancer_amount))}.</p> : null}
                 {d.outcome === "continue" ? <p className={text({ size: "meta", tone: 2 })}>No funds moved. The order went back to in progress so the freelancer can deliver again.</p> : null}
                 {d.admin_note ? <div className={cx(text({ size: "meta", tone: 2 }), css({ p: "10px 12px", bg: "var(--td-surface-2)", borderRadius: "8px", borderLeft: "3px solid var(--td-line-2)", whiteSpace: "pre-wrap" }))}>{d.admin_note}</div> : null}
                 <p className={text({ size: "micro", tone: 3 })}>{d.resolved_at ? dateTime(d.resolved_at) : ""}</p>

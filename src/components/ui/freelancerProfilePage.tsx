@@ -16,6 +16,8 @@ import ServiceCard from "@/app/(main)/explore-services/ServiceCard";
 import { api, FreelancerReview } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
 import { ProfileAvatar, Stars5, StarGlyph, LevelBadge, LangChip, EntryRow, Empty } from "@/components/profile/profileKit";
+import { SHOW_SAVE_BUTTONS } from "@/lib/features";
+import { sharePage } from "@/lib/share";
 
 interface FreelancerProfilePageProps {
   profile: FreelancerProfile;
@@ -246,6 +248,7 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
   const educations = profile.educations ?? [];
   const certificates = profile.certificates ?? [];
   const isOwner = !!authUser && authUser.id === profile.user_id;
+  const shareTitle = `${name} on KickAir`;
   const counts: Record<Tab, number> = { about: 0, portfolio: portfolio.length, services: services.length, reviews: ratingCount };
 
   const handleMessage = async () => {
@@ -410,8 +413,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                   <button type="button" onClick={() => router.push("/dashboard/freelancer")} className={heroSecBtn}><Pencil size={15} />Edit profile</button>
                 ) : (
                   <>
-                    <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-label={isFavorite ? "Remove from saved" : "Save freelancer"} aria-pressed={isFavorite} className={isFavorite ? heroIconFav : heroIconOutline}><Heart size={17} fill={isFavorite ? "currentColor" : "none"} /></button>
-                    <button type="button" aria-label="Share" className={heroIconOutline}><Share2 size={17} /></button>
+                    {SHOW_SAVE_BUTTONS && <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-label={isFavorite ? "Remove from saved" : "Save freelancer"} aria-pressed={isFavorite} className={isFavorite ? heroIconFav : heroIconOutline}><Heart size={17} fill={isFavorite ? "currentColor" : "none"} /></button>}
+                    <button type="button" aria-label="Share" onClick={() => sharePage(shareTitle)} className={heroIconOutline}><Share2 size={17} /></button>
                     <button type="button" onClick={handleMessage} disabled={messaging} className={heroPrimaryBtn}>{messaging ? <Spinner size={15} className={whiteSpinner} /> : <MessageCircle size={15} />}Message</button>
                   </>
                 )}
@@ -462,8 +465,8 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
                   <>
                     <button type="button" onClick={handleMessage} disabled={messaging} className={heroPrimaryBtnFull}>{messaging ? <Spinner size={16} className={whiteSpinner} /> : <MessageCircle size={16} />}Message {name.split(" ")[0]}</button>
                     <div className={sideActionRow}>
-                      <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-pressed={isFavorite} className={heroSecBtnFlex}><Heart size={16} fill={isFavorite ? "currentColor" : "none"} />Save</button>
-                      <button type="button" className={heroSecBtnFlex}><Share2 size={16} />Share</button>
+                      {SHOW_SAVE_BUTTONS && <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-pressed={isFavorite} className={heroSecBtnFlex}><Heart size={16} fill={isFavorite ? "currentColor" : "none"} />Save</button>}
+                      <button type="button" onClick={() => sharePage(shareTitle)} className={heroSecBtnFlex}><Share2 size={16} />Share</button>
                     </div>
                   </>
                 )}
@@ -484,7 +487,9 @@ export function FreelancerProfilePage({ profile }: FreelancerProfilePageProps) {
       {/* mobile bottom action bar */}
       {!isOwner && (
         <div className={mobileBar}>
-          <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-label={isFavorite ? "Remove from saved" : "Save freelancer"} aria-pressed={isFavorite} className={isFavorite ? barIconBtnFav : barIconBtn}><Heart size={18} fill={isFavorite ? "currentColor" : "none"} /></button>
+          {SHOW_SAVE_BUTTONS && (
+            <button type="button" onClick={() => setIsFavorite(!isFavorite)} aria-label={isFavorite ? "Remove from saved" : "Save freelancer"} aria-pressed={isFavorite} className={isFavorite ? barIconBtnFav : barIconBtn}><Heart size={18} fill={isFavorite ? "currentColor" : "none"} /></button>
+          )}
           <button type="button" onClick={handleMessage} disabled={messaging} className={heroPrimaryBtnBar}>{messaging ? <Spinner size={16} className={whiteSpinner} /> : <MessageCircle size={16} />}Message</button>
         </div>
       )}

@@ -2,6 +2,7 @@
 
 import { css } from "styled-system/css";
 import type { CustomOrder, CustomOrderOfferRound } from "@/types/customOrder";
+import { formatUsd } from "@/lib/format";
 
 /**
  * Shared vocabulary for the negotiation rounds: how a round is titled, who sent it as
@@ -24,7 +25,8 @@ export function senderLabel(r: CustomOrderOfferRound, viewer: RoundViewer): stri
 export const firstName = (name?: string | null) => (name ?? "").trim().split(" ")[0] || "them";
 
 export const fmtUsd = (n: number) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-export const fmtUsdShort = (n: number) => `$${Number(n).toLocaleString("en-US", { minimumFractionDigits: 0, maximumFractionDigits: 2 })}`;
+// Whole dollars without decimals, cents always as two digits ("$270.50", never "$270.5").
+export const fmtUsdShort = (n: number) => formatUsd(n);
 export const fmtDays = (d: number | null) => (d == null ? "no delivery time" : `${d} ${d === 1 ? "day" : "days"}`);
 export const fmtRevisions = (r: number | null) => (r == null ? "no revisions set" : `${r} ${r === 1 ? "revision" : "revisions"}`);
 
@@ -60,6 +62,15 @@ export function isDirectOffer(order: CustomOrder): boolean {
   const first = order.offers?.[0];
   if (!first || first.sender_role !== "freelancer") return false;
   return Math.abs(new Date(first.created_at).getTime() - new Date(order.created_at).getTime()) <= 2_000;
+}
+
+/**
+ * The offer on the table ran out of time before the other side answered. The request
+ * stays "offered" on the API; this is what tells the screens to stop offering Accept.
+ */
+export function isOfferExpired(order: CustomOrder): boolean {
+  const expiresAt = order.status === "offered" ? order.offer?.expires_at : null;
+  return !!expiresAt && new Date(expiresAt).getTime() < Date.now();
 }
 
 /* ── Small shared blocks ─────────────────────────────────────────────────── */

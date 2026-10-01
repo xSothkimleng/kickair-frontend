@@ -88,6 +88,26 @@ export interface FreelancerReviewsResponse {
 
 // lib/api.ts
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+export interface FreelancerBrowseFilters {
+  search?: string;
+  locations?: string[];
+  languages?: string[];
+  expertises?: string[];
+  sort?: "relevant" | "name_asc" | "name_desc";
+}
+
+export interface FreelancerFilterOptions {
+  locations: string[];
+  languages: string[];
+  expertises: string[];
+}
+
+/** What a sign-in returns. `reactivated` is true when it brought a deactivated account back. */
+export interface SignInResult {
+  user: User;
+  reactivated: boolean;
+}
+
 const TOKEN_KEY = "auth_token";
 
 const GENERIC_SERVER_ERROR = "Something went wrong on our end. Please try again.";
@@ -171,22 +191,22 @@ class ApiClient {
     return response.data.user;
   }
 
-  async loginEmail(email: string, password: string): Promise<User> {
+  async loginEmail(email: string, password: string): Promise<SignInResult> {
     const response = await this.request("/api/auth/login/email", {
       method: "POST",
       body: JSON.stringify({ email, password }),
     });
     this.setToken(response.data.token);
-    return response.data.user;
+    return { user: response.data.user, reactivated: response.data.reactivated === true };
   }
 
-  async loginPhone(telephone: string, password: string): Promise<User> {
+  async loginPhone(telephone: string, password: string): Promise<SignInResult> {
     const response = await this.request("/api/auth/login/phone", {
       method: "POST",
       body: JSON.stringify({ telephone, password }),
     });
     this.setToken(response.data.token);
-    return response.data.user;
+    return { user: response.data.user, reactivated: response.data.reactivated === true };
   }
 
   async registerEmail(data: EmailRegisterData): Promise<User> {
@@ -210,13 +230,13 @@ class ApiClient {
   // Sign in / up with Google. `accessToken` is the Google OAuth access token from
   // Google Identity Services; `roles` carries the role pre-selected on the sign-up
   // page and only applies when this Google identity is brand new.
-  async googleAuth(accessToken: string, roles?: { is_client?: boolean; is_freelancer?: boolean }): Promise<User> {
+  async googleAuth(accessToken: string, roles?: { is_client?: boolean; is_freelancer?: boolean }): Promise<SignInResult> {
     const response = await this.request("/api/auth/google", {
       method: "POST",
       body: JSON.stringify({ access_token: accessToken, ...roles }),
     });
     this.setToken(response.data.token);
-    return response.data.user;
+    return { user: response.data.user, reactivated: response.data.reactivated === true };
   }
 
   // Ask for a phone code. See PhoneOtpDelivery for what `delivered: false` means.
@@ -247,6 +267,34 @@ class ApiClient {
   }
 
   // Enable the second account role (Start selling / Start hiring). No KYC gate.
+  // Every row of a paged list (`{ data, meta }`), fetched 100 at a time. For lists the
+  // page then filters and sorts itself (a user's own orders, their wallet history),
+  // where showing only the first page would silently hide the rest.
+  async getAllPages<T>(path: string): Promise<T[]> {
+    const join = path.includes("?") ? "&" : "?";
+    const rows: T[] = [];
+    for (let page = 1; ; page++) {
+      const response = await this.get(`${path}${join}per_page=100&page=${page}`);
+      rows.push(...((response.data ?? []) as T[]));
+      const lastPage = response.meta?.last_page ?? 1;
+      if (page >= lastPage) return rows;
+    }
+  }
+
+  // One order, for either of its two parties (anyone else gets a 404).
+  async getOrder(orderId: number): Promise<Order> {
+    const response = await this.get(`/api/orders/${orderId}`);
+    return response.data;
+  }
+
+  // Switches the account off: the profile and listings leave the marketplace and every
+  // session ends. Signing in again within 30 days brings it back. Refused (422) while
+  // the user still has open orders.
+  async deactivateAccount(): Promise<void> {
+    await this.request("/api/account/deactivate", { method: "POST" });
+    this.clearToken();
+  }
+
   async enableRole(role: "client" | "freelancer"): Promise<User> {
     const response = await this.request("/api/account/enable-role", {
       method: "POST",
@@ -466,8 +514,21 @@ class ApiClient {
   // Freelancer Profile Methods
   // ============================================
 
-  async getFreelancerProfiles(page: number = 1): Promise<FreelancerProfilesListResponse> {
-    return this.get(`/api/freelancer-profiles?page=${page}`);
+  // Search, filters and sorting run on the API, so they cover every listed freelancer.
+  async getFreelancerProfiles(page: number = 1, filters: FreelancerBrowseFilters = {}): Promise<FreelancerProfilesListResponse> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (filters.search?.trim()) params.set("search", filters.search.trim());
+    if (filters.sort) params.set("sort", filters.sort);
+    for (const value of filters.locations ?? []) params.append("locations[]", value);
+    for (const value of filters.languages ?? []) params.append("languages[]", value);
+    for (const value of filters.expertises ?? []) params.append("expertises[]", value);
+    return this.get(`/api/freelancer-profiles?${params}`);
+  }
+
+  // The values the Find Freelancers filters offer, across every listed freelancer.
+  async getFreelancerFilterOptions(): Promise<FreelancerFilterOptions> {
+    const response = await this.get("/api/freelancer-profiles/filters");
+    return response.data;
   }
 
   async getFreelancerProfile(id: number): Promise<FreelancerProfile> {
@@ -603,8 +664,12 @@ class ApiClient {
   async getJobPosts(filters: JobPostFilters = {}): Promise<PaginatedResponse<JobPost>> {
     const params = new URLSearchParams();
     if (filters.category_id) params.set("category_id", String(filters.category_id));
-    if (filters.budget_min) params.set("budget_min", String(filters.budget_min));
-    if (filters.budget_max) params.set("budget_max", String(filters.budget_max));
+    // A range typed the wrong way round (min above max) still means that range.
+    const swapped = !!filters.budget_min && !!filters.budget_max && filters.budget_min > filters.budget_max;
+    const budgetMin = swapped ? filters.budget_max : filters.budget_min;
+    const budgetMax = swapped ? filters.budget_min : filters.budget_max;
+    if (budgetMin) params.set("budget_min", String(budgetMin));
+    if (budgetMax) params.set("budget_max", String(budgetMax));
     if (filters.skill_ids?.length) {
       filters.skill_ids.forEach(id => params.append("skill_ids[]", String(id)));
     }
@@ -890,6 +955,14 @@ class ApiClient {
 
   async sendConversationMessage(conversationId: number, body: string): Promise<{ data: import("@/types/message").Message }> {
     return this.post(`/api/conversations/${conversationId}/messages`, { body });
+  }
+
+  // A message with a file (image, PDF, Word document or zip, up to 10 MB), with optional text.
+  async sendConversationFile(conversationId: number, file: File, body?: string): Promise<{ data: import("@/types/message").Message }> {
+    const form = new FormData();
+    form.append("file", file);
+    if (body?.trim()) form.append("body", body.trim());
+    return this.postMultipart(`/api/conversations/${conversationId}/messages`, form);
   }
 
   async getUnreadMessageCount(): Promise<number> {
@@ -1230,6 +1303,8 @@ export interface AdminUser {
   kyc_status: string | null;
   suspended_at: string | null;
   banned_at: string | null;
+  /** Set while the user has switched their own account off in Settings. */
+  deactivated_at?: string | null;
   freelancer_rating: string | null;
   completed_orders: number | null;
   created_at: string;
@@ -1257,6 +1332,8 @@ export interface AdminAccountStatus {
   suspension_reason: string | null;
   banned_at: string | null;
   ban_reason: string | null;
+  /** Set while the user has switched their own account off in Settings. */
+  deactivated_at?: string | null;
 }
 
 export interface AdminUserDetail {

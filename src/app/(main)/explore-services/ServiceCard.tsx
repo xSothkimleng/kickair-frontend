@@ -9,6 +9,8 @@ import { Avatar } from "@/components/ds";
 import { Service } from "@/types/service";
 import { serviceCoverUrl } from "@/lib/serviceCover";
 import { categoryLine } from "@/lib/categoryLine";
+import { plural } from "@/lib/format";
+import { SHOW_SAVE_BUTTONS } from "@/lib/features";
 
 interface ServiceCardProps {
   service: Service;
@@ -150,21 +152,23 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           {/* Category Badge */}
           <div className={categoryBadgeCss}>{categoryName}</div>
 
-          <button
-            type='button'
-            aria-label={isFavorited ? "Remove from favourites" : "Add to favourites"}
-            className={cx("favorite-button", favBtnCss)}
-            onClick={e => {
-              e.preventDefault();
-              e.stopPropagation();
-              setIsFavorited(!isFavorited);
-            }}>
-            {isFavorited ? (
-              <Heart size={16} className={css({ color: "red", fill: "red" })} />
-            ) : (
-              <Heart size={16} />
-            )}
-          </button>
+{SHOW_SAVE_BUTTONS && (
+            <button
+              type='button'
+              aria-label={isFavorited ? "Remove from favourites" : "Add to favourites"}
+              className={cx("favorite-button", favBtnCss)}
+              onClick={e => {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsFavorited(!isFavorited);
+              }}>
+              {isFavorited ? (
+                <Heart size={16} className={css({ color: "red", fill: "red" })} />
+              ) : (
+                <Heart size={16} />
+              )}
+            </button>
+          )}
         </div>
 
         {/* Service Info */}
@@ -189,7 +193,7 @@ export default function ServiceCard({ service }: ServiceCardProps) {
             )}
             <div className={statCss}>
               <ShoppingBag size={12} className={mutedIconCss} />
-              <span className={mutedSmCss}>{service.orders_count} orders</span>
+              <span className={mutedSmCss}>{plural(service.orders_count, "order")}</span>
             </div>
           </div>
 

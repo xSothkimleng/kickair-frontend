@@ -96,7 +96,8 @@ const termsCard = css({
 const termsRow = css({ display: "flex", alignItems: "center" });
 const termsText = css({ textStyle: "ui", color: "ink2" });
 /* Plain emphasis, not a link — there is no Terms page to send people to yet. */
-const termsName = css({ color: "ink", fontWeight: 500 });
+// A link inside the checkbox label: it opens in a new tab so the form is not lost.
+const termsName = css({ color: "ink!", fontWeight: 500, textDecoration: "underline!" });
 const actions = css({
   display: "flex",
   alignItems: "center",
@@ -199,6 +200,15 @@ interface ServiceFormProps {
   onBack: () => void;
 }
 
+// The price a tier's field opens with. `price` from the API is display text with
+// thousands separators ("1,200.00"); parsing that on save turned $1,200 into $1, so the
+// form reads the raw number.
+function editablePrice(option: { price_raw: string | number } | undefined): string {
+  if (!option) return "";
+  const amount = Number(option.price_raw);
+  return Number.isFinite(amount) && amount > 0 ? String(amount) : "";
+}
+
 export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   const isEditing = !!service;
   const router = useRouter();
@@ -257,7 +267,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           description: basicOption?.description || "",
           revisions: String(basicOption?.revisions || "1"),
           deliveryTime: String(basicOption?.delivery_time || "").replace(" days", "") || "3",
-          price: basicOption?.price || "",
+          price: editablePrice(basicOption),
         },
         standard: {
           id: standardOption?.id,
@@ -266,7 +276,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           description: standardOption?.description || "",
           revisions: String(standardOption?.revisions || "3"),
           deliveryTime: String(standardOption?.delivery_time || "").replace(" days", "") || "5",
-          price: standardOption?.price || "",
+          price: editablePrice(standardOption),
         },
         premium: {
           id: premiumOption?.id,
@@ -275,7 +285,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
           description: premiumOption?.description || "",
           revisions: String(premiumOption?.revisions || "Unlimited"),
           deliveryTime: String(premiumOption?.delivery_time || "").replace(" days", "") || "7",
-          price: premiumOption?.price || "",
+          price: editablePrice(premiumOption),
         },
       },
       customOrders: {
@@ -389,6 +399,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       if (!tier.price)        errs[`${t}_price`]    = "Price is required";
       if (!tier.revisions)    errs[`${t}_revisions`] = "Revisions is required";
       if (!tier.deliveryTime) errs[`${t}_delivery`]  = "Delivery time is required";
+      else if (!/^[1-9]\d{0,2}$/.test(String(tier.deliveryTime).trim()) || Number(tier.deliveryTime) > 365) errs[`${t}_delivery`] = "Enter a number of days, from 1 to 365";
     }
 
     // Cross-tier price ordering: Basic ≤ Standard ≤ Premium (compared among enabled tiers).
@@ -573,7 +584,14 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         formData={formData}
         onFormDataChange={setFormData}
         fieldErrors={fieldErrors}
-        onClearTierError={(key) => setFieldErrors(prev => { const n = { ...prev }; delete n[key]; return n; })}
+        onClearTierError={(key) => setFieldErrors(prev => {
+          const n = { ...prev };
+          delete n[key];
+          // "Basic can't cost more than Standard" sits on the other tier's price, so
+          // changing any price clears every price message; publishing checks them again.
+          if (key.endsWith("_price")) for (const t of ["basic", "standard", "premium"]) delete n[`${t}_price`];
+          return n;
+        })}
       />
       <div id='svc-section-media' className={fieldErrors.image ? mediaError : undefined}>
         <MediaGallerySection
@@ -615,7 +633,11 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
             onChange={c => setFormData({ ...formData, agreeToTerms: c })}
             label={
               <span className={termsText}>
-                I agree to the <span className={termsName}>Terms of Service</span> and confirm that all information
+                I agree to the{" "}
+                <a href="/terms" target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()} className={termsName}>
+                  Terms of Service
+                </a>{" "}
+                and confirm that all information
                 provided is accurate
               </span>
             }

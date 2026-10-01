@@ -4,6 +4,7 @@ import { createContext, useContext, useState, useEffect, ReactNode, useCallback 
 import { api, EmailUnverifiedError } from "@/lib/api";
 import { User, EmailRegisterData, PhoneRegisterData } from "@/types/user";
 import EmailVerificationWall from "@/components/auth/EmailVerificationWall";
+import { toast } from "@/components/ds";
 
 const PENDING_EMAIL_KEY = "pending_verification_email";
 
@@ -25,6 +26,10 @@ interface AuthContextType {
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+function welcomeBack(reactivated: boolean) {
+  if (reactivated) toast.success({ title: "Welcome back", description: "Your account is active again." });
+}
 
 function isEmailUnverified(user: User): boolean {
   return !!user.email && !user.email_verified_at;
@@ -82,8 +87,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const loginEmail = async (email: string, password: string): Promise<User> => {
-    const loggedInUser = await api.loginEmail(email, password);
+    const { user: loggedInUser, reactivated } = await api.loginEmail(email, password);
     setUser(loggedInUser);
+    welcomeBack(reactivated);
     if (isEmailUnverified(loggedInUser)) {
       setEmailVerificationPending(true);
       setPendingEmail(loggedInUser.email);
@@ -93,14 +99,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const loginPhone = async (telephone: string, password: string): Promise<User> => {
-    const loggedInUser = await api.loginPhone(telephone, password);
+    const { user: loggedInUser, reactivated } = await api.loginPhone(telephone, password);
     setUser(loggedInUser);
+    welcomeBack(reactivated);
     return loggedInUser;
   };
 
   const googleAuth = async (accessToken: string, roles?: { is_client?: boolean; is_freelancer?: boolean }): Promise<User> => {
-    const authedUser = await api.googleAuth(accessToken, roles);
+    const { user: authedUser, reactivated } = await api.googleAuth(accessToken, roles);
     setUser(authedUser);
+    welcomeBack(reactivated);
     // Google emails arrive pre-verified — clear any lingering verification state.
     setEmailVerificationPending(false);
     setPendingEmail(null);

@@ -15,6 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import type { Tab } from "./page";
 import { MONEY, titleCase } from "@/lib/moneyTerms";
+import { plural } from "@/lib/format";
 
 // ─── Helpers ────────────────────────────────────────────────────────────────
 
@@ -37,6 +38,9 @@ const getStatusLabel = (status: string) => {
   switch (status) {
     case "pending": return "Awaiting Acceptance";
     case "active": return "In Progress";
+    case "delivered": return "Delivered";
+    case "revision_requested": return "Revision Requested";
+    case "disputed": return "Disputed";
     case "completed": return "Completed";
     case "cancelled": return "Cancelled";
     default: return status;
@@ -280,7 +284,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                   <>
                     <Stars5 rating={parseFloat(profile.rating)} size={14} />
                     <span className={ratingValue}>{profile.rating}</span>
-                    <span className={metaText}>({profile.totalReviews} reviews)</span>
+                    <span className={metaText}>({plural(profile.totalReviews, "review")})</span>
                     <span className={metaDot} />
                   </>
                 )}
@@ -384,7 +388,7 @@ export default function DashboardContent({ onTabChange }: Props) {
             <div className={cx(paper, paper24)}>
               <div className={sectionHead}>
                 <p className={sectionTitle}>Active Services</p>
-                <button type="button" className={viewAllBtn}>View All</button>
+                <button type="button" className={viewAllBtn} onClick={() => router.push("/dashboard/freelancer?tab=services")}>View All</button>
               </div>
 
               <div className={listStack}>
@@ -395,7 +399,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                     <div key={service.id} className={listRow}>
                       <div>
                         <p className={rowTitle}>{service.title}</p>
-                        <p className={rowSub}>{service.ordersCount} orders</p>
+                        <p className={rowSub}>{plural(service.ordersCount, "order")}</p>
                       </div>
                       <div className={css({ textAlign: "right" })}>
                         <p className={rowAmount}>{formatCurrency(service.revenue)}</p>
@@ -476,7 +480,7 @@ export default function DashboardContent({ onTabChange }: Props) {
                       key={conv.conversationId}
                       type="button"
                       className={convBtn}
-                      onClick={() => router.push("/dashboard/freelancer/messages")}>
+                      onClick={() => router.push(`/dashboard/freelancer/messages?id=${conv.conversationId}`)}>
                       <Avatar name={conv.otherParticipant.name} src={conv.otherParticipant.avatarUrl ?? undefined} px={40} />
                       <span className={flex1}>
                         <span className={convHead}>

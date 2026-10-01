@@ -17,15 +17,19 @@ import {
   Inbox,
 } from "lucide-react";
 import { css, cva, cx } from "styled-system/css";
-import { Alert, Avatar, Skeleton, Spinner } from "@/components/ds";
+import { Alert, Avatar, Skeleton, Spinner, toast } from "@/components/ds";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
 import { JobPost, Proposal, ProposalStatus } from "@/types/job";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import ProposalModal from "@/components/jobs/ProposalModal";
 import { categoryLine } from "@/lib/categoryLine";
+import { formatUsd, jobBudget } from "@/lib/format";
+import { SHOW_SAVE_BUTTONS } from "@/lib/features";
+import { sharePage } from "@/lib/share";
+import { withRedirect } from "@/lib/redirect";
 
-const money = (v: string | number) => "$" + Number(v).toLocaleString("en-US");
+const money = (v: string | number) => formatUsd(v);
 const fmtDate = (s: string) => new Date(s).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
 const daysLeft = (s: string) => Math.ceil((new Date(s).getTime() - Date.now()) / 86_400_000);
 const timeAgo = (s: string) => {
@@ -45,6 +49,10 @@ const TONE_CLASS: Record<Tone, string> = {
   neutral: css({ bg: "rgba(0,0,0,0.05)", color: "ink2" }),
 };
 const JOB_TONE: Record<string, { tone: Tone; label: string }> = {
+  // The first three are only ever seen by the job's owner (and admins): the API hides them from everyone else.
+  draft: { tone: "neutral", label: "Draft" },
+  pending_review: { tone: "pending", label: "Pending review" },
+  rejected: { tone: "error", label: "Rejected" },
   open: { tone: "success", label: "Open" },
   in_progress: { tone: "info", label: "In progress" },
   completed: { tone: "neutral", label: "Completed" },
@@ -134,7 +142,6 @@ const ruleTight = css({ h: "1px", bg: "hairline", my: "18px" });
 const ruleFlat = css({ h: "1px", bg: "hairline" });
 
 const budgetFigure = css({ fontVariantNumeric: "tabular-nums", textStyle: "stat", fontWeight: 600, color: "successText", whiteSpace: "nowrap" });
-const budgetDash = css({ color: "ink3", fontWeight: 500 });
 const budgetNote = css({ textStyle: "micro", fontWeight: 500, color: "ink2" });
 
 const sectionBlock = css({ mt: "26px" });
@@ -265,7 +272,7 @@ function BudgetFigure({ job }: { job: JobPost }) {
     <div>
       <Label>Project budget · USD</Label>
       <p className={budgetFigure}>
-        {money(job.budget_min)}<span className={budgetDash}> – </span>{money(job.budget_max)}
+        {jobBudget(job.budget_min, job.budget_max)}
       </p>
       <p className={budgetNote}>Fixed-price · paid via escrow</p>
     </div>
@@ -275,7 +282,19 @@ function BudgetFigure({ job }: { job: JobPost }) {
 export default function JobDetailPage() {
   const params = useParams();
   const router = useRouter();
-  const { user } = useAuth();
+  const { user, enableRole } = useAuth();
+  const [becoming, setBecoming] = useState(false);
+  // A client who wants to apply adds the freelancer role right here and stays on the job.
+  const becomeFreelancer = async () => {
+    setBecoming(true);
+    try {
+      await enableRole("freelancer");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update your account. Please try again.");
+    } finally {
+      setBecoming(false);
+    }
+  };
   const jobId = Number(params.id);
 
   const [job, setJob] = useState<JobPost | null>(null);
@@ -286,8 +305,13 @@ export default function JobDetailPage() {
   const [modal, setModal] = useState<{ open: boolean; edit: boolean }>({ open: false, edit: false });
 
   useEffect(() => {
-    if (!jobId) return;
     (async () => {
+      // A link whose id is not a number cannot be a job: say so instead of loading forever.
+      if (!Number.isInteger(jobId) || jobId <= 0) {
+        setError("Job not found.");
+        setLoading(false);
+        return;
+      }
       try {
         setLoading(true);
         setJob(await api.getJobPost(jobId));
@@ -365,11 +389,13 @@ export default function JobDetailPage() {
           <p className={postedLine}>Posted {fmtDate(job.created_at)} · {timeAgo(job.created_at)}</p>
         </div>
         <div className={headActions}>
-          <button type="button" onClick={() => setSaved(s => !s)} className={cx(outlineBtn, outlineBtnPad, savedTone({ saved }))}>
-            <Bookmark size={17} fill={saved ? "currentColor" : "none"} />
-            {saved ? "Saved" : "Save"}
-          </button>
-          <button type="button" aria-label="Share" className={cx(outlineBtn, iconOnlyBtn)}><Share size={17} /></button>
+          {SHOW_SAVE_BUTTONS && (
+            <button type="button" onClick={() => setSaved(s => !s)} className={cx(outlineBtn, outlineBtnPad, savedTone({ saved }))}>
+              <Bookmark size={17} fill={saved ? "currentColor" : "none"} />
+              {saved ? "Saved" : "Save"}
+            </button>
+          )}
+          <button type="button" aria-label="Share" onClick={() => sharePage(job.title)} className={cx(outlineBtn, iconOnlyBtn)}><Share size={17} /></button>
         </div>
       </div>
 
@@ -467,11 +493,11 @@ export default function JobDetailPage() {
         <div className={stackSm}>
           {!user ? (
             <>
-              <button type="button" onClick={() => router.push("/auth/sign-in")} className={cx(pillBtnBase, darkBtn, h52, fullW)}>Log in to apply</button>
-              <button type="button" onClick={() => router.push("/auth/sign-up")} className={cx(pillBtnBase, softBtn, h44, fullW)}>Create an account</button>
+              <button type="button" onClick={() => router.push(withRedirect("/auth/sign-in", `/jobs/${job.id}`))} className={cx(pillBtnBase, darkBtn, h52, fullW)}>Log in to apply</button>
+              <button type="button" onClick={() => router.push(withRedirect("/auth/sign-up", `/jobs/${job.id}`))} className={cx(pillBtnBase, softBtn, h44, fullW)}>Create an account</button>
             </>
           ) : (
-            <button type="button" onClick={() => router.push("/dashboard")} className={cx(pillBtnBase, darkBtn, h52, fullW)}>Become a freelancer to apply</button>
+            <button type="button" onClick={becomeFreelancer} disabled={becoming} className={cx(pillBtnBase, darkBtn, h52, fullW)}>Become a freelancer to apply</button>
           )}
           <p className={centredNote}>Joining KickAir is free. Set up a freelancer profile to submit proposals.</p>
         </div>
@@ -497,7 +523,7 @@ export default function JobDetailPage() {
         <Row label="Proposals">{proposalRange}</Row>
         <div className={ruleFlat} />
         <Row label="Date posted">{fmtDate(job.created_at)}</Row>
-        {job.deadline && <><div className={ruleFlat} /><Row label="Deadline" urgent={dl !== null && dl <= 3}>{fmtDate(job.deadline)}{dl !== null ? ` · ${dl}d` : ""}</Row></>}
+        {job.deadline && <><div className={ruleFlat} /><Row label="Deadline" urgent={dl !== null && dl <= 3}>{fmtDate(job.deadline)}{dl === null ? "" : dl < 0 ? " · passed" : dl === 0 ? " · today" : ` · ${dl}d left`}</Row></>}
       </div>
       <div className={slotsBlock}>
         <div className={slotsHead}>
@@ -559,13 +585,13 @@ export default function JobDetailPage() {
       {applyState !== "applied" && (
         <div className={stickyBar}>
           <div>
-            <p className={stickyPrice}>{money(job.budget_min)} – {money(job.budget_max)}</p>
+            <p className={stickyPrice}>{jobBudget(job.budget_min, job.budget_max)}</p>
             <Label className={label95}>Budget · USD</Label>
           </div>
           {applyState === "new" ? (
             <button type="button" onClick={() => setModal({ open: true, edit: false })} className={cx(pillBtnBase, darkBtn, h46)}>Submit a proposal</button>
           ) : applyState === "logged_out" ? (
-            <button type="button" onClick={() => router.push(user ? "/dashboard" : "/auth/sign-in")} className={cx(pillBtnBase, darkBtn, h46)}>{user ? "Become a freelancer" : "Log in to apply"}</button>
+            <button type="button" disabled={becoming} onClick={() => (user ? becomeFreelancer() : router.push(withRedirect("/auth/sign-in", `/jobs/${job.id}`)))} className={cx(pillBtnBase, darkBtn, h46)}>{user ? "Become a freelancer" : "Log in to apply"}</button>
           ) : (
             <button type="button" disabled className={cx(pillBtnBase, closedPill, h46)}>Closed</button>
           )}

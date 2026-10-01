@@ -12,7 +12,7 @@ import {
   Upload,
 } from "lucide-react";
 import { css, cva } from "styled-system/css";
-import { Alert, Avatar, Spinner, alert } from "@/components/ds";
+import { Alert, Avatar, Spinner, alert, toast } from "@/components/ds";
 import { BareModal } from "@/components/ds/BareModal";
 import { useAuth } from "@/components/context/AuthContext";
 import { api } from "@/lib/api";
@@ -20,7 +20,6 @@ import { toE164Kh } from "@/lib/phone";
 import { useRouter } from "next/navigation";
 import { TextInput, PasswordInput, PhoneInput, OtpInput } from "@/components/ui/inputs";
 import { TelegramLinkSteps } from "@/components/auth/TelegramLinkSteps";
-import { SavedPaymentMethods } from "@/components/payment";
 
 // ─── Style tokens ──────────────────────────────────────────────────────────────
 
@@ -559,6 +558,22 @@ export default function SettingsPage() {
 
   // Deactivate dialog
   const [deactivateOpen, setDeactivateOpen] = React.useState(false);
+  const [deactivating, setDeactivating] = React.useState(false);
+  const [deactivateError, setDeactivateError] = React.useState("");
+
+  const handleDeactivate = async () => {
+    setDeactivating(true);
+    setDeactivateError("");
+    try {
+      await api.deactivateAccount();
+      setUser(null);
+      toast.success({ title: "Account deactivated", description: "Sign in within 30 days to bring it back." });
+      router.push("/");
+    } catch (err) {
+      setDeactivateError(err instanceof Error ? err.message : "Could not deactivate your account. Please try again.");
+      setDeactivating(false);
+    }
+  };
 
   // Sync form fields when user loads
   React.useEffect(() => {
@@ -596,6 +611,11 @@ export default function SettingsPage() {
 
   const handleSendPhoneOtp = async () => {
     if (!newPhone.replace(/\D/g, "")) return;
+    // Nothing to change (and no code to send) when it is the number already on the account.
+    if (user?.telephone && e164NewPhone() === user.telephone) {
+      setPhoneMsg({ type: "error", text: "That is already the phone number on your account." });
+      return;
+    }
     setSendingPhoneOtp(true);
     setPhoneMsg(null);
     try {
@@ -1120,15 +1140,8 @@ export default function SettingsPage() {
           <KycCard status={kycStatus} onSubmit={() => router.push("/dashboard/kyc")} />
         </Section>
 
-        {/* 6. Payment methods — MOCK, see SavedPaymentMethods */}
-        <Section
-          title="Payment methods"
-          description="Saved ways to pay for orders and top up your wallet."
-        >
-          <SavedPaymentMethods />
-        </Section>
-
-        {/* 7. Active sessions */}
+        {/* 6. Active sessions. (Saved payment methods come back with the real gateway;
+            the mock card list is still in components/payment/SavedPaymentMethods.) */}
         <Section
           title="Active sessions"
           description="Devices currently signed in to your account."
@@ -1199,7 +1212,7 @@ export default function SettingsPage() {
           )}
         </Section>
 
-        {/* 8. Danger zone */}
+        {/* 7. Danger zone */}
         <div className={dangerBox}>
           <div className={flexOne}>
             <p className={dangerTitle}>Deactivate account</p>
@@ -1221,7 +1234,7 @@ export default function SettingsPage() {
       {/* Deactivate confirmation dialog */}
       <BareModal
         open={deactivateOpen}
-        onOpenChange={(open) => { if (!open) setDeactivateOpen(false); }}
+        onOpenChange={(open) => { if (!open && !deactivating) { setDeactivateOpen(false); setDeactivateError(""); } }}
         maxW="436px"
         className={dialogPaper}
       >
@@ -1231,13 +1244,23 @@ export default function SettingsPage() {
             Your profile will be hidden from clients and you&apos;ll be signed out everywhere. You
             can reactivate within 30 days by signing back in.
           </p>
+          {deactivateError && (
+            <div className={css({ mt: "12px" })}>
+              <Alert tone="error">{deactivateError}</Alert>
+            </div>
+          )}
         </div>
         <div className={dialogActionsTight}>
-          <button type="button" onClick={() => setDeactivateOpen(false)} className={btn({ tone: "ghost" })}>
+          <button
+            type="button"
+            disabled={deactivating}
+            onClick={() => { setDeactivateOpen(false); setDeactivateError(""); }}
+            className={btn({ tone: "ghost" })}
+          >
             Cancel
           </button>
-          <button type="button" className={btn({ tone: "dangerSolid" })}>
-            Deactivate
+          <button type="button" disabled={deactivating} onClick={handleDeactivate} className={btn({ tone: "dangerSolid" })}>
+            {deactivating ? "Deactivating…" : "Deactivate"}
           </button>
         </div>
       </BareModal>

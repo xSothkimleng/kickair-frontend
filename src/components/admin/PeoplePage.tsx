@@ -7,7 +7,7 @@ import { Search, Star, Users } from "lucide-react";
 import { useUsers } from "./queries";
 import { Avatar, EmptyState, ErrorState, Input, Loading, Pager, Panel, Pill, Select, page, PageHeader, row, searchWrap, table, text } from "./ui";
 import { shortDate } from "./format";
-import { accountLabel, accountState, kycLabel, kycState, roleLabels } from "./labels";
+import { accountPill, kycLabel, kycState, roleLabels } from "./labels";
 
 type RoleF = "" | "freelancer" | "client" | "both";
 type KycF = "" | "approved" | "pending" | "rejected" | "none";
@@ -66,8 +66,9 @@ export default function PeoplePage() {
             <thead><tr><th>Person</th><th>Roles</th><th>Verification</th><th>Status</th><th>Track record</th><th>Joined</th></tr></thead>
             <tbody>
               {rows.map((u) => {
-                const st = accountState(u);
-                const k = kycState(u.kyc_status);
+                const pill = accountPill(u);
+                // Verified is the account flag; a KYC record only says how far a submission got.
+                const k = u.is_verified_id ? "approved" : kycState(u.kyc_status);
                 return (
                   <tr key={u.id} data-clickable onClick={() => router.push(`/admin/people/${u.id}`)}>
                     <td>
@@ -81,7 +82,7 @@ export default function PeoplePage() {
                     </td>
                     <td><span className={row({ gap: 1 })}>{roleLabels(u).map((r) => <Pill key={r} outline>{r}</Pill>)}</span></td>
                     <td>{u.is_freelancer || k !== "none" ? <Pill tone={kycLabel[k].tone}>{kycLabel[k].label}</Pill> : <span className={text({ size: "meta", tone: 3 })}>—</span>}</td>
-                    <td><Pill tone={accountLabel[st].tone} dot>{accountLabel[st].label}</Pill></td>
+                    <td><Pill tone={pill.tone} dot>{pill.label}</Pill></td>
                     <td>
                       {u.is_freelancer ? <p className={cx(row({ gap: 1 }), text({ size: "meta", tone: 2 }))}><Star size={12} /> {u.freelancer_rating ? Number(u.freelancer_rating).toFixed(1) : "—"} · {u.completed_orders ?? 0} completed</p> : <span className={text({ size: "meta", tone: 3 })}>—</span>}
                     </td>

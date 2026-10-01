@@ -16,6 +16,7 @@ import {
   TextInput, PasswordInput, PhoneInput, OtpInput, SegmentedControl, SelectInput,
   FieldLabel, FieldHelper,
 } from "@/components/ui/inputs";
+import { useRedirectIfSignedIn } from "@/components/auth/useRedirectIfSignedIn";
 
 type Role = "client" | "freelancer";
 type Method = "email" | "phone";
@@ -37,6 +38,7 @@ function SignUpContent() {
   const router = useRouter();
   const { registerEmail, registerPhone } = useAuth();
   const redirectTo = safeRedirect(useSearchParams().get("redirect"));
+  useRedirectIfSignedIn(redirectTo);
 
   const [step, setStep] = useState<"form" | "otp">("form");
   const [role, setRole] = useState<Role>("client");
@@ -198,7 +200,9 @@ function SignUpContent() {
               </Link>
             </p>
             <Text size="meta" tone="muted" align="center">
-              By continuing, you agree to KickAir&rsquo;s Terms of Service and Privacy Policy.
+              By continuing, you agree to KickAir&rsquo;s{" "}
+              <Link href="/terms" tone="muted" underline="always" target="_blank">Terms of Service</Link> and{" "}
+              <Link href="/privacy" tone="muted" underline="always" target="_blank">Privacy Policy</Link>.
             </Text>
           </div>
         </>

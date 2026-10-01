@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box, Stack } from "styled-system/jsx";
+import { UNIVERSITY_CONTENT_READY } from "@/lib/features";
 
 interface KickAirUniversityPageProps {
   userType?: "freelancer" | "client";
@@ -27,14 +28,16 @@ interface KickAirUniversityPageProps {
 const textLink = css({
   textStyle: "ui",
   fontWeight: 600,
-  color: "accent",
+  color: "accent!",
   bg: "transparent",
   border: "none",
   p: "0",
   minW: "auto",
   cursor: "pointer",
-  _hover: { textDecoration: "underline" },
+  _hover: { textDecoration: "underline!" },
 });
+// Shown in place of an action while the lessons, downloads and forum do not exist yet.
+const comingSoon = css({ textStyle: "meta", fontWeight: 600, color: "ink3" });
 
 export default function KickAirUniversityPage({ userType = "freelancer" }: KickAirUniversityPageProps) {
   const [activeTab, setActiveTab] = useState<"freelancer" | "client">(userType);
@@ -170,21 +173,19 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             title: "Templates & Tools",
             description: "Download free contract templates, proposal formats, and invoicing tools",
             buttonText: "Browse Resources →",
-            onClick: () => {},
           },
           {
             icon: <MessagesSquare size={24} />,
             title: "Community Forum",
             description: "Connect with other freelancers, share tips, and get advice",
             buttonText: "Join Discussion →",
-            onClick: () => {},
           },
           {
             icon: <Trophy size={24} />,
             title: "Success Stories",
             description: "Learn from freelancers who built six-figure careers on KickAir",
             buttonText: "Read Stories →",
-            // onClick: () => onNavigate("why-kickair", { scrollTo: "success-stories" }),
+            href: "/why-kick-air#success-stories",
           },
         ]
       : [
@@ -193,21 +194,19 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             title: "Templates & Guides",
             description: "Download job post templates, project briefs, and evaluation checklists",
             buttonText: "Browse Resources →",
-            onClick: () => {},
           },
           {
             icon: <MessagesSquare size={24} />,
             title: "Client Community",
             description: "Connect with other clients and share best practices for hiring",
             buttonText: "Join Discussion →",
-            onClick: () => {},
           },
           {
             icon: <Trophy size={24} />,
             title: "Case Studies",
             description: "See how businesses grew with KickAir's freelance talent",
             buttonText: "Read Case Studies →",
-            // onClick: () => onNavigate("why-kickair", { scrollTo: "success-stories" }),
+            href: "/why-kick-air#success-stories",
           },
         ];
 
@@ -442,9 +441,13 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                   <Box as="span" className={css({ textStyle: "meta", color: "ink2" })}>
                     {course.lessons} • {course.duration}
                   </Box>
-                  <button type="button" className={textLink}>
-                    Start Learning →
-                  </button>
+                  {UNIVERSITY_CONTENT_READY ? (
+                    <button type="button" className={textLink}>
+                      Start Learning →
+                    </button>
+                  ) : (
+                    <span className={comingSoon}>Coming soon</span>
+                  )}
                 </Box>
               </Box>
             ))}
@@ -496,9 +499,13 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
                   })}>
                   {resource.description}
                 </Box>
-                <button type="button" onClick={resource.onClick} className={textLink}>
-                  {resource.buttonText}
-                </button>
+                {"href" in resource && resource.href ? (
+                  <Link href={resource.href} className={textLink}>
+                    {resource.buttonText}
+                  </Link>
+                ) : (
+                  <span className={comingSoon}>Coming soon</span>
+                )}
               </Box>
             ))}
           </Box>
@@ -525,7 +532,7 @@ export default function KickAirUniversityPage({ userType = "freelancer" }: KickA
             })}>
             Join Thousands Learning on KickAir
           </Box>
-          <Box display="grid" gridTemplateColumns="repeat(3, 1fr)" gap="8">
+          <Box display="grid" gridTemplateColumns={{ base: "1fr", sm: "repeat(3, minmax(0, 1fr))" }} gap="8">
             <Box>
               <Box
                 as="p"

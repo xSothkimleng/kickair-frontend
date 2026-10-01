@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { Star } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box, Grid } from "styled-system/jsx";
@@ -8,9 +9,9 @@ const readAllBtn = css({
   border: "none",
   textStyle: "body",
   fontWeight: 600,
-  color: "accent",
+  color: "accent!",
   cursor: "pointer",
-  _hover: { textDecoration: "underline" },
+  _hover: { textDecoration: "underline!" },
 });
 
 export default function ReviewsSection() {
@@ -101,7 +102,7 @@ export default function ReviewsSection() {
         </Grid>
 
         <Box textAlign="center">
-          <button className={readAllBtn}>Read All Reviews →</button>
+          <Link href="/why-kick-air#reviews" className={readAllBtn}>Read All Reviews →</Link>
         </Box>
       </Box>
     </Box>

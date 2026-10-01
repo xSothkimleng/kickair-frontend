@@ -13,7 +13,8 @@ import { css, cva } from "styled-system/css";
 import { Alert, Pager, Spinner } from "@/components/ds";
 import { FreelancerCard } from "@/components/layout/card/FreelancerCard";
 import { FreelancerListCard } from "@/components/layout/card/FreelancerListCard";
-import { api } from "@/lib/api";
+import { api, type FreelancerBrowseFilters, type FreelancerFilterOptions } from "@/lib/api";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { FreelancerProfile } from "@/types/user";
 import { Checkbox, SearchInput, SelectInput } from "@/components/ui/inputs";
 
@@ -472,6 +473,13 @@ const fab = css({
   "& svg": { display: "block" },
 });
 
+// The sort menu's values → what the API calls them.
+const SORT_PARAM: Record<string, NonNullable<FreelancerBrowseFilters["sort"]>> = {
+  relevant: "relevant",
+  "name-asc": "name_asc",
+  "name-desc": "name_desc",
+};
+
 // ─── Page ──────────────────────────────────────────────────────────────────────
 
 export default function FindFreelancersPage() {
@@ -503,11 +511,20 @@ export default function FindFreelancersPage() {
   const [languageSearch, setLanguageSearch] = useState("");
   const [expertiseSearch, setExpertiseSearch] = useState("");
 
+  // Typing changes `query` on every keystroke; the request follows a moment later.
+  const appliedQuery = useDebouncedValue(query, 300);
+
   const fetchProfiles = useCallback(async (page: number = 1) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await api.getFreelancerProfiles(page);
+      const response = await api.getFreelancerProfiles(page, {
+        search: appliedQuery,
+        locations: selectedLocations,
+        languages: selectedLanguages,
+        expertises: selectedExpertises,
+        sort: SORT_PARAM[sortBy] ?? "relevant",
+      });
       const data = Array.isArray(response.data) ? response.data : [];
       setProfiles(data);
       setLastPage(response.meta?.last_page ?? 1);
@@ -518,11 +535,17 @@ export default function FindFreelancersPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [appliedQuery, selectedLocations, selectedLanguages, selectedExpertises, sortBy]);
 
   useEffect(() => {
     fetchProfiles(currentPage);
   }, [currentPage, fetchProfiles]);
+
+  // The filter lists come from every listed freelancer, not from the page on screen.
+  const [filterOptions, setFilterOptions] = useState<FreelancerFilterOptions>({ locations: [], languages: [], expertises: [] });
+  useEffect(() => {
+    api.getFreelancerFilterOptions().then(setFilterOptions).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const handleScroll = () => setShowScrollTop(window.scrollY > 400);
@@ -542,63 +565,20 @@ export default function FindFreelancersPage() {
     return () => window.removeEventListener("keydown", onKey);
   }, []);
 
-  // Derive unique filter options from loaded profiles
-  const allLocations = [
-    ...new Set(profiles.map((p) => p.location).filter(Boolean) as string[]),
-  ].sort();
-  const allLanguages = [
-    ...new Set(profiles.flatMap((p) => p.languages?.map((l) => l.name) ?? [])),
-  ].sort();
-  const allExpertises = [
-    ...new Set(
-      profiles.flatMap((p) => p.expertises?.map((e) => e.expertise_name) ?? [])
-    ),
-  ].sort();
+  const allLocations = filterOptions.locations;
+  const allLanguages = filterOptions.languages;
+  const allExpertises = filterOptions.expertises;
 
-  // Client-side filtering
-  let filtered = [...profiles];
+  // The API returns the page already searched, filtered and sorted.
+  const sorted = profiles;
 
-  if (query) {
-    const q = query.toLowerCase();
-    filtered = filtered.filter(
-      (p) =>
-        (p.user?.name || "").toLowerCase().includes(q) ||
-        (p.tagline || "").toLowerCase().includes(q) ||
-        (p.expertises?.some((e) =>
-          e.expertise_name.toLowerCase().includes(q)
-        ) ?? false)
-    );
-  }
-  if (selectedLocations.length > 0) {
-    filtered = filtered.filter(
-      (p) => p.location && selectedLocations.includes(p.location)
-    );
-  }
-  if (selectedLanguages.length > 0) {
-    filtered = filtered.filter((p) =>
-      p.languages?.some((l) => selectedLanguages.includes(l.name))
-    );
-  }
-  if (selectedExpertises.length > 0) {
-    filtered = filtered.filter((p) =>
-      p.expertises?.some((e) => selectedExpertises.includes(e.expertise_name))
-    );
-  }
-
-  // Sorting
-  const sorted = [...filtered].sort((a, b) => {
-    if (sortBy === "name-asc")
-      return (a.user?.name || "").localeCompare(b.user?.name || "");
-    if (sortBy === "name-desc")
-      return (b.user?.name || "").localeCompare(a.user?.name || "");
-    return 0;
-  });
-
+  // Any change to what is being asked for starts again from page 1.
   const clearAllFilters = () => {
     setSelectedLocations([]);
     setSelectedLanguages([]);
     setSelectedExpertises([]);
     setQuery("");
+    setCurrentPage(1);
   };
 
   const toggleFilter = (
@@ -608,6 +588,7 @@ export default function FindFreelancersPage() {
     setter((prev) =>
       prev.includes(value) ? prev.filter((v) => v !== value) : [...prev, value]
     );
+    setCurrentPage(1);
   };
 
   const activeFiltersCount =
@@ -819,7 +800,7 @@ export default function FindFreelancersPage() {
               <SearchInput
                 id="find-freelancer-search"
                 value={query}
-                onChange={setQuery}
+                onChange={(v) => { setQuery(v); setCurrentPage(1); }}
                 placeholder="Search freelancers by name, skill, or expertise…"
               />
 
@@ -827,7 +808,7 @@ export default function FindFreelancersPage() {
               <div className={sortWrap}>
                 <SelectInput
                   value={sortBy}
-                  onChange={(v) => setSortBy(String(v))}
+                  onChange={(v) => { setSortBy(String(v)); setCurrentPage(1); }}
                   options={SORT_OPTIONS}
                 />
               </div>

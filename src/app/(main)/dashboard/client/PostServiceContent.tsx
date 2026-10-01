@@ -10,6 +10,8 @@ import { JobPost, JobPostStatus } from "@/types/job";
 import { StatusPill, KebabMenu, Facts, Banner, Chevron, mgCard, type CardTone, type Fact, type MenuAction } from "@/components/dashboard/ManagementCard";
 import JobPostForm from "@/components/jobs/JobPostForm";
 import JobDraftCard from "@/components/jobs/JobDraftCard";
+import { jobBudget } from "@/lib/format";
+import { useAuth } from "@/components/context/AuthContext";
 
 type View = "list" | "create" | "edit";
 
@@ -19,12 +21,6 @@ function formatDate(dateStr: string) {
     day: "numeric",
     year: "numeric",
   });
-}
-
-function formatCurrency(value: string) {
-  const num = parseFloat(value);
-  if (isNaN(num)) return value;
-  return num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
 }
 
 const JOB_TONE: Record<JobPostStatus, { tone: CardTone; label: string }> = {
@@ -119,7 +115,7 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
   };
 
   const facts: Fact[] = [
-    { label: "Budget · USD", mono: true, value: `${formatCurrency(job.budget_min)} – ${formatCurrency(job.budget_max)}` },
+    { label: "Budget · USD", mono: true, value: jobBudget(job.budget_min, job.budget_max) },
     { label: "Proposals", value: job.proposal_count ? `${job.proposal_count} proposal${job.proposal_count === 1 ? "" : "s"}` : "None yet", color: job.proposal_count ? undefined : "rgba(0, 0, 0, 0.4)" },
   ];
   if ((job.status === "open" || job.status === "in_progress") && job.deadline) {
@@ -163,6 +159,7 @@ function JobRow({ job, onEdit, onCancelled }: JobRowProps) {
 }
 
 export default function PostServiceContent() {
+  const { user } = useAuth();
   const [view, setView] = useState<View>("list");
   const [editingJob, setEditingJob] = useState<JobPost | null>(null);
   const [jobs, setJobs] = useState<JobPost[]>([]);
@@ -224,7 +221,7 @@ export default function PostServiceContent() {
     handleBack();
     setActionMsg(
       saved.status === "draft"
-        ? { type: "success", text: "Saved as a draft. Verify your account, then publish it when you're ready." }
+        ? { type: "success", text: user?.is_verified_id ? "Saved as a draft. Publish it from Drafts when you're ready." : "Saved as a draft. Verify your identity, then publish it when you're ready." }
         : { type: "success", text: "Job submitted for review." },
     );
   };

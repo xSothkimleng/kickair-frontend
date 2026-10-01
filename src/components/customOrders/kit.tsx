@@ -419,13 +419,11 @@ export function CoTextArea({
 /* ── Money (tabular figures) ──────────────────────────────────────────── */
 
 export function fmtMoney(value: number, cents = false): string {
-  return (
-    "$" +
-    Number(value || 0).toLocaleString("en-US", {
-      minimumFractionDigits: cents ? 2 : 0,
-      maximumFractionDigits: cents ? 2 : 0,
-    })
-  );
+  const amount = Number(value || 0);
+  // `cents` forces two decimals; otherwise a whole number stays whole and anything
+  // with cents shows both digits ("$270.50", never "$271" or "$270.5").
+  const digits = cents || !Number.isInteger(amount) ? 2 : 0;
+  return "$" + amount.toLocaleString("en-US", { minimumFractionDigits: digits, maximumFractionDigits: digits });
 }
 
 const MONEY_WEIGHT = { 400: "regular", 500: "medium", 600: "semibold", 700: "bold" } as const;

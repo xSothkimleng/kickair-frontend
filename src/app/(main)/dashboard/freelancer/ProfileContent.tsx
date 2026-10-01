@@ -21,6 +21,7 @@ import LevelDialog from "@/components/profile/LevelDialog";
 import {
   ProfileAvatar, Stars5, LevelBadge, SectionCard, Field, LockedField, LangChip, VerifyRow, EntryRow, Empty, AddPill, RoundIconBtn,
 } from "@/components/profile/profileKit";
+import { plural } from "@/lib/format";
 
 const ymd = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 const portfolioYear = (iso: string | null) => (iso ? new Date(iso).getFullYear() : null);
@@ -717,9 +718,9 @@ export default function ProfileContent() {
                 <>
                   <Stars5 rating={ratingNum} size={15} />
                   <span className={ratingValue}>{ratingNum.toFixed(1)}</span>
-                  <span className={ratingMeta}>({reviewCount} reviews)</span>
+                  <span className={ratingMeta}>({plural(reviewCount, "review")})</span>
                   <span className={ratingDot} />
-                  <span className={ratingMeta}>{orders} orders</span>
+                  <span className={ratingMeta}>{plural(orders, "order")}</span>
                 </>
               ) : (
                 <p className={noReviews}>No reviews yet. Your rating shows here once you complete orders.</p>

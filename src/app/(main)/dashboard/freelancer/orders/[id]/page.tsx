@@ -37,10 +37,11 @@ import {
 import { api } from "@/lib/api";
 import { downloadOrderAttachment } from "@/lib/downloadFile";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
-import { Order, OrderStatus, Dispute, EvidenceFile } from "@/types/order";
+import { OrderStatus, Dispute, EvidenceFile } from "@/types/order";
 import DisputeSettlementRows from "@/components/dashboard/DisputeSettlementRows";
 import OrderRecord from "@/components/dashboard/OrderRecord";
 import { MONEY, afterPlatformFee } from "@/lib/moneyTerms";
+import { formatAmount, revisionsText } from "@/lib/format";
 
 // ─── Design tokens (same as client page) ─────────────────────────────────────
 // (the CARD / SEC_LABEL / BTN_* objects now live in `dashboard/orderPageKit`)
@@ -229,12 +230,7 @@ export default function FreelancerOrderDetailPage() {
   const queryClient = useQueryClient();
   const { data: order = null, isLoading: loading, error: queryError } = useQuery({
     queryKey: qk.orders.detail(orderId, "freelancer"),
-    queryFn: async () => {
-      const response = await api.get("/api/freelancer-orders");
-      const found = response.data.find((o: Order) => o.id === orderId);
-      if (!found) throw new Error("Order not found.");
-      return found as Order;
-    },
+    queryFn: () => api.getOrder(orderId),
     enabled: Number.isFinite(orderId),
   });
   const error = queryError ? (queryError instanceof Error ? queryError.message : "Failed to load order.") : null;
@@ -270,9 +266,11 @@ export default function FreelancerOrderDetailPage() {
   };
 
   const handleDecline = async () => {
+    // Declining cancels the order and refunds the client, so it asks first.
+    if (!window.confirm("Decline this order? It will be cancelled and the client refunded. This cannot be undone.")) return;
     setSubmitting(true); setActionError(null);
     try { await api.post(`/api/orders/${orderId}/cancel`, {}); await fetchOrder(); }
-    catch { setActionError("Failed to decline order."); }
+    catch (e) { setActionError(e instanceof Error ? e.message : "Failed to decline order."); }
     finally { setSubmitting(false); }
   };
 
@@ -332,7 +330,7 @@ export default function FreelancerOrderDetailPage() {
     return (
       <div className={centerPageColCss}>
         <p className={notFoundTextCss}>{error ?? "Order not found."}</p>
-        <button type="button" onClick={() => router.back()} className={pageBtn({ look: "outline", h36: true })}>Go back</button>
+        <button type="button" onClick={() => router.push("/dashboard/freelancer?tab=orders")} className={pageBtn({ look: "outline", h36: true })}>Back to Orders</button>
       </div>
     );
   }
@@ -342,14 +340,16 @@ export default function FreelancerOrderDetailPage() {
   const service = order.service || order.pricing_option?.service;
   const client = order.client_profile;
   const pricingOption = order.pricing_option;
+  // What the client paid is stored on the order; the package price (display text) is only a fallback for old orders.
+  const paidPrice = Number(String(order.price ?? pricingOption?.price ?? "0").replace(/,/g, "")) || 0;
   const deliveryDays = isCustom
     ? order.custom_order?.delivery_days ?? undefined
     : isJobBased
       ? order.proposal?.timeline_days
       : parseInt(String(pricingOption?.delivery_time ?? ""));
-  const revisions = Number((isCustom ? order.custom_order?.revisions : pricingOption?.revisions) ?? 0);
+  const revisions = revisionsText(isCustom ? order.custom_order?.revisions : pricingOption?.revisions);
   const canSubmitEvidence =
-    order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_evidence?.length && !order.dispute.freelancer_statement;
+    order.status === "disputed" && order.dispute?.status === "open" && !order.dispute.freelancer_statement;
   // The actions card only renders when it has something in it — e.g. nothing once the
   // freelancer's dispute evidence is in.
   const hasActions = ["pending", "active", "revision_requested", "completed", "cancelled", "delivered"].includes(order.status) || canSubmitEvidence;
@@ -359,7 +359,7 @@ export default function FreelancerOrderDetailPage() {
       <div className={containerCss}>
 
         {/* Back */}
-        <button type="button" onClick={() => router.back()} className={backBtnCss}>
+        <button type="button" onClick={() => router.push("/dashboard/freelancer?tab=orders")} className={backBtnCss}>
           <span className={startIconCss}><ChevronLeft size={20} /></span>
           Back to Orders
         </button>
@@ -436,9 +436,9 @@ export default function FreelancerOrderDetailPage() {
             )}
             <div className={statGridCss}>
               {[
-                { k: "Price", v: `$${pricingOption?.price ?? order.price ?? "0"}` },
+                { k: "Price", v: `$${formatAmount(paidPrice)}` },
                 { k: "Delivery", v: !isNaN(deliveryDays as number) ? `${deliveryDays} day${deliveryDays !== 1 ? "s" : ""}` : "N/A" },
-                { k: "Revisions", v: !isJobBased ? (revisions === -1 ? "Unlimited" : String(revisions)) : "N/A" },
+                { k: "Revisions", v: !isJobBased ? revisions : "N/A" },
               ].map(({ k, v }) => (
                 <div key={k} className={tileCss}>
                   <p className={tileLabelCss}>{k}</p>
@@ -454,7 +454,7 @@ export default function FreelancerOrderDetailPage() {
                 )}
               </div>
               <p className={css({ textStyle: "title", fontWeight: 700, color: "#10B981" })}>
-                ${(parseFloat(String(pricingOption?.price ?? order.price ?? "0")) * (1 - (commissionRate ?? 0))).toFixed(2)}
+                ${formatAmount(order.dispute?.settlement ? order.dispute.settlement.freelancer_receives : paidPrice * (1 - (commissionRate ?? 0)))}
               </p>
             </div>
           </div>
@@ -541,7 +541,8 @@ export default function FreelancerOrderDetailPage() {
 
               {/* revision_requested */}
               {order.status === "revision_requested" && (
-                <div className={css({ display: "flex", justifyContent: "flex-end" })}>
+                <div className={css({ display: "flex", justifyContent: "flex-end", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
+                  <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>
                   <button type="button" onClick={() => setResubmitOpen(true)} className={pageBtn({ look: "primary" })}>
                     Resubmit Work
                   </button>
@@ -590,7 +591,7 @@ export default function FreelancerOrderDetailPage() {
         </div>
         <div className={dlgFootCss}>
           <button type="button" onClick={() => { setDeliveryOpen(false); setDeliveryNote(""); setDeliveryFiles([]); }} className={pageBtn({ look: "outline" })}>Cancel</button>
-          <button type="button" disabled={submitting || uploading} onClick={handleDeliver} className={pageBtn({ look: "primary" })}>
+          <button type="button" disabled={submitting || uploading || (!deliveryNote.trim() && deliveryFiles.length === 0)} onClick={handleDeliver} className={pageBtn({ look: "primary" })}>
             {submitting ? <Spinner size={14} /> : "Submit delivery"}
           </button>
         </div>
@@ -609,7 +610,7 @@ export default function FreelancerOrderDetailPage() {
         </div>
         <div className={dlgFootCss}>
           <button type="button" onClick={() => { setResubmitOpen(false); setResubmitNote(""); setResubmitFiles([]); }} className={pageBtn({ look: "outline" })}>Cancel</button>
-          <button type="button" disabled={submitting || uploading} onClick={handleResubmit} className={pageBtn({ look: "primary" })}>
+          <button type="button" disabled={submitting || uploading || (!resubmitNote.trim() && resubmitFiles.length === 0)} onClick={handleResubmit} className={pageBtn({ look: "primary" })}>
             {submitting ? <Spinner size={14} /> : "Resubmit work"}
           </button>
         </div>

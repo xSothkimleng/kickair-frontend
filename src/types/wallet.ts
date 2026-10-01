@@ -123,6 +123,8 @@ export interface Transaction {
   balance_after_raw: string;
   status: "completed" | "pending" | "cancelled";
   description: string;
+  /** Why an admin declined a withdrawal, when they gave a reason. */
+  admin_note?: string | null;
   metadata: TransactionMetadata;
   created_at: string;
   updated_at: string;

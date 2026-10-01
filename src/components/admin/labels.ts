@@ -22,6 +22,15 @@ export const accountLabel: Record<AccountState, { tone: Tone; label: string }> =
   suspended: { tone: "amber", label: "Suspended" },
   banned: { tone: "red", label: "Banned" },
 };
+/**
+ * The pill for a person's account. Deactivation is the user's own choice (Settings),
+ * not a moderation state, so it only replaces the label while the account is otherwise
+ * in good standing; suspend / ban still take precedence and keep their own actions.
+ */
+export function accountPill(u: { suspended_at: string | null; banned_at: string | null; deactivated_at?: string | null }): { tone: Tone; label: string } {
+  const state = accountState(u);
+  return state === "active" && u.deactivated_at ? { tone: "neutral", label: "Deactivated" } : accountLabel[state];
+}
 export function accountState(u: { suspended_at: string | null; banned_at: string | null }): AccountState {
   if (u.banned_at) return "banned";
   if (u.suspended_at) return "suspended";

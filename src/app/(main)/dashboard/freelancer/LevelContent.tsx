@@ -324,7 +324,7 @@ export default function LevelContent() {
         <p className={sectionTitle}>How to Earn Points &amp; Level Up</p>
         <div className={earnGrid}>
           {[
-            { icon: "📋", title: "Complete Your Profile", desc: "Every profile step pays one-time XP. A finished profile reaches Silver on its own", pts: "+135 XP total" },
+            { icon: "📋", title: "Complete Your Profile", desc: "Every profile step pays one-time XP. A finished profile reaches Silver on its own", pts: "+125 XP total" },
             { icon: "✅", title: "Complete Projects", desc: "Successfully complete projects. XP scales with order value", pts: "+51–100 XP per project" },
             { icon: "⭐", title: "Get High Ratings", desc: "Every review earns XP; higher ratings earn significantly more", pts: "+30–70 XP per review" },
           ].map(item => (

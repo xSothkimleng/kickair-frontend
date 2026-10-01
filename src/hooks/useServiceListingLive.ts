@@ -13,7 +13,9 @@ import { getEcho } from "@/lib/echo";
 export function useServiceListingLive(serviceId: number, onChanged: (status: string) => void) {
   // Keep the latest callback without resubscribing on every render.
   const onChangedRef = useRef(onChanged);
-  onChangedRef.current = onChanged;
+  useEffect(() => {
+    onChangedRef.current = onChanged;
+  });
 
   useEffect(() => {
     let echo: ReturnType<typeof getEcho>;

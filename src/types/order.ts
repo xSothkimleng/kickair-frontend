@@ -62,6 +62,7 @@ export interface AdminDispute {
   freelancer_statement: string | null;
   admin_note: string | null;
   partial_freelancer_amount: string | null;
+  settlement?: DisputeSettlement | null;
   resolved_at: string | null;
   opened_at: string;
   /** Which party raised it. */

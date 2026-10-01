@@ -169,7 +169,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
                 <p className={labelCss}>For</p>
                 <CoSelect
                   value={clientUserId}
-                  onChange={setClientUserId}
+                  onChange={(v) => { setClientUserId(v); setError(null); }}
                   options={people.map((p) => ({ value: p.id, label: p.name }))}
                   placeholder="Pick a person…"
                   emptyLabel={convsLoading ? "Loading conversations…" : people.length === 0 ? "No conversations yet. Message a client first" : undefined}
@@ -179,7 +179,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
                 <p className={labelCss}>From your service</p>
                 <CoSelect
                   value={serviceId}
-                  onChange={setServiceId}
+                  onChange={(v) => { setServiceId(v); setError(null); }}
                   options={activeServices.map((s) => ({ value: s.id, label: s.title }))}
                   placeholder="Pick a service…"
                   emptyLabel={servicesLoading ? "Loading services…" : activeServices.length === 0 ? "No active services. Publish one first" : undefined}
@@ -193,7 +193,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
                 minRows={3}
                 placeholder="What you'll deliver overall. Write it the way you'd pitch it to them…"
                 value={scope}
-                onChange={setScope}
+                onChange={(v) => { setScope(v); setError(null); }}
               />
             </div>
 
@@ -215,7 +215,7 @@ export default function DirectOfferDialog({ open, onClose }: { open: boolean; on
             {/* one-time project price */}
             <div>
               <p className={labelCss}>Project price <span className={labelSub}>· one-time payment</span></p>
-              <CoInput mono size="sm" className={priceField} placeholder="0" value={amount} onChange={(v) => setAmount(sanitizeMoneyInput(v))} start="$" />
+              <CoInput mono size="sm" className={priceField} placeholder="0" value={amount} onChange={(v) => { setAmount(sanitizeMoneyInput(v)); setError(null); }} start="$" />
             </div>
 
             <div>

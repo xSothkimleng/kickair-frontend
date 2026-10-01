@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Search, X, CheckCircle } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Box, Flex, Wrap } from "styled-system/jsx";
@@ -44,7 +46,7 @@ const ctaSolid = cx(
   ctaBase,
   css({
     bg: "accent",
-    color: "white",
+    color: "white!",
     borderColor: "accent",
     boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)",
     _hover: { bg: "accentHover", borderColor: "accentHover" },
@@ -54,17 +56,20 @@ const ctaOutline = cx(
   ctaBase,
   css({
     bg: "transparent",
-    color: "accent",
+    color: "accent!",
     borderColor: "accent",
-    _hover: { bg: "accent", color: "white" },
+    _hover: { bg: "accent", color: "white!" },
   })
 );
 
 export default function HeroSection() {
   const [searchQuery, setSearchQuery] = useState("");
 
+  const router = useRouter();
+
   const handleSearch = () => {
-    // Your search logic here
+    const q = searchQuery.trim();
+    router.push(q ? `/explore-services?q=${encodeURIComponent(q)}` : "/explore-services");
   };
 
   return (
@@ -195,12 +200,12 @@ export default function HeroSection() {
 
         {/* CTA Buttons */}
         <Flex direction={{ base: "column", sm: "row" }} align="center" justify="center" gap="4" pt="4">
-          <button type="button" className={ctaSolid}>
+          <Link href="/find-freelancer" className={ctaSolid}>
             Explore Freelancers
-          </button>
-          <button type="button" className={ctaOutline}>
+          </Link>
+          <Link href="/auth/sign-up" className={ctaOutline}>
             Become a Freelancer
-          </button>
+          </Link>
         </Flex>
 
         {/* Trust Indicators */}

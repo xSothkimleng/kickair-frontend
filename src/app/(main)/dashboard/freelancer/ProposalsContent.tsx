@@ -9,6 +9,7 @@ import { qk } from "@/lib/queryKeys";
 import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { ProposalStatus } from "@/types/job";
+import { formatUsd } from "@/lib/format";
 
 type Filter = "all" | ProposalStatus;
 
@@ -31,11 +32,7 @@ function formatDate(dateStr: string) {
   });
 }
 
-function formatCurrency(value: string) {
-  const num = parseFloat(value);
-  if (isNaN(num)) return value;
-  return num.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
-}
+const formatCurrency = (value: string | number) => formatUsd(value);
 
 const FILTERS: { value: Filter; label: string }[] = [
   { value: "all", label: "All" },

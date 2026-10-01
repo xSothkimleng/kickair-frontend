@@ -5,10 +5,10 @@ import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { css } from "styled-system/css";
 import { MessageCircle, CheckCircle2, XCircle, Send, RotateCcw, Hourglass, Plus, Tag } from "lucide-react";
-import { Spinner } from "@/components/ds";
+import { Spinner, toast } from "@/components/ds";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
-import { Order, OrderStatus, FreelancerOrdersResponse } from "@/types/order";
+import { Order, OrderStatus } from "@/types/order";
 import { CustomOrder } from "@/types/customOrder";
 import { DatePicker } from "@/components/ui/inputs";
 import { useIncomingCustomOrders, useCoInvalidate } from "@/components/customOrders/hooks";
@@ -21,6 +21,8 @@ import {
   headRowCss, listBtn, listCss, metaMonoCss, metaMutedCss, metaRowCss, pageHeadRowCss, priceCss,
   proposeBtnCss, rightColCss, startIconCss, statusChipCss, subCss, titleCss, titleRowCss,
 } from "@/components/dashboard/orderListKit";
+import { deliveryText, formatAmount, formatUsd } from "@/lib/format";
+import { isOfferExpired } from "@/components/customOrders/offerRounds";
 
 const toYmd = (d: Date | null) => (d ? `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}` : "");
 
@@ -28,6 +30,20 @@ const isNewRequest = (r: CustomOrder) => r.status === "pending" && !r.freelancer
 
 /** Orders and negotiation-phase custom requests interleave in one list. */
 type Row = { kind: "order"; at: string; order: Order } | { kind: "request"; at: string; request: CustomOrder };
+
+// The filter chips, in order, with the words they show (the raw status reads "revision_requested").
+const FILTERS = ["all", "requests", "pending", "active", "delivered", "revision_requested", "disputed", "completed", "cancelled"] as const;
+const FILTER_LABELS: Record<(typeof FILTERS)[number], string> = {
+  all: "All",
+  requests: "Requests",
+  pending: "Pending",
+  active: "Active",
+  delivered: "Delivered",
+  revision_requested: "Revision",
+  disputed: "Disputed",
+  completed: "Completed",
+  cancelled: "Cancelled",
+};
 
 export default function OrdersContent() {
   const router = useRouter();
@@ -47,8 +63,7 @@ export default function OrdersContent() {
       if (fromDate) params.set("from", toYmd(fromDate));
       if (toDate) params.set("to", toYmd(toDate));
       const qs = params.toString();
-      const response: FreelancerOrdersResponse = await api.get(`/api/freelancer-orders${qs ? `?${qs}` : ""}`);
-      return response.data;
+      return api.getAllPages<Order>(`/api/freelancer-orders${qs ? `?${qs}` : ""}`);
     },
   });
   const { data: allRequests = [], isLoading: requestsLoading } = useIncomingCustomOrders();
@@ -131,6 +146,7 @@ export default function OrdersContent() {
       case "pending":
         return { label: "New request", bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" };
       case "offered":
+        if (isOfferExpired(r)) return { label: "Offer expired", bgcolor: "rgba(0,0,0,0.06)", color: "ink2" };
         return r.awaiting === "freelancer"
           ? { label: "Client countered", bgcolor: "rgba(234, 88, 12, 0.1)", color: "#b45309" }
           : { label: "Offer sent", bgcolor: "rgba(37, 99, 235, 0.1)", color: "#1e40af" };
@@ -172,24 +188,28 @@ export default function OrdersContent() {
   };
 
   const handleCancelOrder = async (orderId: number) => {
+    // Declining cancels the order and refunds the client, so it asks first.
+    if (!window.confirm("Decline this order? It will be cancelled and the client refunded. This cannot be undone.")) return;
     try {
       setActionLoading(orderId);
       await api.post(`/api/orders/${orderId}/cancel`, {});
       await fetchOrders();
     } catch (err) {
-      console.error("Failed to cancel order:", err);
+      toast.error(err instanceof Error ? err.message : "Could not decline the order.");
     } finally {
       setActionLoading(null);
     }
   };
 
   const handleDeclineRequest = async (requestId: number) => {
+    // Declining closes the request for good, so it asks first.
+    if (!window.confirm("Decline this request? This closes it and cannot be undone.")) return;
     try {
       setRequestActionLoading(requestId);
       await api.declineCustomOrder(requestId);
       await coInvalidate();
     } catch (err) {
-      console.error("Failed to decline request:", err);
+      toast.error(err instanceof Error ? err.message : "Could not decline the request.");
     } finally {
       setRequestActionLoading(null);
     }
@@ -235,13 +255,13 @@ export default function OrdersContent() {
 
       {/* Filters */}
       <div className={filterRowCss}>
-        {(["all", "requests", "pending", "active", "delivered", "revision_requested", "disputed", "completed", "cancelled"] as const).map(filter => (
+        {FILTERS.map(filter => (
           <button
             key={filter}
             type="button"
             onClick={() => setActiveFilter(filter)}
             className={filterBtn({ on: activeFilter === filter })}>
-            {filter}
+            {FILTER_LABELS[filter]}
             {filter === "requests" && newRequestCount > 0 && (
               <span className={filterNew({ look: activeFilter === filter ? "orangeOn" : "orangeOff" })}>
                 {newRequestCount} new
@@ -323,7 +343,7 @@ export default function OrdersContent() {
                       </div>
                       <div className={rightColCss}>
                         <h6 className={priceCss}>
-                          ${Number(price).toLocaleString()}
+                          {formatUsd(price)}
                         </h6>
                         <span className={statusChipCss} style={{ backgroundColor: chip.bgcolor, color: chip.color }}>
                           {chip.label}
@@ -380,12 +400,13 @@ export default function OrdersContent() {
             const isCustom = !!order.custom_order_id;
             const isJobBased = !order.pricing_option_id && !isCustom;
             const orderTitle = order.service?.title ?? order.proposal?.job_post?.title ?? "Order";
-            const orderPrice = order.pricing_option?.price ?? order.price ?? "0";
+            // What the client paid is stored on the order; the package price is only a fallback for old orders.
+            const orderPrice = formatAmount(order.price ?? order.pricing_option?.price);
             const deliveryLabel = isCustom
               ? "Custom scope"
               : isJobBased
-                ? `${order.proposal?.timeline_days ?? "N/A"} days (timeline)`
-                : `${order.pricing_option?.delivery_time ?? "N/A"} days`;
+                ? `${deliveryText(order.proposal?.timeline_days)} (timeline)`
+                : deliveryText(order.pricing_option?.delivery_time);
 
             return (
               <div key={order.id} className={cardCss}>

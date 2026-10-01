@@ -21,6 +21,8 @@ export type NotificationType =
   | "admin_service_pending"
   | "admin_job_pending"
   | "admin_dispute_opened"
+  | "admin_dispute_evidence"
+  | "admin_payout_requested"
   | "admin_kyc_pending"
   | "custom_order_requested"
   | "custom_order_offered"

@@ -75,7 +75,9 @@ export const TYPE_META: Record<NotificationType, TypeMeta> = {
   // Admin queue
   admin_service_pending: { Icon: Inbox, tone: "pending", cta: "Open queue" },
   admin_job_pending: { Icon: Inbox, tone: "pending", cta: "Open queue" },
+  admin_payout_requested: { Icon: Inbox, tone: "pending", cta: "Open payouts" },
   admin_dispute_opened: { Icon: Scale, tone: "pending", cta: "Open dispute" },
+  admin_dispute_evidence: { Icon: Scale, tone: "pending", cta: "Open dispute" },
   admin_kyc_pending: { Icon: UserCheck, tone: "pending", cta: "Open queue" },
   // Custom orders & milestones
   custom_order_requested: { Icon: FileSignature, tone: "blue", cta: "View request" },
@@ -123,7 +125,8 @@ export function getNotificationRoute(n: Notification): string | null {
   // Admin console queues
   if (type === "admin_service_pending") return `/admin/listings`;
   if (type === "admin_job_pending") return `/admin/listings?kind=job`;
-  if (type === "admin_dispute_opened") return data?.dispute_id ? `/admin/disputes/${data.dispute_id}` : `/admin/disputes`;
+  if (type === "admin_payout_requested") return `/admin/finance`;
+  if (type === "admin_dispute_opened" || type === "admin_dispute_evidence") return data?.dispute_id ? `/admin/disputes/${data.dispute_id}` : `/admin/disputes`;
   if (type === "admin_kyc_pending") return `/admin/verifications`;
   // Custom orders & milestones
   const customOrderId = data?.custom_order_id;

@@ -3,9 +3,9 @@
 import { useState, useRef, useEffect, useLayoutEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { Briefcase, Plus, Receipt, Search, Send } from "lucide-react";
+import { ArrowLeft, Briefcase, Plus, Receipt, Search, Send } from "lucide-react";
 import { css, cva } from "styled-system/css";
-import { Avatar, Spinner, button, iconButton } from "@/components/ds";
+import { Avatar, Spinner, button, iconButton, toast } from "@/components/ds";
 import { Conversation, ConversationOrderEvent, Message } from "@/types/message";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
@@ -32,7 +32,9 @@ const emptyTitleCss = css({ textStyle: "lead", fontWeight: 600, color: "ink" });
 const emptyCopyCss = css({ textStyle: "ui", color: "ink2" });
 
 /* ── shell ── */
-const rootCss = css({ flex: 1, display: "flex", flexDirection: "column" });
+const rootCss = css({ flex: 1, minW: 0, display: "flex", flexDirection: "column" });
+// Back to the conversation list. Phones only: from `md` up the list sits beside the chat.
+const backBtnCss = css({ display: { base: "inline-flex", md: "none" }, alignItems: "center", justifyContent: "center", w: "36px", h: "36px", ml: "-6px", border: "none", borderRadius: "50%", bg: "transparent", color: "ink", cursor: "pointer", flexShrink: 0, _hover: { bg: "rgba(0, 0, 0, 0.05)" } });
 const headerCss = css({
   p: "16px",
   borderBottomWidth: "1px",
@@ -217,11 +219,17 @@ interface ChatViewProps {
   messages: Message[];
   loading: boolean;
   sending: boolean;
-  onSendMessage: (body: string) => Promise<void>;
+  onSendMessage: (body: string, file?: File) => Promise<void>;
   participantLabel?: string;
   /** Which side of the marketplace the viewer is on — decides order links. */
   viewerRole?: "client" | "freelancer";
+  /** Shows a back button on phones, where the chat replaces the conversation list. */
+  onBack?: () => void;
 }
+
+// What the API accepts as a chat attachment.
+const ATTACHMENT_ACCEPT = ".jpg,.jpeg,.png,.gif,.webp,.pdf,.doc,.docx,.zip";
+const ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
 
 const EVENT_LABEL: Record<string, string> = {
   order_placed: "Order placed",
@@ -234,6 +242,7 @@ const EVENT_LABEL: Record<string, string> = {
   dispute_opened: "Dispute opened",
   dispute_resolved: "Dispute resolved",
   evidence_submitted: "Evidence submitted",
+  dispute_feedback: "Admin feedback, order continues",
 };
 
 /** A message or an inline order event, unified for chronological rendering. */
@@ -260,10 +269,26 @@ export default function ChatView({
   onSendMessage,
   participantLabel = "participant",
   viewerRole = "client",
+  onBack,
 }: ChatViewProps) {
   const [messageText, setMessageText] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const composerRef = useRef<HTMLTextAreaElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // The + button sends one file straight away, with whatever is typed as its caption.
+  const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    if (file.size > ATTACHMENT_MAX_BYTES) {
+      toast.error("That file is larger than 10 MB.");
+      return;
+    }
+    const caption = messageText;
+    setMessageText("");
+    await onSendMessage(caption, file);
+  };
   const router = useRouter();
 
   const orderRoute = (orderId: number) =>
@@ -354,6 +379,11 @@ export default function ChatView({
       <div className={headerCss}>
         <div className={rowBetweenCss}>
           <div className={headerIdentityCss}>
+            {onBack && (
+              <button type="button" onClick={onBack} aria-label="Back to conversations" className={backBtnCss}>
+                <ArrowLeft size={20} />
+              </button>
+            )}
             <span className={avatarWrapCss}>
               <Avatar
                 src={conversation.other_participant.avatar_url || undefined}
@@ -436,7 +466,8 @@ export default function ChatView({
       {/* Input */}
       <div className={composerWrapCss}>
         <div className={composerRowCss}>
-          <button type="button" aria-label="Add attachment" className={addBtnCss}>
+          <input ref={fileInputRef} type="file" hidden accept={ATTACHMENT_ACCEPT} onChange={handleFile} />
+          <button type="button" aria-label="Add attachment" disabled={sending} onClick={() => fileInputRef.current?.click()} className={addBtnCss}>
             <Plus size={20} />
           </button>
 

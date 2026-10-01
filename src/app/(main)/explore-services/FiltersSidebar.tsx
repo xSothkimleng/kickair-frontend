@@ -508,7 +508,7 @@ export default function FiltersSidebar({ filters, onChange, categories, budgetMa
         <hr className={dividerCss} />
 
         {/* Rating */}
-        <FilterSection title="Freelancer rating" defaultOpen={false} meta={filters.rating === "any" ? undefined : `${filters.rating}★ & up`}>
+        <FilterSection title="Service rating" defaultOpen={false} meta={filters.rating === "any" ? undefined : `${filters.rating}★ & up`}>
           <RadioGroupPrimitive.Root
             value={filters.rating}
             onValueChange={d => { if (d.value) set("rating", d.value as Filters["rating"]); }}

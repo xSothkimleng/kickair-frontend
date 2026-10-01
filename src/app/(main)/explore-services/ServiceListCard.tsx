@@ -9,6 +9,7 @@ import { Avatar } from "@/components/ds";
 import { Service } from "@/types/service";
 import { serviceCoverUrl } from "@/lib/serviceCover";
 import { categoryLine } from "@/lib/categoryLine";
+import { plural } from "@/lib/format";
 
 interface ServiceListCardProps {
   service: Service;
@@ -140,7 +141,7 @@ export default function ServiceListCard({ service }: ServiceListCardProps) {
               )}
               <div className={statCss}>
                 <ShoppingBag size={12} className={mutedIconCss} />
-                <span className={mutedSmCss}>{service.orders_count} orders</span>
+                <span className={mutedSmCss}>{plural(service.orders_count, "order")}</span>
               </div>
               {fastestDelivery > 0 && (
                 <div className={statCss}>
