@@ -390,7 +390,7 @@ Kimleng said yes to the specimen (https://claude.ai/artifact/RjqaNzAQhYKHELEhHXB
 
 Temp token `blur-fix-shot` deleted; the dev server (:3100) and API (:8000) started by the session were stopped.
 
-## Phase 1 completion work, 2026-10-01 (later the same day) — committed & pushed 2026-10-01 (API 93aa523, FE see git log)
+## Phase 1 completion work, 2026-10-01 (later the same day) — committed & pushed 2026-10-01 (API 93aa523, FE 5ae36f8)
 Kimleng's go: finish the missing Phase 1 items, sweep and fix bugs, commit + push + deploy, then write the client's Word acceptance checklist (format agreed: by feature, journey order, role tags, short expected result, status dropdown, comment; no sign-off line, no styling column; "what comes next" at the bottom). Khmer language and admin security moved to Phase 2. Client tests on the live site with their own accounts plus admin credentials.
 
 **Built so far (API suite 572 green, frontend tsc clean, eslint 0 errors project-wide):**
@@ -438,3 +438,8 @@ Kimleng's go: finish the missing Phase 1 items, sweep and fix bugs, commit + pus
 - Security list from earlier sessions is unchanged (login routes unthrottled, etc.).
 
 **Local test data left behind by the audits** (local DB only; the `sweep-shot` tokens and the throwaway users are already deleted): services, job posts, custom requests and chat messages marked `[sweep]`; orders 17 to 31 between the seeded accounts (several disputed / resolved); two withdrawal requests; the seeded wallets, XP and counters moved accordingly.
+
+**Deployed and checked on the live site (2026-10-01, as a guest only):** `kickair-frontend.vercel.app` and `kickair-api-production.up.railway.app` run these commits. Checked: homepage links, hero search, Explore, Terms / Privacy / Contact, the 404 page, guests bounced from `/dashboard/client` and `/settings` to sign-in, no sideways scroll at 390px, and that the public API returns `meta` and no email or phone. **Not checked on live** (no production accounts were used): every signed-in flow, email delivery, Google sign-in, the Telegram code, browser push.
+
+**The client's acceptance checklist is written:** `kickair-feedback/phase-1-checklist/KickAir-Phase-1-Checklist.docx` (29 pages, 15 sections, 75 features, each with a Status dropdown: Not tested / Approved / Needs change, and a Comment box). It is generated: edit `phase-1-checklist/source/content.cjs` and run `npm install && npm run build` there (see its README). Kimleng sends it to the client together with the admin login. When it comes back, the "Needs change" rows are the next round's input (`/feedback` workflow).
+
