@@ -46,8 +46,8 @@ export default function BasicInfoSection({ formData, onFormDataChange, categorie
           tree={categories}
           loading={categoriesLoading}
           required
-          value={{ categoryId: formData.categoryId, categoryLabel: formData.categoryLabel }}
-          onChange={(v) => onFormDataChange({ ...formData, categoryId: v.categoryId, categoryLabel: v.categoryLabel })}
+          value={{ categoryId: formData.categoryId, categoryLabel: formData.categoryLabel, subcategoryLabel: formData.subcategoryLabel }}
+          onChange={(v) => onFormDataChange({ ...formData, categoryId: v.categoryId, categoryLabel: v.categoryLabel, subcategoryLabel: v.subcategoryLabel })}
           error={fieldErrors?.category}
         />
 

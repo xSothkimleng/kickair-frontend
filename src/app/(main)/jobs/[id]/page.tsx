@@ -383,7 +383,7 @@ export default function JobDetailPage() {
         <div className={headMain}>
           <div className={chipRow}>
             <Chip tone={jobCfg.tone} label={jobCfg.label} size="lg" />
-            <span className={categoryChip}>{categoryLine(job.category, job.category_label)}</span>
+            <span className={categoryChip}>{categoryLine(job)}</span>
           </div>
           <p className={jobTitle}>{job.title}</p>
           <p className={postedLine}>Posted {fmtDate(job.created_at)} · {timeAgo(job.created_at)}</p>

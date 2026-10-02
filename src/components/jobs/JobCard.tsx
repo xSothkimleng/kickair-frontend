@@ -142,7 +142,7 @@ export default function JobCard({ job }: { job: JobPost }) {
 
   const metaLine = (
     <div className={metaRow}>
-      <span className={categoryPill}>{categoryLine(job.category, job.category_label)}</span>
+      <span className={categoryPill}>{categoryLine(job)}</span>
       <p className={postedText}>{timeAgo(job.created_at)}</p>
     </div>
   );

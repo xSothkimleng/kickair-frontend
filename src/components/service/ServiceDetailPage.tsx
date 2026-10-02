@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { Fragment, useState, useEffect } from "react";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
@@ -35,6 +35,7 @@ import { useServiceListingLive } from "@/hooks/useServiceListingLive";
 import { deliveryText, revisionsText } from "@/lib/serviceFormat";
 import { LevelBadge } from "@/components/profile/profileKit";
 import { plural } from "@/lib/format";
+import { categoryParts } from "@/lib/categoryLine";
 import { SHOW_SAVE_BUTTONS } from "@/lib/features";
 import { sharePage } from "@/lib/share";
 import { withRedirect } from "@/lib/redirect";
@@ -608,19 +609,12 @@ export function ServiceDetailPage({ serviceId }: ServiceDetailPageProps) {
               <div>
                 {service.category && (
                   <div className={breadcrumbCss}>
-                    {service.category.parent && (
-                      <>
-                        <span className={crumbCss}>{service.category.parent.category_name}</span>
-                        <span className={crumbSepCss}>›</span>
-                      </>
-                    )}
-                    <span className={crumbCss}>{service.category.category_name}</span>
-                    {service.category_label && (
-                      <>
-                        <span className={crumbSepCss}>›</span>
-                        <span className={crumbCss}>{service.category_label}</span>
-                      </>
-                    )}
+                    {[...(service.category.parent ? [service.category.parent.category_name] : []), ...categoryParts(service)].map((name, i) => (
+                      <Fragment key={i}>
+                        {i > 0 && <span className={crumbSepCss}>›</span>}
+                        <span className={crumbCss}>{name}</span>
+                      </Fragment>
+                    ))}
                   </div>
                 )}
                 <h3 className={serviceTitleCss}>{service.title}</h3>

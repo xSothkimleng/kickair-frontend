@@ -172,7 +172,7 @@ export default function CatalogPage() {
 
   return (
     <div className={page}>
-      <PageHeader title="Catalog" description="Categories organise listings on the site. Owners who don't find a fit type their own words; sort those here. Skills are the tags freelancers pick for their profile." />
+      <PageHeader title="Catalog" description="Categories organise listings on the site. A category an owner types is added when their listing is approved; older ones that were never sorted are listed here. Skills are the tags freelancers pick for their profile." />
 
       {unsorted.isError ? <div className={css({ mb: "20px" })}><ErrorState title="Couldn't load unsorted listings" onRetry={() => unsorted.refetch()} /></div> : rows.length > 0 ? (
         <Panel className={css({ mb: "20px" })}>

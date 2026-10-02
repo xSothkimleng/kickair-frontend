@@ -12,7 +12,7 @@ import { TemporaryUpload } from "@/types/service";
 import { Expertise } from "@/types/user";
 import RichTextEditor from "@/components/ui/RichTextEditor";
 import { TextInput, MultiSelectInput, DatePicker } from "@/components/ui/inputs";
-import CategoryPicker, { CategoryValue } from "@/components/category/CategoryPicker";
+import CategoryPicker, { CategoryValue, categoryError } from "@/components/category/CategoryPicker";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
 
 const FILE_LIMITS = {
@@ -194,6 +194,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
   const [category, setCategory] = useState<CategoryValue>({
     categoryId: job?.category?.id ?? null,
     categoryLabel: job?.category_label ?? null,
+    subcategoryLabel: job?.subcategory_label ?? null,
   });
   const [description, setDescription] = useState(job?.description ?? "");
   const [budgetMin, setBudgetMin] = useState(job?.budget_min ?? "");
@@ -358,8 +359,8 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     if (!asDraft) {
       const errs: Record<string, string> = {};
       if (!title.trim()) errs.title = "Job title is required";
-      if (!category.categoryId) errs.category = "Pick a category, or type your own";
-      else if (categories.some(g => g.id === category.categoryId) && !category.categoryLabel?.trim()) errs.category = "Pick a subcategory, or tell us in a few words what this is";
+      const categoryIssue = categoryError(categories, category);
+      if (categoryIssue) errs.category = categoryIssue;
       if (!description.trim() || description === "<p></p>") errs.description = "Description is required";
       if (!budgetMin) errs.budgetMin = "Required";
       if (!budgetMax) errs.budgetMax = "Required";
@@ -384,6 +385,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
       const payload: CreateJobPostRequest = {
         category_id: category.categoryId,
         category_label: category.categoryLabel?.trim() || null,
+        subcategory_label: category.subcategoryLabel?.trim() || null,
         title: title.trim(),
         description: hasDescription ? description : null,
         budget_min: budgetMin === "" ? null : Number(budgetMin),

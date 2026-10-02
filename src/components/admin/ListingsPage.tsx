@@ -11,7 +11,7 @@ import type { JobPost } from "@/types/job";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
 import { useAdminAction, useAdminStats, useCategories, useJobPosts, useServices } from "./queries";
 import { useToast } from "./toast";
-import { categoryLine } from "@/lib/categoryLine";
+import { categoryLine, type Categorised } from "@/lib/categoryLine";
 import { Avatar, Btn, Drawer, EmptyState, ErrorState, Field, Loading, Modal, Pager, Panel, Pill, Segmented, Select, Tabs, Textarea, button, kvList, page, PageHeader, row, stack, table, text } from "./ui";
 import { ago, errorMessage, money, shortDate, waiting } from "./format";
 import { listingLabel, type ListingStatus } from "./labels";
@@ -22,8 +22,10 @@ type Kind = "service" | "job";
 interface Listing {
   id: number; kind: Kind; title: string; status: ListingStatus; submitted: string;
   owner: { id: number | null; name: string; avatar: string | null; sub: string | null };
-  /** "Web Development › Podcast editing" when the owner typed their own label, else the category name. */
+  /** "Web Development › Podcast editing" when the owner typed their own words, else the category name. */
   category: string | null; categoryId: number | null; label: string | null;
+  /** What the owner typed that is not a category yet: approving the listing adds it to the site. */
+  typed: { category: string | null; subcategory: string | null; under: string | null } | null;
   price?: number; budget?: string; tiers?: number; delivery?: string; proposals?: number; deadline?: string;
   cover: string | null; reason: string | null; description: string | null;
   /** Everything the owner uploaded, the cover included. */
@@ -45,6 +47,14 @@ function serviceStatus(s: Service["status"]): ListingStatus {
 function jobStatus(s: JobPost["status"]): ListingStatus {
   return s === "rejected" ? "rejected" : s === "pending_review" || s === "draft" ? "pending" : "live";
 }
+/** A typed category sits on the catch-all group with the typed subcategory beside it; a typed subcategory sits on a real group. */
+function typedCategory(l: Categorised): Listing["typed"] {
+  const own = l.category_label?.trim();
+  if (!own || !l.category) return null;
+  return l.category.is_catch_all
+    ? { category: own, subcategory: l.subcategory_label?.trim() || null, under: null }
+    : { category: null, subcategory: own, under: l.category.category_name };
+}
 const days = (d: string) => `${d}${/^\d+$/.test(d) ? " days" : ""}`;
 function fromService(s: Service): Listing {
   const u = s.freelancer_profile?.user;
@@ -52,7 +62,7 @@ function fromService(s: Service): Listing {
   return {
     id: s.id, kind: "service", title: s.title, status: serviceStatus(s.status), submitted: s.updated_at ?? s.created_at,
     owner: { id: u?.id ?? null, name: u?.name ?? "Unknown", avatar: u?.avatar_url ?? null, sub: s.freelancer_profile?.tagline ?? u?.email ?? null },
-    category: s.category ? categoryLine(s.category, s.category_label) : null, categoryId: s.category_id, label: s.category_label ?? null,
+    category: s.category ? categoryLine(s) : null, categoryId: s.category_id, label: s.category_label ?? null, typed: typedCategory(s),
     price: opts[0]?.price, tiers: s.pricing_options?.length ?? 0, delivery: opts[0]?.delivery ? days(opts[0].delivery) : undefined,
     cover: s.feature_image?.file_url ?? s.media?.find((m) => m.file_type === "image")?.file_url ?? null, reason: s.rejection_reason ?? null, description: s.description,
     media: (s.media ?? []).map((m) => ({ id: m.id, url: m.file_url, type: m.file_type, name: m.file_name })),
@@ -68,7 +78,7 @@ function fromJob(j: JobPost): Listing {
   return {
     id: j.id, kind: "job", title: j.title, status: jobStatus(j.status), submitted: j.updated_at ?? j.created_at,
     owner: { id: u?.id ?? null, name: j.client_profile?.company_name || u?.name || "Unknown", avatar: u?.avatar_url ?? null, sub: j.client_profile?.company_name ? u?.name ?? null : u?.email ?? null },
-    category: j.category ? categoryLine(j.category, j.category_label) : null, categoryId: j.category_id ?? j.category?.id ?? null, label: j.category_label ?? null,
+    category: j.category ? categoryLine(j) : null, categoryId: j.category_id ?? j.category?.id ?? null, label: j.category_label ?? null, typed: typedCategory(j),
     budget: min && max && min !== max ? `${money(min)} – ${money(max)}` : money(max || min), proposals: j.proposal_count, deadline: j.deadline,
     cover: j.media?.find((m) => m.file_type === "image")?.file_url ?? null, reason: j.rejection_reason ?? null, description: j.description,
     media: (j.media ?? []).map((m) => ({ id: m.id, url: m.file_url, type: m.file_type, name: m.file_name })),
@@ -195,7 +205,7 @@ export default function ListingsPage() {
 
   return (
     <div className={page}>
-      <PageHeader title="Listings" description="Services and job posts go live after a review. A listing filed with the owner's own words can be sorted here one at a time, or by label in Catalog." />
+      <PageHeader title="Listings" description="Services and job posts go live after a review. A category the owner typed is added to the site when you approve the listing; file it under an existing one instead if it is a duplicate." />
       <div className={css({ mb: "16px" })}>
         <Tabs value={kind} onChange={changeKind} items={[{ value: "service", label: `Services${pendingServices != null ? ` (${pendingServices} to review)` : ""}` }, { value: "job", label: `Job posts${pendingJobs != null ? ` (${pendingJobs} to review)` : ""}` }]} />
       </div>
@@ -224,7 +234,7 @@ export default function ListingsPage() {
                     {l.category ? (
                       <div className={cx(stack({ gap: 1 }), css({ alignItems: "flex-start" }))}>
                         <Pill outline>{l.category}</Pill>
-                        {l.label ? <button className={linkBtn} onClick={(e) => { e.stopPropagation(); openAssign(l, false); }}>Owner&apos;s own words · file under…</button> : null}
+                        {l.typed ? <button className={linkBtn} onClick={(e) => { e.stopPropagation(); openAssign(l, false); }}>{l.typed.category ? "New category" : "New subcategory"} · file under an existing one…</button> : null}
                       </div>
                     ) : (
                       <button className={linkBtn} onClick={(e) => { e.stopPropagation(); openAssign(l, false); }}>Assign category</button>
@@ -271,6 +281,16 @@ export default function ListingsPage() {
               </div>
               <a href={current.href} target="_blank" rel="noreferrer" className={button({ variant: "secondary", size: "sm" })}><ExternalLink size={14} /> Open full preview</a>
             </div>
+            {current.typed ? (
+              <div className={cx(text({ size: "meta" }), css({ p: "12px", bg: "var(--td-amber-soft)", color: "var(--td-ink)", borderRadius: "10px" }))}>
+                {current.typed.category
+                  ? <>New category <b>{current.typed.category}</b>{current.typed.subcategory ? <> with the subcategory <b>{current.typed.subcategory}</b></> : null}, typed by the owner.</>
+                  : <>New subcategory <b>{current.typed.subcategory}</b> under {current.typed.under}, typed by the owner.</>}
+                {current.status === "live" || current.status === "disabled"
+                  ? " It is not on the site yet. File this listing under an existing subcategory, or sort it in Catalog."
+                  : " Approving this listing adds it to the site for everyone. If it duplicates an existing one, file the listing under that instead."}
+              </div>
+            ) : null}
             {current.reason ? <div className={cx(text({ size: "meta" }), css({ p: "12px", bg: "var(--td-red-soft)", color: "var(--td-red)", borderRadius: "10px" }))}>{current.reason}</div> : null}
             <Link href={current.owner.id ? `/admin/people/${current.owner.id}` : "#"} className={cx(row({ gap: 3 }), css({ p: "12px", borderRadius: "10px", border: "1px solid var(--td-line)", _hover: { bg: "var(--td-surface-2)" } }))}>
               <Avatar name={current.owner.name} seed={current.owner.id ?? current.id} src={current.owner.avatar} />
@@ -285,7 +305,6 @@ export default function ListingsPage() {
               ) : (
                 <><dt>Budget</dt><dd>{current.budget}</dd><dt>Deadline</dt><dd>{current.deadline ? shortDate(current.deadline) : "—"}</dd><dt>Proposals</dt><dd>{current.status === "live" ? `${current.proposals ?? 0} received` : "Not open yet"}</dd></>
               )}
-              {current.label ? <><dt>Owner wrote</dt><dd>{current.label}</dd></> : null}
               {current.location ? <><dt>Location</dt><dd>{current.location}</dd></> : null}
             </dl>
             {current.packages?.length ? (
@@ -330,7 +349,7 @@ export default function ListingsPage() {
             ) : null}
             {current.tags?.length ? <Section title="Search tags"><div className={row({ gap: 2, wrap: true })}>{current.tags.map((t) => <Pill key={t} outline>{t}</Pill>)}</div></Section> : null}
             {current.skills?.length ? <Section title="Skills wanted"><div className={row({ gap: 2, wrap: true })}>{current.skills.map((k) => <Pill key={k} outline>{k}</Pill>)}</div></Section> : null}
-            {!current.category || current.label ? <Btn onClick={() => openAssign(current, false)}><Tag size={14} /> {current.label ? "File under a subcategory" : "Assign a category"}</Btn> : null}
+            {!current.category || current.label ? <Btn onClick={() => openAssign(current, false)}><Tag size={14} /> {current.label ? "File under an existing subcategory instead" : "Assign a category"}</Btn> : null}
           </div>
         ) : null}
       </Drawer>
@@ -349,7 +368,7 @@ export default function ListingsPage() {
         footer={<><Btn variant="ghost" onClick={() => setAssign(null)}>Cancel</Btn><Btn variant="primary" disabled={!assign?.categoryId || busyId != null} onClick={confirmAssign}>{busyId != null ? "Saving…" : assign?.thenApprove ? "Save and publish" : "Save"}</Btn></>}>
         {assign ? (
           <div className={stack({ gap: 4 })}>
-            {rows.find((l) => l.id === assign.id)?.label ? <p className={text({ size: "meta", tone: 2 })}>Owner wrote: <b>{rows.find((l) => l.id === assign.id)?.label}</b></p> : null}
+            {rows.find((l) => l.id === assign.id)?.label ? <p className={text({ size: "meta", tone: 2 })}>The owner typed: <b>{rows.find((l) => l.id === assign.id)?.category}</b></p> : null}
             <Field label="Subcategory">
               <Select autoFocus value={assign.categoryId} onChange={(e) => setAssign({ ...assign, categoryId: e.target.value })}>
                 <option value="">Choose…</option>

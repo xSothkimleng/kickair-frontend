@@ -107,7 +107,7 @@ export default function JobDraftCard({
             </div>
           </div>
           <p className={category}>
-            {categoryLine(draft.category, draft.category_label, "No category yet")}
+            {categoryLine(draft, "No category yet")}
           </p>
           <p className={edited}>
             Last edited {timeAgo(draft.updated_at)}

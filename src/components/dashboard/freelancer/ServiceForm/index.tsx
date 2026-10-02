@@ -12,6 +12,7 @@ import { ServiceFormData } from "../types";
 import { api } from "@/lib/api";
 import { useAuth } from "@/components/context/AuthContext";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
+import { categoryError } from "@/components/category/CategoryPicker";
 import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
 import { TIER_NAME } from "./PricingTierCard";
@@ -251,6 +252,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       title: service?.title || "",
       categoryId: service?.category_id || null,
       categoryLabel: service?.category_label ?? null,
+      subcategoryLabel: service?.subcategory_label ?? null,
       searchTags: service?.search_tags?.filter((t: string) => t.trim()) || [],
       description: service?.description || "",
       location: service?.location || "Phnom Penh, Cambodia",
@@ -355,6 +357,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       // A subcategory, or a top-level group plus the owner's own label.
       category_id: formData.categoryId,
       category_label: formData.categoryLabel?.trim() || null,
+      subcategory_label: formData.subcategoryLabel?.trim() || null,
       title: formData.title,
       description: formData.description,
       search_tags: formData.searchTags.filter(tag => tag.trim() !== ""),
@@ -379,8 +382,8 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const errs: Record<string, string> = {};
 
     if (!formData.title.trim()) errs.title = "Service title is required";
-    if (!formData.categoryId) errs.category = "Pick a category, or type your own";
-    else if (categories.some(g => g.id === formData.categoryId) && !formData.categoryLabel?.trim()) errs.category = "Pick a subcategory, or tell us in a few words what this is";
+    const categoryIssue = categoryError(categories, formData);
+    if (categoryIssue) errs.category = categoryIssue;
     if (imageCount === 0) errs.image = "Add at least one image";
 
     const enabledTiers = (["basic", "standard", "premium"] as const).filter(t => formData.pricing[t].enabled);

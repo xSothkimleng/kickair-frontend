@@ -43,6 +43,8 @@ export interface ServiceFormData {
   categoryId: number | null;
   // The owner's own words when categoryId is a top-level group with no fitting subcategory.
   categoryLabel: string | null;
+  // The subcategory typed for a typed category.
+  subcategoryLabel: string | null;
   searchTags: string[];
   description: string;
   location: string;

@@ -6,6 +6,7 @@ export type ProposalStatus = "pending" | "accepted" | "rejected" | "withdrawn";
 export interface JobCategory {
   id: number;
   category_name: string;
+  is_catch_all?: boolean;
 }
 
 export interface JobSkill {
@@ -74,6 +75,8 @@ export interface JobPost {
   category_id?: number | null;
   /** The client's own words when filed on a group without a fitting subcategory. */
   category_label?: string | null;
+  /** The subcategory typed for a typed category (a label on the catch-all group). */
+  subcategory_label?: string | null;
   category?: JobCategory | null;
   skills: JobSkill[];
   media: JobMedia[];
@@ -118,6 +121,8 @@ export interface CreateJobPostRequest {
   category_id: number | null;
   // The client's own words, sent when category_id is a top-level group.
   category_label?: string | null;
+  // The subcategory typed for a typed category.
+  subcategory_label?: string | null;
   title: string;
   description: string | null;
   budget_min: number | null;

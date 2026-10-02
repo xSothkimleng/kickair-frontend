@@ -107,6 +107,8 @@ export interface Service {
   category_id: number | null;
   /** The owner's own words when filed on a group without a fitting subcategory. */
   category_label?: string | null;
+  /** The subcategory typed for a typed category (a label on the catch-all group). */
+  subcategory_label?: string | null;
   title: string;
   description: string | null;
   search_tags: string[] | null;
@@ -178,6 +180,8 @@ export interface CreateServiceRequest {
   category_id?: number | null;
   // The owner's own words, sent when category_id is a top-level group.
   category_label?: string | null;
+  // The subcategory typed for a typed category.
+  subcategory_label?: string | null;
   title: string;
   description: string;
   search_tags: string[];
