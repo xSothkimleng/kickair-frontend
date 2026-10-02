@@ -927,6 +927,7 @@ export default function SettingsPage() {
                     placeholder="you@example.com"
                     value={email}
                     onChange={setEmail}
+                    autoComplete="email"
                     disabled={addingEmail}
                   />
                 </div>
@@ -1091,6 +1092,7 @@ export default function SettingsPage() {
             <PasswordInput
               label="Current password"
               placeholder="Enter current password"
+              autoComplete="new-password"
               value={currentPassword}
               onChange={(v) => { setCurrentPassword(v); setPwErrors(p => ({ ...p, current: undefined })); }}
               required
@@ -1099,6 +1101,7 @@ export default function SettingsPage() {
             <PasswordInput
               label="New password"
               placeholder="Enter new password (8+ characters)"
+              autoComplete="new-password"
               value={newPassword}
               onChange={(v) => { setNewPassword(v); setPwErrors(p => ({ ...p, new: undefined })); }}
               required
@@ -1107,6 +1110,7 @@ export default function SettingsPage() {
             <PasswordInput
               label="Confirm new password"
               placeholder="Re-enter new password"
+              autoComplete="new-password"
               value={confirmPassword}
               onChange={(v) => { setConfirmPassword(v); setPwErrors(p => ({ ...p, confirm: undefined })); }}
               required

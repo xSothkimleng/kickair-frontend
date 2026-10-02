@@ -6,6 +6,7 @@ import { CircleCheck } from "lucide-react";
 import { css } from "styled-system/css";
 import { Alert } from "@/components/ds";
 import { AuthFallback, AuthPage, AuthPrimaryButton, authForm, authSubtitle, authTitle } from "@/components/auth/authKit";
+import { useAuth } from "@/components/context/AuthContext";
 import { FieldLabel, PasswordInput } from "@/components/ui/inputs";
 import { api } from "@/lib/api";
 
@@ -21,6 +22,7 @@ function ResetPasswordContent() {
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
+  const { user, logout } = useAuth();
   const router = useRouter();
   const params = useSearchParams();
   const token = params.get("token") ?? "";
@@ -47,6 +49,9 @@ function ResetPasswordContent() {
         password,
         password_confirmation: confirm,
       });
+      // The sign-in page sends a signed-in visitor to their dashboard, so the
+      // "Sign in" button below only reaches the form once this browser is signed out.
+      if (user) await logout();
       setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong. Please try again.");
@@ -79,6 +84,12 @@ function ResetPasswordContent() {
             </p>
           </div>
 
+          {user && (
+            <Alert tone="info" className={alertGap}>
+              You&apos;re signed in as <b>{user.name}</b>. Resetting this password will sign you out on this device.
+            </Alert>
+          )}
+
           {error && (
             <Alert tone="error" onClose={() => setError("")} className={alertGap}>
               {error}
@@ -88,11 +99,11 @@ function ResetPasswordContent() {
           <form onSubmit={handleSubmit} className={authForm}>
             <div>
               <FieldLabel htmlFor="new-password">New password</FieldLabel>
-              <PasswordInput id="new-password" value={password} onChange={setPassword} placeholder="At least 8 characters" disabled={isLoading} />
+              <PasswordInput id="new-password" value={password} onChange={setPassword} placeholder="At least 8 characters" autoComplete="new-password" disabled={isLoading} />
             </div>
             <div>
               <FieldLabel htmlFor="confirm-password">Confirm new password</FieldLabel>
-              <PasswordInput id="confirm-password" value={confirm} onChange={setConfirm} placeholder="Repeat the password" disabled={isLoading} />
+              <PasswordInput id="confirm-password" value={confirm} onChange={setConfirm} placeholder="Repeat the password" autoComplete="new-password" disabled={isLoading} />
             </div>
             <AuthPrimaryButton type="submit" disabled={isLoading || !password || !confirm}>
               {isLoading ? "Resetting…" : "Reset password"}
