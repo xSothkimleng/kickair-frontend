@@ -3,14 +3,15 @@
 import { useState } from "react";
 import Link from "next/link";
 import { css, cx } from "styled-system/css";
-import { ArrowLeft, Ban, Check, ExternalLink, Mail, MapPin, PauseCircle, PlayCircle, Star } from "lucide-react";
+import { ArrowLeft, Ban, Check, ClipboardList, ExternalLink, Mail, MapPin, PauseCircle, PlayCircle, Star, Wallet } from "lucide-react";
 import { api } from "@/lib/api";
 import RichTextDisplay from "@/components/ui/RichTextDisplay";
-import { useAdminAction, useUser } from "./queries";
+import { OrdersTable } from "./OrdersPage";
+import { useAdminAction, useOrders, useTransactions, useUser } from "./queries";
 import { useToast } from "./toast";
-import { Avatar, Btn, ErrorState, Field, Input, Loading, Modal, Panel, PanelHead, Pill, Tabs, Textarea, grid, kvList, page, row, stack, text } from "./ui";
+import { Avatar, Btn, EmptyState, ErrorState, Field, Input, Loading, Modal, Pager, Panel, PanelHead, Pill, Tabs, Textarea, grid, kvList, page, row, stack, table, text } from "./ui";
 import { ago, dateTime, errorMessage, longDate, money, shortDate } from "./format";
-import { accountPill, accountState, kycLabel, kycState } from "./labels";
+import { accountPill, accountState, kycLabel, kycState, txnMeta } from "./labels";
 import { MONEY } from "@/lib/moneyTerms";
 
 const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
@@ -33,7 +34,12 @@ export default function PersonDetailPage({ id }: { id: number }) {
   const toast = useToast();
   const user = useUser(id);
   const p = user.data;
-  const [tab, setTab] = useState<"profile" | "verification">("profile");
+  const [tab, setTab] = useState<"profile" | "verification" | "orders" | "transactions">("profile");
+  const [ordersPage, setOrdersPage] = useState(1);
+  const [txnPage, setTxnPage] = useState(1);
+  // Each list loads when its tab is first opened.
+  const orders = useOrders({ user: id, page: ordersPage }, tab === "orders");
+  const txns = useTransactions("", txnPage, tab === "transactions", id);
   const [modal, setModal] = useState<"email" | "suspend" | "ban" | null>(null);
   const [reason, setReason] = useState("");
   const [subject, setSubject] = useState("");
@@ -124,7 +130,7 @@ export default function PersonDetailPage({ id }: { id: number }) {
 
       <div className={cx(grid({ cols: "main" }), css({ gap: "20px", alignItems: "start" }))}>
         <div className={stack({ gap: 4 })}>
-          <Tabs value={tab} onChange={setTab} items={[{ value: "profile", label: "Profile" }, ...(showVerification ? [{ value: "verification" as const, label: "Verification" }] : [])]} />
+          <Tabs value={tab} onChange={setTab} items={[{ value: "profile", label: "Profile" }, { value: "orders", label: "Orders" }, { value: "transactions", label: "Transactions" }, ...(showVerification ? [{ value: "verification" as const, label: "Verification" }] : [])]} />
 
           {tab === "profile" ? (
             <>
@@ -168,8 +174,37 @@ export default function PersonDetailPage({ id }: { id: number }) {
                   </div>
                 </Panel>
               ) : null}
-              {!fp && !cp ? <Panel><p className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>This account hasn&apos;t set up a profile yet.</p></Panel> : null}
+              {!fp && !cp ? <Panel><div className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>This account hasn&apos;t set up a profile yet.</div></Panel> : null}
             </>
+          ) : null}
+
+          {tab === "orders" ? (
+            <Panel>
+              {orders.isLoading ? <Loading /> : orders.isError ? <ErrorState onRetry={() => orders.refetch()} /> : (orders.data?.data.length ?? 0) === 0 ? <EmptyState icon={<ClipboardList size={20} />} title="No orders yet" body="Orders they place or work on appear here." /> : <OrdersTable rows={orders.data?.data ?? []} viewerId={id} />}
+              <Pager meta={orders.data?.meta} onPage={setOrdersPage} noun="orders" />
+            </Panel>
+          ) : null}
+
+          {tab === "transactions" ? (
+            <Panel>
+              {txns.isLoading ? <Loading /> : txns.isError ? <ErrorState onRetry={() => txns.refetch()} /> : (txns.data?.data.data.length ?? 0) === 0 ? <EmptyState icon={<Wallet size={20} />} title="No transactions yet" body="Top-ups, payments, earnings and payouts on their wallet appear here." /> : (
+                <table className={table}>
+                  <thead><tr><th>When</th><th>Description</th><th>Type</th><th className="num">Amount</th><th>Status</th></tr></thead>
+                  <tbody>
+                    {(txns.data?.data.data ?? []).map((t) => (
+                      <tr key={t.id}>
+                        <td className={css({ whiteSpace: "nowrap" })}><p className={text({ weight: 500 })}>{dateTime(t.created_at)}</p><p className={text({ size: "micro", tone: 3, mono: true })}>#{t.id}{t.order_id ? <> · <Link href={`/admin/orders/${t.order_id}`} className={css({ _hover: { textDecoration: "underline" } })}>order #{t.order_id}</Link></> : null}</p></td>
+                        <td><span className={text({ tone: 2 })}>{t.description}</span>{t.metadata?.reference ? <p className={text({ size: "micro", tone: 3, mono: true })}>Ref {t.metadata.reference}</p> : null}</td>
+                        <td><Pill tone={txnMeta(t.type).tone}>{txnMeta(t.type).label}</Pill></td>
+                        <td className="num"><span className={css({ fontVariantNumeric: "tabular-nums", fontWeight: 600 })}>{money(t.amount)}</span></td>
+                        <td><Pill tone={t.status === "completed" ? "green" : t.status === "pending" ? "amber" : "neutral"}>{t.status === "completed" ? "Completed" : t.status === "pending" ? "Pending" : "Cancelled"}</Pill></td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+              <Pager meta={txns.data?.data.meta} onPage={setTxnPage} noun="transactions" />
+            </Panel>
           ) : null}
 
           {tab === "verification" ? (
@@ -209,6 +244,16 @@ export default function PersonDetailPage({ id }: { id: number }) {
         </div>
 
         <div className={stack({ gap: 4 })}>
+          <Panel>
+            <PanelHead title="Wallet" meta="what they hold now" />
+            <div className={css({ p: "16px" })}>
+              <dl className={kvList}>
+                <dt>{MONEY.availableBalance}</dt><dd className={text({ mono: true, weight: 600 })}>{money(p.wallet.available_balance)}</dd>
+                {p.is_client ? <><dt>{MONEY.committedToOrders}</dt><dd className={text({ mono: true })}>{money(p.wallet.committed_to_orders)}</dd></> : null}
+                {p.is_freelancer ? <><dt>{MONEY.pendingEarnings}</dt><dd className={text({ mono: true })}>{money(p.wallet.pending_earnings)}</dd></> : null}
+              </dl>
+            </div>
+          </Panel>
           <Panel>
             <PanelHead title="Account" />
             <div className={css({ p: "16px" })}>

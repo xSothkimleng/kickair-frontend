@@ -8,7 +8,7 @@ import { api, type AdminTransaction } from "@/lib/api";
 import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { useAdminAction, useFinanceStats, useTransactions, useWithdrawals } from "./queries";
 import { useToast } from "./toast";
-import { Avatar, Btn, EmptyState, ErrorState, Field, Loading, Modal, Pager, Panel, Pill, Segmented, Select, Tabs, Textarea, page, PageHeader, row, table, text, stack } from "./ui";
+import { Avatar, Btn, EmptyState, ErrorState, Field, Input, Loading, Modal, Pager, Panel, Pill, Segmented, Select, Tabs, Textarea, page, PageHeader, row, table, text, stack } from "./ui";
 import { ago, dateTime, errorMessage, money, waiting } from "./format";
 import { payoutLabel, txnLabel, txnMeta } from "./labels";
 
@@ -40,22 +40,25 @@ export default function FinancePage() {
   const [type, setType] = useState("");
   const [txnPage, setTxnPage] = useState(1);
   const [reject, setReject] = useState<{ id: number; note: string } | null>(null);
+  const [paying, setPaying] = useState<{ payout: AdminTransaction; reference: string } | null>(null);
   const [busyId, setBusyId] = useState<number | null>(null);
 
   const stats = useFinanceStats();
   const rate = useCommissionRate();
   const payouts = useWithdrawals(pf, payoutPage, tab === "payouts");
   const txns = useTransactions(type, txnPage, tab === "transactions");
-  const approve = useAdminAction((id: number) => api.approveWithdrawal(id));
+  const approve = useAdminAction(({ id, reference }: { id: number; reference: string }) => api.approveWithdrawal(id, reference));
   const rejectPayout = useAdminAction(({ id, note }: { id: number; note: string }) => api.rejectWithdrawal(id, note));
 
   const prow = [...(payouts.data?.data.data ?? [])].sort((a, b) => (pf === "pending" ? +new Date(a.created_at) - +new Date(b.created_at) : 0));
   const trow = txns.data?.data.data ?? [];
   const s = stats.data;
 
-  const doApprove = async (p: AdminTransaction) => {
+  const confirmApprove = async () => {
+    if (!paying) return;
+    const p = paying.payout;
     setBusyId(p.id);
-    try { await approve.mutateAsync(p.id); toast(`${money(p.amount)} payout to ${p.user?.name ?? "the freelancer"} approved.`); }
+    try { await approve.mutateAsync({ id: p.id, reference: paying.reference.trim() }); toast(`${money(p.amount)} payout to ${p.user?.name ?? "the freelancer"} approved.`); setPaying(null); }
     catch (err) { toast(errorMessage(err), "error"); }
     finally { setBusyId(null); }
   };
@@ -76,7 +79,7 @@ export default function FinancePage() {
             <div><p className={text({ size: "meta", tone: 2 })}>Gross volume today</p><p className={kpiNum}>{money(s.gmv_today)}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{money(s.total_gmv)} all time</p></div>
             <div><p className={text({ size: "meta", tone: 2 })}>Payouts awaiting approval</p><p className={kpiNum}>{money(s.pending_payouts_amount)}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{s.pending_payouts_count} {s.pending_payouts_count === 1 ? "request" : "requests"}</p></div>
             <div><p className={text({ size: "meta", tone: 2 })}>Refunds today</p><p className={kpiNum}>{money(s.refunds_today_amount)}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{s.refunds_today_count} {s.refunds_today_count === 1 ? "refund" : "refunds"}</p></div>
-            <div><p className={text({ size: "meta", tone: 2 })}>Platform fee</p><p className={kpiNum}>{rate != null ? `${Math.round(rate * 100)}%` : "—"}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>Charged to sellers on completion</p></div>
+            <div><p className={text({ size: "meta", tone: 2 })}>Platform income today</p><p className={kpiNum}>{money(s.income_today)}</p><p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{money(s.total_income)} all time{rate != null ? ` · ${Math.round(rate * 100)}% fee on sellers` : ""}</p></div>
           </div>
         )}
       </Panel>
@@ -102,8 +105,8 @@ export default function FinancePage() {
                       <td className="num"><span className={amt}>{money(p.amount)}</span></td>
                       <td><p>{p.metadata?.destination ?? "—"}</p>{p.metadata?.note ? <p className={cx(text({ size: "micro", tone: 3 }), css({ maxW: "260px" }))}>{p.metadata.note}</p> : null}</td>
                       <td>{pf === "pending" ? <><p className={text({ weight: 500 })}>{waiting(p.created_at)}</p><p className={text({ size: "meta", tone: 3 })}>{dateTime(p.created_at)}</p></> : <p className={text({ tone: 2 })}>{ago(p.created_at)}</p>}</td>
-                      <td><div className={cx(stack({ gap: 1 }), css({ alignItems: "flex-start" }))}><Pill tone={payoutLabel[p.status].tone} dot={p.status === "pending"}>{payoutLabel[p.status].label}</Pill>{p.admin_note && p.status !== "pending" ? <span className={cx(text({ size: "micro", tone: 3 }), css({ maxW: "260px" }))}>{p.admin_note}</span> : null}</div></td>
-                      <td className="actions">{p.status === "pending" ? <span className={row({ gap: 2 })}><Btn size="sm" variant="dangerSoft" disabled={busyId === p.id} onClick={() => setReject({ id: p.id, note: "" })}>Reject</Btn><Btn size="sm" variant="success" disabled={busyId === p.id} onClick={() => doApprove(p)}><Check size={14} /> {busyId === p.id ? "Working…" : "Approve"}</Btn></span> : null}</td>
+                      <td><div className={cx(stack({ gap: 1 }), css({ alignItems: "flex-start" }))}><Pill tone={payoutLabel[p.status].tone} dot={p.status === "pending"}>{payoutLabel[p.status].label}</Pill>{p.metadata?.reference ? <span className={text({ size: "micro", tone: 3, mono: true })}>Ref {p.metadata.reference}</span> : null}{p.admin_note && p.status !== "pending" ? <span className={cx(text({ size: "micro", tone: 3 }), css({ maxW: "260px" }))}>{p.admin_note}</span> : null}</div></td>
+                      <td className="actions">{p.status === "pending" ? <span className={row({ gap: 2 })}><Btn size="sm" variant="dangerSoft" disabled={busyId === p.id} onClick={() => setReject({ id: p.id, note: "" })}>Reject</Btn><Btn size="sm" variant="success" disabled={busyId === p.id} onClick={() => setPaying({ payout: p, reference: "" })}><Check size={14} /> {busyId === p.id ? "Working…" : "Approve"}</Btn></span> : null}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -131,7 +134,7 @@ export default function FinancePage() {
                 <tbody>
                   {trow.map((t) => (
                     <tr key={t.id}>
-                      <td><p className={text({ weight: 500 })}>{dateTime(t.created_at)}</p><p className={text({ size: "micro", tone: 3, mono: true })}>#{t.id}{t.order_id ? ` · order #${t.order_id}` : ""}</p></td>
+                      <td><p className={text({ weight: 500 })}>{dateTime(t.created_at)}</p><p className={text({ size: "micro", tone: 3, mono: true })}>#{t.id}{t.order_id ? <> · <Link href={`/admin/orders/${t.order_id}`} className={css({ _hover: { textDecoration: "underline" } })}>order #{t.order_id}</Link></> : null}</p></td>
                       <td>{t.user?.id ? <Link href={`/admin/people/${t.user.id}`} className={cx(row({ gap: 2 }), css({ _hover: { textDecoration: "underline" } }))}><Avatar name={t.user.name} size="xs" seed={t.user.id} /> {t.user.name}</Link> : <span className={text({ tone: 3 })}>—</span>}</td>
                       <td><span className={text({ tone: 2 })}>{t.description}</span></td>
                       <td><Pill tone={txnMeta(t.type).tone}>{txnMeta(t.type).label}</Pill></td>
@@ -146,6 +149,14 @@ export default function FinancePage() {
           </Panel>
         </>
       )}
+
+      <Modal open={!!paying} onClose={() => setPaying(null)} title={paying ? `Approve ${money(paying.payout.amount)} to ${paying.payout.user?.name ?? "the freelancer"}` : ""} description="Send the money from the bank first, then record the transfer here. The reference is kept on the payout and shown to the freelancer." size="sm"
+        footer={<><Btn variant="ghost" onClick={() => setPaying(null)}>Cancel</Btn><Btn variant="success" disabled={!paying?.reference.trim() || busyId != null} onClick={confirmApprove}><Check size={14} /> {busyId != null ? "Saving…" : "Mark as paid"}</Btn></>}>
+        <div className={stack({ gap: 3 })}>
+          {paying?.payout.metadata?.destination ? <p className={text({ size: "meta", tone: 2 })}>Pay to: <b className={text({ size: "meta", weight: 600 })}>{paying.payout.metadata.destination}</b>{paying.payout.metadata.note ? ` · ${paying.payout.metadata.note}` : ""}</p> : null}
+          <Field label="Bank transfer reference" hint="The reference or transaction number from the bank transfer."><Input autoFocus maxLength={100} value={paying?.reference ?? ""} onChange={(e) => setPaying(paying && { ...paying, reference: e.target.value })} placeholder="e.g. FT26275XXXXX" /></Field>
+        </div>
+      </Modal>
 
       <Modal open={!!reject} onClose={() => setReject(null)} title="Reject this payout" description="Nothing is paid out. The amount returns to the freelancer's wallet and they see your note." size="sm"
         footer={<><Btn variant="ghost" onClick={() => setReject(null)}>Cancel</Btn><Btn variant="danger" disabled={!reject?.note.trim() || busyId != null} onClick={confirmReject}>{busyId != null ? "Rejecting…" : "Reject payout"}</Btn></>}>

@@ -19,7 +19,7 @@ const queueCard = css({
 });
 const iconBox = css({ w: "34px", h: "34px", borderRadius: "10px", display: "grid", placeItems: "center", bg: "var(--td-hover)", color: "var(--td-ink-2)", "&[data-hot=true]": { bg: "var(--td-amber-soft)", color: "var(--td-amber)" } });
 const bigNum = css({ textStyle: "stat", fontWeight: 600, fontVariantNumeric: "tabular-nums" });
-const kpiStrip = css({ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", "& > div": { p: "18px 20px", borderRightWidth: "1px", borderRightStyle: "solid", borderRightColor: "var(--td-line)" }, "& > div:last-child": { borderRight: "none" } });
+const kpiStrip = css({ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", "& > div": { p: "18px 20px", borderRightWidth: "1px", borderRightStyle: "solid", borderRightColor: "var(--td-line)" }, "& > div:last-child": { borderRight: "none" } });
 const kpiNum = css({ textStyle: "heading", fontWeight: 600, fontVariantNumeric: "tabular-nums", mt: "6px" });
 const listRow = css({ display: "flex", alignItems: "center", gap: "12px", px: "20px", py: "11px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "var(--td-line)", _hover: { bg: "var(--td-surface-2)" }, "&:last-child": { borderBottom: "none" } });
 
@@ -101,6 +101,11 @@ export default function OverviewPage() {
                 <p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{money(s.gmv.total)} all time</p>
               </div>
               <div>
+                <p className={text({ size: "meta", tone: 2 })}>Platform income today</p>
+                <p className={kpiNum}>{money(s.income.today)}</p>
+                <p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{money(s.income.total)} all time</p>
+              </div>
+              <div>
                 <p className={text({ size: "meta", tone: 2 })}>Sign-ups today</p>
                 <p className={kpiNum}>{s.users.new_today}</p>
                 <p className={cx(text({ size: "meta", tone: 3 }), css({ mt: "4px" }))}>{s.users.new_freelancers_today} freelancers · {s.users.new_clients_today} clients · {num(s.users.total)} total</p>
@@ -123,7 +128,7 @@ export default function OverviewPage() {
       <section className={cx(grid({ cols: 2 }), css({ mt: "28px", gap: "20px" }))}>
         <Panel>
           <PanelHead title="Recent activity" actions={<Link href="/admin/inbox" className={text({ size: "meta", tone: "accent", weight: 500 })}>Open inbox</Link>} />
-          {notices.isLoading ? <Loading /> : recent.length === 0 ? <p className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>Nothing has happened yet.</p> : recent.map((n) => (
+          {notices.isLoading ? <Loading /> : recent.length === 0 ? <div className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>Nothing has happened yet.</div> : recent.map((n) => (
             <Link key={n.id} href={adminNotificationRoute(n)} className={listRow}>
               <span className={css({ w: "6px", h: "6px", borderRadius: "999px", bg: "var(--td-accent)", flexShrink: 0, "&[data-read=true]": { bg: "var(--td-line-2)" } })} data-read={!!n.readAt} />
               <div className={css({ minW: 0, flex: 1 })}>
@@ -136,7 +141,7 @@ export default function OverviewPage() {
         </Panel>
         <Panel>
           <PanelHead title="Joined this week" meta={newest.data ? plural(joined.length, "person", "people") : undefined} actions={<Link href="/admin/people" className={text({ size: "meta", tone: "accent", weight: 500 })}>All people</Link>} />
-          {newest.isLoading ? <Loading /> : joined.length === 0 ? <p className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>No sign-ups in the last 7 days.</p> : joined.map((u) => (
+          {newest.isLoading ? <Loading /> : joined.length === 0 ? <div className={cx(text({ size: "meta", tone: 3 }), css({ p: "20px" }))}>No sign-ups in the last 7 days.</div> : joined.map((u) => (
             <Link key={u.id} href={`/admin/people/${u.id}`} className={listRow}>
               <Avatar name={u.name} size="sm" seed={u.id} src={u.avatar_url} />
               <div className={css({ minW: 0, flex: 1 })}>

@@ -31,8 +31,17 @@ export function useJobPosts(status: string, page: number, enabled = true) {
 export function useWithdrawals(status: string, page: number, enabled = true) {
   return useQuery({ queryKey: qk.admin.withdrawals({ status, page }), queryFn: () => api.getAdminWithdrawals(page, status), placeholderData: (prev) => prev, enabled });
 }
-export function useTransactions(type: string, page: number, enabled = true) {
-  return useQuery({ queryKey: qk.admin.transactions({ type, page }), queryFn: () => api.getAdminTransactions(page, type || undefined), placeholderData: (prev) => prev, enabled });
+export function useTransactions(type: string, page: number, enabled = true, userId?: number) {
+  return useQuery({ queryKey: qk.admin.transactions({ type, page, userId }), queryFn: () => api.getAdminTransactions(page, type || undefined, undefined, userId), placeholderData: (prev) => prev, enabled });
+}
+export function useOrders(params: { page?: number; status?: string; search?: string; user?: number }, enabled = true) {
+  return useQuery({ queryKey: qk.admin.orders(params), queryFn: () => api.getAdminOrders(params), placeholderData: (prev) => prev, enabled });
+}
+export function useOrder(id: number) {
+  return useQuery({ queryKey: qk.admin.order(id), queryFn: () => api.getAdminOrder(id), enabled: Number.isFinite(id) });
+}
+export function useActivity(area: string, page: number) {
+  return useQuery({ queryKey: qk.admin.activity({ area, page }), queryFn: () => api.getAdminActivity(page, area || undefined), placeholderData: (prev) => prev });
 }
 export function useUsers(params: { page?: number; search?: string; role?: string; kyc?: string; status?: string; sort?: string; dir?: "asc" | "desc" }) {
   return useQuery({ queryKey: qk.admin.users(params), queryFn: () => api.getAdminUsers(params), placeholderData: (prev) => prev });

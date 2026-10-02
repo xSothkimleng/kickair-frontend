@@ -36,6 +36,9 @@ Admin list endpoints return `{ data: [...], meta: { current_page, last_page, per
 **Admin data & realtime**
 Admin pages fetch through the hooks in `components/admin/queries.ts`; every key lives under `qk.admin.*` so `registerAdminRefresh` (fed by `GlobalNotificationToast`) and `useAdminAction` can refresh the whole console with one `invalidateQueries(qk.admin.all())`. Admin notifications are routed by type in `components/admin/notify.ts`, never by the stored `data.link`.
 
+**Admin orders and activity (2026-10-02)**
+`/admin/orders` and `/admin/orders/[id]` are read-only: money only moves through approval, cancellation or a dispute decision. `OrdersTable` (in `OrdersPage.tsx`) is shared with a person's page (pass `viewerId` for the compact form); the chat is `ConversationPanel`. `/admin/activity` reads the API's activity log, which the API writes by itself for every admin change, so a new admin action needs no frontend logging.
+
 **Status handling**
 When adding new order statuses, update the status maps in every component that renders a status chip — currently `client/OrdersContent`, `freelancer/OrdersContent` and the two order pages (`dashboard/orders/[id]`, `dashboard/freelancer/orders/[id]`). The old `OrderDetailModal` / `FreelancerOrderDetailModal` were deleted on 2026-10-01 (they had no importers).
 

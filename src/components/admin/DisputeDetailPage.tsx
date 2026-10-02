@@ -1,17 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { css, cx } from "styled-system/css";
-import { ArrowLeft, Check, FileText, Image as ImageIcon, Paperclip, Send } from "lucide-react";
+import { ArrowLeft, Check, FileText, Image as ImageIcon, Paperclip } from "lucide-react";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
-import { getEcho } from "@/lib/echo";
-import { useAuth } from "@/components/context/AuthContext";
 import OrderRecord from "@/components/dashboard/OrderRecord";
 import type { DisputeOutcome, EvidenceFile } from "@/types/order";
-import type { Message } from "@/types/message";
+import ConversationPanel from "./ConversationPanel";
 import { useToast } from "./toast";
 import { Avatar, Btn, ErrorState, Input, Loading, Panel, PanelHead, Textarea, grid, kvList, page, row, stack, text, Eyebrow } from "./ui";
 import { ago, dateTime, errorMessage, money, shortDate } from "./format";
@@ -21,12 +19,6 @@ import { DisputeStatus } from "./DisputesPage";
 const back = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "ui", fontWeight: 500, color: "var(--td-ink-2) !important", mb: "14px", _hover: { color: "var(--td-ink) !important" } });
 const banner = css({ display: "flex", alignItems: "center", gap: "12px", p: "12px 16px", borderRadius: "12px", mb: "20px", bg: "var(--td-amber-soft)", color: "var(--td-amber)", "&[data-kind=info]": { bg: "var(--td-blue-soft)", color: "var(--td-blue)" } });
 const fileChip = css({ display: "inline-flex", alignItems: "center", gap: "6px", h: "26px", px: "8px", borderRadius: "7px", bg: "var(--td-hover)", textStyle: "meta", fontWeight: 500, color: "var(--td-ink-2) !important", maxW: "100%", "& span": { overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }, _hover: { bg: "var(--td-line)" } });
-const bubbleRow = css({ display: "flex", gap: "10px", alignItems: "flex-end", "&[data-me=true]": { flexDirection: "row-reverse" } });
-const bubble = css({
-  maxW: "78%", px: "12px", py: "8px", borderRadius: "14px", bg: "var(--td-hover)", textStyle: "ui", borderBottomLeftRadius: "4px", whiteSpace: "pre-wrap", overflowWrap: "anywhere",
-  "&[data-me=true]": { bg: "var(--td-ink)", color: "#fff", borderBottomLeftRadius: "14px", borderBottomRightRadius: "4px" },
-  "& a": { textDecoration: "underline" },
-});
 const optionCard = css({
   display: "flex", gap: "10px", alignItems: "flex-start", p: "11px 12px", borderRadius: "10px", borderWidth: "1px", borderStyle: "solid", borderColor: "var(--td-line)", cursor: "pointer", transition: "all .12s",
   _hover: { borderColor: "var(--td-line-2)", bg: "var(--td-surface-2)" },
@@ -65,7 +57,6 @@ function Evidence({ title, name, statement, files }: { title: string; name: stri
 
 export default function DisputeDetailPage({ id }: { id: number }) {
   const toast = useToast();
-  const { user } = useAuth();
   const qc = useQueryClient();
 
   // Same key the realtime layer already invalidates for admin_dispute alerts.
@@ -77,28 +68,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
   const [note, setNote] = useState("");
   const [resolving, setResolving] = useState(false);
 
-  // Three-way chat on the order's conversation: history once, then live via Echo.
   const conversationId = d?.order.conversation_id ?? null;
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [draft, setDraft] = useState("");
-  const [sending, setSending] = useState(false);
-  const chatEnd = useRef<HTMLDivElement>(null);
-  useEffect(() => { chatEnd.current?.scrollIntoView({ block: "end" }); }, [messages]);
-  useEffect(() => {
-    if (!conversationId) return;
-    let active = true;
-    api.getConversationMessages(conversationId).then((res) => { if (active) setMessages(res.data ?? []); }).catch(() => {});
-    return () => { active = false; };
-  }, [conversationId]);
-  useEffect(() => {
-    if (!conversationId) return;
-    let echo: ReturnType<typeof getEcho>;
-    try { echo = getEcho(); } catch { return; }
-    echo.private(`conversation.${conversationId}`).listen(".message.sent", (event: { message: Message }) => {
-      setMessages((prev) => (prev.some((m) => m.id === event.message.id) ? prev : [...prev, { ...event.message, is_mine: event.message.sender_id === user?.id }]));
-    });
-    return () => { try { echo.leave(`conversation.${conversationId}`); } catch {} };
-  }, [conversationId, user?.id]);
 
   if (dispute.isLoading) return <div className={page}><Loading tall /></div>;
   if (dispute.isError || !d) {
@@ -116,8 +86,6 @@ export default function DisputeDetailPage({ id }: { id: number }) {
   const isCustom = !!d.order.custom_order;
   const co = d.order.custom_order;
   const earlier = [...(d.earlier_disputes ?? [])].sort((a, b) => b.sequence - a.sequence);
-  const roleOf = (senderId: number) => (senderId === d.client.id ? "client" : senderId === d.freelancer.id ? "freelancer" : "admin");
-  const partyOf = (senderId: number) => (senderId === d.client.id ? d.client : senderId === d.freelancer.id ? d.freelancer : null);
 
   const refresh = async () => {
     await qc.invalidateQueries({ queryKey: qk.disputes.all() });
@@ -137,22 +105,6 @@ export default function DisputeDetailPage({ id }: { id: number }) {
       setResolving(false);
     }
   };
-  const send = async () => {
-    const body = draft.trim();
-    if (!body || !conversationId) return;
-    setSending(true);
-    try {
-      await api.sendConversationMessage(conversationId, body);
-      setDraft("");
-      const res = await api.getConversationMessages(conversationId);
-      setMessages(res.data ?? []);
-    } catch (err) {
-      toast(errorMessage(err, "Message not sent."), "error");
-    } finally {
-      setSending(false);
-    }
-  };
-
   return (
     <div className={page}>
       <Link href="/admin/disputes" className={back}><ArrowLeft size={14} /> Disputes</Link>
@@ -194,35 +146,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
 
           {/* Only when the order has a conversation: without one the panel was a dead end
               ("No conversation exists", a disabled box), so it is hidden. */}
-          {conversationId && (
-            <Panel>
-              <PanelHead title="Conversation" meta="visible to both parties" />
-              <div className={cx(stack({ gap: 3 }), css({ p: "20px", maxH: "420px", overflowY: "auto" }))}>
-                {messages.length === 0 ? <p className={text({ size: "meta", tone: 3 })}>No messages yet.</p> : null}
-                {messages.map((m) => {
-                  const p = partyOf(m.sender_id);
-                  const me = m.is_mine;
-                  const label = me ? "You · admin" : `${m.sender?.name ?? p?.name ?? "Someone"} · ${roleOf(m.sender_id)}`;
-                  return (
-                    <div key={m.id} className={bubbleRow} data-me={me}>
-                      <Avatar name={m.sender?.name ?? p?.name ?? "?"} size="sm" seed={m.sender_id} src={m.sender?.avatar_url ?? p?.avatar_url} />
-                      <div className={cx(stack({ gap: 1 }), css({ alignItems: me ? "flex-end" : "flex-start", maxW: "100%" }))}>
-                        <span className={text({ size: "micro", tone: 3 })}>{label} · {ago(m.created_at)}</span>
-                        <div className={bubble} data-me={me}>
-                          {m.type === "file" && m.file_url ? <a href={m.file_url} target="_blank" rel="noreferrer"><Paperclip size={12} className={css({ display: "inline", verticalAlign: "-1px" })} /> {m.file_name ?? "Attachment"}</a> : m.body}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                <div ref={chatEnd} />
-              </div>
-              <div className={cx(row({ gap: 2 }), css({ p: "12px 16px", borderTopWidth: "1px", borderTopStyle: "solid", borderTopColor: "var(--td-line)", bg: "var(--td-surface-2)" }))}>
-                <Input placeholder="Message both parties…" value={draft} onChange={(e) => setDraft(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }} disabled={sending} />
-                <Btn variant="primary" onClick={send} disabled={!draft.trim() || sending}><Send size={14} /> {sending ? "Sending…" : "Send"}</Btn>
-              </div>
-            </Panel>
-          )}
+          {conversationId && <ConversationPanel conversationId={conversationId} client={d.client} freelancer={d.freelancer} />}
 
           <Panel>
             <PanelHead title="Order record" meta="deliveries, revisions and disputes in order" />
@@ -337,7 +261,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
           </Panel>
 
           <Panel>
-            <PanelHead title="Order" />
+            <PanelHead title="Order" actions={<Link href={`/admin/orders/${d.order.id}`} className={text({ size: "meta", tone: "accent", weight: 500 })}>Open order</Link>} />
             <div className={css({ p: "16px" })}>
               <dl className={kvList}>
                 <dt>Title</dt><dd>{d.order.title}</dd>

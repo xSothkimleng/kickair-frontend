@@ -5,7 +5,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { css, cx } from "styled-system/css";
-import { Bell, ExternalLink, LayoutGrid, LogOut, Scale, Search, ShieldCheck, Store, Tags, Users, Wallet, Inbox } from "lucide-react";
+import { Bell, ClipboardList, ExternalLink, History, LayoutGrid, LogOut, Scale, Search, ShieldCheck, Store, Tags, Users, Wallet, Inbox } from "lucide-react";
 import { useAuth } from "@/components/context/AuthContext";
 import GlobalNotificationToast, { registerAdminRefresh, registerBellRefresh } from "@/components/layout/GlobalNotificationToast";
 import { api } from "@/lib/api";
@@ -54,8 +54,10 @@ const NAV = [
     { href: "/admin/finance", label: "Finance", icon: Wallet, key: "payouts" as const },
   ] },
   { group: "Manage", items: [
+    { href: "/admin/orders", label: "Orders", icon: ClipboardList, key: null },
     { href: "/admin/people", label: "People", icon: Users, key: null },
     { href: "/admin/catalog", label: "Catalog", icon: Tags, key: null },
+    { href: "/admin/activity", label: "Activity", icon: History, key: null },
   ] },
 ];
 

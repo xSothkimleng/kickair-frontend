@@ -459,13 +459,31 @@ Kimleng reviewed the client's `kickair-feedback/rounds/kickair-FINANCE-SPECIFICA
 
 **Not done:** the client checklist (`phase-1-checklist`) does not mention the rule. The phone width of the new client line was not screenshotted (it reuses `statusNoteCss`). Local order 15 (`[counter-test]`) was delivered and auto-approved by this check.
 
+## Admin console additions, 2026-10-02 — committed & pushed 2026-10-02 (API 50d8ada)
+Kimleng (an owner as well as the developer) asked for the admin console's gaps to be filled. Agreed scope: five view-and-record features now; anything that moves money outside the normal flow (admin cancel / refund, manual wallet corrections) waits for Phase 2 with the ledger work. The admin login stays shared (`admin@kickair.com`); **roles (RBAC) are the first item of Phase 2**.
+
+**1. Orders screen (read-only).** `GET /api/admin/orders` (`status`, also `open`; `search` by number, `#15`, `ORD-000015`, or either party's name or email; `user` for one person's orders on either side) and `GET /api/admin/orders/{order}` (`AdminOrderController`, `AdminOrderResource`). `OrderMoney::for($order)` says where the money is: `held`, `released`, `refunded`, `split`, or `milestones` for legacy custom orders, and reads the fee from the release transaction so a later rate change does not rewrite old orders. Console: `/admin/orders` (`OrdersPage`) and `/admin/orders/[id]` (`OrderDetailPage`: order record, wallet movements, conversation, agreed custom offer, money, parties, disputes).
+
+**2. A person's orders and transactions.** People → a person now has Orders and Transactions tabs and a Wallet panel (available balance, committed to orders, pending earnings). `GET /api/admin/transactions?user=` and `wallet` on `GET /api/admin/users/{user}`.
+
+**3. Platform income.** `Transaction::platformIncome($since)`: the commission recorded on rows that released money to a freelancer (`clearance`, `dispute_release`). It is the one definition, like `grossVolume`. Shown on Overview and Finance (today and all time). Rows written before commission was recorded (before 2026-08-20) count as zero.
+
+**4. Payout reference.** Approving a payout now requires the bank transfer reference (`ApproveWithdrawalRequest`); it is stored in the payout's `metadata.reference` with `paid_at`, shown on the payout row, and sent to the freelancer in the "Withdrawal approved" notification. Console: the Approve button opens a "Mark as paid" dialog.
+
+**5. Activity log.** `admin_actions` table + `RecordAdminAction` middleware on the whole admin route group: every successful non-GET admin request writes one row (who, what, which section, a readable sentence). `AdminActionDescriber` holds the sentences; an endpoint without an entry there is still logged with its method and path, so nothing new can be forgotten. `GET /api/admin/activity` (`area` filter); console: `/admin/activity`. Rows are never edited.
+
+**Also:** the dispute page's chat became the shared `ConversationPanel` (also used on the order page) and links to the order; a person's-orders table is the compact form of `OrdersTable` (`viewerId`); three empty-state texts in the console lost their padding to `globals.css` (padding on `<p>`) and are now `<div>`s. `phpunit.xml` sets `memory_limit` 512M for tests: the suite outgrew PHP's 128M default.
+
+**Verified:** API suite 645 (35 new: `AdminOrderTest`, `AdminIncomeAndPayoutTest`, `AdminActivityLogTest`); the income and search queries also run on local Postgres; tsc, eslint, `next build`; headless Chrome at 1440 and 1280 on every new screen, including a real payout approval through the dialog. **Not done:** the client checklist (its payout step still says "press Approve", and it has no Orders or Activity rows); no phone layout (Phase 1.5, like the rest of the console). **Local test data touched:** payout #70 (Alice, $5, `[sweep]`) was approved with reference `FT26275TEST01`, which is also the activity log's first row.
+
 ---
-## Start here next session (written at the end of 2026-10-01)
-1. **`git status` in both repos (updated 2026-10-02).** The auto-approve change (API `d416ed4` + frontend) and the payment-methods change are committed and pushed.
-2. **Phase 1 is with the client.** Kimleng sends `kickair-feedback/phase-1-checklist/KickAir-Phase-1-Checklist.docx` plus the admin login. Nothing else is owed on Phase 1 until it comes back; then the "Needs change" rows are the next round (`/feedback` workflow), and design comments go to the Phase 1.5 list.
-3. **Open questions for Kimleng:** should payouts be ABA only (the Withdraw dialog still offers "Wing / other bank")? Should the checkout option "Bank Transfer" be renamed "ABA PayWay"?
-4. **Not verified on production** (only checked as a guest): signed-in flows, email delivery (Resend), Google sign-in, the Telegram code, browser push. Locally all of it passes except what needs those real services.
-5. **Phases:** 1.5 = UI only (incl. the admin console's phone layout); 2 = ABA PayWay, hosting, Khmer, security (incl. the public KYC document links), production Telegram bot; 3 = release.
+## Start here next session (written at the end of 2026-10-02)
+1. **`git status` in both repos.** Both should be clean. Everything from 2026-10-02 is pushed: the 3-day auto-approve, the payment-methods change, and the admin console additions (API `50d8ada`; the frontend commit carries this note).
+2. **Kimleng is testing on the live site**, running the client checklist themselves before sending it. Expect bug reports or "needs change" notes from that run first; the client's own round comes after.
+3. **The client checklist is behind the site.** `kickair-feedback/phase-1-checklist/source/content.cjs`: the payout step still says "press Approve" (it now opens a dialog that needs the bank transfer reference), the admin section has no Orders or Activity rows, and the 3-day auto-approve is not mentioned. Offered to Kimleng on 2026-10-02, not yet answered. Rebuild with `npm install && npm run build` there and check the .docx through Word.
+4. **Open questions for Kimleng:** should payouts be ABA only (the Withdraw dialog still offers "Wing / other bank")? Should the checkout option "Bank Transfer" be renamed "ABA PayWay"? Is the live admin password still the seeded one (it should be changed before the client gets the login)? Should the admin chat box on the order page be read-only outside disputes?
+5. **Not verified on production by me** (only checked as a guest): signed-in flows, email delivery (Resend), Google sign-in, the Telegram code, browser push, and every admin screen. Locally all of it passes.
+6. **Phases:** 1.5 = UI only (incl. the admin console's phone layout); 2 = admin roles (RBAC) first, then ABA PayWay with the money-layer hardening, admin money actions (cancel / refund, wallet corrections), hosting, Khmer, security (incl. the public KYC document links), production Telegram bot; 3 = release. The client's July finance specification is ignored unless they raise it again.
 
 **Test gotcha worth knowing:** inside one Pest test, `user('sanctum')` remembers the first authenticated user across requests, so a second `actingAs()` is ignored on routes that read the Sanctum guard explicitly (public service / job / profile routes, `UserResource`). Call `auth()->forgetGuards()` between viewers (see `JobPostTest`, `FreelancerBrowseTest`).
 

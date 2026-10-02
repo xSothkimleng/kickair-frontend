@@ -27,7 +27,7 @@ import {
   JobPostFilters,
 } from "@/types/job";
 import { ServiceCategory, Service } from "@/types/service";
-import { AdminDispute, Order, OrderTimelineEvent } from "@/types/order";
+import { AdminDispute, DisputeOutcome, Order, OrderStatus, OrderTimelineEvent } from "@/types/order";
 import {
   CustomOrder,
   CreateCustomOrderRequest,
@@ -785,10 +785,11 @@ class ApiClient {
     return response.data;
   }
 
-  async getAdminTransactions(page = 1, type?: string, status?: string): Promise<AdminTransactionsResponse> {
+  async getAdminTransactions(page = 1, type?: string, status?: string, userId?: number): Promise<AdminTransactionsResponse> {
     const params = new URLSearchParams({ page: String(page) });
     if (type) params.set("type", type);
     if (status) params.set("status", status);
+    if (userId) params.set("user", String(userId));
     return this.get(`/api/admin/transactions?${params}`);
   }
 
@@ -798,8 +799,32 @@ class ApiClient {
     return this.get(`/api/admin/withdrawals?${params}`);
   }
 
-  async approveWithdrawal(transactionId: number): Promise<void> {
-    await this.post(`/api/admin/withdrawals/${transactionId}/approve`, {});
+  /** `reference` is the bank transfer's reference: it is stored on the payout and sent to the freelancer. */
+  async approveWithdrawal(transactionId: number, reference: string): Promise<void> {
+    await this.post(`/api/admin/withdrawals/${transactionId}/approve`, { reference });
+  }
+
+  // ── Admin Orders (read-only) and the activity log ─────────────────────────
+
+  async getAdminOrders(params: { page?: number; status?: string; search?: string; user?: number } = {}): Promise<{ data: AdminOrder[]; meta: PageMeta }> {
+    const query = new URLSearchParams({ page: String(params.page ?? 1) });
+    if (params.status) query.set("status", params.status);
+    if (params.search) query.set("search", params.search);
+    if (params.user) query.set("user", String(params.user));
+    const response = await this.get(`/api/admin/orders?${query}`);
+    return response.data;
+  }
+
+  async getAdminOrder(orderId: number): Promise<AdminOrderDetail> {
+    const response = await this.get(`/api/admin/orders/${orderId}`);
+    return response.data;
+  }
+
+  async getAdminActivity(page = 1, area?: string): Promise<{ data: AdminActivityEntry[]; meta: PageMeta }> {
+    const query = new URLSearchParams({ page: String(page) });
+    if (area) query.set("area", area);
+    const response = await this.get(`/api/admin/activity?${query}`);
+    return response.data;
   }
 
   async rejectWithdrawal(transactionId: number, note?: string): Promise<void> {
@@ -1269,6 +1294,11 @@ export interface AdminDashboardStats {
     today: string;
     total: string;
   };
+  /** What the platform kept in fees on money released to freelancers. */
+  income: {
+    today: string;
+    total: string;
+  };
   withdrawals: {
     pending_count: number;
     pending_amount: string;
@@ -1380,6 +1410,12 @@ export interface AdminUserDetail {
     reviews?: number;
     total_earned?: number;
   };
+  /** What they hold now: the wallet balance plus the two escrow figures. */
+  wallet: {
+    available_balance: number;
+    committed_to_orders: number;
+    pending_earnings: number;
+  };
   kyc: AdminUserKyc | null;
 }
 
@@ -1390,6 +1426,65 @@ export interface AdminStats {
   pending_payouts_count: number;
   refunds_today_amount: string;
   refunds_today_count: number;
+  income_today: string;
+  total_income: string;
+}
+
+export interface AdminOrderParty {
+  id: number | null;
+  name: string;
+  email: string | null;
+  avatar_url: string | null;
+}
+
+/** Where an order's money is: `held` in escrow, `released`, `refunded`, `split` by a dispute, or paid per `milestones` (legacy custom orders). */
+export interface AdminOrderMoney {
+  state: "held" | "released" | "refunded" | "split" | "milestones";
+  price: number;
+  held: number;
+  freelancer_receives: number;
+  platform_fee: number;
+  client_refund: number;
+}
+
+export interface AdminOrder {
+  id: number;
+  reference: string;
+  status: OrderStatus;
+  type: "service" | "job" | "custom";
+  title: string;
+  price: string | null;
+  created_at: string;
+  updated_at: string;
+  delivered_at: string | null;
+  auto_approve_at: string | null;
+  money: AdminOrderMoney;
+  client: AdminOrderParty;
+  freelancer: AdminOrderParty;
+  /** The order's latest dispute, if it ever had one. */
+  dispute: { id: number; sequence: number; status: "open" | "resolved"; outcome: DisputeOutcome | null } | null;
+}
+
+export interface AdminOrderDetail extends AdminOrder {
+  conversation_id: number | null;
+  package: string | null;
+  delivery_history: NonNullable<AdminDispute["order"]["delivery_history"]>;
+  revision_history: NonNullable<AdminDispute["order"]["revision_history"]>;
+  custom_order: AdminDispute["order"]["custom_order"] | null;
+  disputes: { id: number; sequence: number; status: "open" | "resolved"; outcome: DisputeOutcome | null; opened_at: string; resolved_at: string | null }[];
+  transactions: AdminTransaction[];
+}
+
+/** One row of the console's activity log: what an admin did, and to what. */
+export interface AdminActivityEntry {
+  id: number;
+  action: string;
+  area: string;
+  subject_type: "user" | "dispute" | "order" | null;
+  subject_id: number | null;
+  summary: string;
+  admin: { id: number | null; name: string };
+  created_at: string;
 }
 
 export interface AdminTransaction {

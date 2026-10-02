@@ -1,5 +1,5 @@
 import type { Tone } from "./ui";
-import type { DisputeOutcome } from "@/types/order";
+import type { DisputeOutcome, OrderStatus } from "@/types/order";
 
 /** KYC state as the People list shows it (derived from AdminUser.kyc_status). */
 export type KycState = "none" | "pending" | "approved" | "rejected";
@@ -49,6 +49,33 @@ export const outcomeLabel: Record<DisputeOutcome, { tone: Tone; label: string; l
   full_freelancer: { tone: "green", label: "Paid out", long: "Paid to the freelancer in full" },
   partial: { tone: "purple", label: "Split", long: "Amount split between both parties" },
   continue: { tone: "blue", label: "Continued", long: "Continued with admin feedback" },
+};
+
+/** Order status as the Orders screen shows it. */
+export const orderLabel: Record<OrderStatus, { tone: Tone; label: string }> = {
+  pending: { tone: "neutral", label: "Awaiting acceptance" },
+  active: { tone: "blue", label: "In progress" },
+  delivered: { tone: "amber", label: "Delivered" },
+  revision_requested: { tone: "amber", label: "Revision requested" },
+  disputed: { tone: "red", label: "Disputed" },
+  completed: { tone: "green", label: "Completed" },
+  cancelled: { tone: "neutral", label: "Cancelled" },
+};
+
+export const orderTypeLabel: Record<"service" | "job" | "custom", string> = {
+  service: "Service package",
+  job: "Job contract",
+  custom: "Custom offer",
+};
+
+/** The console section an activity-log row belongs to, and where its rows open when they name no one. */
+export const areaLabel: Record<string, { tone: Tone; label: string; href: string }> = {
+  people: { tone: "blue", label: "People", href: "/admin/people" },
+  disputes: { tone: "red", label: "Disputes", href: "/admin/disputes" },
+  listings: { tone: "purple", label: "Listings", href: "/admin/listings" },
+  finance: { tone: "green", label: "Finance", href: "/admin/finance" },
+  catalog: { tone: "neutral", label: "Catalog", href: "/admin/catalog" },
+  other: { tone: "neutral", label: "Other", href: "/admin" },
 };
 
 export const payoutLabel = {
