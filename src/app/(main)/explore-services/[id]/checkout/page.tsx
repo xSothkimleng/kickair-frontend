@@ -31,6 +31,7 @@ import {
   type AbaMethod,
 } from "@/components/payment";
 import { MONEY, escrowSentence } from "@/lib/moneyTerms";
+import FundMilestoneDialog from "@/components/customOrders/FundMilestoneDialog";
 import { PAYMENT_METHODS_TEXT } from "@/lib/paymentMethods";
 
 type PaySource = "wallet" | "aba";
@@ -200,6 +201,8 @@ function CheckoutContent() {
   const [paySource, setPaySource] = useState<PaySource | null>(null);
   const [abaMethod, setAbaMethod] = useState<AbaMethod | null>(null);
   const [topUpOpen, setTopUpOpen] = useState(false);
+  // Paying from the wallet asks once more before the money moves; a bank payment already has its own review step.
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const createdOrderId = useRef<number | null>(null);
 
   const { data: service, isLoading, error } = useQuery({
@@ -292,7 +295,7 @@ function CheckoutContent() {
   const handleConfirm = () => {
     if (!selectedPricing) return;
     if (!ensureCanPurchase()) return;
-    if (paySource === "wallet" && !insufficient) flow.startWallet(total);
+    if (paySource === "wallet" && !insufficient) setConfirmOpen(true);
     // ABA charges only the shortfall (or the full price when the wallet is empty).
     else if (paySource === "aba" && abaMethod) flow.startAba(abaMethod, bankCharge);
   };
@@ -540,6 +543,14 @@ function CheckoutContent() {
         suggestedAmount={topUpSuggested}
         returnNote='Top up, then come back to finish your order.'
         onSuccess={() => qc.invalidateQueries({ queryKey: qk.wallet() })}
+      />
+      <FundMilestoneDialog
+        open={confirmOpen}
+        onClose={() => setConfirmOpen(false)}
+        milestoneTitle={selectedPricing ? `${selectedPricing.title} package` : ""}
+        amount={total}
+        onConfirm={() => { setConfirmOpen(false); flow.startWallet(total); }}
+        submitting={false}
       />
       {flow.overlay}
       {gateDialog}
