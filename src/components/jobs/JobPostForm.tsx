@@ -358,7 +358,7 @@ export default function JobPostForm({ job, onBack, onSaved }: JobPostFormProps) 
     if (!asDraft) {
       const errs: Record<string, string> = {};
       if (!title.trim()) errs.title = "Job title is required";
-      if (!category.categoryId) errs.category = "Please select a category";
+      if (!category.categoryId) errs.category = "Pick a category, or type your own";
       else if (categories.some(g => g.id === category.categoryId) && !category.categoryLabel?.trim()) errs.category = "Pick a subcategory, or tell us in a few words what this is";
       if (!description.trim() || description === "<p></p>") errs.description = "Description is required";
       if (!budgetMin) errs.budgetMin = "Required";
