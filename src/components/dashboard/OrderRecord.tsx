@@ -195,22 +195,63 @@ interface RoundRowData {
   prev: CustomOrderOfferRound | null;
   onTable: boolean;
   agreed: boolean;
-  onTableNote?: string;
+}
+
+/** What the client asked for in a custom request, shown in full on its "Request Sent" row. */
+export interface RequestDetails {
+  budget: string | number | null;
+  days: number | null;
+  brief: string | null;
+  attachments: string[];
+}
+/** A pre-order event. The custom request one carries the request itself. */
+export type PreEvent = OrderTimelineEvent & { request?: RequestDetails };
+
+/** The request part of a custom order, from any of the shapes the pages receive it in. */
+export function requestDetailsOf(co: { budget?: string | number | null; desired_timeline_days?: number | null; description?: string | null; attachments?: string[] }): RequestDetails {
+  return { budget: co.budget ?? null, days: co.desired_timeline_days ?? null, brief: co.description ?? null, attachments: co.attachments ?? [] };
 }
 
 const termsLineCss = css({ display: "flex", gap: "6px 14px", flexWrap: "wrap", alignItems: "baseline", textStyle: "ui", color: "#334155", fontVariantNumeric: "tabular-nums", mt: "2px" });
 const termStrong = css({ fontWeight: 600 });
 const termWas = css({ textDecoration: "line-through", color: "#94A3B8", textStyle: "meta", ml: "4px" });
-const roundToggleCss = css({ alignSelf: "flex-start", display: "inline-flex", alignItems: "center", minH: "44px", p: 0, border: "none", bg: "transparent", color: "#2563EB", textStyle: "meta", fontWeight: 600, cursor: "pointer", _hover: { textDecoration: "underline" } });
 const roundBoxCss = css({ display: "flex", flexDirection: "column", gap: "10px", p: "12px 14px", bg: "#F8FAFC", borderWidth: "1px", borderStyle: "solid", borderColor: "#E2E8F0", borderRadius: "8px", maxW: "760px" });
 const roundBoxLabel = css({ textStyle: "eyebrow", fontWeight: 600, color: "#64748B" });
 const roundBoxText = css({ textStyle: "ui", color: "#334155", whiteSpace: "pre-wrap" });
-const roundBodyCss = css({ display: "flex", flexDirection: "column", gap: "5px" });
+const roundBodyCss = css({ display: "flex", flexDirection: "column", gap: "8px" });
+const requestFilesCss = css({ display: "flex", flexWrap: "wrap", gap: "6px 14px" });
+const requestFileCss = css({ display: "inline-flex", alignItems: "center", gap: "6px", textStyle: "meta", color: "#334155", "& svg": { flexShrink: 0, color: "#64748B" } });
 
-/** Terms line with struck "was" values, then the full scope and note behind a toggle. */
+/** The client's request in full: budget and timeline, then the brief and any attachments. */
+function RequestBox({ data }: { data: RequestDetails }) {
+  const budget = Number(data.budget) || 0;
+  const brief = data.brief?.trim();
+  return (
+    <div className={roundBodyCss}>
+      <div className={termsLineCss}>
+        {budget > 0 && <span className={termStrong}>Budget {fmtUsdShort(budget)}</span>}
+        {data.days != null && <span>{data.days} {data.days === 1 ? "day" : "days"}</span>}
+      </div>
+      {(brief || data.attachments.length > 0) && (
+        <div className={roundBoxCss}>
+          {brief && <div><p className={roundBoxLabel}>Brief</p><p className={roundBoxText}>{brief}</p></div>}
+          {data.attachments.length > 0 && (
+            <div>
+              <p className={roundBoxLabel}>Attachments</p>
+              <div className={requestFilesCss}>
+                {data.attachments.map((name) => <span key={name} className={requestFileCss}><FileText size={14} />{name}</span>)}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** Terms line with struck "was" values, then the full scope and note. Nothing is folded away. */
 function RoundTerms({ data }: { data: RoundRowData }) {
-  const [open, setOpen] = useState(false);
-  const { round: r, prev, onTable, onTableNote } = data;
+  const { round: r, prev } = data;
   const changed = new Set(diffTerms(prev ? termsOf(prev) : null, termsOf(r)).map((c) => c.key));
   // A plain render helper, not a component: React's compiler forbids components created during render.
   const term = (k: "delivery" | "revisions", value: string, was: string) => (
@@ -227,19 +268,10 @@ function RoundTerms({ data }: { data: RoundRowData }) {
         {term("revisions", fmtRevisions(r.revisions), prev ? String(prev.revisions ?? "none") : "")}
         {changed.has("scope") && <span className={badgeCss({ tone: "purple" })}>Scope edited</span>}
       </div>
-      {onTable && onTableNote ? (
-        <p className={descCss}>{onTableNote}</p>
-      ) : (
-        <>
-          <button type="button" onClick={() => setOpen((o) => !o)} aria-expanded={open} className={roundToggleCss}>{open ? "Hide full offer" : "Show full offer"}</button>
-          {open && (
-            <div className={roundBoxCss}>
-              <div><p className={roundBoxLabel}>Scope</p><p className={roundBoxText}>{r.scope || "No scope written."}</p></div>
-              {r.note && <div><p className={roundBoxLabel}>Note</p><p className={roundBoxText}>{r.note}</p></div>}
-            </div>
-          )}
-        </>
-      )}
+      <div className={roundBoxCss}>
+        <div><p className={roundBoxLabel}>Scope</p><p className={roundBoxText}>{r.scope || "No scope written."}</p></div>
+        {r.note && <div><p className={roundBoxLabel}>Note</p><p className={roundBoxText}>{r.note}</p></div>}
+      </div>
     </div>
   );
 }
@@ -253,6 +285,7 @@ interface RecordRow {
   description: string | null;
   note?: string | null;
   round?: RoundRowData;
+  request?: RequestDetails;
   attachments?: Attachment[];
   actor?: string | null;
 }
@@ -271,7 +304,6 @@ export default function OrderRecord({
   rounds,
   roundsViewer = "client",
   negotiating = false,
-  onTableNote,
   title = "Order Record",
   caption = "Everything that happened on this order in one timeline: activity, deliveries and revisions.",
   embedded = false,
@@ -282,14 +314,12 @@ export default function OrderRecord({
   deliveryHistory?: DeliveryEntry[];
   revisionHistory?: RevisionEntry[];
   /** Events that predate the order itself (e.g. a custom request/offer), merged into the timeline. */
-  preEvents?: OrderTimelineEvent[];
+  preEvents?: PreEvent[];
   /** Every negotiation round, oldest first; each becomes a row with its terms and what changed. */
   rounds?: CustomOrderOfferRound[];
   roundsViewer?: RoundViewer;
   /** While the negotiation is open the last round is "On the table"; afterwards it is the agreed one. */
   negotiating?: boolean;
-  /** Replaces the last round's toggle while it is on the table (the page shows it in full above). */
-  onTableNote?: string;
   title?: string;
   caption?: string;
   /**
@@ -322,7 +352,7 @@ export default function OrderRecord({
 
   // The event log is the spine; deliveries/revisions attach to their k-th
   // matching event (both lists are append-only, so positional matching holds).
-  const baseEvents: OrderTimelineEvent[] = [...(preEvents ?? []), ...startRow, ...events];
+  const baseEvents: PreEvent[] = [...(preEvents ?? []), ...startRow, ...events];
 
   let dIdx = 0;
   let rIdx = 0;
@@ -335,6 +365,7 @@ export default function OrderRecord({
       title: titleFor(e.event_type),
       description: e.description,
       actor: e.actor_role,
+      request: e.request,
     };
     if (e.event_type === "dispute_opened") disputeNo += 1;
     // An admin "continue" decision: titled by the dispute it answers, with the
@@ -382,7 +413,7 @@ export default function OrderRecord({
       badge: last ? (negotiating ? "On the table" : "Agreed") : undefined,
       description: r.accepts_previous && prev ? `Agreed to ${roundTitle(prev).toLowerCase()} as it stood.` : null,
       actor: senderLabel(r, roundsViewer),
-      round: { round: r, prev, onTable: last && negotiating, agreed: last && !negotiating, onTableNote },
+      round: { round: r, prev, onTable: last && negotiating, agreed: last && !negotiating },
     });
   });
 
@@ -450,6 +481,7 @@ export default function OrderRecord({
                   {row.description && (
                     <p className={descCss}>{row.description}</p>
                   )}
+                  {row.request && <RequestBox data={row.request} />}
                   {row.round && <RoundTerms data={row.round} />}
                   {row.note && (
                     <p className={noteCss}>

@@ -7,7 +7,7 @@ import { css, cx } from "styled-system/css";
 import { ArrowLeft, Check, FileText, Image as ImageIcon, Paperclip } from "lucide-react";
 import { api } from "@/lib/api";
 import { qk } from "@/lib/queryKeys";
-import OrderRecord from "@/components/dashboard/OrderRecord";
+import OrderRecord, { requestDetailsOf } from "@/components/dashboard/OrderRecord";
 import type { DisputeOutcome, EvidenceFile } from "@/types/order";
 import ConversationPanel from "./ConversationPanel";
 import { useToast } from "./toast";
@@ -158,7 +158,7 @@ export default function DisputeDetailPage({ id }: { id: number }) {
                 deliveryHistory={d.order.delivery_history}
                 revisionHistory={d.order.revision_history}
                 preEvents={co ? [
-                  ...(co.requested_at ? [{ id: -101, event_type: "request_sent", description: "The client opened a custom request.", actor_role: "client" as const, created_at: co.requested_at }] : []),
+                  ...(co.requested_at ? [{ id: -101, event_type: "request_sent", description: "The client opened a custom request.", actor_role: "client" as const, created_at: co.requested_at, request: requestDetailsOf(co) }] : []),
                   ...(!(co.offers?.length) && co.offered_at ? [{ id: -102, event_type: "offer_sent", description: "The freelancer sent a custom offer.", actor_role: "freelancer" as const, created_at: co.offered_at }] : []),
                 ] : undefined}
                 rounds={co?.offers}

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { css, cx } from "styled-system/css";
 import { ArrowLeft, FileText } from "lucide-react";
-import OrderRecord from "@/components/dashboard/OrderRecord";
+import OrderRecord, { requestDetailsOf } from "@/components/dashboard/OrderRecord";
 import { MONEY, platformFee } from "@/lib/moneyTerms";
 import type { AdminOrderDetail } from "@/lib/api";
 import ConversationPanel from "./ConversationPanel";
@@ -80,7 +80,7 @@ export default function OrderDetailPage({ id }: { id: number }) {
                 deliveryHistory={o.delivery_history}
                 revisionHistory={o.revision_history}
                 preEvents={co ? [
-                  ...(co.requested_at ? [{ id: -101, event_type: "request_sent", description: "The client opened a custom request.", actor_role: "client" as const, created_at: co.requested_at }] : []),
+                  ...(co.requested_at ? [{ id: -101, event_type: "request_sent", description: "The client opened a custom request.", actor_role: "client" as const, created_at: co.requested_at, request: requestDetailsOf(co) }] : []),
                   ...(!(co.offers?.length) && co.offered_at ? [{ id: -102, event_type: "offer_sent", description: "The freelancer sent a custom offer.", actor_role: "freelancer" as const, created_at: co.offered_at }] : []),
                 ] : undefined}
                 rounds={co?.offers}

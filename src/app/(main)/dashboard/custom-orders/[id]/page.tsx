@@ -16,8 +16,8 @@ import ReviewCounter from "@/components/customOrders/ReviewCounter";
 import CounterOfferForm from "@/components/customOrders/CounterOfferForm";
 import OfferComposer, { OFFER_DEFAULTS } from "@/components/customOrders/OfferComposer";
 import Workspace from "@/components/customOrders/Workspace";
-import OrderRecord from "@/components/dashboard/OrderRecord";
-import { firstName, fmtDays, fmtRevisions, fmtUsd, fmtUsdShort, isDirectOffer, isOfferExpired, roundTitle } from "@/components/customOrders/offerRounds";
+import OrderRecord, { requestDetailsOf } from "@/components/dashboard/OrderRecord";
+import { firstName, fmtDays, fmtRevisions, fmtUsd, isDirectOffer, isOfferExpired, roundTitle } from "@/components/customOrders/offerRounds";
 import { MONEY } from "@/lib/moneyTerms";
 
 const STATUS_TEXT: Record<string, string> = {
@@ -61,6 +61,9 @@ const briefText = css({ textStyle: "body", color: "ink" });
 const attachBlock = css({ mb: "20px" });
 const attachRow = css({ display: "flex", gap: "8px", flexWrap: "wrap" });
 const actionAlert = css({ mt: "20px" });
+// The request (or the offer on the table) shown for reference above the offer form.
+const referenceCard = css({ mb: "24px" });
+const tableNote = css({ textStyle: "ui", color: "ink2", whiteSpace: "pre-wrap", pt: "10px" });
 // Footer row under a hairline: Decline (quiet) on the left, the two ways to
 // respond on the right — counter with an offer, or accept the request as-is.
 const detailActions = css({
@@ -198,32 +201,13 @@ export default function CustomOrderDetailPage() {
           <Header order={order} />
 
           {composing ? (
-            <OfferComposer order={order} onSent={() => setComposing(false)} onCancel={() => setComposing(false)} />
+            <>
+              <div className={cx(detailCard, referenceCard)}><RequestDetails order={order} /></div>
+              <OfferComposer order={order} onSent={() => setComposing(false)} onCancel={() => setComposing(false)} />
+            </>
           ) : (
             <div className={detailCard}>
-              <div className={statsRow}>
-                <div className={statCell}>
-                  <p className={coLabel}>Budget</p>
-                  <Money value={order.budget} size="title" weight={600} />
-                </div>
-                <div className={statSplit} />
-                <div className={statCell}>
-                  <p className={coLabel}>Timeline</p>
-                  <span className={statDays}>{order.desired_timeline_days ?? "—"} days</span>
-                </div>
-              </div>
-
-              <p className={coLabel}>The brief</p>
-              <p className={briefText}>{order.description}</p>
-
-              {order.attachments.length > 0 && (
-                <div className={attachBlock}>
-                  <p className={coLabel}>Attachments</p>
-                  <div className={attachRow}>
-                    {order.attachments.map((a) => <AttachChip key={a} name={a} />)}
-                  </div>
-                </div>
-              )}
+              <RequestDetails order={order} />
 
               {actionError && <Alert tone="error" className={actionAlert}>{actionError}</Alert>}
 
@@ -289,13 +273,24 @@ export default function CustomOrderDetailPage() {
         <div className={cx(container, clientTurn && !composing ? narrow : wide)}>
           <BackBtn onClick={() => (composing ? setComposing(false) : router.push(backTo))} label={composing ? (clientTurn ? "Back to your offer" : "Back to the counter-offer") : "Back to orders"} />
           {composing ? (
-            <OfferComposer
-              order={order}
-              variant={clientTurn ? "offer" : "counter"}
-              initial={table ? { scope: table.scope ?? "", price: Number(table.total), deliveryDays: table.delivery_days, revisions: table.revisions } : undefined}
-              onSent={() => { setComposing(false); refetch(); }}
-              onCancel={() => setComposing(false)}
-            />
+            <>
+              {table && (
+                <div className={cx(summaryCard, referenceCard)}>
+                  <p className={coLabel}>{clientTurn ? "Your last offer" : `${firstName(order.client.name)}'s counter-offer`}</p>
+                  <div className={termRow}><span className={termKey}>Client pays</span><span className={termVal}>{fmtUsd(Number(table.total))}</span></div>
+                  <div className={termRow}><span className={termKey}>Delivery</span><span className={termVal}>{fmtDays(table.delivery_days)}</span></div>
+                  <div className={termRow}><span className={termKey}>Revisions</span><span className={termVal}>{fmtRevisions(table.revisions)}</span></div>
+                  <p className={summaryScope}>{table.scope}</p>
+                  {table.note ? <p className={tableNote}>Note: {table.note}</p> : null}
+                </div>
+              )}
+              <OfferComposer
+                order={order}
+                variant={clientTurn ? "offer" : "counter"}
+                onSent={() => { setComposing(false); refetch(); }}
+                onCancel={() => setComposing(false)}
+              />
+            </>
           ) : (
             <>
               <Header order={order} />
@@ -334,6 +329,37 @@ export default function CustomOrderDetailPage() {
         )}
       </div>
     </div>
+  );
+}
+
+/** What the client asked for: budget, timeline, the brief and any attachments. */
+function RequestDetails({ order }: { order: CustomOrder }) {
+  return (
+    <>
+      <div className={statsRow}>
+        <div className={statCell}>
+          <p className={coLabel}>Budget</p>
+          <Money value={order.budget} size="title" weight={600} />
+        </div>
+        <div className={statSplit} />
+        <div className={statCell}>
+          <p className={coLabel}>Timeline</p>
+          <span className={statDays}>{order.desired_timeline_days ?? "—"} days</span>
+        </div>
+      </div>
+
+      <p className={coLabel}>The brief</p>
+      <p className={briefText}>{order.description}</p>
+
+      {order.attachments.length > 0 && (
+        <div className={attachBlock}>
+          <p className={coLabel}>Attachments</p>
+          <div className={attachRow}>
+            {order.attachments.map((a) => <AttachChip key={a} name={a} />)}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 
@@ -378,14 +404,14 @@ function WaitingCard({ order, waitingFor, options, payLabel, onResend }: { order
 function NegotiationRecord({ order, viewer }: { order: CustomOrder; viewer: "client" | "freelancer" }) {
   const freelancer = firstName(order.freelancer.name);
   const client = order.client.name ?? "The client";
-  const budget = `Budget ${fmtUsdShort(order.budget)}${order.desired_timeline_days ? ` · ${order.desired_timeline_days} days` : ""}.`;
   const request = !isDirectOffer(order)
     ? [{
         id: -101,
         event_type: "request_sent",
-        description: viewer === "client" ? `You asked ${freelancer} for a custom order. ${budget}` : `${client} asked you for a custom order. ${budget}`,
+        description: viewer === "client" ? `You asked ${freelancer} for a custom order.` : `${client} asked you for a custom order.`,
         actor_role: "client" as const,
         created_at: order.created_at,
+        request: requestDetailsOf(order),
       }]
     : [];
   return (
@@ -394,7 +420,6 @@ function NegotiationRecord({ order, viewer }: { order: CustomOrder; viewer: "cli
       rounds={order.offers}
       roundsViewer={viewer}
       negotiating={order.status === "offered"}
-      onTableNote="Shown in full at the top of this page."
       title="Order record"
       caption="Everything that happened on this request, in one timeline. Every offer is kept."
     />
