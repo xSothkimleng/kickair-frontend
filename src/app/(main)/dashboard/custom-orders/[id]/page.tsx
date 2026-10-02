@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { ArrowRight, Check, ChevronLeft, Clock } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft } from "lucide-react";
 import { css, cx } from "styled-system/css";
 import { Alert, Spinner } from "@/components/ds";
 import { api } from "@/lib/api";
@@ -13,12 +13,12 @@ import {
 } from "@/components/customOrders/kit";
 import ReviewOffer from "@/components/customOrders/ReviewOffer";
 import ReviewCounter from "@/components/customOrders/ReviewCounter";
+import WaitingOffer from "@/components/customOrders/WaitingOffer";
 import CounterOfferForm from "@/components/customOrders/CounterOfferForm";
 import OfferComposer, { OFFER_DEFAULTS } from "@/components/customOrders/OfferComposer";
 import Workspace from "@/components/customOrders/Workspace";
 import OrderRecord, { requestDetailsOf } from "@/components/dashboard/OrderRecord";
-import { firstName, fmtDays, fmtRevisions, fmtUsd, isDirectOffer, isOfferExpired, roundTitle } from "@/components/customOrders/offerRounds";
-import { MONEY } from "@/lib/moneyTerms";
+import { firstName, fmtDays, fmtRevisions, fmtUsd, isDirectOffer } from "@/components/customOrders/offerRounds";
 
 const STATUS_TEXT: Record<string, string> = {
   pending: "Your request was sent. You'll be notified when a custom offer arrives.",
@@ -81,10 +81,6 @@ const detailActions = css({
 const detailActionsMain = css({ display: "flex", alignItems: "center", flexWrap: "wrap", gap: "10px", ml: "auto" });
 
 const summaryCard = cx(coCard, css({ p: { base: "20px", md: "24px" } }));
-// Waiting on the client is a neutral state, not a warning: a quiet line (no box, no status tint).
-const awaitNote = css({ display: "flex", alignItems: "center", gap: "8px", mb: "16px", pb: "16px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
-const awaitIcon = css({ flexShrink: 0, color: "ink3" });
-const awaitText = css({ textStyle: "ui", color: "ink2", "& strong": { fontWeight: 600, color: "ink" } });
 const termRow = css({ display: "flex", justifyContent: "space-between", alignItems: "center", py: "10px", borderBottomWidth: "1px", borderBottomStyle: "solid", borderBottomColor: "hairline" });
 const termKey = css({ textStyle: "body", color: "ink2" });
 const termVal = css({ textStyle: "body", fontWeight: 600, color: "ink", fontVariantNumeric: "tabular-nums" });
@@ -250,7 +246,7 @@ export default function CustomOrderDetailPage() {
           ) : order.awaiting === "freelancer" ? (
             <>
               <Header order={order} />
-              <WaitingCard order={order} waitingFor={firstName(order.freelancer.name)} options="agree, counter or decline" payLabel={MONEY.youPay} />
+              <WaitingOffer order={order} viewer="client" />
             </>
           ) : (
             <>
@@ -270,7 +266,7 @@ export default function CustomOrderDetailPage() {
     const clientTurn = order.awaiting !== "freelancer";
     return (
       <div className={page}>
-        <div className={cx(container, clientTurn && !composing ? narrow : wide)}>
+        <div className={cx(container, wide)}>
           <BackBtn onClick={() => (composing ? setComposing(false) : router.push(backTo))} label={composing ? (clientTurn ? "Back to your offer" : "Back to the counter-offer") : "Back to orders"} />
           {composing ? (
             <>
@@ -295,13 +291,7 @@ export default function CustomOrderDetailPage() {
             <>
               <Header order={order} />
               {clientTurn ? (
-                <WaitingCard
-                  order={order}
-                  waitingFor={firstName(order.client.name)}
-                  options="accept, counter or decline"
-                  payLabel="Client pays"
-                  onResend={() => setComposing(true)}
-                />
+                <WaitingOffer order={order} viewer="freelancer" onResend={() => setComposing(true)} />
               ) : (
                 <ReviewCounter order={order} onChanged={() => refetch()} onCounter={() => setComposing(true)} />
               )}
@@ -360,43 +350,6 @@ function RequestDetails({ order }: { order: CustomOrder }) {
         </div>
       )}
     </>
-  );
-}
-
-/**
- * "Your offer is with the other side": the terms on the table and who is expected to
- * answer. When that offer has run out of time it says so, and the freelancer (the only
- * side that can restart the negotiation) gets a button to send a new one.
- */
-function WaitingCard({ order, waitingFor, options, payLabel, onResend }: { order: CustomOrder; waitingFor: string; options: string; payLabel: string; onResend?: () => void }) {
-  const table = order.offers[order.offers.length - 1] ?? null;
-  const expired = isOfferExpired(order);
-  return (
-    <div className={summaryCard}>
-      <div className={awaitNote}>
-        <Clock size={16} className={awaitIcon} />
-        {expired ? (
-          <p className={awaitText}>
-            <strong>{table ? `${roundTitle(table)} expired.` : "The offer expired."}</strong> {waitingFor} did not answer in time, so it can no longer be accepted.
-            {onResend ? " Send a new offer to keep the request going." : ` ${waitingFor} can send a new offer.`}
-          </p>
-        ) : (
-          <p className={awaitText}>
-            <strong>{table ? `${roundTitle(table)} sent.` : "Offer sent."}</strong> Awaiting {waitingFor}&apos;s decision: {options}.
-          </p>
-        )}
-      </div>
-      <p className={coLabel}>On the table</p>
-      <div className={termRow}><span className={termKey}>{payLabel}</span><span className={termVal}>{fmtUsd(order.offer?.total ?? 0)}</span></div>
-      <div className={termRow}><span className={termKey}>Delivery</span><span className={termVal}>{fmtDays(order.offer?.delivery_days ?? null)}</span></div>
-      <div className={termRow}><span className={termKey}>Revisions</span><span className={termVal}>{fmtRevisions(order.offer?.revisions ?? null)}</span></div>
-      <p className={summaryScope}>{order.offer?.scope}</p>
-      {expired && onResend && (
-        <div className={css({ mt: "14px" })}>
-          <button type="button" onClick={onResend} className={coBtn({ tone: "black", size: "lg", strong: true })}>Send a new offer</button>
-        </div>
-      )}
-    </div>
   );
 }
 
