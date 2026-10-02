@@ -43,7 +43,7 @@ const toastIconCss = css({ color: "accent", mt: "1px", flexShrink: 0 });
  * root layout — 5 s auto-hide) while nudging the bells and cached queries. Renders nothing.
  */
 export default function GlobalNotificationToast() {
-  const { user } = useAuth();
+  const { user, refreshUser } = useAuth();
   const queryClient = useQueryClient();
   const userId = user?.id;
 
@@ -70,6 +70,8 @@ export default function GlobalNotificationToast() {
       triggerBellRefresh();
       // Refresh whatever page data this notification affects (live, no reload).
       invalidateForNotification(queryClient, data.type);
+      // The verification banners read the signed-in user, which no query holds.
+      if (data.type === "kyc_approved" || data.type === "kyc_rejected") refreshUser();
       // Admin alerts also nudge the open admin work-queue to refetch.
       if (data.role === "admin") triggerAdminRefresh(data.type);
     });
@@ -91,7 +93,7 @@ export default function GlobalNotificationToast() {
     return () => {
       try { echo.leave(`private-user.${userId}`); } catch {}
     };
-  }, [userId, queryClient]);
+  }, [userId, queryClient, refreshUser]);
 
   return null;
 }

@@ -44,6 +44,9 @@ const rootCss = css({
   borderStyle: "solid",
   borderColor: "border",
   boxShadow: "0 4px 12px rgba(15,23,42,0.12)",
+  // Ark measures the whole card (padding and border included) into --height, so the
+  // card has to size the same way or it ends up that much taller than its text.
+  boxSizing: "border-box",
   // Ark drives position/stacking through these vars.
   translate: "var(--x) var(--y)",
   scale: "var(--scale)",
