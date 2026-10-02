@@ -33,7 +33,7 @@ export type PricingTierSlot = "basic" | "standard" | "premium";
 export interface PricingOption {
   id: number;
   service_id: number;
-  /** Which of the three slots this option fills. The title is free text and may be renamed. */
+  /** Which of the three slots this option fills. New saves title it Basic / Standard / Premium; older ones may carry a custom title. */
   tier?: PricingTierSlot | null;
   title: string;
   description: string;

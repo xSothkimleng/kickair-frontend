@@ -24,8 +24,8 @@ const body = css({ display: "flex", flexDirection: "column", gap: "12px" });
 const editorLabel = css({ textStyle: "ui", fontWeight: 500, color: "body" });
 const optionalMark = css({ color: "ink3" });
 
-/** Shown greyed-out in an empty Name field, and saved as the tier's name when it is left empty. */
-export const DEFAULT_TIER_NAME = { basic: "Basic", standard: "Standard", premium: "Premium" } as const;
+/** The three tiers have fixed names; this is what each one is saved and shown as. */
+export const TIER_NAME = { basic: "Basic", standard: "Standard", premium: "Premium" } as const;
 
 interface PricingTierCardProps {
   tier: "basic" | "standard" | "premium";
@@ -50,8 +50,6 @@ export default function PricingTierCard({ tier, data, onChange, onToggle, errors
 
       {!disabled && (
         <div className={body}>
-          <TextInput size="sm" label="Name" value={data.name} onChange={(v) => onChange({ ...data, name: v })} placeholder={DEFAULT_TIER_NAME[tier]} />
-
           <div>
             <p className={editorLabel}>
               Description <span className={optionalMark}>(optional)</span>

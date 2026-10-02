@@ -14,7 +14,7 @@ import { useAuth } from "@/components/context/AuthContext";
 import { useFormRecovery } from "@/hooks/useFormRecovery";
 import BasicInfoSection from "./BasicInfoSection";
 import PricingSection from "./PricingSection";
-import { DEFAULT_TIER_NAME } from "./PricingTierCard";
+import { TIER_NAME } from "./PricingTierCard";
 import MediaGallerySection from "./MediaGallerySection";
 import FAQsSection from "./FAQsSection";
 import CustomOrdersSection from "./CustomOrdersSection";
@@ -240,14 +240,9 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
   // Initialize form data from service if editing
   const getInitialFormData = (): ServiceFormData => {
     const pricingOptions = service?.pricing_options || [];
-    // Match by the tier slot — the title is free text and may have been renamed.
+    // Match by the tier slot — older options may still carry a title their owner typed.
     const optionFor = (tier: PricingTierSlot) =>
       pricingOptions.find(p => (p.tier ?? p.title.trim().toLowerCase()) === tier);
-    // A name that is still the default stays empty so the field shows its placeholder.
-    const nameFor = (tier: PricingTierSlot) => {
-      const title = optionFor(tier)?.title.trim() ?? "";
-      return title === DEFAULT_TIER_NAME[tier] ? "" : title;
-    };
     const basicOption = optionFor("basic");
     const standardOption = optionFor("standard");
     const premiumOption = optionFor("premium");
@@ -263,7 +258,6 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         basic: {
           id: basicOption?.id,
           enabled: !!basicOption,
-          name: nameFor("basic"),
           description: basicOption?.description || "",
           revisions: String(basicOption?.revisions || "1"),
           deliveryTime: String(basicOption?.delivery_time || "").replace(" days", "") || "3",
@@ -272,7 +266,6 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         standard: {
           id: standardOption?.id,
           enabled: isEditing ? !!standardOption : true,
-          name: nameFor("standard"),
           description: standardOption?.description || "",
           revisions: String(standardOption?.revisions || "3"),
           deliveryTime: String(standardOption?.delivery_time || "").replace(" days", "") || "5",
@@ -281,7 +274,6 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
         premium: {
           id: premiumOption?.id,
           enabled: !!premiumOption,
-          name: nameFor("premium"),
           description: premiumOption?.description || "",
           revisions: String(premiumOption?.revisions || "Unlimited"),
           deliveryTime: String(premiumOption?.delivery_time || "").replace(" days", "") || "7",
@@ -348,7 +340,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
       pricingOptions.push({
         ...(t.id ? { id: t.id } : {}),
         tier,
-        title: t.name.trim() || DEFAULT_TIER_NAME[tier],
+        title: TIER_NAME[tier],
         description: t.description || undefined,
         price: parseFloat(t.price) || 0,
         revisions: t.revisions || undefined,
@@ -387,7 +379,7 @@ export default function ServiceForm({ service, onBack }: ServiceFormProps) {
     const errs: Record<string, string> = {};
 
     if (!formData.title.trim()) errs.title = "Service title is required";
-    if (!formData.categoryId) errs.category = "Please select a category";
+    if (!formData.categoryId) errs.category = "Pick a category, or type your own";
     else if (categories.some(g => g.id === formData.categoryId) && !formData.categoryLabel?.trim()) errs.category = "Pick a subcategory, or tell us in a few words what this is";
     if (imageCount === 0) errs.image = "Add at least one image";
 
