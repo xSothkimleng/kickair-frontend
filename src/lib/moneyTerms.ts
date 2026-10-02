@@ -50,6 +50,21 @@ export const escrowSentence = (freelancerName = "the freelancer") =>
 /** The short form for badges, notes and success screens. */
 export const ESCROW_SHORT = "Held in escrow until you approve the delivery.";
 
+/**
+ * How long a client has to review a delivery before it is approved automatically.
+ * The API decides the real deadline (`kickair.orders.auto_approve_days`); this is only
+ * for static copy such as the Terms page, so change both together.
+ */
+export const REVIEW_WINDOW = "3 days";
+
+/** The client's notice on a delivered order. `deadline` comes from `formatDeadline()`. */
+export const autoApproveClientNote = (deadline: string) =>
+  `If you do not respond by ${deadline}, the delivery is approved automatically and the payment is released to the freelancer.`;
+
+/** The freelancer's side of the same rule. */
+export const autoApproveFreelancerNote = (deadline: string) =>
+  `If the client does not respond by ${deadline}, the delivery is approved automatically and the payment is released to you.`;
+
 const SMALL_WORDS = new Set(["a", "an", "and", "the", "to", "of", "in", "for", "on", "at", "by"]);
 
 /** "Committed to orders" → "Committed to Orders", for UI that is Title Case. */

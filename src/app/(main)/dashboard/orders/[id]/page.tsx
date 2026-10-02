@@ -16,6 +16,7 @@ import {
   AlertCircle as ErrorIcon,
   X as CloseIcon,
   Scale as ScaleIcon,
+  Clock as ClockIcon,
 } from "lucide-react";
 import { Spinner } from "@/components/ds";
 import { BareModal } from "@/components/ds/BareModal";
@@ -39,8 +40,8 @@ import { OrderStatus, Dispute, EvidenceFile } from "@/types/order";
 import { useAuth } from "@/components/context/AuthContext";
 import DisputeSettlementRows from "@/components/dashboard/DisputeSettlementRows";
 import OrderRecord from "@/components/dashboard/OrderRecord";
-import { MONEY } from "@/lib/moneyTerms";
-import { formatAmount, revisionsText } from "@/lib/format";
+import { MONEY, autoApproveClientNote } from "@/lib/moneyTerms";
+import { formatAmount, formatDeadline, revisionsText } from "@/lib/format";
 
 // ─── Design tokens ────────────────────────────────────────────────────────────
 // (the CARD / SEC_LABEL / BTN_* objects now live in `dashboard/orderPageKit`)
@@ -542,6 +543,12 @@ export default function ClientOrderDetailPage() {
           {hasActions && (
             <div className={actionsBarCss}>
               {/* delivered */}
+              {order.status === "delivered" && order.auto_approve_at && (
+                <div className={statusNoteCss}>
+                  <ClockIcon size={16} />
+                  <p>{autoApproveClientNote(formatDeadline(order.auto_approve_at))}</p>
+                </div>
+              )}
               {order.status === "delivered" && (
                 <div className={css({ display: "flex", justifyContent: "flex-end", flexWrap: "wrap", "& > :not(style) ~ :not(style)": { marginLeft: "10px" } })}>
                   <button type="button" onClick={() => setDisputeOpen(true)} className={pageBtn({ look: "danger" })}>Open Dispute</button>

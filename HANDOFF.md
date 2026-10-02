@@ -443,3 +443,29 @@ Kimleng's go: finish the missing Phase 1 items, sweep and fix bugs, commit + pus
 
 **The client's acceptance checklist is written:** `kickair-feedback/phase-1-checklist/KickAir-Phase-1-Checklist.docx` (29 pages, 15 sections, 75 features, each with a Status dropdown: Not tested / Approved / Needs change, and a Comment box). It is generated: edit `phase-1-checklist/source/content.cjs` and run `npm install && npm run build` there (see its README). Kimleng sends it to the client together with the admin login. When it comes back, the "Needs change" rows are the next round's input (`/feedback` workflow).
 
+## Payment methods decided, 2026-10-01 (evening) — committed & pushed 2026-10-02
+Kimleng: **the only real payment will be ABA PayWay: scan the KHQR code, or pay with Visa / Mastercard.** The production Telegram bot is Phase 2 and the admin console's phone layout is Phase 1.5.
+
+Applied to the site so it stops promising methods that will not exist: `ABA_METHODS` (`components/payment/AbaMethodSelector.tsx`) is now KHQR + card (Visa · Mastercard) for both the checkout and the top-up dialog; `AbaMethod` and `PayLogoId` lost Alipay, WeChat, UnionPay and JCB (their SVGs are deleted); the footer strip shows KHQR, Visa, Mastercard. The sentence form lives in `src/lib/paymentMethods.ts` (`PAYMENT_METHODS_TEXT`) and is what the checkout line and Why KickAir read; the homepage FAQ, "Get Paid" step, the Why KickAir review and the website-v2 FAQ no longer mention Wing, Pi Pay or PayPal. Left alone: the Withdraw dialog's "Wing / other bank" destination (payouts are manual and were not part of this decision) and the "Bank Transfer" label on the checkout option. Verified: tsc, eslint, `next build`, and the checkout, footer and FAQ in headless Chrome.
+
+## Auto-approve after delivery, 2026-10-02 — committed & pushed 2026-10-02 (API d416ed4)
+Kimleng reviewed the client's `kickair-feedback/rounds/kickair-FINANCE-SPECIFICATION.html` (a July 2026 document; most of it was already built in the August financial rebuild). Decisions: **build the 3-day auto-approve now; park the ledger hardening for Phase 2 with ABA PayWay; ignore the rest of the document unless the client raises it again.**
+
+**The rule:** a delivered order the client neither approves, sends back for revision nor disputes within 3 days is approved automatically, and the payment is released exactly as if the client had pressed Approve. A revision request or a dispute stops it; a redelivery restarts the 3 days.
+
+**API:** `orders.delivered_at` (set by deliver and resubmit; orders already delivered when the migration ran start their 3 days at that moment). `OrderApprovalService::approve($order, 'client' | 'system')` is now the one place that releases escrow on approval: it locks both wallets and re-reads the status, so the client and the job cannot release twice. `orders:auto-approve` runs hourly (`routes/console.php`; Railway's `start.sh` runs `schedule:work`). The window is `kickair.orders.auto_approve_days` (`ORDER_AUTO_APPROVE_DAYS`, default 3, 0 turns it off). `OrderResource` returns `delivered_at` and `auto_approve_at`. The order record gets an `order_completed` row with actor `system`; the "Work Delivered" notification warns the client about the 3 days, and the completion notifications say the approval was automatic. Legacy milestone-flow custom orders are skipped. Tests: `tests/Feature/OrderAutoApprovalTest.php` (14), suite 610.
+
+**Frontend:** the client's order page shows a clock line above the buttons ("If you do not respond by October 5 at 9:20 AM, ..."); the freelancer's page says the same from their side. Wording lives in `src/lib/moneyTerms.ts` (`autoApproveClientNote`, `autoApproveFreelancerNote`, `REVIEW_WINDOW` for static copy); the deadline format is `formatDeadline` in `src/lib/format.ts`. The Terms page and the homepage FAQ state the rule. Verified: tsc, eslint, `next build`, and in headless Chrome: delivered order as client and as freelancer, then the real job against a backdated order (wallets, transactions, notifications and the order record all correct).
+
+**Not done:** the client checklist (`phase-1-checklist`) does not mention the rule. The phone width of the new client line was not screenshotted (it reuses `statusNoteCss`). Local order 15 (`[counter-test]`) was delivered and auto-approved by this check.
+
+---
+## Start here next session (written at the end of 2026-10-01)
+1. **`git status` in both repos (updated 2026-10-02).** The auto-approve change (API `d416ed4` + frontend) and the payment-methods change are committed and pushed.
+2. **Phase 1 is with the client.** Kimleng sends `kickair-feedback/phase-1-checklist/KickAir-Phase-1-Checklist.docx` plus the admin login. Nothing else is owed on Phase 1 until it comes back; then the "Needs change" rows are the next round (`/feedback` workflow), and design comments go to the Phase 1.5 list.
+3. **Open questions for Kimleng:** should payouts be ABA only (the Withdraw dialog still offers "Wing / other bank")? Should the checkout option "Bank Transfer" be renamed "ABA PayWay"?
+4. **Not verified on production** (only checked as a guest): signed-in flows, email delivery (Resend), Google sign-in, the Telegram code, browser push. Locally all of it passes except what needs those real services.
+5. **Phases:** 1.5 = UI only (incl. the admin console's phone layout); 2 = ABA PayWay, hosting, Khmer, security (incl. the public KYC document links), production Telegram bot; 3 = release.
+
+**Test gotcha worth knowing:** inside one Pest test, `user('sanctum')` remembers the first authenticated user across requests, so a second `actingAs()` is ignored on routes that read the Sanctum guard explicitly (public service / job / profile routes, `UserResource`). Call `auth()->forgetGuards()` between viewers (see `JobPostTest`, `FreelancerBrowseTest`).
+

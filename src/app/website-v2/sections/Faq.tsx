@@ -27,7 +27,7 @@ const FAQS = [
   },
   {
     q: "How do I pay?",
-    a: "With the methods Cambodia already uses — ABA Bank, Wing and Pi Pay — or an international card or PayPal.",
+    a: "Through ABA PayWay: scan the ABA KHQR code with any Cambodian bank app, or pay with a Visa or Mastercard card.",
   },
   {
     q: "How do I know the reviews are real?",

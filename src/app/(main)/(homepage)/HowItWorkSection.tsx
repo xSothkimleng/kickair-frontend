@@ -116,7 +116,7 @@ export default function HowItWorksSection() {
     {
       number: 3,
       title: "Get Paid",
-      description: "Deliver great work and receive payment directly to Wing, ABA, or Pi Pay",
+      description: "Deliver great work and the payment lands in your KickAir balance, ready to withdraw to your bank",
     },
   ];
 

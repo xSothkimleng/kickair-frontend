@@ -31,6 +31,7 @@ import {
   type AbaMethod,
 } from "@/components/payment";
 import { MONEY, escrowSentence } from "@/lib/moneyTerms";
+import { PAYMENT_METHODS_TEXT } from "@/lib/paymentMethods";
 
 type PaySource = "wallet" | "aba";
 
@@ -451,7 +452,7 @@ function CheckoutContent() {
                       <p className={optionSubCss}>
                         {shortfall > 0 && shortfall < total
                           ? `Tops up the ${fmtUsd(shortfall)} shortfall, wallet covers the rest`
-                          : "KHQR, card, Alipay or WeChat"}
+                          : PAYMENT_METHODS_TEXT}
                       </p>
                     </div>
                   </div>

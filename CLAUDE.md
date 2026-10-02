@@ -62,7 +62,7 @@ Both `OrdersContent` files interleave regular orders with negotiation-phase cust
 ### Client actions per status
 | Status | Actions available |
 |--------|-------------------|
-| `delivered` | Approve & Release Payment · Request Revision · Open Dispute |
+| `delivered` | Approve & Release Payment · Request Revision · Open Dispute (no response by `order.auto_approve_at` → the API approves it automatically) |
 | `active` | Open Dispute |
 | `disputed` | Submit Evidence (once) |
 | `completed` | Leave Review |

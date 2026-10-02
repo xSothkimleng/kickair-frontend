@@ -2,16 +2,12 @@
 
 import { css, cva } from "styled-system/css";
 
-export type PayLogoId = "khqr" | "visa" | "mc" | "unionpay" | "jcb" | "alipay" | "wechat";
+export type PayLogoId = "khqr" | "visa" | "mc";
 
 const LABELS: Record<PayLogoId, string> = {
   khqr: "ABA KHQR",
   visa: "Visa",
   mc: "Mastercard",
-  unionpay: "UnionPay",
-  jcb: "JCB",
-  alipay: "Alipay",
-  wechat: "WeChat Pay",
 };
 
 // Slot shape — 50% round (the old theme logoRadius); switch to "22%" for square slots.

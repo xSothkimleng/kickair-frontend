@@ -14,7 +14,3 @@ shape (round vs square) is controlled by `tokens.logoRadius` in `src/theme.ts`.
 | `khqr.svg`     | ABA KHQR      |
 | `visa.svg`     | Visa          |
 | `mc.svg`       | Mastercard    |
-| `unionpay.svg` | UnionPay      |
-| `jcb.svg`      | JCB           |
-| `alipay.svg`   | Alipay        |
-| `wechat.svg`   | WeChat Pay    |

@@ -127,7 +127,7 @@ export default function MockAbaPayWayPopup({
   onCancel: () => void;
 }) {
   const isCard = method === "card";
-  const methodName = { khqr: "ABA KHQR", alipay: "Alipay", wechat: "WeChat Pay", card: "Card" }[method];
+  const methodName = { khqr: "ABA KHQR", card: "Card" }[method];
 
   return (
     <BareModal
@@ -195,7 +195,7 @@ export default function MockAbaPayWayPopup({
   );
 }
 
-/* QR / scan variant (KHQR, Alipay, WeChat) */
+/* QR / scan variant (KHQR) */
 
 const qrPaneCss = css({ display: "flex", flexDirection: "column", alignItems: "center", gap: "14px" });
 const qrHeadRowCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%" });
@@ -235,7 +235,7 @@ const qrCaptionWrapCss = css({ px: "16px", pb: "14px", textAlign: "center" });
 const qrCaptionCss = css({ textStyle: "micro", color: "ink3", fontVariantNumeric: "tabular-nums" });
 const qrHintCss = css({ textAlign: "center", textStyle: "ui", color: "ink2" });
 
-const BRAND_COLOR: Record<AbaMethod, string> = { khqr: "#e2202a", alipay: "#1296db", wechat: "#09bb07", card: "#e2202a" };
+const BRAND_COLOR: Record<AbaMethod, string> = { khqr: "#e2202a", card: "#e2202a" };
 
 function QrPane({ method, methodName, onComplete }: { method: AbaMethod; methodName: string; onComplete: () => void }) {
   const timer = useCountdown(292);

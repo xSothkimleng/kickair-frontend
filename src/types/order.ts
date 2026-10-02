@@ -245,6 +245,10 @@ export interface Order {
   delivery_history?: Array<{ note: string | null; attachments: Array<{ url: string; file_name: string; file_type: string }>; submitted_at: string }>;
   revision_history?: Array<{ note: string | null; requested_at: string }>;
   revision_note: string | null;
+  /** When the latest delivery was submitted. */
+  delivered_at?: string | null;
+  /** Set only while the client's review is awaited: when the delivery is approved automatically. */
+  auto_approve_at?: string | null;
   created_at: string;
   updated_at: string;
   review: Review | null;

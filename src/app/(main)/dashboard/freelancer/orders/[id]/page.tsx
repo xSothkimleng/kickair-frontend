@@ -40,8 +40,8 @@ import { useCommissionRate } from "@/hooks/useCommissionRate";
 import { OrderStatus, Dispute, EvidenceFile } from "@/types/order";
 import DisputeSettlementRows from "@/components/dashboard/DisputeSettlementRows";
 import OrderRecord from "@/components/dashboard/OrderRecord";
-import { MONEY, afterPlatformFee } from "@/lib/moneyTerms";
-import { formatAmount, revisionsText } from "@/lib/format";
+import { MONEY, afterPlatformFee, autoApproveFreelancerNote } from "@/lib/moneyTerms";
+import { formatAmount, formatDeadline, revisionsText } from "@/lib/format";
 
 // ─── Design tokens (same as client page) ─────────────────────────────────────
 // (the CARD / SEC_LABEL / BTN_* objects now live in `dashboard/orderPageKit`)
@@ -567,7 +567,11 @@ export default function FreelancerOrderDetailPage() {
               {/* cancelled / delivered (no further action) */}
               {(order.status === "cancelled" || order.status === "delivered") && (
                 <p className={css({ textStyle: "ui", color: "#94A3B8", textAlign: "right" })}>
-                  {order.status === "cancelled" ? "Order Cancelled" : "Awaiting client review"}
+                  {order.status === "cancelled"
+                    ? "Order Cancelled"
+                    : order.auto_approve_at
+                      ? `Awaiting client review. ${autoApproveFreelancerNote(formatDeadline(order.auto_approve_at))}`
+                      : "Awaiting client review"}
                 </p>
               )}
             </div>

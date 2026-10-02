@@ -19,8 +19,6 @@ interface FlowState {
 const METHOD_LABEL: Record<FlowMethod, string> = {
   khqr: "ABA KHQR",
   card: "your card",
-  alipay: "Alipay",
-  wechat: "WeChat Pay",
   wallet: "your wallet",
 };
 

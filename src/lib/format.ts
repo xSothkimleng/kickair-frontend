@@ -53,6 +53,14 @@ export function revisionsText(value: number | string | null | undefined): string
   return /^\d+$/.test(text) ? text : "N/A";
 }
 
+/** A deadline with its time, in the viewer's own time zone: "October 5 at 2:16 PM". */
+export function formatDeadline(value: string): string {
+  const date = new Date(value);
+  const day = date.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+  const time = date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+  return `${day} at ${time}`;
+}
+
 /**
  * A dollar amount for lists and summaries: "$300" for a whole number, "$270.50" when
  * there are cents. Never "$270.5", and never rounded to "$271".

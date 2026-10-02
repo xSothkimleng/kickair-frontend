@@ -5,15 +5,19 @@ import PaymentOption from "./PaymentOption";
 import PayLogo, { type PayLogoId } from "./PayLogo";
 import Annot from "./Annot";
 
-export type AbaMethod = "khqr" | "card" | "alipay" | "wechat";
+export type AbaMethod = "khqr" | "card";
 
-/** ABA PayWay methods per ABA's integration guideline. */
+/**
+ * The ways to pay. The plan is ABA PayWay only: scan the KHQR code, or pay with a Visa
+ * or Mastercard card. This list is the single place the checkout and the top-up dialog
+ * read their options from. The same list as a sentence, for the marketing pages, is
+ * `PAYMENT_METHODS_TEXT` in lib/paymentMethods.ts: change both together.
+ */
 export const ABA_METHODS: { id: AbaMethod; name: string; desc: string; logos: PayLogoId[] }[] = [
   { id: "khqr", name: "ABA KHQR", desc: "Scan with any Cambodian bank app", logos: ["khqr"] },
-  { id: "card", name: "Credit / Debit Card", desc: "Visa · Mastercard · UnionPay · JCB", logos: ["visa", "mc", "unionpay", "jcb"] },
-  { id: "alipay", name: "Alipay", desc: "Alipay wallet", logos: ["alipay"] },
-  { id: "wechat", name: "WeChat Pay", desc: "WeChat wallet", logos: ["wechat"] },
+  { id: "card", name: "Credit / Debit Card", desc: "Visa · Mastercard", logos: ["visa", "mc"] },
 ];
+
 
 const listCss = css({ display: "flex", flexDirection: "column", gap: "10px" });
 const headCss = css({ display: "flex", justifyContent: "space-between", alignItems: "center", mb: "2px" });

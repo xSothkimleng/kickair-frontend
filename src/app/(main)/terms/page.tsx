@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Link } from "@/components/ds";
 import { LegalPage, type LegalSection } from "@/components/legal/LegalPage";
+import { REVIEW_WINDOW } from "@/lib/moneyTerms";
 
 export const metadata: Metadata = { title: "Terms of Service | KickAir" };
 
@@ -39,6 +40,7 @@ const SECTIONS: LegalSection[] = [
     heading: "Delivery, revisions and approval",
     body: [
       "The freelancer delivers the work on the order page. The client can approve it, or ask for a revision and say what needs to change.",
+      `If the client does not respond within ${REVIEW_WINDOW} of a delivery, it is approved automatically. A revision request or a dispute stops this.`,
       "Approving a delivery releases the payment and cannot be undone.",
     ],
   },

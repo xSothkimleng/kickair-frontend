@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDown } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box } from "styled-system/jsx";
+import { REVIEW_WINDOW } from "@/lib/moneyTerms";
 
 const faqTrigger = css({
   w: "full",
@@ -31,12 +32,12 @@ const faqs = [
   {
     question: "Is my money safe with the escrow system?",
     answer:
-      "Yes. Your payment is held securely by KickAir until you approve the work. If there are any issues, our team mediates fairly. Freelancers are only paid when you are satisfied or after dispute resolution.",
+      `Yes. Your payment is held securely by KickAir until you approve the work. If there are any issues, our team mediates fairly. Freelancers are paid when you approve the work, when ${REVIEW_WINDOW} pass after a delivery without a response from you, or after dispute resolution.`,
   },
   {
     question: "What payment methods do you accept?",
     answer:
-      "We support Cambodia-friendly payment methods including Wing, ABA Bank, and Pi Pay. International payments via credit card and PayPal are also available.",
+      "Payments go through ABA PayWay. Scan the ABA KHQR code with any Cambodian bank app, or pay with a Visa or Mastercard card.",
   },
   {
     question: "How do I know reviews are real?",

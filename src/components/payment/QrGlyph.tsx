@@ -2,7 +2,7 @@
 
 /**
  * Deterministic pseudo-QR matrix — a placeholder visual only, NOT a scannable
- * code. The real KHQR/Alipay/WeChat QR is rendered by ABA PayWay's hosted page.
+ * code. The real KHQR code is rendered by ABA PayWay's hosted page.
  */
 export default function QrGlyph({ color = "#111", size = 150 }: { color?: string; size?: number }) {
   const N = 21;

@@ -3,7 +3,8 @@
 import { css, cva } from "styled-system/css";
 import PayLogo, { type PayLogoId } from "./PayLogo";
 
-const FOOTER_METHODS: PayLogoId[] = ["visa", "mc", "unionpay", "jcb", "alipay", "wechat"];
+// The same methods the checkout offers (see ABA_METHODS).
+const FOOTER_METHODS: PayLogoId[] = ["khqr", "visa", "mc"];
 
 const wrapCss = css({
   display: "flex",

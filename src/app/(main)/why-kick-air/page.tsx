@@ -4,6 +4,7 @@ import type { LucideIcon } from "lucide-react";
 import { css } from "styled-system/css";
 import { Box, Grid } from "styled-system/jsx";
 import { MONEY, ESCROW_SHORT, titleCase } from "@/lib/moneyTerms";
+import { PAYMENT_METHODS_TEXT } from "@/lib/paymentMethods";
 
 // Black numbered step badge (how-it-works columns).
 const stepCircle = css({
@@ -136,7 +137,7 @@ export default function WhyKickAirPage() {
   }[] = [
     { num: 1, title: "Find Freelancer", desc: "Browse profiles and select the perfect talent for your project" },
     { num: 2, title: "Review & Quote", desc: "Check tier options and get detailed project quote" },
-    { num: 3, title: titleCase(MONEY.clientPays), desc: "Secure payment via Wing, ABA Bank, or Pi Pay" },
+    { num: 3, title: titleCase(MONEY.clientPays), desc: `Secure payment through ABA PayWay: ${PAYMENT_METHODS_TEXT}` },
     { num: 4, title: "Money Held Securely", desc: ESCROW_SHORT, gradient: true },
     { num: 5, title: "Freelancer Delivers", desc: "Project completed and submitted for review" },
     { num: 6, title: titleCase(MONEY.paymentReleased), desc: "Freelancer receives the payment instantly", success: true },
@@ -201,7 +202,7 @@ export default function WhyKickAirPage() {
       img: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100",
     },
     {
-      text: '"Fast, reliable, and professional. The payment system with Wing and ABA makes it so convenient for local transactions. Highly recommend to any Cambodian freelancer."',
+      text: '"Fast, reliable, and professional. Paying with ABA KHQR makes it so convenient for local transactions. Highly recommend to any Cambodian freelancer."',
       name: "Sophia Lim",
       role: "Content Writer",
       img: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100",
